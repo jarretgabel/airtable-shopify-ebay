@@ -9,10 +9,12 @@ import {
   updateConfiguredRecord,
   type AirtableConfiguredWriteSource,
 } from '../../providers/airtable/sources.js';
+import { validateConfiguredWorkflowImageMetadata } from '../../providers/airtable/workflowImageMetadataValidation.js';
 
 interface AirtableWriteBody {
   fields?: Record<string, unknown>;
   typecast?: boolean;
+  action?: 'validate-workflow-image-metadata';
 }
 
 const SELF_SERVICE_USER_WRITE_FIELD_NAMES = new Set([
@@ -189,6 +191,7 @@ interface UpsertConfiguredRecordDependencies {
   requireRouteAccess?: typeof requireRouteAccess;
   createConfiguredRecord?: typeof createConfiguredRecord;
   updateConfiguredRecord?: typeof updateConfiguredRecord;
+  validateWorkflowImageMetadata?: typeof validateConfiguredWorkflowImageMetadata;
 }
 
 export function createCreateHandler(dependencies: UpsertConfiguredRecordDependencies = {}) {
@@ -216,6 +219,7 @@ export function createCreateHandler(dependencies: UpsertConfiguredRecordDependen
 export function createUpdateHandler(dependencies: UpsertConfiguredRecordDependencies = {}) {
   const requireAccess = dependencies.requireRouteAccess ?? requireRouteAccess;
   const updateRecord = dependencies.updateConfiguredRecord ?? updateConfiguredRecord;
+  const validateWorkflowImages = dependencies.validateWorkflowImageMetadata ?? validateConfiguredWorkflowImageMetadata;
 
   return async function updateConfiguredRecordHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
     const origin = getRequestOrigin(event);
@@ -223,11 +227,29 @@ export function createUpdateHandler(dependencies: UpsertConfiguredRecordDependen
       const source = validateWriteSource(requirePathParam(event, 'source', 'airtable', 'MISSING_SOURCE'));
       const recordId = requirePathParam(event, 'recordId', 'airtable', 'MISSING_RECORD_ID');
       const body = requireJsonBody<AirtableWriteBody>(event, 'airtable', 'INVALID_AIRTABLE_REQUEST_BODY');
-      const fields = validateFields(body.fields);
       const user = source === 'users'
         ? await requireAccess(event, {})
         : await requireAccess(event);
 
+      if (body.action === 'validate-workflow-image-metadata') {
+        if (source !== 'approval-combined') {
+          throw new HttpError(400, 'Workflow image metadata validation is only supported for combined listings.', {
+            service: 'airtable',
+            code: 'WORKFLOW_IMAGE_METADATA_SOURCE_UNSUPPORTED',
+            retryable: false,
+          });
+        }
+
+        const result = await validateWorkflowImages(recordId);
+        logInfo('Validated combined listing image metadata formats', {
+          source,
+          recordId,
+          removedCount: result.removedCount,
+        });
+        return jsonOk(result, { origin });
+      }
+
+      const fields = validateFields(body.fields);
       if (source === 'users' && !hasFullAccessRole(user.role)) {
         assertSelfUserUpdateAllowed(user, recordId, fields);
       }

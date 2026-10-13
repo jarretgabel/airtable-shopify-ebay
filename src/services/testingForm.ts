@@ -327,9 +327,22 @@ function buildStageContext(record: AirtableRecord): TestingFormStageContext {
         nowIso: new Date().toISOString(),
       })
     : filterWorkflowImageMetadataByStage(parsedImageMetadata, 'testing');
+  const mergedTestingAttachmentIds = new Set(
+    mergedTestingMetadata
+      .map((record) => record.attachmentId?.trim().toLowerCase())
+      .filter((id): id is string => Boolean(id)),
+  );
+  const mergedTestingUrls = new Set(mergedTestingMetadata.map((record) => record.url.trim().toLowerCase()));
+  const unrepresentedTestingMetadata = filterWorkflowImageMetadataByStage(parsedImageMetadata, 'testing')
+    .filter((record) => {
+      const attachmentId = record.attachmentId?.trim().toLowerCase();
+      const url = record.url.trim().toLowerCase();
+      return !(attachmentId && mergedTestingAttachmentIds.has(attachmentId)) && !mergedTestingUrls.has(url);
+    });
   const imageMetadata = [
     ...parsedImageMetadata.filter((record) => record.sourceStage !== 'testing'),
     ...mergedTestingMetadata,
+    ...unrepresentedTestingMetadata,
   ];
   const existingAttachments = imageMetadata.length > 0
     ? filterWorkflowAttachmentsByStage(

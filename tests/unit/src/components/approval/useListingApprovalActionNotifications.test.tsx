@@ -232,6 +232,85 @@ describe('approval action notifications', () => {
     });
   });
 
+  it('saves unsaved listing changes before publishing', async () => {
+    publishApprovalRecordMock.mockResolvedValue({
+      target: 'shopify',
+      shopify: {
+        productId: '88',
+        mode: 'updated',
+        warnings: [],
+        wroteProductId: true,
+        staleProductIdCleared: false,
+      },
+      failures: [],
+    });
+
+    const requestConfirmation = vi.fn(async () => true);
+    const savePendingUpdates = vi.fn(async () => true);
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      changedFieldNames: ['Name'],
+      savePendingUpdates,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      isShopifyPublishBlockedByAuctionFormat: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
+      mergedDraftSourceFields: { Name: 'Updated listing name' },
+      setFormValue: vi.fn(),
+      pushInlineActionNotice: vi.fn(),
+      requestConfirmation,
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('shopify');
+    });
+
+    expect(requestConfirmation).toHaveBeenCalledWith(expect.objectContaining({
+      message: 'Save the current page changes to Airtable, then publish using those values.',
+      bullets: expect.arrayContaining([
+        'Unsaved listing changes will be saved to Airtable before publishing.',
+      ]),
+    }));
+    expect(savePendingUpdates).toHaveBeenCalledTimes(1);
+    expect(publishApprovalRecordMock).toHaveBeenCalledTimes(1);
+    expect(savePendingUpdates.mock.invocationCallOrder[0]).toBeLessThan(
+      publishApprovalRecordMock.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('does not publish when saving unsaved listing changes fails', async () => {
+    const requestConfirmation = vi.fn(async () => true);
+    const savePendingUpdates = vi.fn(async () => false);
+    const { result } = renderHook(() => useListingApprovalPublishActions({
+      selectedRecord: record,
+      changedFieldNames: ['Name'],
+      savePendingUpdates,
+      hasMissingShopifyRequiredFields: false,
+      hasMissingEbayRequiredFields: false,
+      isShopifyPublishBlockedByAuctionFormat: false,
+      missingShopifyRequiredFieldLabels: [],
+      missingEbayRequiredFieldLabels: [],
+      approvalPublishSource: 'approval-shopify',
+      tableReference: 'appApproval/viwApproval',
+      tableName: 'Approval',
+      mergedDraftSourceFields: { Name: 'Updated listing name' },
+      setFormValue: vi.fn(),
+      pushInlineActionNotice: vi.fn(),
+      requestConfirmation,
+    }));
+
+    await act(async () => {
+      await result.current.runCombinedPush('shopify');
+    });
+
+    expect(savePendingUpdates).toHaveBeenCalledTimes(1);
+    expect(publishApprovalRecordMock).not.toHaveBeenCalled();
+  });
+
   it('publishes an error notification after a publish exception', async () => {
     publishApprovalRecordMock.mockRejectedValue(new Error('Network timeout'));
 

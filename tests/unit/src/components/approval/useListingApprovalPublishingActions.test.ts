@@ -69,6 +69,8 @@ describe('useListingApprovalPublishingActions', () => {
       resolveShopifyCategoryId: vi.fn(),
       upsertShopifyProductWithCollectionFallback: vi.fn(),
       canUpdateApprovedShopifyListing: false,
+      changedFieldNames: ['Name'],
+      savePendingUpdates: vi.fn(async () => true),
       hasMissingShopifyRequiredFields: false,
       hasMissingEbayRequiredFields: false,
       isShopifyPublishBlockedByAuctionFormat: false,
@@ -85,6 +87,8 @@ describe('useListingApprovalPublishingActions', () => {
 
     expect(useListingApprovalPublishActionsMock).toHaveBeenCalledWith({
       selectedRecord: record,
+      changedFieldNames: ['Name'],
+      savePendingUpdates: params.savePendingUpdates,
       hasMissingShopifyRequiredFields: false,
       hasMissingEbayRequiredFields: false,
       isShopifyPublishBlockedByAuctionFormat: false,

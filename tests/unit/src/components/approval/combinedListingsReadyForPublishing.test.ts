@@ -23,6 +23,7 @@ describe('combinedListingsReadyForPublishing', () => {
         'Workflow Status': 'Approved for Publish',
         'Item Title': 'Stereo Receiver',
         SKU: 'READY-001',
+        'Ebay Listing Format': 'Fixed Price',
         Price: '499.99',
         'Product Category': 'Receivers',
       }),
@@ -30,6 +31,7 @@ describe('combinedListingsReadyForPublishing', () => {
         'Workflow Status': 'Awaiting Pre-Listing Review',
         'Item Title': 'Integrated Amplifier',
         SKU: 'READY-002',
+        'Ebay Listing Format': 'Fixed Price',
         Price: '699.99',
         'Product Category': 'Amplifiers',
       }),
@@ -37,12 +39,14 @@ describe('combinedListingsReadyForPublishing', () => {
         'Workflow Status': 'Approved for Publish',
         'Item Title': 'Turntable',
         SKU: 'NEEDS-001',
+        'Ebay Listing Format': 'Fixed Price',
         Price: '399.99',
       }),
       createRecord('active', {
         'Workflow Status': 'Listed, Shopify',
         'Item Title': 'Amplifier',
         Price: '299.99',
+        'Ebay Listing Format': 'Fixed Price',
         'Product Category': 'Amplifiers',
       }),
       createRecord('hidden', {
@@ -67,12 +71,14 @@ describe('combinedListingsReadyForPublishing', () => {
         'Workflow Status': 'Awaiting Pre-Listing Review',
         'Item Title': 'Receiver Missing SKU',
         Price: '249.99',
+        'Ebay Listing Format': 'Fixed Price',
       }),
       createRecord('awaiting-with-sku', {
         'Workflow Status': 'Awaiting Pre-Listing Review',
         'Item Title': 'Receiver With SKU',
         SKU: 'SKU-1234',
         Price: '249.99',
+        'Ebay Listing Format': 'Fixed Price',
       }),
     ];
 
@@ -88,6 +94,7 @@ describe('combinedListingsReadyForPublishing', () => {
         'Workflow Status': 'Approved for Publish',
         'Item Title': 'Needs copy edits',
         Price: '799.99',
+        'Ebay Listing Format': 'Fixed Price',
         'Product Category': 'Receivers',
       }),
       createRecord('approved-with-sku', {
@@ -95,6 +102,7 @@ describe('combinedListingsReadyForPublishing', () => {
         'Item Title': 'Needs missing vendor',
         SKU: 'WORK-1001',
         Price: '899.99',
+        'Ebay Listing Format': 'Fixed Price',
       }),
     ];
 
@@ -109,6 +117,7 @@ describe('combinedListingsReadyForPublishing', () => {
         'Workflow Status': 'Approved for Publish',
         'Item Title': 'No SKU Yet',
         Price: '799.99',
+        'Ebay Listing Format': 'Fixed Price',
         'Product Category': 'Receivers',
       }),
       createRecord('approved-with-sku', {
@@ -116,6 +125,7 @@ describe('combinedListingsReadyForPublishing', () => {
         'Item Title': 'With SKU',
         SKU: 'SKU-READY-1',
         Price: '899.99',
+        'Ebay Listing Format': 'Fixed Price',
         'Product Category': 'Amplifiers',
       }),
     ];

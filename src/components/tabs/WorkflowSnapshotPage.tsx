@@ -396,6 +396,8 @@ export function WorkflowSnapshotPage({
                   title="Intake Images"
                   description="Images submitted at intake via JotForm, archived to Google Drive."
                   images={stageImages.intakeImages}
+                  recordSource="used-gear-workflow"
+                  recordId={record.id}
                 />
               </SnapshotCard>
 
@@ -415,6 +417,8 @@ export function WorkflowSnapshotPage({
                   title="Testing Images"
                   description="Saved testing-stage images appear here for record review and listing handoff context."
                   images={stageImages.testingImages}
+                  recordSource="used-gear-workflow"
+                  recordId={record.id}
                 />
               </SnapshotCard>
 
@@ -432,16 +436,22 @@ export function WorkflowSnapshotPage({
                   title="Intake Images"
                   description="These intake-stage images are available for reference while photography work is completed."
                   images={stageImages.intakeImages}
+                  recordSource="used-gear-workflow"
+                  recordId={record.id}
                 />
                 <WorkflowReferenceImagesPanel
                   title="Testing Images"
                   description="These testing-stage images are available for reference while photography work is completed."
                   images={stageImages.testingImages}
+                  recordSource="used-gear-workflow"
+                  recordId={record.id}
                 />
                 <WorkflowReferenceImagesPanel
                   title="Photography Images"
                   description="Photography-stage processed images selected for listing context appear here."
                   images={stageImages.photographyImages}
+                  recordSource="used-gear-workflow"
+                  recordId={record.id}
                 />
               </SnapshotCard>
 

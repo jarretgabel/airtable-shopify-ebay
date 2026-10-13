@@ -91,20 +91,8 @@ export function useListingApprovalSaveActions({
     pushInlineActionNotice('info', 'Page data reset', 'Form values were restored to current Airtable values.');
   };
 
-  const handleSaveUpdates = async () => {
-    if (!selectedRecord) return;
-    const effectiveChangedFieldNames = getEffectiveChangedFieldNames();
-    const confirmed = await requestConfirmation({
-      title: 'Save listing updates',
-      message: 'Write the current page values back to Airtable for this listing.',
-      confirmLabel: 'Save updates',
-      bullets: [
-        `Record: ${recordTitle(selectedRecord.fields)}`,
-        `Channel: ${approvalChannel}`,
-        `${effectiveChangedFieldNames.length} changed field${effectiveChangedFieldNames.length === 1 ? '' : 's'} will be saved.`,
-      ],
-    });
-    if (!confirmed) return;
+  const saveCurrentUpdates = async (effectiveChangedFieldNames: string[]): Promise<boolean> => {
+    if (!selectedRecord) return false;
     trackWorkflowEvent('approval_saved', {
       recordId: selectedRecord.id,
       tableReference,
@@ -150,6 +138,7 @@ export function useListingApprovalSaveActions({
             succeeded: true,
           }),
         );
+        return true;
       } else {
         const saveErrorMessage = useApprovalStore.getState().error
           || 'Could not save listing changes to Airtable. Review the error section and try again.';
@@ -164,11 +153,12 @@ export function useListingApprovalSaveActions({
             errorMessage: saveErrorMessage,
           }),
         );
+        return false;
       }
     };
 
     try {
-      await runSave();
+      return await runSave();
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : 'Unable to save listing changes to Airtable.';
       pushInlineActionNotice('error', 'Save failed', message);
@@ -182,11 +172,36 @@ export function useListingApprovalSaveActions({
           errorMessage: message,
         }),
       );
+      return false;
     }
+  };
+
+  const savePendingUpdates = async (): Promise<boolean> => {
+    const effectiveChangedFieldNames = getEffectiveChangedFieldNames();
+    if (effectiveChangedFieldNames.length === 0) return true;
+    return saveCurrentUpdates(effectiveChangedFieldNames);
+  };
+
+  const handleSaveUpdates = async () => {
+    if (!selectedRecord) return;
+    const effectiveChangedFieldNames = getEffectiveChangedFieldNames();
+    const confirmed = await requestConfirmation({
+      title: 'Save listing updates',
+      message: 'Write the current page values back to Airtable for this listing.',
+      confirmLabel: 'Save updates',
+      bullets: [
+        `Record: ${recordTitle(selectedRecord.fields)}`,
+        `Channel: ${approvalChannel}`,
+        `${effectiveChangedFieldNames.length} changed field${effectiveChangedFieldNames.length === 1 ? '' : 's'} will be saved.`,
+      ],
+    });
+    if (!confirmed) return;
+    await saveCurrentUpdates(effectiveChangedFieldNames);
   };
 
   return {
     handleResetData,
     handleSaveUpdates,
+    savePendingUpdates,
   };
 }

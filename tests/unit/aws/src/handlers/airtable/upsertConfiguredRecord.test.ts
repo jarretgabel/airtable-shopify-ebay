@@ -143,6 +143,45 @@ test('rejects non-admin users who try to change protected fields on their own re
     },
   });
 
+  test('validates combined listing image metadata through the existing protected update route', async () => {
+    let validatedRecordId = '';
+    const handler = createUpdateHandler({
+      requireRouteAccess: async () => ({
+        userId: 'u-listing-editor',
+        airtableRecordId: 'rec-user-1',
+        name: 'Listing Editor',
+        email: 'listing@example.com',
+        mustChangePassword: false,
+        role: 'processor',
+        allowedPages: ['listings'],
+      }),
+      validateWorkflowImageMetadata: async (recordId) => {
+        validatedRecordId = recordId;
+        return {
+          metadataJson: '[]',
+          validImageUrls: [],
+          removedCount: 1,
+        };
+      },
+      updateConfiguredRecord: async () => {
+        throw new Error('The validation action should perform its own targeted write.');
+      },
+    });
+
+    const response = await handler(createEvent({
+      pathParameters: { source: 'approval-combined', recordId: 'recWorkflow701' },
+      body: JSON.stringify({ action: 'validate-workflow-image-metadata' }),
+    }));
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(validatedRecordId, 'recWorkflow701');
+    assert.deepEqual(JSON.parse(response.body || '{}'), {
+      metadataJson: '[]',
+      validImageUrls: [],
+      removedCount: 1,
+    });
+  });
+
   const response = await handler(createEvent({
     body: JSON.stringify({
       fields: {

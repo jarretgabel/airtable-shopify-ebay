@@ -34,7 +34,10 @@ type PublishActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'setDerivedFormValue'
   | 'pushInlineActionNotice'
   | 'requestConfirmation'
->;
+> & {
+  changedFieldNames?: string[];
+  savePendingUpdates?: () => Promise<boolean>;
+};
 
 const EBAY_PUBLISH_PROGRESS_NOTICE_ID = 'ebay-publish-progress';
 const EBAY_IMAGE_UPLOAD_CONCURRENCY = 2;
@@ -50,6 +53,7 @@ function isEbayHostedImageUrl(value: string): boolean {
 
 export function useListingApprovalPublishActions({
   selectedRecord,
+  changedFieldNames = [],
   hasMissingShopifyRequiredFields,
   hasMissingEbayRequiredFields,
   isShopifyPublishBlockedByAuctionFormat,
@@ -65,6 +69,7 @@ export function useListingApprovalPublishActions({
   setDerivedFormValue,
   pushInlineActionNotice,
   requestConfirmation,
+  savePendingUpdates,
 }: PublishActionsParams) {
   const [pushingTarget, setPushingTarget] = useState<'shopify' | 'ebay' | 'both' | null>(null);
   const pushResultNotification = useNotificationStore.getState().upsertByKey;
@@ -424,12 +429,16 @@ export function useListingApprovalPublishActions({
 
     const confirmed = await requestConfirmation({
       title: target === 'both' ? 'Publish to both channels' : `Publish to ${target === 'shopify' ? 'Shopify' : 'eBay'}`,
-      message: 'Publish using the current page values rather than the last saved backend payload.',
+      message: changedFieldNames.length > 0
+        ? 'Save the current page changes to Airtable, then publish using those values.'
+        : 'Publish using the current page values rather than the last saved backend payload.',
       confirmLabel: target === 'both' ? 'Publish both' : `Publish ${target}`,
       bullets: [
         `Record: ${recordTitle(selectedRecord.fields)}`,
         `Target: ${target === 'both' ? 'Shopify and eBay' : target === 'shopify' ? 'Shopify' : 'eBay'}`,
-        'Current in-page values will be used for the publish request.',
+        ...(changedFieldNames.length > 0
+          ? ['Unsaved listing changes will be saved to Airtable before publishing.']
+          : ['Current in-page values will be used for the publish request.']),
         ...(workflowPublishSummary ? [
           `Workflow status: ${workflowPublishSummary.workflowStatus || 'Not set'}`,
           `Resolved title: ${workflowPublishSummary.readiness.title || 'Missing title'}`,
@@ -447,6 +456,14 @@ export function useListingApprovalPublishActions({
 
     setPushingTarget(target);
     try {
+      if (changedFieldNames.length > 0) {
+        if (!savePendingUpdates) {
+          pushInlineActionNotice('error', 'Save failed', 'Cannot publish unsaved listing changes because the save action is unavailable.');
+          return;
+        }
+        if (!(await savePendingUpdates())) return;
+      }
+
       const publishFields = await prepareEbayHostedImages(
         target,
         buildPublishFieldsForTarget(target, mergedDraftSourceFields ?? null),

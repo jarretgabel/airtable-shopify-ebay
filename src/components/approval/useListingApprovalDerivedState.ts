@@ -9,6 +9,7 @@ import type { AirtableRecord } from '@/types/airtable';
 interface UseListingApprovalDerivedStateParams {
   records: AirtableRecord[];
   selectedRecordId: ApprovalTabViewModel['selectedRecordId'];
+  actualFieldNames: string[];
   allFieldNames: string[];
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
@@ -27,6 +28,7 @@ interface UseListingApprovalDerivedStateParams {
 export function useListingApprovalDerivedState({
   records,
   selectedRecordId,
+  actualFieldNames,
   allFieldNames,
   approvalChannel,
   isCombinedApproval,
@@ -44,6 +46,7 @@ export function useListingApprovalDerivedState({
   const combinedFieldState = useListingApprovalCombinedFieldState({
     records,
     selectedRecordId,
+    actualFieldNames,
     allFieldNames,
     approvalChannel,
     isCombinedApproval,

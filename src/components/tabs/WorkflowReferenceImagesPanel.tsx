@@ -1,5 +1,8 @@
-import type { SyntheticEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isGoogleDriveImageUrl } from '@/services/workflowImageMetadata';
+import { getConfiguredWorkflowImagePreview } from '@/services/app-api/airtable';
+
+type WorkflowImagePreviewSource = 'used-gear-workflow' | 'approval-combined';
 
 interface WorkflowReferenceImage {
   id?: string;
@@ -13,12 +16,21 @@ interface WorkflowReferenceImagesPanelProps {
   images: WorkflowReferenceImage[];
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  recordSource?: WorkflowImagePreviewSource;
+  recordId?: string;
 }
 
 function getGoogleDriveFileId(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.toLowerCase() !== 'drive.google.com') {
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname !== 'drive.google.com'
+      && hostname !== 'docs.google.com'
+      && hostname !== 'drive.usercontent.google.com'
+      && hostname !== 'googleusercontent.com'
+      && !hostname.endsWith('.googleusercontent.com')
+    ) {
       return null;
     }
 
@@ -27,7 +39,7 @@ function getGoogleDriveFileId(url: string): string | null {
       return queryId;
     }
 
-    const pathMatch = parsed.pathname.match(/\/d\/([^/]+)/);
+    const pathMatch = parsed.pathname.match(/\/(?:file\/)?d\/([^/]+)/i);
     return pathMatch?.[1] ?? null;
   } catch {
     return null;
@@ -47,12 +59,91 @@ function getReferencePreviewUrl(url?: string): string | undefined {
   return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
 }
 
-function applyImageFallback(event: SyntheticEvent<HTMLImageElement, Event>, fallbackUrl?: string): void {
-  if (!fallbackUrl) return;
-  const image = event.currentTarget;
-  if (image.dataset.fallbackApplied === 'true') return;
-  image.dataset.fallbackApplied = 'true';
-  image.src = fallbackUrl;
+function ReferenceImageCard({
+  image,
+  recordSource,
+  recordId,
+}: {
+  image: WorkflowReferenceImage;
+  recordSource?: WorkflowImagePreviewSource;
+  recordId?: string;
+}) {
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+  const [isNearViewport, setIsNearViewport] = useState(false);
+  const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState('');
+  const fileId = image.url ? getGoogleDriveFileId(image.url) : null;
+
+  useEffect(() => {
+    const node = imageContainerRef.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsNearViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setIsNearViewport(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '300px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isNearViewport) return;
+
+    if (!recordSource || !recordId || !fileId) {
+      setPreviewDataUrl(getReferencePreviewUrl(image.url) ?? null);
+      return;
+    }
+
+    let active = true;
+    setPreviewDataUrl(null);
+    setPreviewError('');
+    void getConfiguredWorkflowImagePreview(recordSource, recordId, fileId)
+      .then(({ dataUrl }) => {
+        if (active) setPreviewDataUrl(dataUrl);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setPreviewError(error instanceof Error ? error.message : 'Unable to load this image preview.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [fileId, image.url, isNearViewport, recordId, recordSource]);
+
+  return (
+    <div ref={imageContainerRef} className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--bg)]">
+      {previewDataUrl ? (
+        <a href={image.url} target="_blank" rel="noreferrer" className="block">
+          <img
+            src={previewDataUrl}
+            alt={image.filename}
+            className="aspect-[4/3] w-full bg-slate-950/30 object-cover"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={() => {
+              setPreviewDataUrl(null);
+              setPreviewError('The image data could not be displayed.');
+            }}
+          />
+        </a>
+      ) : (
+        <div
+          className="flex aspect-[4/3] items-center justify-center bg-slate-950/30 px-4 text-center text-sm text-[var(--muted)]"
+          role={previewError ? 'alert' : 'status'}
+        >
+          {previewError || (isNearViewport ? 'Loading image preview...' : 'Image preview loads when visible.')}
+        </div>
+      )}
+      <div className="px-3 py-2.5 text-sm text-[var(--ink)]">{image.filename}</div>
+    </div>
+  );
 }
 
 export function WorkflowReferenceImagesPanel({
@@ -61,6 +152,8 @@ export function WorkflowReferenceImagesPanel({
   images,
   collapsible = false,
   defaultCollapsed = false,
+  recordSource,
+  recordId,
 }: WorkflowReferenceImagesPanelProps) {
   const googleDriveImages = images.filter((image) => (
     Boolean(image.url && isGoogleDriveImageUrl(image.url))
@@ -75,28 +168,13 @@ export function WorkflowReferenceImagesPanel({
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {googleDriveImages.map((image) => {
-          const previewUrl = getReferencePreviewUrl(image.url);
-
           return (
-            <div key={image.id ?? `${image.filename}-${image.url ?? ''}`} className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--bg)]">
-              {previewUrl ? (
-                <a href={image.url} target="_blank" rel="noreferrer" className="block">
-                  <img
-                    src={previewUrl}
-                    alt={image.filename}
-                    className="aspect-[4/3] w-full bg-slate-950/30 object-cover"
-                    loading="lazy"
-                    onError={(event) => applyImageFallback(event, image.url)}
-                    referrerPolicy="no-referrer"
-                  />
-                </a>
-              ) : (
-                <div className="flex aspect-[4/3] items-center justify-center bg-slate-950/30 px-4 text-center text-sm text-[var(--muted)]">
-                  Preview unavailable
-                </div>
-              )}
-              <div className="px-3 py-2.5 text-sm text-[var(--ink)]">{image.filename}</div>
-            </div>
+            <ReferenceImageCard
+              key={image.id ?? `${image.filename}-${image.url ?? ''}`}
+              image={image}
+              recordSource={recordSource}
+              recordId={recordId}
+            />
           );
         })}
       </div>

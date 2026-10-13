@@ -359,6 +359,7 @@ export function useListingApprovalTabState({
   } = useListingApprovalDerivedState({
     records: recordsForSelection,
     selectedRecordId,
+    actualFieldNames,
     allFieldNames,
     approvalChannel,
     isCombinedApproval,

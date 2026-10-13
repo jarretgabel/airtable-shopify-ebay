@@ -1,5 +1,20 @@
 import { TAB_DATA_TTLS, shouldReuseTabData } from '@/app/tabDataCache';
-import { SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES } from '@/components/approval/listingApprovalShopifyConstants';
+import {
+  EBAY_CATEGORIES_FIELD_CANDIDATES,
+  EBAY_CONDITION_FIELD_CANDIDATES,
+  EBAY_DESCRIPTION_FIELD_CANDIDATES,
+  EBAY_FORMAT_FIELD_CANDIDATES,
+  EBAY_PRICE_FIELD_CANDIDATES,
+  EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
+  EBAY_SKU_FIELD_CANDIDATES,
+  EBAY_TITLE_FIELD_CANDIDATES,
+} from '@/components/approval/listingApprovalEbayConstants';
+import {
+  SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES,
+  SHOPIFY_PRICE_FIELD_CANDIDATES,
+  SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
+  SHOPIFY_TITLE_FIELD_CANDIDATES,
+} from '@/components/approval/listingApprovalShopifyConstants';
 import { getRecordsFromResolvedSource } from '@/services/app-api/airtable';
 import { resolveConfiguredRecordsSource } from '@/services/app-api/airtableSources';
 import { getInventoryItems, getOffersForInventorySkus } from '@/services/app-api/ebay';
@@ -96,7 +111,19 @@ const APPROVAL_QUEUE_FIELDS = [
   'eBay Format',
   'eBay Offer Format',
   'Listing Format',
+  ...SHOPIFY_TITLE_FIELD_CANDIDATES,
+  ...SHOPIFY_PRICE_FIELD_CANDIDATES,
+  ...SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES,
   ...SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
+  ...EBAY_TITLE_FIELD_CANDIDATES,
+  ...EBAY_SKU_FIELD_CANDIDATES,
+  ...EBAY_CONDITION_FIELD_CANDIDATES.filter((fieldName) => fieldName !== '__Condition__'),
+  ...EBAY_PRICE_FIELD_CANDIDATES,
+  ...EBAY_CATEGORIES_FIELD_CANDIDATES,
+  ...EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
+  ...EBAY_DESCRIPTION_FIELD_CANDIDATES,
+  ...EBAY_FORMAT_FIELD_CANDIDATES,
+  'Ebay Categories',
 ];
 
 function getApprovalSourceCacheKey(tableReference: string, tableName?: string): string {

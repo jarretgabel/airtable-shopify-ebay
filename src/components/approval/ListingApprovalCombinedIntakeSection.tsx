@@ -5,6 +5,7 @@ import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 import {
   filterWorkflowImageMetadataByStage,
   isGoogleDriveImageUrl,
+  isProcessedWorkflowImage,
   parseWorkflowImageMetadata,
 } from '@/services/workflowImageMetadata';
 import {
@@ -25,11 +26,6 @@ import { CONDITION_FIELD } from '@/stores/approvalStore';
 import type { ListingApprovalCombinedIntakeSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const iconActionButtonClass = sharedIconActionButtonClass;
-
-function isProcessedWorkflowImage(filename: string, url?: string): boolean {
-  const sample = `${filename} ${url ?? ''}`.toLowerCase();
-  return /(^|[-_])processed/.test(sample);
-}
 
 function EditIcon() {
   return (
@@ -357,6 +353,8 @@ export function ListingApprovalCombinedIntakeSection({
         images={intakeImages}
         collapsible
         defaultCollapsed
+        recordSource="approval-combined"
+        recordId={selectedRecord.id}
       />
       <ListingApprovalTestingSection
         fields={displayedTestingFields}
@@ -371,6 +369,8 @@ export function ListingApprovalCombinedIntakeSection({
         images={testingImages}
         collapsible
         defaultCollapsed
+        recordSource="approval-combined"
+        recordId={selectedRecord.id}
       />
       <ListingApprovalPhotographySection
         fields={displayedPhotographyFields}
@@ -385,6 +385,8 @@ export function ListingApprovalCombinedIntakeSection({
         images={photographyImages}
         collapsible
         defaultCollapsed
+        recordSource="approval-combined"
+        recordId={selectedRecord.id}
       />
     </IntakeSnapshotSection>
   );

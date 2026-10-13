@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useEffect, useState, type ReactNode, type SyntheticEvent } from 'react';
 import type { WorkflowListingImageAttachment } from '@/components/approval/workflowListingImageHelpers';
 import { isGoogleDriveImageUrl } from '@/services/workflowImageMetadata';
 
@@ -9,6 +9,9 @@ interface WorkflowListingImageSelectorProps {
   onSelectionChange: (selectedUrls: string[]) => void;
   disabled?: boolean;
   sourceActions?: ReactNode;
+  validationStatus?: 'idle' | 'checking' | 'ready' | 'error';
+  validationError?: string;
+  validationRemovedCount?: number;
 }
 
 function getGoogleDriveFileId(url: string): string | null {
@@ -171,8 +174,24 @@ export function WorkflowListingImageSelector({
   onSelectionChange,
   disabled = false,
   sourceActions,
+  validationStatus = 'idle',
+  validationError = '',
+  validationRemovedCount = 0,
 }: WorkflowListingImageSelectorProps) {
   const [previewAttachment, setPreviewAttachment] = useState<WorkflowListingImageAttachment | null>(null);
+  useEffect(() => {
+    if (!previewAttachment) return;
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setPreviewAttachment(null);
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [previewAttachment]);
+
   const googleDriveAttachments = attachments.filter((attachment) => isGoogleDriveImageUrl(attachment.url));
   const googleDriveSelectedUrls = selectedUrls.filter(isGoogleDriveImageUrl);
   const uniqueAttachments: WorkflowListingImageAttachment[] = [];
@@ -418,13 +437,26 @@ export function WorkflowListingImageSelector({
               {sourceActions}
             </div>
           ) : null}
+          {validationStatus === 'ready' && validationRemovedCount > 0 ? (
+            <p className="mt-3 text-xs text-amber-200" role="status">
+              {validationRemovedCount} unsupported image{validationRemovedCount === 1 ? '' : 's'} removed from listing metadata.
+            </p>
+          ) : null}
         </div>
         <div className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ink)]">
           {selectedCount} of {totalDistinctAttachments} selected
         </div>
       </div>
 
-      {uniqueAttachments.length === 0 ? (
+      {validationStatus === 'checking' ? (
+        <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-6 text-sm text-[var(--muted)]" role="status">
+          Checking image formats before showing listing images...
+        </div>
+      ) : validationStatus === 'error' ? (
+        <div className="mt-4 rounded-xl border border-rose-400/35 bg-rose-500/10 px-4 py-4 text-sm text-rose-200" role="alert">
+          Image formats could not be verified, so image choices are withheld. {validationError}
+        </div>
+      ) : uniqueAttachments.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--panel)]/60 px-4 py-6 text-sm text-[var(--muted)]">
           Upload images in the Testing or Photos form before selecting them for the listing.
         </div>

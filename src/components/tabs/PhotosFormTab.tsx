@@ -479,6 +479,8 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                 title="Intake Images"
                 description="These intake-stage images are available for reference while you photograph the current stage."
                 images={stageContext.intakeReferenceAttachments}
+                recordSource="used-gear-workflow"
+                recordId={recordId ?? undefined}
               />
             ) : (
               <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
@@ -492,6 +494,8 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                 title="Testing Images"
                 description="These testing-stage images are available for reference while you photograph the current stage."
                 images={stageContext.testingReferenceAttachments}
+                recordSource="used-gear-workflow"
+                recordId={recordId ?? undefined}
               />
             ) : (
               <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">

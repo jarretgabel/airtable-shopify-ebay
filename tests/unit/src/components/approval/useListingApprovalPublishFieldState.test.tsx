@@ -30,6 +30,7 @@ describe('useListingApprovalPublishFieldState', () => {
         'Item Title',
         'Description',
         'Item Condition',
+        'Ebay Listing Format',
         'Buy It Now USD',
         'Categories',
       ],
@@ -42,8 +43,25 @@ describe('useListingApprovalPublishFieldState', () => {
       'Item Title',
       'Description',
       'Item Condition',
+      'Ebay Listing Format',
       'Buy It Now USD',
       'Categories',
     ]);
+  });
+
+  it('keeps category required when it is not included in the record field projection', () => {
+    const { result } = renderHook(() => useListingApprovalPublishFieldState({
+      allFieldNames: [
+        'eBay Inventory SKU',
+        'Item Title',
+        'Description',
+        'Item Condition',
+        'Buy It Now USD',
+      ],
+      approvalChannel: 'ebay',
+      selectedRecord: null,
+    }));
+
+    expect(result.current.ebayRequiredFieldNames).toContain('Ebay Categories');
   });
 });

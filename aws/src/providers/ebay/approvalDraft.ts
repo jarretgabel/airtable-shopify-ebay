@@ -1,7 +1,11 @@
 import { parseCategoryIds, parseCategoryIdsFromFields } from './approvalCategories.js';
 import { collectImageUrlsFromFields, dedupeCaseInsensitive, parseImageUrls } from './approvalImages.js';
 import { getField, getRawField, parseInteger, parseKeyFeatureEntries, type ApprovalFieldMap } from './approvalShared.js';
-import { getIncludedWorkflowImages, parseWorkflowImageMetadata } from '../../shared/workflowImages.js';
+import {
+  getIncludedWorkflowImages,
+  getListingWorkflowImages,
+  parseWorkflowImageMetadata,
+} from '../../shared/workflowImages.js';
 
 const EBAY_CONDITION_ENUMS = new Set([
   'NEW',
@@ -121,8 +125,31 @@ function parsePositiveNumber(raw: string): number | undefined {
   return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
+function parseWeightUnit(raw: string): string | undefined {
+  const match = raw.trim().toLowerCase().match(/(?:^|[^a-z])(lbs?|pounds?|oz|ounces?|kgs?|kilograms?|grams?|g)(?:$|[^a-z])/);
+  const unit = match?.[1];
+  if (!unit) return undefined;
+  if (/^(?:lb|lbs|pound|pounds)$/.test(unit)) return 'POUND';
+  if (/^(?:oz|ounce|ounces)$/.test(unit)) return 'OUNCE';
+  if (/^(?:kg|kgs|kilogram|kilograms)$/.test(unit)) return 'KILOGRAM';
+  if (/^(?:g|gram|grams)$/.test(unit)) return 'GRAM';
+  return undefined;
+}
+
+function parseWeightWithUnit(raw: string): { value: number; unit: string } | undefined {
+  const match = raw.replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*(lbs?|pounds?|oz|ounces?|kgs?|kilograms?|grams?|g)(?:$|[^a-z])/i);
+  if (!match) return undefined;
+  const value = Number(match[1]);
+  const unit = parseWeightUnit(match[2]);
+  return Number.isFinite(value) && value > 0 && unit ? { value, unit } : undefined;
+}
+
 function parseShippingDimensions(raw: string): [number, number, number] | undefined {
-  const values = raw.replace(/,/g, '').match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const normalized = raw.replace(/,/g, '');
+  const dimensionsMatch = normalized.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)/i);
+  const values = dimensionsMatch
+    ? dimensionsMatch.slice(1).map(Number)
+    : normalized.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
   if (values.length < 3 || values.slice(0, 3).some((value) => !Number.isFinite(value) || value <= 0)) return undefined;
   return [values[0], values[1], values[2]];
 }
@@ -311,8 +338,15 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   const condition = normalizeEbayCondition(getField(fields, ['__Condition__', 'Item Condition', 'Condition', 'eBay Inventory Condition']));
   const conditionDescription = getField(fields, ['eBay Inventory Condition Description']);
   const quantity = parseInteger(getField(fields, ['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty']), 1);
-  const packageWeight = parsePositiveNumber(getField(fields, ['eBay Inventory Package Weight Value', 'Shipping Weight', 'Weight']));
-  const packageDimensions = parseShippingDimensions(getField(fields, ['Shipping Dims', 'Shipping Dimensions']));
+  const packageWeightRaw = getField(fields, ['eBay Inventory Package Weight Value', 'Shipping Weight', 'Weight']);
+  const shippingDimensionsRaw = getField(fields, ['Shipping Dims', 'Shipping Dimensions']);
+  const embeddedWeight = parseWeightWithUnit(packageWeightRaw) ?? parseWeightWithUnit(shippingDimensionsRaw);
+  const packageWeight = parsePositiveNumber(packageWeightRaw) ?? embeddedWeight?.value;
+  const packageWeightUnit = getField(fields, ['eBay Inventory Package Weight Unit'])
+    || parseWeightUnit(packageWeightRaw)
+    || parseWeightUnit(shippingDimensionsRaw)
+    || 'POUND';
+  const packageDimensions = parseShippingDimensions(shippingDimensionsRaw);
   const packageType = getField(fields, ['eBay Inventory Package Type', 'Ebay Package Type']);
   const packageWeightAndSize = packageWeight || packageDimensions || packageType
     ? {
@@ -328,17 +362,17 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
         ...(packageWeight ? {
           weight: {
             value: packageWeight,
-            unit: getField(fields, ['eBay Inventory Package Weight Unit']) || 'POUND',
+            unit: packageWeightUnit,
           },
         } : {}),
       }
     : undefined;
-  const workflowImageUrls = getIncludedWorkflowImages(parseWorkflowImageMetadata(getRawField(fields, [
+  const workflowImageUrls = getIncludedWorkflowImages(getListingWorkflowImages(parseWorkflowImageMetadata(getRawField(fields, [
     'Workflow Image Metadata JSON',
     'Workflow Image Metadata',
     'workflow_image_metadata_json',
     'workflow_image_metadata',
-  ]))).map((record) => record.url);
+  ])).filter((record) => record.sourceStage !== 'intake'))).map((record) => record.url);
   const preparedEbayImageUrls = parseImageUrls(getRawField(fields, ['eBay Inventory Product Image URLs JSON', 'eBay Inventory Product ImageURLs JSON', 'ebay_inventory_product_imageurls_json']));
   const imageUrls = parseImageUrls(getRawField(fields, ['eBay Inventory Product Image URLs', 'eBay Inventory Product Image URL', 'eBay Inventory Product Image URL 1', 'eBay Inventory Product Image URL 2', 'eBay Inventory Product Image URL 3', 'ebay_inventory_product_imageurls', 'ebay_inventory_product_imageurl', 'ebay_inventory_product_imageurl_1', 'ebay_inventory_product_imageurl_2', 'ebay_inventory_product_imageurl_3', 'Photo URLs (comma-separated)', 'Photo URLs', 'Images (comma-separated)', 'photo_urls', 'Shopify REST Images JSON', 'shopify_rest_images_json', 'Shopify Images JSON', 'shopify_images_json', 'Images', 'images', 'Image URL', 'Image URLs', 'image_url', 'image_urls']));
   const fallbackImageUrls = collectImageUrlsFromFields(fields);

@@ -23,6 +23,12 @@ This document records the implemented publish writeback behavior from the combin
   - `Pre-Listing Reviewed At`
   - `Approved For Publish At`
 
+## Saving Listing Changes Before Publish
+- When the listing page has unsaved edits, the publish confirmation tells the operator those edits will be saved to Airtable before publishing.
+- The publish action saves the current listing values first and stops if that save fails; marketplace publishing is never attempted after a failed save.
+- When there are no unsaved edits, publishing proceeds without an additional save.
+- The standalone `Save Updates` action remains available for saving without publishing.
+
 ## Common Writeback Behavior
 - On the first successful publish result, the workflow row writes back into the listed lifecycle family.
 - `Listed At` is captured on the first successful publish writeback.

@@ -416,6 +416,42 @@ export function getIncludedWorkflowImageMetadata(records: WorkflowImageMetadataR
   ));
 }
 
+export function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  if (/(^|[-_.\s])original([-_.\s]|$)/.test(sample)) return false;
+  return /(^|[-_])processed([-_.\s]|$)/.test(sample);
+}
+
+function normalizeWorkflowImageIdentity(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function getWorkflowImageBaseIdentity(filename: string): string {
+  return normalizeWorkflowImageIdentity(filename.replace(/[-_]processed(?=\.[^.]+$|$)/i, ''));
+}
+
+export function getListingWorkflowImageMetadata(
+  records: WorkflowImageMetadataRecord[],
+): WorkflowImageMetadataRecord[] {
+  const explicitlyProcessedRecords = records.filter((record) => (
+    isProcessedWorkflowImage(record.filename, record.url)
+  ));
+  const processedBaseIdentities = new Set(
+    explicitlyProcessedRecords.map((record) => getWorkflowImageBaseIdentity(record.filename)),
+  );
+  const selectableRecords = records.filter((record) => {
+    if (isProcessedWorkflowImage(record.filename, record.url)) return true;
+    if (record.sourceStage !== 'photos' || /(^|[-_.\s])original([-_.\s]|$)/i.test(record.filename)) return false;
+    return !processedBaseIdentities.has(getWorkflowImageBaseIdentity(record.filename));
+  });
+
+  return selectableRecords.length > 0 ? selectableRecords : records;
+}
+
 export function filterWorkflowImageMetadataByStage(
   records: WorkflowImageMetadataRecord[],
   stage: WorkflowImageSourceStage,

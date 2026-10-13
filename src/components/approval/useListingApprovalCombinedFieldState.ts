@@ -44,6 +44,7 @@ import { useListingApprovalCombinedFieldSync } from '@/components/approval/useLi
 interface UseListingApprovalCombinedFieldStateParams {
   records: AirtableRecord[];
   selectedRecordId: ApprovalTabViewModel['selectedRecordId'];
+  actualFieldNames: string[];
   allFieldNames: string[];
   approvalChannel: 'shopify' | 'ebay' | 'combined';
   isCombinedApproval: boolean;
@@ -76,6 +77,7 @@ function isEbayPriceLikeFieldName(fieldName: string): boolean {
 export function useListingApprovalCombinedFieldState({
   records,
   selectedRecordId,
+  actualFieldNames,
   allFieldNames,
   approvalChannel,
   isCombinedApproval,
@@ -161,13 +163,13 @@ export function useListingApprovalCombinedFieldState({
 
   const combinedDescriptionFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
-    const exact = selectedRecordFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'description');
+    const exact = actualFieldNames.find((fieldName) => fieldName.trim().toLowerCase() === 'description');
     if (exact) return exact;
-    return selectedRecordFieldNames.find((fieldName) =>
+    return actualFieldNames.find((fieldName) =>
       SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase())
       || EBAY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()),
     ) ?? '';
-  }, [isCombinedApproval, selectedRecordFieldNames]);
+  }, [actualFieldNames, isCombinedApproval]);
 
   const combinedSharedKeyFeaturesFieldName = useMemo(() => {
     if (!isCombinedApproval) return '';
@@ -331,6 +333,10 @@ export function useListingApprovalCombinedFieldState({
 
   const combinedSharedFieldNames = useMemo(() => {
     if (!isCombinedApproval) return allFieldNames;
+    const descriptionFieldCandidates = new Set([
+      ...SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES,
+      ...EBAY_DESCRIPTION_FIELD_CANDIDATES,
+    ].map((fieldName) => fieldName.trim().toLowerCase()));
     const shopifyOnlySet = new Set(combinedShopifyOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
     const ebayOnlySet = new Set(combinedEbayOnlyFieldNames.map((fieldName) => fieldName.toLowerCase()));
     const conditionCandidateSet = new Set(CONDITION_FIELD_CANDIDATES.map((fieldName) => fieldName.toLowerCase()));
@@ -353,6 +359,7 @@ export function useListingApprovalCombinedFieldState({
       if (isSharedQuantityFieldName(fieldName) && fieldName !== combinedSharedQuantityFieldName) return false;
       if (isItemZipCodeField(fieldName)) return false;
       if (normalized === 'weight' || normalized === 'shipping weight' || normalized === 'shipping dims') return false;
+      if (descriptionFieldCandidates.has(normalized)) return false;
       if (isCombinedEbayPriceField) return false;
       if (EBAY_FORMAT_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;
       if (EBAY_DURATION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === normalized)) return false;

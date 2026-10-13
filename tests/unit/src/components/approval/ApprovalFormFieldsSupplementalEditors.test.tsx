@@ -1340,6 +1340,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
       fieldName: 'Categories',
       marketplaceId: 'EBAY_US',
       value: ['3276'],
+      required: true,
     }));
   });
 });

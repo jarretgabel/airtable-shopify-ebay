@@ -892,6 +892,48 @@ describe('testingForm', () => {
     expect([...new Set(result.stageContext.imageMetadata.map((record) => record.sourceStage))].sort()).toEqual(['intake', 'photos', 'testing']);
   });
 
+  it('preserves testing image metadata that is missing from the current Airtable attachment response', async () => {
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      'Workflow Status': 'Testing In Progress',
+      SKU: 'SKU-106',
+      Make: 'McIntosh',
+      Model: 'MC240',
+      'Component Type': ['Amplifier'],
+      Status: 'Tested',
+      Images: [
+        { id: 'att-current', url: 'https://drive.google.com/current.jpg', filename: 'testing-current.jpg' },
+      ],
+      'Workflow Image Metadata JSON': JSON.stringify([
+        {
+          attachmentId: 'att-current',
+          url: 'https://drive.google.com/current.jpg',
+          filename: 'testing-current.jpg',
+          alt: 'Current bench view',
+          sortOrder: 1,
+          sourceStage: 'testing',
+          includedInListing: true,
+        },
+        {
+          attachmentId: 'att-missing',
+          url: 'https://drive.google.com/missing.jpg',
+          filename: 'testing-missing.jpg',
+          alt: 'Saved detail image',
+          sortOrder: 2,
+          sourceStage: 'testing',
+          includedInListing: true,
+        },
+      ]),
+    }));
+
+    const result = await loadTestingFormValues('recTestingWithMissingAttachment');
+
+    expect(result.stageContext.imageMetadata).toEqual(expect.arrayContaining([
+      expect.objectContaining({ attachmentId: 'att-current', filename: 'testing-current.jpg' }),
+      expect.objectContaining({ attachmentId: 'att-missing', filename: 'testing-missing.jpg' }),
+    ]));
+    expect(result.stageContext.imageMetadata).toHaveLength(2);
+  });
+
   it('falls back to metadata-backed testing attachments when workflow records have no Airtable image attachments', async () => {
     vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
       'Workflow Status': 'Testing In Progress',

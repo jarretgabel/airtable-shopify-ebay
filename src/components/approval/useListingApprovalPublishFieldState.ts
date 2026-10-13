@@ -111,15 +111,16 @@ export function useListingApprovalPublishFieldState({
       resolveFieldName([...EBAY_TITLE_FIELD_CANDIDATES], ''),
       resolveFieldName([...EBAY_DESCRIPTION_FIELD_CANDIDATES], ''),
       resolveFieldName([...EBAY_CONDITION_FIELD_CANDIDATES], ''),
+      formatFieldName,
       resolveFieldName([...EBAY_PRICE_FIELD_CANDIDATES], ''),
       resolveFieldName([
         ...EBAY_CATEGORIES_FIELD_CANDIDATES,
         ...EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
-      ], ''),
+      ], 'Ebay Categories'),
     ].filter((fieldName): fieldName is string => fieldName.trim().length > 0);
 
     return Array.from(new Set(required));
-  }, [resolveFieldName]);
+  }, [formatFieldName, resolveFieldName]);
 
   const combinedRequiredFieldNames = useMemo(
     () => Array.from(new Set([...shopifyRequiredFieldNames, ...ebayRequiredFieldNames])),

@@ -74,6 +74,46 @@ describe('ListingApprovalRecordActions', () => {
     expect(screen.queryByRole('button', { name: 'Approve for Publish' })).not.toBeInTheDocument();
   });
 
+  it('hides all publishing actions when Shopify-required data is missing', () => {
+    render(
+      <ListingApprovalRecordActions
+        {...baseProps}
+        hasMissingShopifyRequiredFields
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Publish Shopify' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish eBay' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish Both' })).not.toBeInTheDocument();
+  });
+
+  it('hides all publishing actions when eBay-required data is missing', () => {
+    render(
+      <ListingApprovalRecordActions
+        {...baseProps}
+        hasMissingEbayRequiredFields
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Publish Shopify' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish eBay' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish Both' })).not.toBeInTheDocument();
+  });
+
+  it('hides every publish action when both channels have missing required data', () => {
+    render(
+      <ListingApprovalRecordActions
+        {...baseProps}
+        hasMissingShopifyRequiredFields
+        hasMissingEbayRequiredFields
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Publish Shopify' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish eBay' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Publish Both' })).not.toBeInTheDocument();
+  });
+
   it('keeps publish labels for approved rows even when stale marketplace IDs are present', () => {
     render(
       <ListingApprovalRecordActions

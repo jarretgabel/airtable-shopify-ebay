@@ -1,6 +1,8 @@
 import { HttpError } from '../../shared/errors.js';
+import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
+import { downloadGoogleDriveFile, extractGoogleDriveFileId } from '../googleDrive/client.js';
 
 export interface EbayInventoryItem {
   sku: string;
@@ -139,15 +141,6 @@ export interface EbayUploadedImageResult {
   url: string;
 }
 
-function isGoogleDriveUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname === 'drive.google.com' || parsed.hostname === 'docs.google.com';
-  } catch {
-    return false;
-  }
-}
-
 function isEbayHostedImageUrl(value: string): boolean {
   try {
     return new URL(value).hostname.toLowerCase().endsWith('.ebayimg.com');
@@ -173,25 +166,26 @@ function requirePreparedEbayImageUrls(inventoryItem: Record<string, unknown>): v
   });
 }
 
-function extractGoogleDriveFileId(url: string): string {
-  try {
-    const parsed = new URL(url);
-    const fromQuery = parsed.searchParams.get('id')?.trim();
-    if (fromQuery) return fromQuery;
-    const match = parsed.pathname.match(/\/file\/d\/([^/]+)/i);
-    return match?.[1]?.trim() ?? '';
-  } catch {
-    return '';
-  }
-}
-
 function buildGoogleDriveDownloadUrl(url: string): string {
   const fileId = extractGoogleDriveFileId(url);
   if (!fileId) return url;
   return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 }
 
-function inferImageFileNameFromUrl(url: string, index: number): string {
+function buildGoogleDriveConfirmedDownloadUrl(url: string): string {
+  const fileId = extractGoogleDriveFileId(url);
+  if (!fileId) return '';
+  return `https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&confirm=t`;
+}
+
+function resolveImageMimeType(contentType: string | null, bytes: Buffer): string | null {
+  const normalizedContentType = contentType?.split(';')[0]?.trim().toLowerCase() ?? '';
+  return normalizedContentType.startsWith('image/')
+    ? normalizedContentType
+    : detectSupportedImageMimeType(bytes);
+}
+
+function inferImageFileNameFromUrl(url: string, index: number, mimeType: string): string {
   try {
     const parsed = new URL(url);
     const pathnamePart = parsed.pathname.split('/').filter(Boolean).at(-1) || '';
@@ -200,7 +194,18 @@ function inferImageFileNameFromUrl(url: string, index: number): string {
   } catch {
     // Fall through.
   }
-  return `listing-image-${index + 1}.jpg`;
+  const extension = mimeType === 'image/png'
+    ? 'png'
+    : mimeType === 'image/gif'
+      ? 'gif'
+      : mimeType === 'image/webp'
+        ? 'webp'
+        : mimeType === 'image/bmp'
+          ? 'bmp'
+          : mimeType === 'image/tiff'
+            ? 'tif'
+            : 'jpg';
+  return `listing-image-${index + 1}.${extension}`;
 }
 
 export async function uploadExternalImageUrlToEbayHostedPictures(
@@ -216,22 +221,55 @@ export async function uploadExternalImageUrlToEbayHostedPictures(
     });
   }
 
-  const response = await fetch(buildGoogleDriveDownloadUrl(normalizedUrl), {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; ResolutionAVBot/1.0)',
-    },
-    signal: AbortSignal.timeout(EBAY_EXTERNAL_IMAGE_DOWNLOAD_TIMEOUT_MS),
-  });
-  if (!response.ok) {
-    throw new HttpError(response.status, `Could not download listing image ${index + 1}.`, {
-      service: 'ebay',
-      code: 'EBAY_IMAGE_DOWNLOAD_FAILED',
-      retryable: response.status >= 500,
+  const downloadImage = async (url: string): Promise<{ bytes: Buffer; mimeType: string } | null> => {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; ResolutionAVBot/1.0)',
+      },
+      signal: AbortSignal.timeout(EBAY_EXTERNAL_IMAGE_DOWNLOAD_TIMEOUT_MS),
     });
+    if (!response.ok) {
+      throw new HttpError(response.status, `Could not download listing image ${index + 1}.`, {
+        service: 'ebay',
+        code: 'EBAY_IMAGE_DOWNLOAD_FAILED',
+        retryable: response.status >= 500,
+      });
+    }
+
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length === 0) {
+      throw new HttpError(400, `Listing image ${index + 1} was empty.`, {
+        service: 'ebay',
+        code: 'EBAY_IMAGE_DOWNLOAD_EMPTY',
+        retryable: false,
+      });
+    }
+
+    const mimeType = resolveImageMimeType(response.headers.get('content-type'), bytes);
+    return mimeType ? { bytes, mimeType } : null;
+  };
+
+  const downloadUrl = buildGoogleDriveDownloadUrl(normalizedUrl);
+  let image = await downloadImage(downloadUrl);
+  if (!image) {
+    const confirmedDownloadUrl = buildGoogleDriveConfirmedDownloadUrl(normalizedUrl);
+    if (confirmedDownloadUrl && confirmedDownloadUrl !== downloadUrl) {
+      image = await downloadImage(confirmedDownloadUrl);
+    }
   }
 
-  const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim() || 'image/jpeg';
-  if (!mimeType.startsWith('image/')) {
+  if (!image) {
+    const fileId = extractGoogleDriveFileId(normalizedUrl);
+    if (fileId) {
+      const downloadedFile = await downloadGoogleDriveFile(fileId);
+      const mimeType = resolveImageMimeType(downloadedFile.contentType, downloadedFile.bytes);
+      if (mimeType) {
+        image = { bytes: downloadedFile.bytes, mimeType };
+      }
+    }
+  }
+
+  if (!image) {
     throw new HttpError(400, `Listing image ${index + 1} did not return an image file.`, {
       service: 'ebay',
       code: 'EBAY_IMAGE_DOWNLOAD_INVALID_TYPE',
@@ -239,19 +277,10 @@ export async function uploadExternalImageUrlToEbayHostedPictures(
     });
   }
 
-  const bytes = Buffer.from(await response.arrayBuffer());
-  if (bytes.length === 0) {
-    throw new HttpError(400, `Listing image ${index + 1} was empty.`, {
-      service: 'ebay',
-      code: 'EBAY_IMAGE_DOWNLOAD_EMPTY',
-      retryable: false,
-    });
-  }
-
   return uploadImageToEbayHostedPictures(
-    inferImageFileNameFromUrl(normalizedUrl, index),
-    mimeType,
-    bytes.toString('base64'),
+    inferImageFileNameFromUrl(normalizedUrl, index, image.mimeType),
+    image.mimeType,
+    image.bytes.toString('base64'),
   );
 }
 

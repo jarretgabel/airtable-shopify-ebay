@@ -8,10 +8,12 @@ import {
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
+const requiredBadgeClass = 'inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]';
 
 interface EbayCategoriesSelectProps {
   fieldName: string;
   label: string;
+  required?: boolean;
   marketplaceId: string;
   value: string[];
   disabled: boolean;
@@ -23,6 +25,7 @@ interface EbayCategoriesSelectProps {
 export function EbayCategoriesSelect({
   fieldName,
   label,
+  required = false,
   marketplaceId,
   value,
   disabled,
@@ -61,6 +64,10 @@ export function EbayCategoriesSelect({
     disabled,
     onChange,
   });
+  const missingRequiredSelection = required && value.length === 0;
+  const inputClassName = missingRequiredSelection
+    ? `${inputBaseClass} border-rose-400/45 bg-rose-500/5 focus:border-rose-300`
+    : inputBaseClass;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -93,9 +100,12 @@ export function EbayCategoriesSelect({
 
   return (
     <div ref={rootRef} className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
-      <span className={labelClass}>{label}</span>
+      <span className={`${labelClass} flex items-center gap-2 ${missingRequiredSelection ? 'text-[var(--required-label-ink)]' : ''}`}>
+        <span>{label}</span>
+        {required && <span className={requiredBadgeClass}>eBay Required</span>}
+      </span>
 
-      <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+      <div className={`rounded-xl border p-3 ${missingRequiredSelection ? 'border-rose-400/45 bg-rose-500/5' : 'border-[var(--line)] bg-[var(--panel)]'}`}>
         <p className="m-0 mb-2 text-xs text-[var(--muted)]">
           Select up to 2 categories. First = primary category, second = secondary category.
         </p>
@@ -108,7 +118,9 @@ export function EbayCategoriesSelect({
 
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {value.length === 0 && (
-            <span className="text-sm text-[var(--muted)]">No categories selected.</span>
+            <span className={`text-sm ${missingRequiredSelection ? 'text-rose-200' : 'text-[var(--muted)]'}`}>
+              No categories selected.
+            </span>
           )}
           {value.map((selectedValue, index) => {
             const option = categoryMap.get(selectedValue) ?? categoryMap.get(normalizeSelectionValue(selectedValue));
@@ -168,7 +180,7 @@ export function EbayCategoriesSelect({
 
         <div className="flex items-center gap-2">
           <input
-            className={inputBaseClass}
+            className={inputClassName}
             type="text"
             value={query}
             placeholder="Search eBay categories"
@@ -194,6 +206,7 @@ export function EbayCategoriesSelect({
             aria-expanded={isOpen}
             aria-controls={`${fieldName}-ebay-category-options`}
             aria-autocomplete="list"
+            aria-invalid={missingRequiredSelection || undefined}
           />
           <button
             type="button"

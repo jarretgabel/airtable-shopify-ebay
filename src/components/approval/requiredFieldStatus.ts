@@ -32,6 +32,40 @@ function isShopifyCategoryLikeFieldName(fieldName: string): boolean {
     || normalized === 'google product category';
 }
 
+function isEbayConditionFieldName(fieldName: string): boolean {
+  return [
+    '__condition__',
+    'condition',
+    'item condition',
+    'ebay inventory condition',
+  ].includes(normalizeFieldName(fieldName));
+}
+
+function isEbayFormatFieldName(fieldName: string): boolean {
+  const normalized = normalizeFieldName(fieldName).replace(/[_\s]+/g, ' ');
+  return normalized === 'ebay listing format'
+    || normalized === 'ebay offer format'
+    || normalized === 'listing format';
+}
+
+function isEbayCategoryFieldName(fieldName: string): boolean {
+  const normalized = normalizeFieldName(fieldName).replace(/[_\s]+/g, ' ');
+  if (normalized.includes('shopify') || normalized.includes('google') || normalized.includes('taxonomy') || normalized.includes('product type')) {
+    return false;
+  }
+
+  if (normalized === 'categories') return true;
+  if (!normalized.includes('categor') || normalized.includes('name')) return false;
+
+  return normalized.includes('ebay')
+    || normalized.includes('id')
+    || normalized.includes('primary')
+    || normalized.includes('secondary')
+    || normalized.includes('airtable')
+    || normalized.includes('linked')
+    || normalized.includes('json');
+}
+
 function matchesRequiredFieldGroup(fieldName: string, requiredFieldName: string): boolean {
   const normalizedField = normalizeFieldName(fieldName);
   const normalizedRequired = normalizeFieldName(requiredFieldName);
@@ -40,6 +74,9 @@ function matchesRequiredFieldGroup(fieldName: string, requiredFieldName: string)
   if (isTitleLikeFieldName(fieldName) && isTitleLikeFieldName(requiredFieldName)) return true;
   if (isPriceLikeFieldName(fieldName) && isPriceLikeFieldName(requiredFieldName)) return true;
   if (isShopifyCategoryLikeFieldName(fieldName) && isShopifyCategoryLikeFieldName(requiredFieldName)) return true;
+  if (isEbayConditionFieldName(fieldName) && isEbayConditionFieldName(requiredFieldName)) return true;
+  if (isEbayFormatFieldName(fieldName) && isEbayFormatFieldName(requiredFieldName)) return true;
+  if (isEbayCategoryFieldName(fieldName) && isEbayCategoryFieldName(requiredFieldName)) return true;
 
   return false;
 }
@@ -57,6 +94,7 @@ function resolveRequiredFieldValue(source: Record<string, unknown>, requiredFiel
   });
 
   if (aliasEntry) return aliasEntry[1];
+  if (isEbayConditionFieldName(requiredFieldName)) return 'Used';
   return exactValue;
 }
 

@@ -21,8 +21,8 @@ const baseProps = {
   tableName: 'Listings',
   approvedFieldName: 'Approved',
   shopifyRequiredFieldNames: ['Title', 'Vendor'],
-  ebayRequiredFieldNames: ['Title', 'Price'],
-  combinedRequiredFieldNames: ['Title'],
+  ebayRequiredFieldNames: ['Title', 'Price', '__Condition__'],
+  combinedRequiredFieldNames: ['Title', '__Condition__'],
   titleFieldName: 'Title',
   formatFieldName: 'Format',
   priceFieldName: 'Price',
@@ -181,7 +181,7 @@ describe('ListingApprovalQueuePanel', () => {
 
     expect(readySection).not.toBeNull();
     expect(workSection).not.toBeNull();
-    expect(within(readySection as HTMLElement).queryByText('Ready Listing')).not.toBeInTheDocument();
+    expect(within(readySection as HTMLElement).getByText('Ready Listing')).toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Approved Missing Vendor')).not.toBeInTheDocument();
@@ -190,8 +190,8 @@ describe('ListingApprovalQueuePanel', () => {
     expect(within(workSection as HTMLElement).getByText('Approved Missing Vendor')).toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Approved Missing SKU')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
-    expect(within(workSection as HTMLElement).getByText('Ready Listing')).toBeInTheDocument();
-    expect(within(workSection as HTMLElement).getAllByText('Awaiting Pre-Listing Review').length).toBeGreaterThan(1);
+    expect(within(workSection as HTMLElement).queryByText('Ready Listing')).not.toBeInTheDocument();
+    expect(within(workSection as HTMLElement).queryByText('Awaiting Pre-Listing Review')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).getAllByText('Approved for Publish').length).toBeGreaterThan(1);
     expect(within(workSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();

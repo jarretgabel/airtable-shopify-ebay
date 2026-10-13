@@ -19,11 +19,10 @@ const baseProps = {
 };
 
 describe('ListingApprovalRecordAlerts', () => {
-  it('shows listing review guidance when readiness blockers are cleared', () => {
+  it('does not show redundant review guidance when readiness blockers are cleared', () => {
     render(<ListingApprovalRecordAlerts {...baseProps} />);
 
-    expect(screen.getByText('Listing review is in progress.')).toBeInTheDocument();
-    expect(screen.getByText(/approve the row for publish/i)).toBeInTheDocument();
+    expect(screen.queryByText('Listing review is in progress.')).not.toBeInTheDocument();
   });
 
   it('shows workflow readiness blockers for listing review rows', () => {

@@ -68,17 +68,6 @@ export function ListingApprovalRecordAlerts({
 
   return (
     <>
-      {isWorkflowListingReview && workflowReadinessMissingRequirements.length === 0 && (
-        <section className="mt-4 rounded-lg border border-sky-400/35 bg-sky-500/10 px-3 py-2">
-          <p className="m-0 text-sm font-semibold text-sky-200">
-            Listing review is in progress.
-          </p>
-          <p className="m-0 mt-1 text-xs text-sky-200/85">
-            Confirm pricing, content, and marketplace readiness here, then approve the row for publish.
-          </p>
-        </section>
-      )}
-
       {isWorkflowListingReview && hasActionBlockers && (
         <section className="mt-4 rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2">
           <p className="m-0 text-sm font-semibold text-amber-200">

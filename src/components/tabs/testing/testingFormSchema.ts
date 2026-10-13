@@ -156,7 +156,6 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     airtableFieldName: 'Audiogon Rating',
     label: 'Audiogon Rating',
     type: 'text',
-    required: true,
     description: '1-10',
   },
   {
@@ -212,14 +211,14 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     airtableFieldName: 'Shipping Weight',
     label: 'Shipping Weight',
     type: 'text',
-    description: 'Enter in lbs. Box + Foam adds approximately 10lbs to unit weight.',
+    description: 'Enter the total packaged weight in pounds (lbs), including the box and foam. Example: 22.',
   },
   {
     name: 'shippingDims',
     airtableFieldName: 'Shipping Dims',
     label: 'Shipping Dimensions',
     type: 'text',
-    description: 'Enter in inches as W"xD"xH"',
+    description: 'Enter package dimensions in inches as W x D x H. Keep weight separate; do not include it here. Example: 22 x 20 x 12.',
   },
   {
     name: 'shippingMethod',
@@ -266,7 +265,7 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     label: 'Service Time',
     required: true,
     type: 'number',
-    description: 'Enter total service time in minutes.',
+    description: 'Enter total service time in minutes. Enter 0 if no service was performed.',
   },
   {
     name: 'testingDate',

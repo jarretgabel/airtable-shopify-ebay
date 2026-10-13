@@ -546,6 +546,210 @@ test('pushApprovalBundleToEbay recreates an unpublished offer with invalid stale
   }
 });
 
+test('uploadExternalImageUrlToEbayHostedPictures sniffs image bytes when Google Drive returns a generic content type', async () => {
+  const originalFetch = global.fetch;
+  const jpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+  let uploadedImageType = '';
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('drive.google.com/uc')) {
+      return new Response(jpegBytes, {
+        status: 200,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
+    }
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return new Response(JSON.stringify({ access_token: 'test-access-token', expires_in: 7200 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (url.endsWith('/ws/api.dll')) {
+      const body = init?.body;
+      assert.ok(body instanceof FormData);
+      uploadedImageType = (body.get('image') as File).type;
+      return new Response(
+        '<UploadSiteHostedPicturesResponse><Ack>Success</Ack><FullURL>https://i.ebayimg.com/images/g/test/s-l1600.jpg</FullURL></UploadSiteHostedPicturesResponse>',
+        { status: 200 },
+      );
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${url}`);
+  };
+
+  try {
+    await withEnvAsync(
+      {
+        EBAY_ENV: 'production',
+        EBAY_CLIENT_ID: 'test-client-id',
+        EBAY_CLIENT_SECRET: 'test-client-secret',
+        EBAY_REFRESH_TOKEN: 'test-refresh-token',
+      },
+      async () => {
+        const client = await import('../../../../../../aws/src/providers/ebay/client.js?generic-image-content-type-test');
+        const result = await client.uploadExternalImageUrlToEbayHostedPictures(
+          'https://drive.google.com/uc?export=view&id=test-image',
+          9,
+        );
+
+        assert.equal(result.url, 'https://i.ebayimg.com/images/g/test/s-l1600.jpg');
+        assert.equal(uploadedImageType, 'image/jpeg');
+      },
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('uploadExternalImageUrlToEbayHostedPictures retries Google Drive confirmation pages', async () => {
+  const originalFetch = global.fetch;
+  const jpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+  const downloadUrls: string[] = [];
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('drive.google.com/uc') || url.includes('drive.usercontent.google.com/download')) {
+      downloadUrls.push(url);
+      if (url.includes('drive.google.com/uc')) {
+        return new Response('<html>Confirm download</html>', {
+          status: 200,
+          headers: { 'Content-Type': 'text/html' },
+        });
+      }
+      return new Response(jpegBytes, {
+        status: 200,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
+    }
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return new Response(JSON.stringify({ access_token: 'test-access-token', expires_in: 7200 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (url.endsWith('/ws/api.dll')) {
+      const body = init?.body;
+      assert.ok(body instanceof FormData);
+      assert.equal((body.get('image') as File).type, 'image/jpeg');
+      return new Response(
+        '<UploadSiteHostedPicturesResponse><Ack>Success</Ack><FullURL>https://i.ebayimg.com/images/g/test/s-l1600.jpg</FullURL></UploadSiteHostedPicturesResponse>',
+        { status: 200 },
+      );
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${url}`);
+  };
+
+  try {
+    await withEnvAsync(
+      {
+        EBAY_ENV: 'production',
+        EBAY_CLIENT_ID: 'test-client-id',
+        EBAY_CLIENT_SECRET: 'test-client-secret',
+        EBAY_REFRESH_TOKEN: 'test-refresh-token',
+      },
+      async () => {
+        const client = await import('../../../../../../aws/src/providers/ebay/client.js?drive-download-confirmation-test');
+        const result = await client.uploadExternalImageUrlToEbayHostedPictures(
+          'https://drive.google.com/uc?export=view&id=test-image',
+          9,
+        );
+
+        assert.equal(result.url, 'https://i.ebayimg.com/images/g/test/s-l1600.jpg');
+        assert.equal(downloadUrls.length, 2);
+        assert.match(downloadUrls[1], /confirm=t/);
+      },
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('uploadExternalImageUrlToEbayHostedPictures downloads private Google Drive images with configured credentials', async () => {
+  const originalFetch = global.fetch;
+  const jpegBytes = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+  let driveAuthorization = '';
+  let uploadedImageType = '';
+
+  global.fetch = async (input: string | URL | Request, init?: RequestInit) => {
+    const url = typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.toString()
+        : input.url;
+
+    if (url.includes('drive.google.com/uc') || url.includes('drive.usercontent.google.com/download')) {
+      return new Response('<html>Sign in to Google Drive</html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      });
+    }
+    if (url === 'https://oauth2.googleapis.com/token') {
+      return Response.json({ access_token: 'test-drive-access-token', expires_in: 3600 });
+    }
+    if (url.includes('/drive/v3/files/private-image?alt=media')) {
+      const headers = new Headers(init?.headers);
+      driveAuthorization = headers.get('Authorization') ?? '';
+      return new Response(jpegBytes, {
+        status: 200,
+        headers: { 'Content-Type': 'application/octet-stream' },
+      });
+    }
+    if (url.includes('/identity/v1/oauth2/token')) {
+      return Response.json({ access_token: 'test-ebay-access-token', expires_in: 7200 });
+    }
+    if (url.endsWith('/ws/api.dll')) {
+      const body = init?.body;
+      assert.ok(body instanceof FormData);
+      uploadedImageType = (body.get('image') as File).type;
+      return new Response(
+        '<UploadSiteHostedPicturesResponse><Ack>Success</Ack><FullURL>https://i.ebayimg.com/images/g/private/s-l1600.jpg</FullURL></UploadSiteHostedPicturesResponse>',
+        { status: 200 },
+      );
+    }
+
+    throw new Error(`Unexpected fetch URL in test: ${url}`);
+  };
+
+  try {
+    await withEnvAsync(
+      {
+        EBAY_ENV: 'production',
+        EBAY_CLIENT_ID: 'test-client-id',
+        EBAY_CLIENT_SECRET: 'test-client-secret',
+        EBAY_REFRESH_TOKEN: 'test-refresh-token',
+        GOOGLE_DRIVE_CLIENT_ID: 'test-drive-client-id',
+        GOOGLE_DRIVE_CLIENT_SECRET: 'test-drive-client-secret',
+        GOOGLE_DRIVE_REFRESH_TOKEN: 'test-drive-refresh-token',
+      },
+      async () => {
+        const client = await import('../../../../../../aws/src/providers/ebay/client.js?private-drive-image-test');
+        const result = await client.uploadExternalImageUrlToEbayHostedPictures(
+          'https://drive.google.com/uc?export=view&id=private-image',
+          9,
+        );
+
+        assert.equal(result.url, 'https://i.ebayimg.com/images/g/private/s-l1600.jpg');
+        assert.equal(driveAuthorization, 'Bearer test-drive-access-token');
+        assert.equal(uploadedImageType, 'image/jpeg');
+      },
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('getRequiredEbayWebhookCallbackUrl builds HTTPS callback URLs from env config', () => {
   const originalBaseUrl = process.env.EBAY_WEBHOOK_BASE_URL;
 

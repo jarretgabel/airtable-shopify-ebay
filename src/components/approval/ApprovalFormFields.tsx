@@ -243,6 +243,7 @@ export function ApprovalFormFields({
     toFieldLabel,
   } = useApprovalFormFieldRequirements({
     approvalChannel,
+    isCombinedApproval,
     allFieldNames,
     requiredFieldNames,
     shopifyRequiredFieldNames,
@@ -313,6 +314,7 @@ export function ApprovalFormFields({
     getInputClassName,
   };
   const supplementalEditorsProps: ApprovalFormFieldsSupplementalEditorsProps = {
+    validateWorkflowImageFormats: isCombinedApproval,
     showWorkflowImageSelector,
     imageUrlSourceField,
     useCombinedImageAltEditor,
@@ -325,6 +327,7 @@ export function ApprovalFormFields({
     formValues,
     testingSectionValues,
     setFormValue,
+    setDerivedFormValue,
     saving,
     isReadOnlyApprovalField,
     workflowManagedListingContent,

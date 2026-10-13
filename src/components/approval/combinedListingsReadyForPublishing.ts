@@ -1,5 +1,6 @@
 import {
   EBAY_PRICE_FIELD_CANDIDATES,
+  EBAY_FORMAT_FIELD_CANDIDATES,
   EBAY_TITLE_FIELD_CANDIDATES,
 } from '@/components/approval/listingApprovalEbayConstants';
 import { findEbayPriceFieldName } from '@/components/approval/listingApprovalFieldHelpers';
@@ -80,8 +81,11 @@ export function getCombinedListingsRequiredFieldNames(records: AirtableRecord[])
 
   const ebayPriceFieldName = findEbayPriceFieldName(allFieldNames)
     || resolveFieldName(allFieldNames, [...EBAY_PRICE_FIELD_CANDIDATES]);
+  const ebayFormatFieldName = resolveFieldName(allFieldNames, [...EBAY_FORMAT_FIELD_CANDIDATES])
+    || 'Ebay Listing Format';
   const ebayRequiredFieldNames = Array.from(new Set([
     resolveFieldName(allFieldNames, [...EBAY_TITLE_FIELD_CANDIDATES]),
+    ebayFormatFieldName,
     ebayPriceFieldName,
   ].filter((fieldName) => fieldName.trim().length > 0)));
 

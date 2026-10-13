@@ -14,6 +14,18 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     });
   });
 
+  it('extracts weight and dimensions from combined shipping details', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      SKU: 'SKU-COMBINED-PACKAGE',
+      'Shipping Dims': '22lbs (22x20x12)',
+    });
+
+    expect(payload.inventoryItem.packageWeightAndSize).toEqual({
+      dimensions: { length: 22, width: 20, height: 12, unit: 'INCH' },
+      weight: { value: 22, unit: 'POUND' },
+    });
+  });
+
   it('builds inventory item and offer payload from eBay approval fields', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-1',
@@ -27,14 +39,14 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         {
           attachmentId: 'att-1',
           url: 'https://drive.google.com/1.jpg',
-          filename: '1.jpg',
+          filename: '1-processed.jpg',
           sourceStage: 'photos',
           includedInListing: true,
         },
         {
           attachmentId: 'att-2',
           url: 'https://drive.google.com/2.jpg',
-          filename: '2.jpg',
+          filename: '2-processed.jpg',
           sourceStage: 'photos',
           includedInListing: true,
         },
@@ -316,7 +328,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         {
           attachmentId: 'att-2',
           url: 'https://drive.google.com/meta-b.jpg',
-          filename: 'meta-b.jpg',
+          filename: 'meta-b-processed.jpg',
           alt: 'Rear angle',
           sortOrder: 1,
           sourceStage: 'photos',
@@ -325,7 +337,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         {
           attachmentId: 'att-1',
           url: 'https://drive.google.com/meta-a.jpg',
-          filename: 'meta-a.jpg',
+          filename: 'meta-a-processed.jpg',
           alt: 'Front angle',
           sortOrder: 2,
           sourceStage: 'testing',
@@ -349,7 +361,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         {
           attachmentId: 'att-photos',
           url: 'https://drive.google.com/meta-photos.jpg',
-          filename: 'meta-photos.jpg',
+          filename: 'meta-photos-processed.jpg',
           alt: 'Photos stage primary',
           sortOrder: 1,
           sourceStage: 'photos',
@@ -371,6 +383,47 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       sku: 'EBAY-SKU-WORKFLOW-INCLUSION',
       product: {
         imageUrls: ['https://drive.google.com/meta-photos.jpg'],
+      },
+    });
+  });
+
+  it('uses only processed workflow images for eBay when originals are also included', () => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields({
+      'eBay Inventory SKU': 'EBAY-SKU-PROCESSED-IMAGES',
+      'Workflow Image Metadata JSON': JSON.stringify([
+        {
+          url: 'https://drive.google.com/testing-original.jpg',
+          filename: 'testing-photo-1-original.jpg',
+          sourceStage: 'testing',
+          includedInListing: true,
+        },
+        {
+          url: 'https://drive.google.com/testing-processed.jpg',
+          filename: 'testing-photo-1-processed.jpg',
+          sourceStage: 'testing',
+          includedInListing: true,
+        },
+        {
+          url: 'https://drive.google.com/photos-photo-1.jpg',
+          filename: 'photos-photo-1.jpg',
+          sourceStage: 'photos',
+          includedInListing: true,
+        },
+        {
+          url: 'https://drive.google.com/intake-original.jpg',
+          filename: 'intake-photo-1-processed.jpg',
+          sourceStage: 'intake',
+          includedInListing: false,
+        },
+      ]),
+    });
+
+    expect(payload.inventoryItem).toMatchObject({
+      product: {
+        imageUrls: [
+          'https://drive.google.com/testing-processed.jpg',
+          'https://drive.google.com/photos-photo-1.jpg',
+        ],
       },
     });
   });

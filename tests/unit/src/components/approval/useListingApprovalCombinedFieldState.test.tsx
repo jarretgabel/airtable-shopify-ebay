@@ -19,6 +19,7 @@ function renderCombinedFieldState(record: AirtableRecord) {
   return renderHook(() => useListingApprovalCombinedFieldState({
     records: [record],
     selectedRecordId: record.id,
+    actualFieldNames: Object.keys(record.fields),
     allFieldNames: Object.keys(record.fields),
     approvalChannel: 'combined',
     isCombinedApproval: true,
@@ -34,6 +35,7 @@ function renderCombinedFieldStateWithFormValues(record: AirtableRecord, formValu
   return renderHook(() => useListingApprovalCombinedFieldState({
     records: [record],
     selectedRecordId: record.id,
+    actualFieldNames: Object.keys(record.fields),
     allFieldNames: Object.keys(record.fields),
     approvalChannel: 'combined',
     isCombinedApproval: true,
@@ -46,6 +48,75 @@ function renderCombinedFieldStateWithFormValues(record: AirtableRecord, formValu
 }
 
 describe('useListingApprovalCombinedFieldState', () => {
+  it('does not offer a synthetic Description field that is missing from the active source', () => {
+    const record = buildRecord({ Title: 'Sansui AU-717' });
+
+    const { result } = renderHook(() => useListingApprovalCombinedFieldState({
+      records: [record],
+      selectedRecordId: record.id,
+      actualFieldNames: ['Title'],
+      allFieldNames: ['Title', 'Description'],
+      approvalChannel: 'combined',
+      isCombinedApproval: true,
+      formValues: { Title: 'Sansui AU-717', Description: 'Unsaved draft' },
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: 'classic',
+      setSelectedEbayTemplateId: vi.fn(),
+    }));
+
+    expect(result.current.combinedDescriptionFieldName).toBe('');
+    expect(result.current.combinedSharedFieldNames).not.toContain('Description');
+  });
+
+  it('uses the configured Description field when Airtable omits its blank value', () => {
+    const record = buildRecord({ Title: 'Sansui AU-717' });
+
+    const { result } = renderHook(() => useListingApprovalCombinedFieldState({
+      records: [record],
+      selectedRecordId: record.id,
+      actualFieldNames: ['Title', 'Description'],
+      allFieldNames: ['Title', 'Description'],
+      approvalChannel: 'combined',
+      isCombinedApproval: true,
+      formValues: { Title: 'Sansui AU-717', Description: '' },
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: 'classic',
+      setSelectedEbayTemplateId: vi.fn(),
+    }));
+
+    expect(result.current.combinedDescriptionFieldName).toBe('Description');
+  });
+
+  it('uses an actual description alias instead of a synthetic Description field', () => {
+    const record = buildRecord({
+      Title: 'Sansui AU-717',
+      'Shopify Body Description': 'Existing listing copy.',
+    });
+
+    const { result } = renderHook(() => useListingApprovalCombinedFieldState({
+      records: [record],
+      selectedRecordId: record.id,
+      actualFieldNames: ['Title', 'Shopify Body Description'],
+      allFieldNames: ['Title', 'Shopify Body Description', 'Description'],
+      approvalChannel: 'combined',
+      isCombinedApproval: true,
+      formValues: {
+        Title: 'Sansui AU-717',
+        'Shopify Body Description': 'Existing listing copy.',
+        Description: '',
+      },
+      setFormValue: vi.fn(),
+      setDerivedFormValue: vi.fn(),
+      selectedEbayTemplateId: 'classic',
+      setSelectedEbayTemplateId: vi.fn(),
+    }));
+
+    expect(result.current.combinedDescriptionFieldName).toBe('Shopify Body Description');
+    expect(result.current.combinedSharedFieldNames).not.toContain('Shopify Body Description');
+  });
+
   it('prefers a real testing notes field when present', () => {
     const record = buildRecord({
       Title: 'Sansui AU-717',
@@ -181,6 +252,7 @@ describe('useListingApprovalCombinedFieldState', () => {
     const { result } = renderHook(() => useListingApprovalCombinedFieldState({
       records: [record],
       selectedRecordId: record.id,
+      actualFieldNames: Object.keys(record.fields),
       allFieldNames: Object.keys(record.fields),
       approvalChannel: 'combined',
       isCombinedApproval: true,

@@ -202,6 +202,17 @@ describe('WorkflowListingImageSelector', () => {
     expect(screen.queryByRole('dialog', { name: 'Expanded listing image preview' })).not.toBeInTheDocument();
   });
 
+  it('closes the expanded preview when Escape is pressed', () => {
+    render(<SelectorHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand image-a.jpg' }));
+    expect(screen.getByRole('dialog', { name: 'Expanded listing image preview' })).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByRole('dialog', { name: 'Expanded listing image preview' })).not.toBeInTheDocument();
+  });
+
   it('does not show URL variants of selected images in available uploads', () => {
     const onSelectionChange = vi.fn();
 
@@ -469,5 +480,38 @@ describe('WorkflowListingImageSelector', () => {
     const availableCardsAfter = screen.getAllByTestId('available-listing-image-card');
     expect(availableCardsAfter).toHaveLength(1);
     expect(availableCardsAfter[0]).toHaveTextContent('photo-2-processed.jpg');
+  });
+
+  it('withholds image choices until format validation completes', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          { id: 'att-valid', url: 'https://drive.google.com/uc?id=valid', filename: 'valid.jpg' },
+        ]}
+        selectedUrls={['https://drive.google.com/uc?id=valid']}
+        onSelectionChange={vi.fn()}
+        validationStatus="checking"
+      />,
+    );
+
+    expect(screen.getByRole('status')).toHaveTextContent('Checking image formats');
+    expect(screen.queryByTestId('selected-listing-image-card')).not.toBeInTheDocument();
+  });
+
+  it('explains when image format validation fails', () => {
+    render(
+      <WorkflowListingImageSelector
+        attachments={[
+          { id: 'att-valid', url: 'https://drive.google.com/uc?id=valid', filename: 'valid.jpg' },
+        ]}
+        selectedUrls={['https://drive.google.com/uc?id=valid']}
+        onSelectionChange={vi.fn()}
+        validationStatus="error"
+        validationError="Drive access unavailable."
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Drive access unavailable.');
+    expect(screen.queryByTestId('selected-listing-image-card')).not.toBeInTheDocument();
   });
 });

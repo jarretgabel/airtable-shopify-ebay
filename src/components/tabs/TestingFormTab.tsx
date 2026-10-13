@@ -95,9 +95,9 @@ function validateForm(values: TestingFormValues): string | null {
   if (!values.make.trim()) return 'Make is required.';
   if (!values.model.trim()) return 'Model is required.';
   if (!values.componentType.trim()) return 'Component Type is required.';
-  if (!values.audiogonRating.trim()) return 'Audiogon Rating is required.';
   if (!values.testingNotes.trim()) return 'Testing Notes is required.';
   if (!values.testingTimeMinutes.trim()) return 'Testing Time is required.';
+  if (!values.serviceTimeMinutes.trim()) return 'Service Time is required.';
   if (!values.testingDate.trim()) return 'Testing Date is required.';
   return null;
 }
@@ -205,6 +205,14 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
 
   const setFieldValue = <K extends keyof TestingFormValues>(fieldName: K, value: TestingFormValues[K]) => {
     setFormValues((current) => ({ ...current, [fieldName]: value }));
+    const isEmptyImageReset = fieldName === 'imageFiles'
+      && Array.isArray(value)
+      && value.length === 0
+      && formValues.imageFiles.length === 0;
+    if (!isEmptyImageReset) {
+      setSubmitSuccess(null);
+      setSubmitError(null);
+    }
   };
 
   const submitTesting = async (submitIntent: TestingSubmitIntent) => {
@@ -393,12 +401,6 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
           ) : undefined}
         />
 
-        {submitError ? (
-          <div className="rounded-xl border border-[#f7c8c4] bg-[var(--error-bg)] px-4 py-3 text-sm text-[var(--error-text)]">
-            {submitError}
-          </div>
-        ) : null}
-
         {imagesProcessing ? (
           <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-50/90">
             Preparing images: {imageProcessingSummary.processed} of {imageProcessingSummary.total} ready.
@@ -412,14 +414,6 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
             {imageUploadProgress.phase === 'finalizing'
               ? `Finalizing saved image metadata for ${imageUploadProgress.total} ${imageUploadProgress.total === 1 ? 'image' : 'images'}.`
               : `Uploading images: ${imageUploadProgress.completed} of ${imageUploadProgress.total} complete.${imageUploadProgress.currentFilename ? ` Current file: ${imageUploadProgress.currentFilename}.` : ''}`}
-          </div>
-        ) : null}
-
-        {submitSuccess ? (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            {submitSuccess.action === 'updated'
-              ? <>Testing fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>
-              : <>Testing submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>}
           </div>
         ) : null}
 
@@ -445,6 +439,8 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
             title="Intake Images"
             description="These intake-stage images are available for reference while you test the current stage. They do not become part of the active testing upload set unless you upload them here again."
             images={stageContext.referenceAttachments}
+            recordSource="used-gear-workflow"
+            recordId={recordId ?? undefined}
           />
         </WorkflowFormSnapshotSection>
 
@@ -459,6 +455,32 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
               </div>
             ))}
           </div>
+
+          {submitError ? (
+            <section
+              className="rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2"
+              role="alert"
+              aria-live="assertive"
+            >
+              <p className="m-0 text-sm font-semibold text-rose-200">Testing save failed</p>
+              <p className="m-0 mt-1 text-xs text-rose-200/90">{submitError}</p>
+            </section>
+          ) : null}
+
+          {submitSuccess ? (
+            <section
+              className="rounded-lg border border-emerald-400/35 bg-emerald-500/10 px-3 py-2"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="m-0 text-sm font-semibold text-emerald-200">
+                {submitSuccess.action === 'updated' ? 'Testing changes saved' : 'Testing submission saved'}
+              </p>
+              <p className="m-0 mt-1 text-xs text-emerald-200/90">
+                Testing details for <strong>{submitSuccess.sku}</strong> were saved to Airtable.
+              </p>
+            </section>
+          ) : null}
 
           <div className="flex justify-end">
             <div className="flex gap-3">

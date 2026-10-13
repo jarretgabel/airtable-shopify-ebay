@@ -62,6 +62,7 @@ export function ListingApprovalRecordActions({
   onPrimaryAction,
 }: ListingApprovalRecordActionsProps) {
   const showCombinedPublishButtons = isCombinedApproval;
+  const hasMissingRequiredPublishFields = hasMissingShopifyRequiredFields || hasMissingEbayRequiredFields;
   const isPostPublishLocked = workflowStatus === 'Sold - Ready to Ship' || workflowStatus === 'Shipped';
   const shouldForcePublishLabels = workflowStatus === 'Approved for Publish' || workflowStatus === 'Awaiting Pre-Listing Review';
   const hasExistingShopifyForActionLabel = hasExistingShopifyRestProductId && !shouldForcePublishLabels;
@@ -110,14 +111,16 @@ export function ListingApprovalRecordActions({
           Open eBay Listing
         </SecondaryActionButton>
       )}
-      {showCombinedPublishButtons && !isPostPublishLocked && (
+      {showCombinedPublishButtons && !isPostPublishLocked && !hasMissingRequiredPublishFields && (
         <>
           <SecondaryActionButton
             onClick={onPublishShopify}
             disabled={saving || approving || pushingTarget !== null || pushShopifyDisabled}
           >
             {pushingTarget === 'shopify'
-              ? (hasExistingShopifyForActionLabel ? 'Updating Shopify...' : 'Publishing Shopify...')
+              ? saving
+                ? 'Saving before Shopify publish...'
+                : (hasExistingShopifyForActionLabel ? 'Updating Shopify...' : 'Publishing Shopify...')
               : isShopifyPublishBlockedByAuctionFormat
                   ? 'Set Buy It Now Format'
                   : pushShopifyDisabled
@@ -129,7 +132,9 @@ export function ListingApprovalRecordActions({
             disabled={saving || approving || pushingTarget !== null || pushEbayDisabled}
           >
             {pushingTarget === 'ebay'
-              ? (hasExistingEbayForActionLabel ? 'Updating eBay...' : 'Publishing eBay...')
+              ? saving
+                ? 'Saving before eBay publish...'
+                : (hasExistingEbayForActionLabel ? 'Updating eBay...' : 'Publishing eBay...')
               : pushEbayDisabled
                   ? 'Complete eBay Fields'
                   : ebayActionLabel}
@@ -139,7 +144,9 @@ export function ListingApprovalRecordActions({
             disabled={saving || approving || pushingTarget !== null || pushBothDisabled}
           >
             {pushingTarget === 'both'
-              ? (hasExistingShopifyForActionLabel || hasExistingEbayForActionLabel ? 'Updating / Publishing...' : 'Publishing Both...')
+              ? saving
+                ? 'Saving before publish...'
+                : (hasExistingShopifyForActionLabel || hasExistingEbayForActionLabel ? 'Updating / Publishing...' : 'Publishing Both...')
               : isShopifyPublishBlockedByAuctionFormat
                   ? 'Set Buy It Now Format'
                   : pushBothDisabled

@@ -46,9 +46,12 @@ export function useListingApprovalFieldNames({
     records.forEach((record) => {
       Object.keys(record.fields).forEach((fieldName) => names.add(fieldName));
     });
+    if (approvalChannel === 'combined') {
+      names.add('Description');
+    }
 
     return Array.from(names).sort((left, right) => left.localeCompare(right));
-  }, [records]);
+  }, [approvalChannel, records]);
 
   const allFieldNames = useMemo(() => {
     const names = new Set<string>(actualFieldNames);

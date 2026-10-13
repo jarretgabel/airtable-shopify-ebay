@@ -1,4 +1,5 @@
 import { HttpError } from '../../shared/errors.js';
+import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
 
 export type WorkflowImageArchiveStage = 'intake' | 'testing' | 'photos';
@@ -39,6 +40,25 @@ export interface WorkflowImageRenameResult {
   id: string;
   filename: string;
   url: string;
+}
+
+export function extractGoogleDriveFileId(url: string): string {
+  try {
+    const parsed = new URL(url.trim());
+    const hostname = parsed.hostname.toLowerCase();
+    const isDriveHost = hostname === 'drive.google.com'
+      || hostname === 'docs.google.com'
+      || hostname === 'drive.usercontent.google.com'
+      || hostname === 'googleusercontent.com'
+      || hostname.endsWith('.googleusercontent.com');
+    if (parsed.protocol !== 'https:' || !isDriveHost) return '';
+
+    const fromQuery = parsed.searchParams.get('id')?.trim();
+    if (fromQuery) return fromQuery;
+    return parsed.pathname.match(/\/(?:file\/)?d\/([^/]+)/i)?.[1]?.trim() ?? '';
+  } catch {
+    return '';
+  }
 }
 
 interface GoogleDriveListResponse {
@@ -188,6 +208,131 @@ async function driveRequest<T>(url: string, init: RequestInit, fallbackCode: str
   }
 
   return await response.json() as T;
+}
+
+export async function downloadGoogleDriveFile(fileId: string): Promise<{ bytes: Buffer; contentType: string | null }> {
+  const normalizedFileId = fileId.trim();
+  if (!normalizedFileId) {
+    throw new HttpError(400, 'Google Drive file id is required to download a file', {
+      service: 'google-drive',
+      code: 'GOOGLE_DRIVE_FILE_ID_REQUIRED',
+      retryable: false,
+    });
+  }
+
+  const token = await requireDriveAccessToken();
+  const params = new URLSearchParams({
+    alt: 'media',
+    supportsAllDrives: 'true',
+  });
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(normalizedFileId)}?${params.toString()}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new HttpError(response.status, `Google Drive file download failed (${response.status}): ${detail}`, {
+      service: 'google-drive',
+      code: 'GOOGLE_DRIVE_FILE_DOWNLOAD_FAILED',
+      retryable: response.status === 429 || response.status >= 500,
+    });
+  }
+
+  return {
+    bytes: Buffer.from(await response.arrayBuffer()),
+    contentType: response.headers.get('content-type'),
+  };
+}
+
+export async function downloadGoogleDriveFileHeader(fileId: string): Promise<{ bytes: Buffer; contentType: string | null }> {
+  const normalizedFileId = fileId.trim();
+  if (!normalizedFileId) {
+    throw new HttpError(400, 'Google Drive file id is required to download a file', {
+      service: 'google-drive',
+      code: 'GOOGLE_DRIVE_FILE_ID_REQUIRED',
+      retryable: false,
+    });
+  }
+
+  const token = await requireDriveAccessToken();
+  const params = new URLSearchParams({
+    alt: 'media',
+    supportsAllDrives: 'true',
+  });
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(normalizedFileId)}?${params.toString()}`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Range: 'bytes=0-15',
+      },
+      signal: AbortSignal.timeout(15_000),
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new HttpError(response.status, `Google Drive file download failed (${response.status}): ${detail}`, {
+      service: 'google-drive',
+      code: 'GOOGLE_DRIVE_FILE_DOWNLOAD_FAILED',
+      retryable: response.status === 429 || response.status >= 500,
+    });
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    return {
+      bytes: Buffer.from(await response.arrayBuffer()).subarray(0, 16),
+      contentType: response.headers.get('content-type'),
+    };
+  }
+
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+  let streamEnded = false;
+  while (totalBytes < 16) {
+    const next = await reader.read();
+    if (next.done) {
+      streamEnded = true;
+      break;
+    }
+
+    const chunk = Buffer.from(next.value).subarray(0, 16 - totalBytes);
+    chunks.push(chunk);
+    totalBytes += chunk.length;
+  }
+  if (!streamEnded) {
+    await reader.cancel();
+  }
+
+  return {
+    bytes: Buffer.concat(chunks, totalBytes),
+    contentType: response.headers.get('content-type'),
+  };
+}
+
+function validateArchiveImagePayload(
+  payload: GoogleDriveArchiveFilePayload,
+  variant: 'original' | 'processed',
+): GoogleDriveArchiveFilePayload {
+  const bytes = Buffer.from(payload.file, 'base64');
+  const contentType = detectSupportedImageMimeType(bytes);
+  if (!contentType) {
+    throw new HttpError(400, `The ${variant} workflow upload is not a supported image file.`, {
+      service: 'google-drive',
+      code: 'GOOGLE_DRIVE_IMAGE_FORMAT_UNSUPPORTED',
+      retryable: false,
+    });
+  }
+
+  return { ...payload, contentType };
 }
 
 async function findFileByName(parentId: string, name: string, mimeType?: string): Promise<GoogleDriveFile | undefined> {
@@ -357,6 +502,7 @@ async function ensurePublicReadAccess(fileId: string): Promise<void> {
 }
 
 export async function archiveWorkflowImagesToGoogleDrive(request: WorkflowImageArchiveRequest): Promise<WorkflowImageArchiveResult> {
+  const processed = validateArchiveImagePayload(request.processed, 'processed');
   const folderId = await ensureArchiveFolder(request.folderKey);
 
   const originalFile = await upsertFileInFolder(
@@ -368,9 +514,9 @@ export async function archiveWorkflowImagesToGoogleDrive(request: WorkflowImageA
 
   const processedFile = await upsertFileInFolder(
     folderId,
-    buildArchiveFilename(request.stage, 'processed', request.processed.filename),
-    request.processed.contentType,
-    request.processed.file,
+    buildArchiveFilename(request.stage, 'processed', processed.filename),
+    processed.contentType,
+    processed.file,
   );
 
   await ensurePublicReadAccess(processedFile.id);

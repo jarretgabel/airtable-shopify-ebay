@@ -43,7 +43,7 @@ export function useListingApprovalRecordActions({
   pushInlineActionNotice,
   requestConfirmation,
 }: UseListingApprovalRecordActionsParams) {
-  const { handleResetData, handleSaveUpdates } = useListingApprovalPersistenceActions({
+  const { handleResetData, handleSaveUpdates, savePendingUpdates } = useListingApprovalPersistenceActions({
     selectedRecord,
     approvalChannel,
     allFieldNames,
@@ -77,6 +77,8 @@ export function useListingApprovalRecordActions({
     setFormValue,
     setDerivedFormValue,
     saveRecord,
+    changedFieldNames,
+    savePendingUpdates,
     createShopifyDraftOnApprove,
     shopifyApprovalPreview,
     loadShopifyApprovalPreviewNow,

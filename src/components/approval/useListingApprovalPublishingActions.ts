@@ -2,7 +2,7 @@ import type { UseListingApprovalRecordActionsParams } from './listingApprovalRec
 import { useListingApprovalApproveAction } from './useListingApprovalApproveAction';
 import { useListingApprovalPublishActions } from './useListingApprovalPublishActions';
 
-type PublishingActionsParams = Pick<UseListingApprovalRecordActionsParams,
+type PublishingActionsParams = Omit<Pick<UseListingApprovalRecordActionsParams,
   'selectedRecord'
   | 'approvalChannel'
   | 'actualFieldNames'
@@ -21,6 +21,7 @@ type PublishingActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'resolveShopifyCategoryId'
   | 'upsertShopifyProductWithCollectionFallback'
   | 'canUpdateApprovedShopifyListing'
+  | 'changedFieldNames'
   | 'hasMissingShopifyRequiredFields'
   | 'hasMissingEbayRequiredFields'
   | 'isShopifyPublishBlockedByAuctionFormat'
@@ -33,7 +34,10 @@ type PublishingActionsParams = Pick<UseListingApprovalRecordActionsParams,
   | 'onBackToList'
   | 'pushInlineActionNotice'
   | 'requestConfirmation'
->;
+>, 'changedFieldNames'> & {
+  changedFieldNames?: string[];
+  savePendingUpdates?: () => Promise<boolean>;
+};
 
 export function useListingApprovalPublishingActions({
   selectedRecord,
@@ -54,6 +58,7 @@ export function useListingApprovalPublishingActions({
   resolveShopifyCategoryId,
   upsertShopifyProductWithCollectionFallback,
   canUpdateApprovedShopifyListing,
+  changedFieldNames = [],
   hasMissingShopifyRequiredFields,
   hasMissingEbayRequiredFields,
   isShopifyPublishBlockedByAuctionFormat,
@@ -66,9 +71,12 @@ export function useListingApprovalPublishingActions({
   onBackToList,
   pushInlineActionNotice,
   requestConfirmation,
+  savePendingUpdates,
 }: PublishingActionsParams) {
   const { pushingTarget, runCombinedPush } = useListingApprovalPublishActions({
     selectedRecord,
+    changedFieldNames,
+    ...(savePendingUpdates ? { savePendingUpdates } : {}),
     hasMissingShopifyRequiredFields,
     hasMissingEbayRequiredFields,
     isShopifyPublishBlockedByAuctionFormat,

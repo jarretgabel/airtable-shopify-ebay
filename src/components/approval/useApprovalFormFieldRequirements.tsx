@@ -8,12 +8,21 @@ import {
 } from './approvalFormFieldsSharedHelpers';
 import { getEbayPriceFieldLabel } from './approvalFormFieldsEbayHelpersBasic';
 import { isMissingRequiredFieldValue } from './requiredFieldStatus';
+import { EBAY_FORMAT_FIELD_CANDIDATES } from './listingApprovalEbayConstants';
 
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
 const requiredBadgeClass = 'inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]';
 
+function isEbayFormatFieldName(fieldName: string): boolean {
+  const normalized = fieldName.trim().toLowerCase().replace(/[_\s]+/g, ' ');
+  return EBAY_FORMAT_FIELD_CANDIDATES.some(
+    (candidate) => candidate.trim().toLowerCase().replace(/[_\s]+/g, ' ') === normalized,
+  );
+}
+
 interface UseApprovalFormFieldRequirementsParams {
   approvalChannel?: 'shopify' | 'ebay' | 'combined';
+  isCombinedApproval?: boolean;
   allFieldNames: string[];
   requiredFieldNames: string[];
   shopifyRequiredFieldNames: string[];
@@ -25,6 +34,7 @@ interface UseApprovalFormFieldRequirementsParams {
 
 export function useApprovalFormFieldRequirements({
   approvalChannel,
+  isCombinedApproval = false,
   allFieldNames,
   requiredFieldNames,
   shopifyRequiredFieldNames,
@@ -74,6 +84,10 @@ export function useApprovalFormFieldRequirements({
 
     if (isPriceLikeField(fieldName)) {
       return normalizedRequiredNames.some((requiredFieldName) => isPriceLikeField(requiredFieldName));
+    }
+
+    if (isEbayFormatFieldName(fieldName)) {
+      return normalizedRequiredNames.some((requiredFieldName) => isEbayFormatFieldName(requiredFieldName));
     }
 
     if (isShopifyCategoryLikeField(fieldName)) {
@@ -144,7 +158,7 @@ export function useApprovalFormFieldRequirements({
 
     if (!isShopifyRequired && !isEbayRequired) return null;
 
-    if (approvalChannel !== 'combined' && isRequiredField(fieldName)) {
+    if (approvalChannel !== 'combined' && !isCombinedApproval && isRequiredField(fieldName)) {
       return <span className={requiredBadgeClass}>Required</span>;
     }
 
@@ -154,7 +168,7 @@ export function useApprovalFormFieldRequirements({
         {isEbayRequired && <span className={requiredBadgeClass}>eBay Required</span>}
       </>
     );
-  }, [approvalChannel, isEbayRequiredField, isRequiredField, isShopifyRequiredField]);
+  }, [approvalChannel, isCombinedApproval, isEbayRequiredField, isRequiredField, isShopifyRequiredField]);
 
   const renderFieldLabel = useCallback((fieldName: string): JSX.Element => (
     <span className={`${getLabelClassName(fieldName)} flex items-center gap-2`}>

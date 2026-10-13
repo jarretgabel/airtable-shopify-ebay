@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestingFormTab } from '@/components/tabs/TestingFormTab';
@@ -8,6 +9,7 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
     onUploadAssetsChange,
     onProcessingStateChange,
     onProcessingSummaryChange,
+    resetKey = 0,
     afterUploadContent,
   }: {
     onFilesChange: (files: File[]) => void;
@@ -20,37 +22,54 @@ vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
     }>) => void;
     onProcessingStateChange?: (isProcessing: boolean) => void;
     onProcessingSummaryChange?: (summary: { total: number; processed: number; processing: number; failed: number }) => void;
+    resetKey?: string | number;
     afterUploadContent?: React.ReactNode;
-  }) => (
-    <div>
-      <button
-        type="button"
-        onClick={() => {
-          const originalFile = new File(['original-testing'], 'original-testing.jpg', { type: 'image/jpeg' });
-          const processedFile = new File(['processed-testing'], 'processed-testing.jpg', { type: 'image/jpeg' });
-          onFilesChange([processedFile]);
-          onUploadAssetsChange?.([{
-            originalFile,
-            uploadFile: processedFile,
-            imageRole: 'front',
-            altText: 'Accuphase P-300 amplifier available at Resolution AV',
-          }]);
-        }}
-      >
-        Mock add processed testing photos
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          onProcessingSummaryChange?.({ total: 2, processed: 1, processing: 1, failed: 0 });
-          onProcessingStateChange?.(true);
-        }}
-      >
-        Mock testing processing in progress
-      </button>
-      {afterUploadContent}
-    </div>
-  ),
+  }) => {
+    const callbacksRef = useRef({ onFilesChange, onUploadAssetsChange });
+    const previousResetKeyRef = useRef(resetKey);
+
+    useEffect(() => {
+      callbacksRef.current = { onFilesChange, onUploadAssetsChange };
+    }, [onFilesChange, onUploadAssetsChange]);
+
+    useEffect(() => {
+      if (previousResetKeyRef.current === resetKey) return;
+      previousResetKeyRef.current = resetKey;
+      callbacksRef.current.onFilesChange([]);
+      callbacksRef.current.onUploadAssetsChange?.([]);
+    }, [resetKey]);
+
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => {
+            const originalFile = new File(['original-testing'], 'original-testing.jpg', { type: 'image/jpeg' });
+            const processedFile = new File(['processed-testing'], 'processed-testing.jpg', { type: 'image/jpeg' });
+            onFilesChange([processedFile]);
+            onUploadAssetsChange?.([{
+              originalFile,
+              uploadFile: processedFile,
+              imageRole: 'front',
+              altText: 'Accuphase P-300 amplifier available at Resolution AV',
+            }]);
+          }}
+        >
+          Mock add processed testing photos
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onProcessingSummaryChange?.({ total: 2, processed: 1, processing: 1, failed: 0 });
+            onProcessingStateChange?.(true);
+          }}
+        >
+          Mock testing processing in progress
+        </button>
+        {afterUploadContent}
+      </div>
+    );
+  },
 }));
 
 const {
@@ -141,7 +160,7 @@ describe('TestingFormTab', () => {
         testingNotes: 'Bench tested.',
         testingTimeMinutes: '30',
         serviceNotes: '',
-        serviceTimeMinutes: '',
+        serviceTimeMinutes: '0',
         testingDate: '2026-05-03',
         status: 'Tested',
       },
@@ -162,6 +181,15 @@ describe('TestingFormTab', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to Testing' }));
     expect(onBackToDirectory).toHaveBeenCalledTimes(1);
+  });
+
+  it('explains how to enter shipping weight and dimensions separately', async () => {
+    render(<TestingFormTab recordId="rec-testing" />);
+
+    await screen.findByRole('heading', { name: 'SKU-500' });
+
+    expect(screen.getByText('Enter the total packaged weight in pounds (lbs), including the box and foam. Example: 22.')).toBeInTheDocument();
+    expect(screen.getByText('Enter package dimensions in inches as W x D x H. Keep weight separate; do not include it here. Example: 22 x 20 x 12.')).toBeInTheDocument();
   });
 
   it('submits edited workflow image metadata only after testing completion is confirmed', async () => {
@@ -254,7 +282,7 @@ describe('TestingFormTab', () => {
     expect(submittedValues.imageFiles[0]?.name).toBe('processed-testing.jpg');
   });
 
-  it('blocks submission when a required testing field is missing', async () => {
+  it('allows submission when Audiogon Rating is blank', async () => {
     loadTestingFormValuesMock.mockResolvedValueOnce({
       source: 'used-gear-workflow',
       customerReference: {
@@ -292,7 +320,7 @@ describe('TestingFormTab', () => {
         testingNotes: 'Bench tested.',
         testingTimeMinutes: '30',
         serviceNotes: '',
-        serviceTimeMinutes: '',
+        serviceTimeMinutes: '0',
         testingDate: '2026-05-03',
         status: 'Tested',
       },
@@ -304,7 +332,29 @@ describe('TestingFormTab', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
 
-    expect(await screen.findByText('Audiogon Rating is required.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(submitTestingFormMock).toHaveBeenCalledWith(
+        expect.objectContaining({ audiogonRating: '' }),
+        'rec-testing',
+        expect.any(Object),
+      );
+    });
+
+    const saveNotice = await screen.findByText('Testing changes saved');
+    const statusNotice = saveNotice.closest('[role="status"]');
+    expect(statusNotice).toHaveTextContent('Testing details for SKU-500 were saved to Airtable.');
+    expect(statusNotice).toHaveClass('rounded-lg', 'border-emerald-400/35');
+    expect(statusNotice?.nextElementSibling).toContainElement(screen.getByRole('button', { name: 'Save Testing' }));
+  });
+
+  it('blocks saving when required Service Time is blank', async () => {
+    render(<TestingFormTab recordId="rec-testing" />);
+
+    await screen.findByRole('heading', { name: 'SKU-500' });
+    fireEvent.change(screen.getByLabelText(/Service Time/), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Service Time is required.');
     expect(submitTestingFormMock).not.toHaveBeenCalled();
   });
 

@@ -1,7 +1,11 @@
+type WorkflowImageSourceStage = 'intake' | 'testing' | 'photos';
+
 interface WorkflowImageRecord {
   url: string;
+  filename: string;
   alt: string;
   sortOrder: number;
+  sourceStage: WorkflowImageSourceStage;
   includedInListing: boolean;
 }
 
@@ -30,6 +34,12 @@ function normalizeBoolean(value: unknown, fallback: boolean): boolean {
     if (value === 0) return false;
   }
   return fallback;
+}
+
+function normalizeStage(value: unknown): WorkflowImageSourceStage {
+  if (value === 'intake') return 'intake';
+  if (value === 'testing') return 'testing';
+  return 'photos';
 }
 
 function extractFilenameStem(filename: string): string {
@@ -149,8 +159,10 @@ function normalizeRecord(value: unknown, fallbackOrder: number): WorkflowImageRe
 
   return {
     url,
+    filename,
     alt: resolveWorkflowAltText(rawAlt, filename, url),
     sortOrder: normalizeSortOrder(record.sortOrder ?? record.sort_order ?? record.position, fallbackOrder),
+    sourceStage: normalizeStage(record.sourceStage ?? record.source_stage),
     includedInListing: normalizeBoolean(
       record.includedInListing
       ?? record.included_in_listing
@@ -201,4 +213,38 @@ export function getIncludedWorkflowImages(records: WorkflowImageRecord[]): Workf
   return records
     .filter((record) => record.includedInListing)
     .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+export function isProcessedWorkflowImage(filename: string, url?: string): boolean {
+  const sample = `${filename} ${url ?? ''}`.toLowerCase();
+  if (/(^|[-_.\s])original([-_.\s]|$)/.test(sample)) return false;
+  return /(^|[-_])processed([-_.\s]|$)/.test(sample);
+}
+
+function normalizeWorkflowImageIdentity(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function getWorkflowImageBaseIdentity(filename: string): string {
+  return normalizeWorkflowImageIdentity(filename.replace(/[-_]processed(?=\.[^.]+$|$)/i, ''));
+}
+
+export function getListingWorkflowImages(records: WorkflowImageRecord[]): WorkflowImageRecord[] {
+  const explicitlyProcessedRecords = records.filter((record) => (
+    isProcessedWorkflowImage(record.filename, record.url)
+  ));
+  const processedBaseIdentities = new Set(
+    explicitlyProcessedRecords.map((record) => getWorkflowImageBaseIdentity(record.filename)),
+  );
+  const selectableRecords = records.filter((record) => {
+    if (isProcessedWorkflowImage(record.filename, record.url)) return true;
+    if (record.sourceStage !== 'photos' || /(^|[-_.\s])original([-_.\s]|$)/i.test(record.filename)) return false;
+    return !processedBaseIdentities.has(getWorkflowImageBaseIdentity(record.filename));
+  });
+
+  return selectableRecords.length > 0 ? selectableRecords : records;
 }
