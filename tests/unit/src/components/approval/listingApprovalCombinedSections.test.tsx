@@ -334,6 +334,35 @@ describe('combined approval sections', () => {
     expect(screen.getByText('Small nick near right edge in bright light.')).toBeInTheDocument();
   });
 
+  it('shows cleanly named photography-stage images in the photography image panel', () => {
+    const props = buildIntakeProps();
+    props.originalFieldValues = {
+      ...props.originalFieldValues,
+      'Workflow Image Metadata JSON': JSON.stringify([
+        {
+          attachmentId: 'drive-photo-1',
+          url: 'https://drive.google.com/uc?id=drive-photo-1',
+          filename: 'bel-canto-pre-1-side-view.jpg',
+          sourceStage: 'photos',
+          includedInListing: true,
+        },
+        {
+          attachmentId: 'drive-photo-original',
+          url: 'https://drive.google.com/uc?id=drive-photo-original',
+          filename: 'bel-canto-pre-1-side-view-original.jpg',
+          sourceStage: 'photos',
+          includedInListing: true,
+        },
+      ]),
+    };
+
+    render(<ListingApprovalCombinedIntakeSection {...props} />);
+
+    expect(screen.getByText('Photography Images')).toBeInTheDocument();
+    expect(screen.getByText('bel-canto-pre-1-side-view.jpg')).toBeInTheDocument();
+    expect(screen.queryByText('bel-canto-pre-1-side-view-original.jpg')).not.toBeInTheDocument();
+  });
+
   it('renders item title above description in the shared section', () => {
     const props = buildSharedProps();
 

@@ -5,6 +5,7 @@ import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 import {
   filterWorkflowImageMetadataByStage,
   isGoogleDriveImageUrl,
+  isOriginalWorkflowImage,
   isProcessedWorkflowImage,
   parseWorkflowImageMetadata,
 } from '@/services/workflowImageMetadata';
@@ -226,7 +227,7 @@ export function ListingApprovalCombinedIntakeSection({
 
   const photographyImages = useMemo(() => {
     const metadataPhotographyImages = filterWorkflowImageMetadataByStage(workflowImageMetadata, 'photos')
-      .filter((image) => image.includedInListing && isProcessedWorkflowImage(image.filename, image.url))
+      .filter((image) => image.includedInListing && !isOriginalWorkflowImage(image.filename, image.url))
       .map((image) => ({
         id: image.attachmentId,
         url: image.url,

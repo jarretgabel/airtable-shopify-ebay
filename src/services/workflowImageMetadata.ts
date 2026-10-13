@@ -416,9 +416,13 @@ export function getIncludedWorkflowImageMetadata(records: WorkflowImageMetadataR
   ));
 }
 
+export function isOriginalWorkflowImage(filename: string, url?: string): boolean {
+  return /(^|[-_.\s])original([-_.\s]|$)/i.test(`${filename} ${url ?? ''}`);
+}
+
 export function isProcessedWorkflowImage(filename: string, url?: string): boolean {
   const sample = `${filename} ${url ?? ''}`.toLowerCase();
-  if (/(^|[-_.\s])original([-_.\s]|$)/.test(sample)) return false;
+  if (isOriginalWorkflowImage(filename, url)) return false;
   return /(^|[-_])processed([-_.\s]|$)/.test(sample);
 }
 
