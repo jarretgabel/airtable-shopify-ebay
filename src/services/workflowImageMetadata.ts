@@ -1,3 +1,5 @@
+import { isEbayHostedImageCache, type EbayHostedImageCache } from '@contracts/ebayImages';
+
 export type WorkflowImageSourceStage = 'intake' | 'testing' | 'photos';
 
 export const WORKFLOW_IMAGE_ROLE_OPTIONS = [
@@ -29,6 +31,7 @@ export interface WorkflowImageMetadataRecord {
   includedInListing: boolean;
   createdAt?: string;
   updatedAt?: string;
+  ebayHostedImageCache?: EbayHostedImageCache;
 }
 
 export interface WorkflowImageAttachmentLike {
@@ -245,6 +248,7 @@ function normalizeMetadataRecord(value: unknown, fallbackOrder: number): Workflo
     ),
     createdAt: normalizeString(record.createdAt) || normalizeString(record.created_at) || undefined,
     updatedAt: normalizeString(record.updatedAt) || normalizeString(record.updated_at) || undefined,
+    ebayHostedImageCache: isEbayHostedImageCache(record.ebayHostedImageCache) ? record.ebayHostedImageCache : undefined,
   };
 }
 

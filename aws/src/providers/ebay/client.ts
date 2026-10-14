@@ -1,4 +1,6 @@
+import { createHash } from 'node:crypto';
 import { HttpError } from '../../shared/errors.js';
+import { isEbayHostedImageCache, type EbayHostedImageCache } from '../../shared/contracts/ebayImages.js';
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
@@ -139,6 +141,8 @@ export interface EbayApprovalPushResult {
 
 export interface EbayUploadedImageResult {
   url: string;
+  sha256?: string;
+  reused?: boolean;
 }
 
 function isEbayHostedImageUrl(value: string): boolean {
@@ -211,7 +215,15 @@ function inferImageFileNameFromUrl(url: string, index: number, mimeType: string)
 export async function uploadExternalImageUrlToEbayHostedPictures(
   sourceUrl: string,
   index = 0,
+  cachedImage?: EbayHostedImageCache,
 ): Promise<EbayUploadedImageResult> {
+  if (cachedImage !== undefined && !isEbayHostedImageCache(cachedImage)) {
+    throw new HttpError(400, 'Invalid saved eBay image fingerprint or hosted URL.', {
+      service: 'ebay',
+      code: 'INVALID_EBAY_IMAGE_CACHE',
+      retryable: false,
+    });
+  }
   const normalizedUrl = sourceUrl.trim();
   if (!normalizedUrl) {
     throw new HttpError(400, 'sourceUrl is required', {
@@ -277,11 +289,38 @@ export async function uploadExternalImageUrlToEbayHostedPictures(
     });
   }
 
-  return uploadImageToEbayHostedPictures(
+  const sha256 = createHash('sha256').update(image.bytes).digest('hex');
+  if (cachedImage?.sha256 === sha256) {
+    const response = await fetch(cachedImage.url, {
+      method: 'HEAD',
+      redirect: 'error',
+      signal: AbortSignal.timeout(EBAY_HOSTED_IMAGE_CHECK_TIMEOUT_MS),
+    });
+    if (response.ok) {
+      if (!response.headers.get('content-type')?.toLowerCase().startsWith('image/')) {
+        throw new HttpError(502, `Existing eBay image ${index + 1} did not return an image file.`, {
+          service: 'ebay',
+          code: 'EBAY_IMAGE_REUSE_CHECK_INVALID_TYPE',
+          retryable: false,
+        });
+      }
+      return { url: cachedImage.url, sha256, reused: true };
+    }
+    if (response.status !== 404 && response.status !== 410) {
+      throw new HttpError(response.status, `Could not verify existing eBay image ${index + 1}.`, {
+        service: 'ebay',
+        code: 'EBAY_IMAGE_REUSE_CHECK_FAILED',
+        retryable: response.status >= 500 || response.status === 429,
+      });
+    }
+  }
+
+  const uploaded = await uploadImageToEbayHostedPictures(
     inferImageFileNameFromUrl(normalizedUrl, index, image.mimeType),
     image.mimeType,
     image.bytes.toString('base64'),
   );
+  return { ...uploaded, sha256, reused: false };
 }
 
 export interface EbayPublishedListing {
@@ -435,6 +474,7 @@ const DEFAULT_EBAY_CATEGORY_ID = '14990';
 
 const EBAY_REST_REQUEST_TIMEOUT_MS = 12_000;
 const EBAY_EXTERNAL_IMAGE_DOWNLOAD_TIMEOUT_MS = 15_000;
+const EBAY_HOSTED_IMAGE_CHECK_TIMEOUT_MS = 5_000;
 
 async function ebayRestFetch(input: string, init: RequestInit = {}): Promise<Response> {
   try {

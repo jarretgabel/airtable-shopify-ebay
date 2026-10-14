@@ -8,12 +8,19 @@ const {
   markWorkflowListingStaleMock,
   takeDownWorkflowMarketplaceListingAndMoveBackMock,
   updateRecordFromResolvedSourceMock,
+  getProductMock,
+  getOfferMock,
 } = vi.hoisted(() => ({
   loadUsedGearOperationalRecordContextMock: vi.fn(),
   markWorkflowListingStaleMock: vi.fn(),
   takeDownWorkflowMarketplaceListingAndMoveBackMock: vi.fn(),
   updateRecordFromResolvedSourceMock: vi.fn(),
+  getProductMock: vi.fn(),
+  getOfferMock: vi.fn(),
 }));
+
+vi.mock('@/services/app-api/shopify', () => ({ getProduct: getProductMock }));
+vi.mock('@/services/app-api/ebay', () => ({ getOffer: getOfferMock }));
 
 vi.mock('@/services/app-api/airtable', () => ({
   updateRecordFromResolvedSource: updateRecordFromResolvedSourceMock,
@@ -54,6 +61,8 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     markWorkflowListingStaleMock.mockReset();
     takeDownWorkflowMarketplaceListingAndMoveBackMock.mockReset();
     updateRecordFromResolvedSourceMock.mockReset();
+    getProductMock.mockReset().mockResolvedValue({ id: 12345, status: 'ACTIVE', onlineStoreUrl: 'https://test-shop.myshopify.com/products/test' });
+    getOfferMock.mockReset().mockResolvedValue({ offerId: 'offer-1', status: 'PUBLISHED' });
     vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
@@ -125,6 +134,56 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     expect(screen.queryByText(listedAt)).not.toBeInTheDocument();
   });
 
+  it('shows both channels when Shopify and eBay verify as live', async () => {
+    const record = buildRecord({ 'Shopify REST Product ID': '12345', 'eBay Offer ID': 'offer-1' });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+    expect(await screen.findByText('Listed, Shopify + eBay')).toBeInTheDocument();
+    expect(getProductMock).toHaveBeenCalledWith(12345);
+    expect(getOfferMock).toHaveBeenCalledWith('offer-1');
+  });
+
+  it('does not claim Shopify is live when the ACTIVE product is unpublished to Online Store', async () => {
+    const record = buildRecord({ 'Shopify REST Product ID': '12345', 'eBay Offer ID': 'offer-1' });
+    getProductMock.mockResolvedValue({ id: 12345, status: 'ACTIVE', onlineStoreUrl: null });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+    expect(await screen.findByText('Listed, eBay')).toBeInTheDocument();
+    expect(screen.queryByText('Listed, Shopify + eBay')).not.toBeInTheDocument();
+  });
+
+  it('does not treat historical eBay identifiers as proof of a live listing', async () => {
+    const record = buildRecord({ 'Shopify REST Product ID': '12345', 'eBay Offer ID': 'offer-1' });
+    getOfferMock.mockResolvedValue({ offerId: 'offer-1', status: 'UNPUBLISHED' });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+    await waitFor(() => expect(getOfferMock).toHaveBeenCalled());
+    expect(await screen.findByText('Listed, Shopify')).toBeInTheDocument();
+    expect(screen.queryByText('Listed, Shopify + eBay')).not.toBeInTheDocument();
+  });
+
+  it('reports verification errors instead of claiming both channels are live', async () => {
+    const record = buildRecord({ 'Shopify REST Product ID': '12345', 'eBay Offer ID': 'offer-1' });
+    getOfferMock.mockRejectedValue(new Error('eBay is unavailable'));
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+    expect(await screen.findByText(/Could not verify marketplace listing status: eBay is unavailable/)).toBeInTheDocument();
+    expect(screen.queryByText('Listed, Shopify + eBay')).not.toBeInTheDocument();
+  });
+
+  it('rechecks unchanged offer IDs after publishing finishes', async () => {
+    const record = buildRecord({ 'Shopify REST Product ID': '12345', 'eBay Offer ID': 'offer-1' });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    getOfferMock.mockResolvedValue({ offerId: 'offer-1', status: 'UNPUBLISHED' });
+    const props = { selectedRecord: record, tableReference: 'used-gear-workflow', loadRecords: vi.fn() };
+    const { rerender } = render(<ListingApprovalWorkflowOpsPanel {...props} />);
+    expect(await screen.findByText('Listed, Shopify')).toBeInTheDocument();
+    rerender(<ListingApprovalWorkflowOpsPanel {...props} publishing />);
+    getOfferMock.mockResolvedValue({ offerId: 'offer-1', status: 'PUBLISHED' });
+    rerender(<ListingApprovalWorkflowOpsPanel {...props} publishing={false} />);
+    expect(await screen.findByText('Listed, Shopify + eBay')).toBeInTheDocument();
+  });
+
   it('runs post-publish stale actions and reloads the Listings table', async () => {
     const loadRecords = vi.fn(async () => {});
     const updatedRecord = buildRecord({ 'Workflow Status': 'Stale Listing, Shopify' });
@@ -151,6 +210,26 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     });
   });
 
+  it('shows compact takedown labels without a workflow-only Back to Ready action', async () => {
+    const record = buildRecord({ 'Shopify REST Product ID': '12345', 'eBay Offer ID': 'offer-1' });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+
+    render(
+      <ListingApprovalWorkflowOpsPanel
+        selectedRecord={record}
+        tableReference="used-gear-workflow"
+        loadRecords={vi.fn(async () => {})}
+      />,
+    );
+
+    const shopifyButton = await screen.findByRole('button', { name: 'Take Down Shopify' });
+    expect(shopifyButton).toHaveAttribute('title', 'Remove the Shopify listing and return this record to Ready for listing.');
+    expect(shopifyButton.parentElement).toHaveClass('[&>button]:text-xs', '[&>button]:px-3');
+    expect(screen.getByRole('button', { name: 'Take Down eBay' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Take Down Both' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Back To Ready/i })).not.toBeInTheDocument();
+  });
+
   it('runs shopify takedown and moves the row back to ready', async () => {
     const loadRecords = vi.fn(async () => {});
     const updatedRecord = buildRecord({
@@ -172,7 +251,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify' }));
 
     await waitFor(() => {
       expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'shopify');
@@ -196,7 +275,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify' }));
 
     await waitFor(() => {
       expect(window.confirm).toHaveBeenCalled();
@@ -225,7 +304,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Take Down eBay + Back To Ready' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down eBay' }));
 
     await waitFor(() => {
       expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'ebay');
@@ -257,7 +336,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Both + Back To Ready' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Both' }));
 
     await waitFor(() => {
       expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'both');
@@ -281,7 +360,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Take Down eBay + Back To Ready' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down eBay' }));
 
     await waitFor(() => {
       expect(window.confirm).toHaveBeenCalled();
@@ -303,7 +382,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    expect(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Take Down Shopify' })).toBeInTheDocument();
   });
 
   it('shows shopify takedown action for Listed, Shopify even when product id is missing', async () => {
@@ -320,7 +399,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    expect(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Take Down Shopify' })).toBeInTheDocument();
   });
 
   it('skips source sync write when current source is used-gear-workflow', async () => {
@@ -344,7 +423,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify' }));
 
     await waitFor(() => {
       expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'shopify');
@@ -374,7 +453,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
       />,
     );
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify + Back To Ready' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Take Down Shopify' }));
 
     await waitFor(() => {
       expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).toHaveBeenCalledWith('rec-workflow-1', 'shopify');

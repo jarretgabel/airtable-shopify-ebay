@@ -3,6 +3,10 @@ import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
 import { toFormValue } from '@/stores/approvalStore';
 import {
   EBAY_BODY_HTML_FIELD_CANDIDATES,
+  EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
+  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
+  EBAY_TEMPLATE_COPY_FIELD_NAME,
+  resolveEbayTemplateCopyValue,
   EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
   EBAY_PRICE_FIELD_CANDIDATES,
   EBAY_TESTING_NOTES_FIELD_CANDIDATES,
@@ -268,12 +272,57 @@ export async function saveEbayApprovalSupplementalFields({
   }
 
   const bodyHtmlRaw = bodyHtmlPreview || (ebayBodyHtmlSaveFieldName ? (formValues[ebayBodyHtmlSaveFieldName] ?? '') : '');
+  const templateCopyFormFieldName = Object.keys(formValues).find((fieldName) =>
+    fieldName.toLowerCase() === EBAY_TEMPLATE_COPY_FIELD_NAME.toLowerCase());
+  const hasLegacyTemplateCopy = Object.prototype.hasOwnProperty.call(formValues, EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD);
+  const hasTemplateCopy = templateCopyFormFieldName !== undefined || hasLegacyTemplateCopy;
+  const templateCopyRaw = resolveEbayTemplateCopyValue(formValues);
+  const bodyEditorFieldNames = [
+    EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
+  ].filter((fieldName) => Object.prototype.hasOwnProperty.call(formValues, fieldName));
+  if (bodyEditorFieldNames.length > 0 && !bodyHtmlRaw.trim()) {
+    throw new Error('Cannot save eBay template copy without a rendered listing body. Wait for the body preview to load, then retry.');
+  }
+  const bodyDocument = bodyEditorFieldNames.length > 0 || hasTemplateCopy
+    ? new DOMParser().parseFromString(bodyHtmlRaw, 'text/html')
+    : null;
+  const copySection = bodyDocument?.getElementById('template-copy');
+  if (hasTemplateCopy && copySection) {
+    const expectedCopy = bodyDocument?.createElement('div');
+    if (expectedCopy) {
+      expectedCopy.innerHTML = templateCopyRaw;
+    }
+    if (copySection.innerHTML.trim() !== expectedCopy?.innerHTML.trim()) {
+      throw new Error('Cannot save eBay template copy because the rendered listing body is not up to date. Wait for the body preview to update, then retry.');
+    }
+  }
+  if (hasTemplateCopy) {
+    const existingCopyFieldName = resolveExistingFieldName(existingFieldLookup, [EBAY_TEMPLATE_COPY_FIELD_NAME]);
+    const originalCopyRaw = existingCopyFieldName ? toFormValue(selectedRecord.fields[existingCopyFieldName]) : '';
+    if (templateCopyRaw !== originalCopyRaw) {
+      const savedCopyField = await trySaveEbayField({
+        candidates: [existingCopyFieldName ?? templateCopyFormFieldName ?? EBAY_TEMPLATE_COPY_FIELD_NAME],
+        rawValue: templateCopyRaw,
+        selectedRecord,
+        tableReference,
+        tableName,
+        options: { typecast: false, coerceNumber: false },
+      });
+      if (!savedCopyField) {
+        throw new Error('Cannot save eBay Template Copy. Add a writable long-text field named "eBay Template Copy" to the current Airtable source.');
+      }
+      setFormValue(savedCopyField, templateCopyRaw);
+    }
+    if (hasLegacyTemplateCopy) {
+      setFormValue(EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD, formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '');
+    }
+  }
   const bodyHtmlCandidates = [ebayBodyHtmlSaveFieldName, ...EBAY_BODY_HTML_FIELD_CANDIDATES, 'Body html'];
   const existingBodyHtmlFieldName = resolveExistingFieldName(existingFieldLookup, bodyHtmlCandidates);
   const bodyHtmlSaveCandidates = [existingBodyHtmlFieldName ?? '', ...bodyHtmlCandidates];
   const originalBodyHtmlRaw = existingBodyHtmlFieldName ? toFormValue(selectedRecord.fields[existingBodyHtmlFieldName]) : '';
-  const shouldSaveBodyHtml = Boolean(existingBodyHtmlFieldName) && bodyHtmlRaw.trim().length > 0 && (
-    shouldForceEbayBodyHtmlSave || bodyHtmlRaw !== originalBodyHtmlRaw
+  const shouldSaveBodyHtml = Boolean(existingBodyHtmlFieldName || bodyEditorFieldNames.length > 0) && bodyHtmlRaw.trim().length > 0 && (
+    shouldForceEbayBodyHtmlSave || bodyEditorFieldNames.length > 0 || bodyHtmlRaw !== originalBodyHtmlRaw
   );
   if (shouldSaveBodyHtml) {
     const savedBodyHtmlField = await trySaveEbayField({
@@ -286,6 +335,13 @@ export async function saveEbayApprovalSupplementalFields({
     });
     if (savedBodyHtmlField) {
       setFormValue(savedBodyHtmlField, bodyHtmlRaw);
+      // These editor values are persisted inside the body, not as Airtable columns.
+      bodyEditorFieldNames.forEach((fieldName) => {
+        if (fieldName === EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD && !bodyDocument?.getElementById('about')) return;
+        setFormValue(fieldName, formValues[fieldName] ?? '');
+      });
+    } else if (bodyEditorFieldNames.length > 0) {
+      throw new Error('Cannot save eBay template copy because the listing body field is not writable in the current Airtable source.');
     }
   }
 

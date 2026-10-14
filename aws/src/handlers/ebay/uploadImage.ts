@@ -3,6 +3,7 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
+import type { EbayHostedImageCache } from '../../shared/contracts/ebayImages.js';
 import {
   uploadExternalImageUrlToEbayHostedPictures,
   uploadImageToEbayHostedPictures,
@@ -14,6 +15,7 @@ interface UploadImageBody {
   file?: string;
   sourceUrl?: string;
   index?: number;
+  cachedImage?: EbayHostedImageCache;
 }
 
 interface UploadImageDependencies {
@@ -38,8 +40,8 @@ export function createHandler(dependencies: UploadImageDependencies = {
     const sourceUrl = body.sourceUrl?.trim();
 
     if (sourceUrl) {
-      const result = await dependencies.uploadExternalImageUrlToEbayHostedPictures(sourceUrl, body.index);
-      logInfo('Uploaded external eBay hosted picture', { sourceUrl, index: body.index });
+      const result = await dependencies.uploadExternalImageUrlToEbayHostedPictures(sourceUrl, body.index, body.cachedImage);
+      logInfo(result.reused ? 'Reused external eBay hosted picture' : 'Uploaded external eBay hosted picture', { sourceUrl, index: body.index });
       return jsonOk(result, { origin });
     }
 

@@ -39,3 +39,49 @@ test('generated eBay body HTML overrides stale duplicate body field aliases', ()
     '<html><body><h1>MIT MITerminator 2</h1><p>Fresh speaker cable description</p></body></html>',
   );
 });
+
+test('template rendering uses saved copy when the preview input does not override it', () => {
+    const preview = buildEbayApprovalPreviewFromFields({
+      'eBay Inventory SKU': 'PREVIEW-SKU',
+      'Item Title': 'Amp',
+      'eBay Template Copy': '<p>Saved copy</p>',
+    }, {
+      templateHtml: '<div id="template-copy">{{template_copy}}</div><p>{{description}}</p>',
+      title: 'Amp',
+      description: 'Description',
+      keyFeatures: '',
+    });
+    assert.equal(preview.generatedBodyHtml, '<div id="template-copy"><p>Saved copy</p></div><p>Description</p>');
+});
+
+test('an explicitly cleared preview copy does not fall back to the saved copy', () => {
+    const preview = buildEbayApprovalPreviewFromFields({
+      'eBay Inventory SKU': 'PREVIEW-SKU',
+      'Item Title': 'Amp',
+      'eBay Template Copy': '<p>Saved copy</p>',
+    }, {
+      templateHtml: '<div id="template-copy">{{template_copy}}</div>',
+      title: 'Amp',
+      description: 'Description',
+      keyFeatures: '',
+      templateCopy: '',
+    });
+    assert.equal(preview.generatedBodyHtml, '<div id="template-copy"></div>');
+});
+
+test('without a template saved copy does not replace or get inserted into manual listing HTML', () => {
+    const manualBody = '<p>Manual listing HTML</p>';
+    const preview = buildEbayApprovalPreviewFromFields({
+      'eBay Inventory SKU': 'PREVIEW-SKU',
+      'Item Title': 'Amp',
+      'Ebay Body (HTML)': manualBody,
+      'eBay Template Copy': '<p>Saved for later</p>',
+    }, {
+      templateHtml: '',
+      title: 'Amp',
+      description: 'Description',
+      keyFeatures: '',
+    });
+    assert.equal(preview.generatedBodyHtml, '');
+    assert.equal(preview.draftPayloadBundle.offer.listingDescription, manualBody);
+});

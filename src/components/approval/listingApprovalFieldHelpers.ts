@@ -1,5 +1,8 @@
 import { SHIPPING_SERVICE_FIELD } from '@/stores/approvalStore';
 import {
+  EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
+  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
+  EBAY_TEMPLATE_COPY_FIELD_NAME,
   EBAY_BODY_HTML_FIELD_CANDIDATES,
   EBAY_BODY_KEY_FEATURES_FIELD_CANDIDATES,
   EBAY_DESCRIPTION_FIELD_CANDIDATES,
@@ -130,7 +133,7 @@ export function isEbayBodyHtmlFieldName(fieldName: string): boolean {
 
 export function isEbayBodyTemplateCopyOverrideFieldName(fieldName: string): boolean {
   const compact = fieldName.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  return compact === 'ebaybodytemplatecopyoverride';
+  return compact === 'ebaybodytemplatecopyoverride' || compact === 'ebaytemplatecopy';
 }
 
 export function isEbayBodyHtmlTemplateFieldName(fieldName: string): boolean {
@@ -145,6 +148,9 @@ export function isEbayBodyHtmlTemplateFieldName(fieldName: string): boolean {
 }
 
 export function isEbayBodyHtmlSyncTriggerFieldName(fieldName: string): boolean {
+  if (fieldName === EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD
+    || fieldName === EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD
+    || fieldName.trim().toLowerCase() === EBAY_TEMPLATE_COPY_FIELD_NAME.toLowerCase()) return true;
   const normalized = normalizeFieldLookupKey(fieldName);
   if (!normalized) return false;
 

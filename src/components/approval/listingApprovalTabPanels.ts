@@ -349,14 +349,17 @@ export function buildListingApprovalTabPanels({
     : '';
   const derivedShopifyServiceListingUrl = resolveShopifyServiceListingUrl(resolvedShopifyStoreDomain, formValues);
   const derivedEbayAdminListingUrl = ebayOfferId
-    ? `https://www.ebay.com/sh/lst/active?offerId=${encodeURIComponent(ebayOfferId)}`
+    ? 'https://www.ebay.com/sh/lst/active'
     : '';
   const derivedEbayServiceListingUrl = ebayListingId
     ? `https://www.ebay.com/itm/${encodeURIComponent(ebayListingId)}`
     : '';
 
-  const workflowStatus = selectedRecord && typeof selectedRecord.fields['Workflow Status'] === 'string'
-    ? selectedRecord.fields['Workflow Status'].trim()
+  const workflowDetailsRecord = selectedRecord
+    ? mergeDerivedWorkflowLifecycleFields(selectedRecord, formValues)
+    : null;
+  const workflowStatus = workflowDetailsRecord && typeof workflowDetailsRecord.fields['Workflow Status'] === 'string'
+    ? workflowDetailsRecord.fields['Workflow Status'].trim()
     : null;
   const allowMarketplaceListingLinks = !isCombinedApproval || isPostPublishMarketplaceStatus(workflowStatus);
 
@@ -373,8 +376,8 @@ export function buildListingApprovalTabPanels({
     ? (ebayServiceListingUrl ?? (derivedEbayServiceListingUrl || null))
     : null;
 
-  const workflowSummary: ListingApprovalWorkflowSummaryData | null = selectedRecord && isCombinedApproval
-    ? buildListingApprovalWorkflowSummaryData(selectedRecord)
+  const workflowSummary: ListingApprovalWorkflowSummaryData | null = workflowDetailsRecord && isCombinedApproval
+    ? buildListingApprovalWorkflowSummaryData(workflowDetailsRecord)
     : null;
 
   const selectedRecordViewProps = selectedRecord
@@ -446,8 +449,8 @@ export function buildListingApprovalTabPanels({
       approvalChannel,
       isCombinedApproval,
       workflowStatus: workflowSummary?.workflowStatus ?? null,
-      workflowReadinessMissingRequirements: selectedRecord && workflowSummary && isCombinedApproval
-        ? getUsedGearWorkflowListingReadiness(selectedRecord).missingRequirements
+      workflowReadinessMissingRequirements: workflowDetailsRecord && workflowSummary && isCombinedApproval
+        ? getUsedGearWorkflowListingReadiness(workflowDetailsRecord).missingRequirements
         : [],
       saving,
       approving,
@@ -481,9 +484,6 @@ export function buildListingApprovalTabPanels({
     })
     : null;
 
-  const workflowDetailsRecord = selectedRecord
-    ? mergeDerivedWorkflowLifecycleFields(selectedRecord, formValues)
-    : null;
   const workflowDetails = workflowDetailsRecord && isCombinedApproval && workflowSummary && hasTableReference
     ? workflowSummary.workflowStatus === 'Sold - Ready to Ship' || workflowSummary.workflowStatus === 'Shipped'
       ? createElement(ListingApprovalSoldReadyPanel, {
@@ -494,11 +494,13 @@ export function buildListingApprovalTabPanels({
       })
       : createElement(ListingApprovalWorkflowOpsPanel, {
         selectedRecord: workflowDetailsRecord,
+        publishing: pushingTarget !== null,
         tableReference,
         tableName,
         loadRecords,
         onMovedBackToReady: () => {
           setDerivedFormValue('Workflow Status', 'Approved for Publish');
+          setDerivedFormValue('Listed At', '');
           setDerivedFormValue('Shopify REST Product ID', '');
           setDerivedFormValue('Shopify Product ID', '');
           setDerivedFormValue('Shopify REST Published At', '');

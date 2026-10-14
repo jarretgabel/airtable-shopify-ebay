@@ -21,6 +21,49 @@ describe('useApprovalPreview', () => {
     });
   });
 
+  it.each([
+    { templateHtml: '<div>{{template_copy}}</div>', copy: '<p>Saved listing copy</p>' },
+    { templateHtml: '<div>{{template_copy}}</div>', copy: '' },
+    { templateHtml: '', copy: '<p>Saved for later</p>' },
+  ])('sends canonical copy only when rendering a template: $copy', async ({ templateHtml, copy }) => {
+    renderHook(() => useApprovalPreview({
+      approvalChannel: 'ebay',
+      selectedRecord: {
+        id: 'rec-copy-preview',
+        createdTime: '2026-05-18T00:00:00.000Z',
+        fields: { 'eBay Template Copy': '<p>Previously saved</p>' },
+      },
+      fieldKinds: {},
+      formValues: {
+        'eBay Template Copy': copy,
+        '__ebay_body_template_copy_override__': '<p>Stale virtual copy</p>',
+      },
+      setDerivedFormValue: vi.fn(),
+      fromFormValue: (value) => value,
+      isCombinedApproval: false,
+      ebayCategoryLabelsById: {},
+      selectedEbayTemplateHtml: templateHtml,
+      combinedEbayTitleFieldName: 'Title',
+      combinedDescriptionFieldName: 'Description',
+      combinedSharedKeyFeaturesFieldName: 'Key Features',
+      combinedEbayTestingNotesFieldName: 'Testing Notes',
+      combinedEbayBodyHtmlFieldName: 'Ebay Body (HTML)',
+      combinedMakeFieldName: 'Make',
+      combinedModelFieldName: 'Model',
+      isRemovedCombinedEbayPriceFieldName: () => false,
+      isEbayHandlingCostFieldName: () => false,
+      isEbayGlobalShippingFieldName: () => false,
+    }));
+    await waitFor(() => expect(normalizeApprovalRecordMock).toHaveBeenCalled());
+    expect(normalizeApprovalRecordMock).toHaveBeenCalledWith(
+      expect.objectContaining({ 'eBay Template Copy': copy }),
+      'ebay',
+      expect.objectContaining({
+        bodyPreview: templateHtml ? expect.objectContaining({ templateCopy: copy }) : undefined,
+      }),
+    );
+  });
+
   it('falls back to merged source values when combined form values are blank', async () => {
     renderHook(() => useApprovalPreview({
       approvalChannel: 'combined',

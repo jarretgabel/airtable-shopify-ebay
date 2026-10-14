@@ -221,6 +221,8 @@ describe('buildListingApprovalTabPanels', () => {
         'Workflow Status': 'Listed, Shopify',
         'Listed At': '2026-05-07T12:00:00.000Z',
         'Shopify REST Product ID': '12345',
+        'eBay Offer ID': 'offer-live',
+        'eBay Listing ID': 'listing-live',
       },
     });
 
@@ -235,6 +237,124 @@ describe('buildListingApprovalTabPanels', () => {
       'Listed At': '2026-05-07T12:00:00.000Z',
       'Shopify REST Product ID': '12345',
     });
+    expect(result.selectedRecordPanelProps?.workflowSummary?.workflowStatus).toBe('Listed, Shopify');
+    expect(buildListingApprovalSelectedRecordStatusPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      workflowStatus: 'Listed, Shopify',
+      ebayAdminListingUrl: 'https://www.ebay.com/sh/lst/active',
+      ebayServiceListingUrl: 'https://www.ebay.com/itm/listing-live',
+    }));
+  });
+
+  it('hides stale marketplace links immediately after returning to Ready', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'rec-taken-down',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        'Workflow Status': 'Listed, eBay',
+        'eBay Offer ID': 'offer-old',
+        'eBay Listing ID': 'listing-old',
+      },
+    };
+    const result = buildListingApprovalTabPanels({
+      ...createBaseParams(selectedRecord),
+      formValues: {
+        'Workflow Status': 'Approved for Publish',
+        'Listed At': '',
+        'eBay Offer ID': '',
+        'eBay Listing ID': '',
+      },
+    });
+    expect(result.selectedRecordPanelProps?.workflowSummary?.workflowStatus).toBe('Approved for Publish');
+    expect(buildListingApprovalSelectedRecordStatusPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      workflowStatus: 'Approved for Publish',
+      ebayAdminListingUrl: null,
+      ebayServiceListingUrl: null,
+    }));
+  });
+
+  it('clears the cached listing date when a takedown returns the record to Ready', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'rec-takedown-date',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: { 'Workflow Status': 'Listed, Shopify', 'Listed At': '2026-05-07T12:00:00.000Z' },
+    };
+    const params = createBaseParams(selectedRecord);
+    const result = buildListingApprovalTabPanels(params);
+    const details = result.selectedRecordPanelProps?.workflowDetails;
+    if (!isValidElement<{ onMovedBackToReady: () => void }>(details)) {
+      throw new Error('Expected workflow lifecycle panel.');
+    }
+    details.props.onMovedBackToReady();
+    expect(params.setDerivedFormValue).toHaveBeenCalledWith('Listed At', '');
+  });
+
+  it('opens unfiltered Seller Hub and the current listing after republishing', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'rec-republished',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        Name: 'Bel Canto Pre 1',
+        'Workflow Status': 'Listed, eBay',
+        'eBay Offer ID': '310041424011',
+        'eBay Listing ID': '820235128624',
+      },
+    };
+
+    buildListingApprovalTabPanels({
+      ...createBaseParams(selectedRecord),
+      formValues: {
+        Name: 'Bel Canto Pre 1',
+        'eBay Offer ID': '310041424011',
+        'eBay Listing ID': '820235156666',
+      },
+    });
+
+    expect(buildListingApprovalSelectedRecordStatusPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      ebayAdminListingUrl: 'https://www.ebay.com/sh/lst/active',
+      ebayServiceListingUrl: 'https://www.ebay.com/itm/820235156666',
+    }));
+  });
+
+  it('keeps marketplace links hidden before publishing even when old eBay IDs remain', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'rec-ready',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        Name: 'Bel Canto Pre 1',
+        'Workflow Status': 'Approved for Publish',
+      },
+    };
+
+    buildListingApprovalTabPanels({
+      ...createBaseParams(selectedRecord),
+      formValues: {
+        'eBay Offer ID': '310041424011',
+        'eBay Listing ID': '820235128624',
+      },
+    });
+
+    expect(buildListingApprovalSelectedRecordStatusPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      ebayAdminListingUrl: null,
+      ebayServiceListingUrl: null,
+    }));
+  });
+
+  it('omits eBay links when marketplace IDs are missing', () => {
+    const selectedRecord: AirtableRecord = {
+      id: 'rec-no-ebay',
+      createdTime: '2026-05-07T00:00:00.000Z',
+      fields: {
+        Name: 'Bel Canto Pre 1',
+        'Workflow Status': 'Listed, Shopify',
+      },
+    };
+
+    buildListingApprovalTabPanels(createBaseParams(selectedRecord));
+
+    expect(buildListingApprovalSelectedRecordStatusPropsMock).toHaveBeenCalledWith(expect.objectContaining({
+      ebayAdminListingUrl: null,
+      ebayServiceListingUrl: null,
+    }));
   });
 
   it('omits workflow summary when the selected row is not a workflow-backed combined record', () => {

@@ -111,6 +111,7 @@ export interface ShopifyUnifiedProductResult {
   title: string;
   handle?: string | null;
   status?: string | null;
+  onlineStoreUrl?: string | null;
 }
 
 export interface ShopifyUnifiedUpsertWithCollectionsResult {

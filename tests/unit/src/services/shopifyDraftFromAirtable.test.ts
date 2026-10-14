@@ -533,6 +533,26 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     expect(product.variants?.[0]?.inventory_quantity).toBe(1);
   });
 
+  it('defaults missing Shopify inventory quantity to one and enables tracking', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Default Quantity Product',
+    });
+    const request = buildShopifyUnifiedProductSetRequest(product);
+
+    expect(product.variants?.[0]?.inventory_quantity).toBe(1);
+    expect(product.variants?.[0]?.inventory_management).toBe('shopify');
+    expect(request.input.variants?.[0]?.inventoryItem?.tracked).toBe(true);
+  });
+
+  it('preserves an explicitly supplied zero Shopify inventory quantity', () => {
+    const product = buildShopifyDraftProductFromApprovalFields({
+      'Shopify REST Title': 'Out Of Stock Product',
+      Quantity: '0',
+    });
+
+    expect(product.variants?.[0]?.inventory_quantity).toBe(0);
+  });
+
   it('prefers canonical Shopify inventory quantity over legacy aliases in ProductSet payloads', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Canonical Quantity Product',

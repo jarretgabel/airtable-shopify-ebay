@@ -7,7 +7,74 @@ import {
   getRequiredShopifyWebhookCallbackUrl,
   listWebhookSubscriptions,
   resolveTaxonomyCategory,
+  syncProductVariantInventoryLevels,
 } from '../../../../../../aws/src/providers/shopify/client.js';
+
+test('syncProductVariantInventoryLevels sets the requested quantity at the only active location', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;
+  const originalAccessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+  const originalInventoryLocationId = process.env.SHOPIFY_INVENTORY_LOCATION_ID;
+  const originalLocationId = process.env.SHOPIFY_LOCATION_ID;
+  process.env.SHOPIFY_STORE_DOMAIN = 'test-shop.myshopify.com';
+  process.env.SHOPIFY_ACCESS_TOKEN = 'token';
+  process.env.SHOPIFY_INVENTORY_LOCATION_ID = '';
+  process.env.SHOPIFY_LOCATION_ID = '';
+  const requests: Array<{ url: string; method: string; body?: Record<string, unknown> }> = [];
+
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    const method = init?.method ?? 'GET';
+    const body = typeof init?.body === 'string' ? JSON.parse(init.body) as Record<string, unknown> : undefined;
+    requests.push({ url, method, body });
+
+    if (url.includes('/products/123.json')) {
+      return new Response(JSON.stringify({
+        product: {
+          variants: [{
+            id: 456,
+            sku: '11750',
+            position: 1,
+            inventory_item_id: 789,
+          }],
+        },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    if (url.includes('/locations.json')) {
+      return new Response(JSON.stringify({
+        locations: [{ id: 321, active: true }],
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    if (url.includes('/inventory_levels/set.json')) {
+      return new Response(JSON.stringify({ inventory_level: { available: 1 } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    throw new Error(`Unexpected Shopify request: ${url}`);
+  };
+
+  try {
+    await syncProductVariantInventoryLevels(123, [{ sku: '11750', position: 1, quantity: 1 }]);
+
+    const setRequest = requests.find((request) => request.url.includes('/inventory_levels/set.json'));
+    assert.equal(setRequest?.method, 'POST');
+    assert.deepEqual(setRequest?.body, {
+      location_id: 321,
+      inventory_item_id: 789,
+      available: 1,
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.SHOPIFY_STORE_DOMAIN = originalStoreDomain;
+    process.env.SHOPIFY_ACCESS_TOKEN = originalAccessToken;
+    process.env.SHOPIFY_INVENTORY_LOCATION_ID = originalInventoryLocationId;
+    process.env.SHOPIFY_LOCATION_ID = originalLocationId;
+  }
+});
 
 test('getColorPatternMetaobjectIdsByTaxonomyValueIds maps taxonomy references to metaobjects', async () => {
   const originalFetch = globalThis.fetch;

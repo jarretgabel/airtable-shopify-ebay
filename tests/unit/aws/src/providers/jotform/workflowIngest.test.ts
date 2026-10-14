@@ -1,7 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createIngestJotFormSubmissionWorkflow } from '../../../../../../aws/src/providers/jotform/workflowIngest.js';
+import { createIngestJotFormSubmissionWorkflow, parseWorkflowImageMetadata, replaceIntakeImageMetadata, serializeWorkflowImageMetadata } from '../../../../../../aws/src/providers/jotform/workflowIngest.js';
 import type { JotFormSubmission } from '../../../../../../aws/src/providers/jotform/client.js';
+
+test('refreshing intake preserves saved eBay caches on listing photos', () => {
+  const cache = { url: 'https://i.ebayimg.com/photo.jpg', sha256: 'a'.repeat(64) };
+  const metadata = parseWorkflowImageMetadata(JSON.stringify([{
+    url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', ebayHostedImageCache: cache,
+  }]));
+  const replaced = replaceIntakeImageMetadata(metadata, [{ id: 'intake', url: 'https://drive.google.com/uc?id=intake', filename: 'intake.jpg' }]);
+  const saved = JSON.parse(serializeWorkflowImageMetadata(replaced));
+  assert.deepEqual(saved.find((entry: { sourceStage: string }) => entry.sourceStage === 'photos').ebayHostedImageCache, cache);
+});
 
 function buildSubmission(overrides: Partial<JotFormSubmission> = {}): JotFormSubmission {
   return {

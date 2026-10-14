@@ -1,6 +1,9 @@
 import { TAB_DATA_TTLS, shouldReuseTabData } from '@/app/tabDataCache';
 import {
   EBAY_CATEGORIES_FIELD_CANDIDATES,
+  EBAY_BODY_HTML_FIELD_CANDIDATES,
+  EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
+  EBAY_TEMPLATE_COPY_FIELD_NAME,
   EBAY_CONDITION_FIELD_CANDIDATES,
   EBAY_DESCRIPTION_FIELD_CANDIDATES,
   EBAY_FORMAT_FIELD_CANDIDATES,
@@ -236,7 +239,35 @@ export function createHydrateFormAction(set: ApprovalStoreSet): ApprovalStore['h
     mirrorAliasValues(SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES);
     mirrorAliasValues(EBAY_PRICE_ALIAS_FIELDS);
 
-    set({ formValues: nextValues, initialFormValues: { ...nextValues }, fieldKinds: nextKinds });
+    const templateCopyFieldName = [...allFieldNames, ...Object.keys(record.fields)].find((fieldName) =>
+      fieldName.toLowerCase() === EBAY_TEMPLATE_COPY_FIELD_NAME.toLowerCase()) ?? EBAY_TEMPLATE_COPY_FIELD_NAME;
+    const hasSavedTemplateCopy = Object.prototype.hasOwnProperty.call(record.fields, templateCopyFieldName);
+    const savedTemplateCopy = toFormValueForField(templateCopyFieldName, record.fields[templateCopyFieldName]);
+    nextValues[templateCopyFieldName] = savedTemplateCopy;
+    nextKinds[templateCopyFieldName] = 'text';
+    const bodyHtmlFieldName = Object.keys(record.fields).find((fieldName) =>
+      EBAY_BODY_HTML_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === fieldName.toLowerCase()));
+    const savedBodyHtml = bodyHtmlFieldName ? record.fields[bodyHtmlFieldName] : undefined;
+    if (typeof savedBodyHtml === 'string' && savedBodyHtml.trim()) {
+      const bodyDocument = new DOMParser().parseFromString(savedBodyHtml, 'text/html');
+      const editorSections = [
+        [templateCopyFieldName, 'template-copy'],
+        [EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD, 'about'],
+      ] as const;
+      editorSections.forEach(([fieldName, sectionId]) => {
+        if (sectionId === 'template-copy' && hasSavedTemplateCopy) return;
+        const section = bodyDocument.getElementById(sectionId);
+        if (!section) return;
+        nextValues[fieldName] = section.innerHTML.trim();
+        nextKinds[fieldName] = 'text';
+      });
+    }
+
+    set({
+      formValues: nextValues,
+      initialFormValues: { ...nextValues, [templateCopyFieldName]: savedTemplateCopy },
+      fieldKinds: nextKinds,
+    });
   };
 }
 

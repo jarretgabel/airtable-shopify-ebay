@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { recordTitle } from '@/app/appNavigation';
 import { getPublishRequiredFieldValidationNotice } from '@/components/approval/listingApprovalActionValidation';
 import { publishApprovalRecord } from '@/services/app-api/approval';
-import { updateConfiguredRecord } from '@/services/app-api/airtable';
+import { getConfiguredRecord, updateConfiguredRecord } from '@/services/app-api/airtable';
 import { uploadImageUrlToEbayHostedPictures } from '@/services/app-api/ebay';
+import { mergeEbayImageCaches } from '@/services/ebayImageCache';
+import { isEbayHostedImageCache, type EbayHostedImageCache } from '@contracts/ebayImages';
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
 import { getUsedGearWorkflowStatus } from '@/services/usedGearWorkflow';
 import { resolveWorkflowStatusAfterPublish } from '@/services/usedGearWorkflowLifecycle';
@@ -111,6 +113,9 @@ export function useListingApprovalPublishActions({
         const message = error instanceof Error ? error.message : String(error);
         const unknownFieldNames = getUnknownFieldNamesFromWriteError(message);
         if (unknownFieldNames.length === 0) {
+          throw error;
+        }
+        if (unknownFieldNames.some((fieldName) => fieldName === 'Listed At' || fieldName === 'Workflow Status')) {
           throw error;
         }
 
@@ -230,22 +235,35 @@ export function useListingApprovalPublishActions({
     }
 
     const hostedUrls = [...imageUrls];
+    const imageMetadata = parseWorkflowImageMetadata(
+      fields['Workflow Image Metadata JSON']
+      ?? fields['Workflow Image Metadata']
+      ?? fields.workflow_image_metadata_json
+      ?? fields.workflow_image_metadata,
+    );
+    const cachedImages = new Map(imageMetadata.map((image) => [image.url, image.ebayHostedImageCache]));
+    const cacheUpdates = new Map<string, EbayHostedImageCache>();
     const pending = imageUrls
       .map((url, index) => ({ url, index }))
       .filter(({ url }) => !isEbayHostedImageUrl(url));
+    const checkingForReuse = pending.some(({ url }) => Boolean(cachedImages.get(url)));
+    const progressTitle = checkingForReuse ? 'Checking eBay images' : 'Uploading eBay images';
 
     if (pending.length > 0) {
       pushInlineActionNotice(
         'info',
-        'Uploading eBay images',
-        `Uploading approved images to eBay (0/${pending.length}).`,
+        progressTitle,
+        checkingForReuse
+          ? `Checking approved images for changes (0/${pending.length}).`
+          : `Uploading approved images to eBay (0/${pending.length}).`,
         { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID, persistent: true },
       );
     }
 
     let nextPendingIndex = 0;
     let completed = 0;
-    const failures: Array<{ imageNumber: number; error: unknown }> = [];
+    let reused = 0;
+    const failures: Array<{ imageNumber: number; error: unknown; attempts: number }> = [];
 
     const uploadNextImage = async (): Promise<void> => {
       while (nextPendingIndex < pending.length) {
@@ -253,15 +271,26 @@ export function useListingApprovalPublishActions({
         nextPendingIndex += 1;
 
         let lastError: unknown;
+        let attemptsMade = 0;
         for (let attempt = 1; attempt <= EBAY_IMAGE_UPLOAD_ATTEMPTS; attempt += 1) {
+          attemptsMade = attempt;
           try {
-            const uploaded = await uploadImageUrlToEbayHostedPictures(pendingImage.url, pendingImage.index);
+            const uploaded = await uploadImageUrlToEbayHostedPictures(pendingImage.url, pendingImage.index, cachedImages.get(pendingImage.url));
+            const cache = { url: uploaded.url, sha256: uploaded.sha256 };
+            if (!isEbayHostedImageCache(cache)) {
+              lastError = new Error('eBay image preparation returned an invalid hosted URL or missing content fingerprint.');
+              break;
+            }
+            cacheUpdates.set(pendingImage.url, cache);
             hostedUrls[pendingImage.index] = uploaded.url;
             completed += 1;
+            if (uploaded.reused) reused += 1;
             pushInlineActionNotice(
               'info',
-              'Uploading eBay images',
-              `Uploading approved images to eBay (${completed}/${pending.length}).`,
+              progressTitle,
+              checkingForReuse
+                ? `${completed}/${pending.length} images ready: ${reused} reused, ${completed - reused} uploaded.`
+                : `Uploading approved images to eBay (${completed}/${pending.length}).`,
               { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID, persistent: true },
             );
             lastError = undefined;
@@ -272,7 +301,7 @@ export function useListingApprovalPublishActions({
         }
 
         if (lastError !== undefined) {
-          failures.push({ imageNumber: pendingImage.index + 1, error: lastError });
+          failures.push({ imageNumber: pendingImage.index + 1, error: lastError, attempts: attemptsMade });
         }
       }
     };
@@ -284,10 +313,33 @@ export function useListingApprovalPublishActions({
       ),
     );
 
+    if (cacheUpdates.size > 0 && selectedRecord) {
+      const currentRecord = await getConfiguredRecord(approvalPublishSource, selectedRecord.id);
+      const currentMetadata = currentRecord.fields['Workflow Image Metadata JSON'];
+      const nextMetadata = mergeEbayImageCaches(currentMetadata, cacheUpdates);
+      if (nextMetadata !== currentMetadata) {
+        await updateConfiguredRecord(approvalPublishSource, selectedRecord.id, {
+          'Workflow Image Metadata JSON': nextMetadata,
+        });
+        const draftMetadata = useApprovalStore.getState().formValues?.['Workflow Image Metadata JSON'];
+        if (typeof draftMetadata === 'string' && draftMetadata !== fields['Workflow Image Metadata JSON'] && draftMetadata !== nextMetadata) {
+          const draftUrls = new Set(parseWorkflowImageMetadata(draftMetadata).map((image) => image.url));
+          const draftUpdates = new Map([...cacheUpdates].filter(([url]) => draftUrls.has(url)));
+          if (draftUpdates.size > 0) {
+            setFormValue('Workflow Image Metadata JSON', mergeEbayImageCaches(draftMetadata, draftUpdates));
+          }
+        } else if (setDerivedFormValue) {
+          setDerivedFormValue('Workflow Image Metadata JSON', nextMetadata);
+        } else {
+          setFormValue('Workflow Image Metadata JSON', nextMetadata);
+        }
+      }
+    }
+
     if (failures.length > 0) {
       const firstFailure = failures[0];
       const reason = firstFailure.error instanceof Error ? firstFailure.error.message : String(firstFailure.error);
-      throw new Error(`Could not upload eBay image ${firstFailure.imageNumber} after ${EBAY_IMAGE_UPLOAD_ATTEMPTS} attempts: ${reason}`);
+      throw new Error(`Could not upload eBay image ${firstFailure.imageNumber} after ${firstFailure.attempts} ${firstFailure.attempts === 1 ? 'attempt' : 'attempts'}: ${reason}`);
     }
 
     return {
@@ -300,9 +352,10 @@ export function useListingApprovalPublishActions({
     target: 'shopify' | 'ebay' | 'both',
     executionResult: Awaited<ReturnType<typeof publishApprovalRecord>>,
   ) => {
-    if (!selectedRecord) return;
+    if (!selectedRecord || (!executionResult.shopify && !executionResult.ebay)) return;
 
-    const currentWorkflowStatus = getUsedGearWorkflowStatus(selectedRecord.fields);
+    const currentRecord = await getConfiguredRecord(approvalPublishSource, selectedRecord.id);
+    const currentWorkflowStatus = getUsedGearWorkflowStatus(currentRecord.fields);
     if (!currentWorkflowStatus) return;
 
     const publishedToShopify = Boolean(executionResult.shopify);
@@ -323,16 +376,17 @@ export function useListingApprovalPublishActions({
 
     if (nextWorkflowStatus) {
       fields['Workflow Status'] = nextWorkflowStatus;
-      if (typeof selectedRecord.fields['Listed At'] !== 'string' || selectedRecord.fields['Listed At'].trim().length === 0) {
+      const listedAt = currentRecord.fields['Listed At'];
+      if (typeof listedAt !== 'string' || !listedAt.trim() || Number.isNaN(Date.parse(listedAt))) {
         fields['Listed At'] = now;
       }
     }
 
     if (publishedToShopify) {
       fields['Shopify REST Published At'] = now;
-      fields['Shopify REST Published Scope'] = typeof selectedRecord.fields['Shopify REST Published Scope'] === 'string'
-        && selectedRecord.fields['Shopify REST Published Scope'].trim().length > 0
-        ? selectedRecord.fields['Shopify REST Published Scope'].trim()
+      fields['Shopify REST Published Scope'] = typeof currentRecord.fields['Shopify REST Published Scope'] === 'string'
+        && currentRecord.fields['Shopify REST Published Scope'].trim().length > 0
+        ? currentRecord.fields['Shopify REST Published Scope'].trim()
         : 'web';
       if (executionResult.shopify?.productId) {
         fields['Shopify REST Product ID'] = executionResult.shopify.productId;

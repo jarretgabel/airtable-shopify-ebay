@@ -6,6 +6,7 @@ import {
   findLatestProductByTitleOrHandle,
   getColorPatternMetaobjectIdsByTaxonomyValueIds,
   getProduct,
+  publishProductToOnlineStore,
   getTaxonomyCategoryAttributes,
   resolveTaxonomyCategory,
   syncProductVariantInventoryLevels,
@@ -191,12 +192,13 @@ async function resolveCategoryForPublishWithoutPreview(
   }
 }
 
-async function applyInventorySyncWarnings(
+async function completeShopifyPublish(
   productId: number,
   targetInventoryLevels: Array<{ sku?: string; position?: number; quantity: number }>,
   baseWarnings: string[],
   debugContext?: { enabled: boolean; recordId: string },
 ): Promise<string[]> {
+  await publishProductToOnlineStore(productId);
   if (targetInventoryLevels.length === 0) {
     return baseWarnings;
   }
@@ -463,7 +465,7 @@ export async function publishApprovalListingToShopify({
         existingProductId: parsedExistingProductId,
         taxonomyMetafields,
       });
-      const resolvedWarnings = await applyInventorySyncWarnings(
+      const resolvedWarnings = await completeShopifyPublish(
         updated.product.id,
         targetInventoryLevels,
         [...warnings, ...updated.warnings],
@@ -507,7 +509,7 @@ export async function publishApprovalListingToShopify({
 
     warnings.push(`Found existing Shopify draft #${duplicateGuardMatch.id} by title/handle and updated it instead of creating a duplicate draft.`);
 
-    const resolvedWarnings = await applyInventorySyncWarnings(
+    const resolvedWarnings = await completeShopifyPublish(
       updated.product.id,
       targetInventoryLevels,
       [...warnings, ...updated.warnings],
@@ -539,7 +541,7 @@ export async function publishApprovalListingToShopify({
       : `Shopify listing was created, but writing ${productIdFieldName} to Airtable failed.`);
   }
 
-  const resolvedWarnings = await applyInventorySyncWarnings(
+  const resolvedWarnings = await completeShopifyPublish(
     created.product.id,
     targetInventoryLevels,
     [...warnings, ...created.warnings],

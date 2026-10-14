@@ -3,7 +3,7 @@ import { normalizeApprovalRecord } from '@/services/app-api/approval';
 import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
-  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
+  resolveEbayTemplateCopyValue,
 } from '@/components/approval/listingApprovalEbayConstants';
 import type { EbayApprovalPreviewResult } from '@/services/app-api/ebay';
 import type { ShopifyApprovalPreviewResult } from '@/services/app-api/shopify';
@@ -66,10 +66,6 @@ function resolveEbayDescriptionPreviewValue(
   combinedDescriptionFieldName: string,
 ): string {
   return resolveCombinedPreviewValue(formValues, sourceFields, selectedRecord, combinedDescriptionFieldName);
-}
-
-function resolveEbayTemplateCopyPreviewValue(formValues: Record<string, string>): string {
-  return (formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '').trim();
 }
 
 function resolveEbayAboutPreviewValue(formValues: Record<string, string>): string {
@@ -178,13 +174,13 @@ export function useApprovalPreview({
   const isEbayPayloadPreviewContext = approvalChannel === 'ebay' || approvalChannel === 'combined';
 
   const currentEbayPreviewBodyInput = useMemo(() => {
-    if (!isEbayPayloadPreviewContext) return undefined;
+    if (!isEbayPayloadPreviewContext || !selectedEbayTemplateHtml.trim()) return undefined;
 
     return {
       templateHtml: selectedEbayTemplateHtml,
       title: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTitleFieldName),
       description: resolveEbayDescriptionPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedDescriptionFieldName),
-      templateCopy: resolveEbayTemplateCopyPreviewValue(formValues),
+      templateCopy: resolveEbayTemplateCopyValue(formValues).trim(),
       keyFeatures: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedSharedKeyFeaturesFieldName),
       testingNotes: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayTestingNotesFieldName),
       make: resolveCombinedPreviewValue(formValues, mergedDraftSourceFields, selectedRecord, combinedMakeFieldName),

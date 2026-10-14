@@ -271,6 +271,17 @@ describe('app-api ebay', () => {
     }));
   });
 
+  it('passes saved fingerprints to image preparation and returns reuse results', async () => {
+    const cachedImage = { url: 'https://i.ebayimg.com/existing.jpg', sha256: 'a'.repeat(64) };
+    fetchMock.mockResolvedValueOnce(Response.json({ ...cachedImage, reused: true }));
+    expect(await uploadImageUrlToEbayHostedPictures('https://drive.google.com/uc?id=photo', 1, cachedImage))
+      .toEqual({ ...cachedImage, reused: true });
+    expect(fetchMock).toHaveBeenCalledWith(expectApiPath('/api/ebay/images'), expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ sourceUrl: 'https://drive.google.com/uc?id=photo', index: 1, cachedImage }),
+    }));
+  });
+
   it('calls the Lambda eBay approval preview endpoint', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({

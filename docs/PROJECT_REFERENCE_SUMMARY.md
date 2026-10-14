@@ -49,6 +49,7 @@
 - All forms and workflow actions target the `SB Inventory` Airtable table.
 - Data model and field rules documented in `docs/used-gear-workflow/data-model-and-approvals.md`.
 - Field mapping and schema patterns in `docs/forms/README.md` and `docs/forms/templates/README.md`.
+- `eBay Template Copy` is a long-text field (rich text disabled) holding per-listing copy HTML, separate from `Ebay Body (HTML)`. Layout templates render it in their copy slot; blank copy adds nothing. Without a layout template, saved copy does not modify manual body HTML. Legacy embedded copy is migrated on the next listing save, not by bulk updates or republishing.
 
 ### Image Metadata
 - Images uploaded to the `Images` attachment field after record creation.
@@ -57,6 +58,7 @@
 - Intake images: `sourceStage: "intake"` (shown in intake snapshot, regardless of `includedInListing`).
 - Testing/Photography images: `sourceStage: "testing"` or `"photos"`, shown in main listing gallery only if `includedInListing: true`.
 - Workflow metadata is the canonical image source for listings. Legacy Airtable `Images` attachments may remain for archival/reference purposes, but must not be used as listing image URLs.
+- eBay preparation saves an optional `ebayHostedImageCache: { url, sha256 }` on each source image in `Workflow Image Metadata JSON`; no additional Airtable field is needed. The SHA-256 is computed from downloaded source bytes, not filenames or URLs. Unchanged images reuse an accessible eBay-hosted URL; new/changed images and URLs returning 404/410 are uploaded. Other verification errors are surfaced without duplicate uploads. Cache writes merge into the current saved metadata and preserve gallery order, inclusion, roles and annotations. Old listings need one preparation pass to establish these mappings. Whole-item Inventory API updates still include the ordered image URL list.
 - `npm run workflow:sku-drive-images:audit` produces a read-only, newest-first reconciliation plan for exact-SKU Google Drive folders. It skips existing Drive-backed metadata and requires explicit approval for cleanly named images whose processed state cannot be inferred safely. Use `--only-skus sku1,sku2` for a bounded audit; when explicit file IDs are approved, only those selected images are planned, including for records that already have photos.
 - `npm run workflow:sku-drive-images:coverage -- --skip-skus 10800` compares every file in every exact-SKU Drive folder against included testing/photos-stage metadata, newest records first. It groups identical file content across duplicate folders, distinguishes explicitly processed files from unverified candidates/originals, and never writes to Airtable or Drive.
 - Apply only a reviewed plan with `npm run workflow:sku-drive-images:apply -- --plan <plan.json> --confirm SYNC_SKU_GOOGLE_DRIVE_PROCESSED_IMAGES`. If confirmed real photos replace workflow seed placeholders, also pass `--replace-seeded-photo-metadata`; that removes only the matching seed rows from `Workflow Image Metadata JSON`, never Drive files. The sync never modifies the legacy `Images` attachment field.
@@ -79,6 +81,10 @@
 - Testing and Photography must be complete before Listings.
 - Listings move to live status only after review and publish action.
 - Post-Publish owns active post-sale follow-through and Archive owns shipped lookup/reference; Listings keeps record context but does not own post-sale workflow.
+- Listings exposes compact `Take Down Shopify`, `Take Down eBay`, and `Take Down Both` actions. These still require confirmation and return the record to Ready after successful takedown. A standalone workflow-only Back to Ready button is not shown, because it would clear saved listing IDs without removing live listings.
+- The Post-Publish Lifecycle label verifies the linked Shopify product and eBay offer through authenticated local `/api` reads and can display `Listed, Shopify + eBay`. This is a display label, not a new Airtable workflow status. Publish date writeback reads the current saved record so a stale pre-takedown timestamp cannot suppress restoring `Listed At`; ordinary live updates preserve the existing date.
+- Marketplace link gating, workflow summary and Publish/Update action labels use the same derived lifecycle values as the lifecycle panel. Successful publish writeback exposes the listing links immediately, without waiting for the selected queue row to refresh; a successful takedown hides them immediately.
+- Shopify approval publishing explicitly publishes the active product to Online Store after product creation/update and confirms its `onlineStoreUrl` before returning success. GraphQL `ACTIVE` alone does not publish a product to a sales channel. This publication step uses the existing REST product API and `write_products` access, preserves an existing publication, and changes no price, variant or image fields. The lifecycle panel requires both `ACTIVE` and an Online Store URL. The authenticated product-set API also accepts `{ action: "publish-online-store", productId }` to finish publication of an existing active product without recreating it.
 
 ### Approval & Listing Flow
 - Approval queues and listing review use shared UI conventions and change-tracking.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
+  getUsedGearWorkflowLifecycleStatusLabel,
   getUsedGearWorkflowPostSaleOutcome,
   getUsedGearWorkflowRestockDisposition,
   getUsedGearWorkflowStaleRecoveryStatus,
@@ -10,6 +11,19 @@ import {
 import type { AirtableRecord } from '@/types/airtable';
 
 describe('usedGearWorkflowLifecycle', () => {
+  it('labels both live channels without changing the canonical workflow status', () => {
+    expect(getUsedGearWorkflowLifecycleStatusLabel('Listed, Shopify', { shopify: true, ebay: true }))
+      .toBe('Listed, Shopify + eBay');
+    expect(getUsedGearWorkflowLifecycleStatusLabel('Stale Listing, eBay', { shopify: true, ebay: true }))
+      .toBe('Stale Listing, Shopify + eBay');
+    expect(getUsedGearWorkflowLifecycleStatusLabel('Listed, Shopify', { shopify: false, ebay: true }))
+      .toBe('Listed, eBay');
+    expect(getUsedGearWorkflowLifecycleStatusLabel('Listed, Shopify', { shopify: false, ebay: false }))
+      .toBe('No active marketplace listings');
+    expect(getUsedGearWorkflowLifecycleStatusLabel('Shipped', { shopify: true, ebay: true }))
+      .toBe('Shipped');
+  });
+
   it('derives stale-listing queue membership once a listed row crosses the threshold', () => {
     const record: AirtableRecord = {
       id: 'rec-listed',

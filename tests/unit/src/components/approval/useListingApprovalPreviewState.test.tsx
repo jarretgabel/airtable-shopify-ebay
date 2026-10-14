@@ -45,6 +45,7 @@ describe('useListingApprovalPreviewState', () => {
       },
       fieldKinds: {},
       formValues: {
+        'eBay Template Copy': '<p>Dedicated field copy</p>',
         Title: 'Marantz 2270',
         Description: 'Receiver description',
         Make: '',
@@ -70,6 +71,7 @@ describe('useListingApprovalPreviewState', () => {
     });
 
     expect(result.current.combinedEbayGeneratedBodyHtml).toContain('2270');
+    expect(result.current.combinedEbayGeneratedBodyHtml).toContain('<p>Dedicated field copy</p>');
     expect(setDerivedFormValue).not.toHaveBeenCalled();
   });
 

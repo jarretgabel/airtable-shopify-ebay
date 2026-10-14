@@ -233,7 +233,7 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
     'in_stock',
     'stock',
     'available',
-  ]));
+  ])) ?? 1;
   const inventoryManagement = getField(fields, ['Shopify REST Variant 1 Inventory Management', 'shopify_rest_variant_1_inventory_management']) || undefined;
   const sku = getField(fields, ['Shopify REST Variant 1 SKU', 'SKU', 'shopify_rest_variant_1_sku']) || undefined;
   const barcode = sku || getField(fields, ['Shopify REST Variant 1 Barcode', 'shopify_rest_variant_1_barcode']) || undefined;

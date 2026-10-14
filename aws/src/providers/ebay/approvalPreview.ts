@@ -8,7 +8,7 @@ import type { EbayApprovalPreviewResult as EbayApprovalPreview } from '../../sha
 import { buildEbayDraftPayloadBundleFromApprovalFields } from './approvalDraft.js';
 import { buildEbayBodyHtmlFromTemplate } from './approvalBodyTemplate.js';
 import { buildCategoryFieldUpdates, resolveSelectedCategoryIds, resolveSelectedCategoryNames } from './approvalPreviewCategories.js';
-import type { ApprovalFieldMap } from './approvalShared.js';
+import { getField, type ApprovalFieldMap } from './approvalShared.js';
 
 export type { EbayApprovalPreview };
 
@@ -39,7 +39,12 @@ export function buildEbayApprovalPreviewFromFields(
   categoryPreview?: EbayCategoryPreviewInput,
 ): EbayApprovalPreview {
   const nextFields = { ...fields };
-  const generatedBodyHtml = bodyPreview ? buildEbayBodyHtmlFromTemplate(bodyPreview) : '';
+  const generatedBodyHtml = bodyPreview?.templateHtml.trim()
+    ? buildEbayBodyHtmlFromTemplate({
+      ...bodyPreview,
+      templateCopy: bodyPreview.templateCopy ?? getField(fields, ['eBay Template Copy']),
+    })
+    : '';
   if (generatedBodyHtml.trim()) {
     const bodyHtmlFieldName = bodyPreview?.fieldName?.trim() || 'Ebay Body (HTML)';
     applyGeneratedBodyHtml(nextFields, bodyHtmlFieldName, generatedBodyHtml);

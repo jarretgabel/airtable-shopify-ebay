@@ -14,6 +14,7 @@ import type {
   EbayUploadedImageResult,
 } from '@/services/ebay/types';
 import type { EbayApprovalPreviewResult } from '@contracts/ebayApproval';
+import type { EbayHostedImageCache } from '@contracts/ebayImages';
 import type { EbayDraftPayloadBundle } from '@/services/ebayDraftFromAirtable';
 import type { AirtableConfiguredRecordsSource } from './airtableSources';
 import { isAppApiHttpError } from './errors';
@@ -297,11 +298,13 @@ export async function uploadImageToEbayHostedPictures(file: File): Promise<EbayU
 export async function uploadImageUrlToEbayHostedPictures(
   sourceUrl: string,
   index: number,
+  cachedImage?: EbayHostedImageCache,
 ): Promise<EbayUploadedImageResult> {
   try {
     return await postJson<EbayUploadedImageResult>('/api/ebay/images', {
       sourceUrl,
       index,
+      cachedImage,
     }, {
       timeoutMs: 35_000,
     });

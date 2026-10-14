@@ -10,7 +10,8 @@ import {
 import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
-  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
+  EBAY_TEMPLATE_COPY_FIELD_NAME,
+  resolveEbayTemplateCopyValue,
 } from './listingApprovalEbayConstants';
 import {
   isEbayAdvancedOptionField,
@@ -396,7 +397,9 @@ export function ApprovalFormFields({
     </Suspense>
   ) : null;
 
-  const editableEbayTemplateCopyValue = formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '';
+  const ebayTemplateCopyFieldName = allFieldNames.find((fieldName) =>
+    fieldName.toLowerCase() === EBAY_TEMPLATE_COPY_FIELD_NAME.toLowerCase()) ?? EBAY_TEMPLATE_COPY_FIELD_NAME;
+  const editableEbayTemplateCopyValue = resolveEbayTemplateCopyValue(formValues);
   const editableEbayAboutRawValue = formValues[EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD] ?? '';
   const editableEbayAboutValue = isEffectivelyEmptyHtml(editableEbayAboutRawValue)
     ? EBAY_BODY_ABOUT_DEFAULT_TEXT
@@ -406,12 +409,12 @@ export function ApprovalFormFields({
     ?? (approvalChannel === 'ebay' ? (
       <div className="space-y-3">
         <EbayTemplateCopyWysiwygEditor
-          fieldName={EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD}
+          fieldName={ebayTemplateCopyFieldName}
           value={editableEbayTemplateCopyValue}
           setFormValue={setFormValue}
           disabled={saving}
           label="Advanced: eBay Template Copy"
-          helperText={'Save reusable copy here, then load it only on listings that need it. Blank copy does not add anything above the product description.'}
+          helperText={'Save Updates stores this listing\'s copy in eBay Template Copy. Load a reusable preset only when needed. Blank copy adds nothing to the rendered template.'}
           enableTemplateLibrary
         />
 

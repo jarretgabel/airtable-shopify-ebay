@@ -179,6 +179,7 @@ export interface ShopifyUnifiedProductResult {
   title: string;
   handle?: string | null;
   status?: string | null;
+  onlineStoreUrl?: string | null;
 }
 
 type ShopifyGraphQlProductStatus = 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
@@ -722,6 +723,7 @@ export async function getProduct(id: number): Promise<ShopifyUnifiedProductResul
       title: string;
       handle?: string | null;
       status?: string | null;
+      onlineStoreUrl?: string | null;
     } | null;
   }>(
     `query GetProduct($id: ID!) {
@@ -730,6 +732,7 @@ export async function getProduct(id: number): Promise<ShopifyUnifiedProductResul
         title
         handle
         status
+        onlineStoreUrl
       }
     }`,
     { id: toShopifyProductGid(id) },
@@ -745,7 +748,57 @@ export async function getProduct(id: number): Promise<ShopifyUnifiedProductResul
     title: data.product.title,
     handle: data.product.handle,
     status: data.product.status,
+    ...(data.product.onlineStoreUrl !== undefined ? { onlineStoreUrl: data.product.onlineStoreUrl } : {}),
   };
+}
+
+export async function publishProductToOnlineStore(productId: number): Promise<ShopifyUnifiedProductResult> {
+  if (!Number.isSafeInteger(productId) || productId <= 0) {
+    throw new HttpError(400, 'productId must be a positive integer.', {
+      service: 'shopify', code: 'INVALID_PRODUCT_ID', retryable: false,
+    });
+  }
+  const product = await getProduct(productId);
+  if (!product) {
+    throw new HttpError(404, 'Shopify product was not found.', {
+      service: 'shopify', code: 'SHOPIFY_PRODUCT_NOT_FOUND', retryable: false,
+    });
+  }
+  if (product.status !== 'ACTIVE') {
+    throw new HttpError(409, 'Shopify product must be active before Online Store publication.', {
+      service: 'shopify', code: 'SHOPIFY_PRODUCT_NOT_ACTIVE', retryable: false,
+    });
+  }
+  if (product.onlineStoreUrl) return product;
+
+  const storeDomain = requireSecret('SHOPIFY_STORE_DOMAIN');
+  const response = await fetch(`https://${storeDomain}/admin/api/2024-04/products/${productId}.json`, {
+    method: 'PUT',
+    headers: {
+      'X-Shopify-Access-Token': requireSecret('SHOPIFY_ACCESS_TOKEN'),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ product: { id: productId, published_at: new Date().toISOString(), published_scope: 'web' } }),
+    signal: AbortSignal.timeout(12_000),
+  });
+  const body = await response.json() as { product?: { id: number; published_at?: string | null } };
+  if (!response.ok) {
+    throw new HttpError(response.status, `Shopify Online Store publication failed (HTTP ${response.status}).`, {
+      service: 'shopify', code: 'SHOPIFY_ONLINE_STORE_PUBLICATION_FAILED', retryable: response.status >= 500,
+    });
+  }
+  if (body.product?.id !== productId || !body.product.published_at || Number.isNaN(Date.parse(body.product.published_at))) {
+    throw new HttpError(502, 'Shopify did not confirm Online Store publication.', {
+      service: 'shopify', code: 'SHOPIFY_ONLINE_STORE_PUBLICATION_UNCONFIRMED', retryable: false,
+    });
+  }
+  const publishedProduct = await getProduct(productId);
+  if (!publishedProduct?.onlineStoreUrl || publishedProduct.status !== 'ACTIVE') {
+    throw new HttpError(502, 'Shopify saved publication, but the Online Store URL is not available yet.', {
+      service: 'shopify', code: 'SHOPIFY_ONLINE_STORE_URL_UNAVAILABLE', retryable: true,
+    });
+  }
+  return publishedProduct;
 }
 
 export async function upsertProductWithUnifiedRequest(

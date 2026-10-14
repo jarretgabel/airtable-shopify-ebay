@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   markWorkflowListingStale,
   markWorkflowRelisted,
-  moveWorkflowBackToReadyForPublish,
   takeDownWorkflowMarketplaceListingAndMoveBack,
   markWorkflowCancelled,
   markWorkflowPartialRefund,
@@ -17,11 +16,12 @@ import {
 } from '@/services/usedGearQueue';
 import {
   getUsedGearWorkflowPostPublishSnapshot,
+  getUsedGearWorkflowLifecycleStatusLabel,
   USED_GEAR_STALE_RECOVERY_STATUS_OPTIONS,
   type UsedGearWorkflowStaleRecoveryStatus,
 } from '@/services/usedGearWorkflowLifecycle';
 import { applyUsedGearWorkflowNoteTemplate, getUsedGearWorkflowNoteTemplates } from '@/services/usedGearWorkflowNoteTemplates';
-import { compactRowPrimaryActionButtonClass, compactRowSecondaryActionButtonClass } from '@/components/app/buttonStyles';
+import { compactActionRowClass, compactRowPrimaryActionButtonClass, compactRowSecondaryActionButtonClass } from '@/components/app/buttonStyles';
 import {
   tabFormControlBaseClass,
   tabFormControlMultilineClass,
@@ -29,6 +29,8 @@ import {
   warningInlineBannerClass,
 } from '@/components/tabs/uiClasses';
 import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
+import { getProduct } from '@/services/app-api/shopify';
+import { getOffer } from '@/services/app-api/ebay';
 import { resolveConfiguredRecordsSource } from '@/services/app-api/airtableSources';
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
@@ -44,6 +46,7 @@ interface ListingApprovalWorkflowOpsPanelProps {
     options?: { combinedMaxRecords?: number },
   ) => Promise<void>;
   onMovedBackToReady?: (updatedRecord: AirtableRecord) => void;
+  publishing?: boolean;
 }
 
 function normalizeStaleRecoveryStatus(value: unknown): UsedGearWorkflowStaleRecoveryStatus | '' {
@@ -136,10 +139,14 @@ export function ListingApprovalWorkflowOpsPanel({
   tableName,
   loadRecords,
   onMovedBackToReady,
+  publishing = false,
 }: ListingApprovalWorkflowOpsPanelProps) {
   const [workflowRecord, setWorkflowRecord] = useState(selectedRecord);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [marketplaceStatus, setMarketplaceStatus] = useState<{ shopify: boolean; ebay: boolean } | null>(null);
+  const [marketplaceStatusError, setMarketplaceStatusError] = useState<string | null>(null);
+  const [checkingMarketplaceStatus, setCheckingMarketplaceStatus] = useState(false);
   const [staleRecoveryDraftStatus, setStaleRecoveryDraftStatus] = useState<UsedGearWorkflowStaleRecoveryStatus | ''>('');
   const [staleRecoveryDraftNotes, setStaleRecoveryDraftNotes] = useState('');
   const [shipmentFollowThroughDraftNotes, setShipmentFollowThroughDraftNotes] = useState('');
@@ -206,6 +213,51 @@ export function ListingApprovalWorkflowOpsPanel({
     && (hasShopifyProductId || postPublishSnapshot?.status === 'Listed, Shopify' || postPublishSnapshot?.status === 'Stale Listing, Shopify');
   const canTakeDownEbay = (postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing')
     && (hasEbayOfferId || postPublishSnapshot?.status === 'Listed, eBay' || postPublishSnapshot?.status === 'Stale Listing, eBay');
+  const shopifyProductId = workflowShopifyProductId || selectedShopifyProductId;
+  const ebayOfferId = workflowEbayOfferId || selectedEbayOfferId;
+  const isListingStage = postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing';
+
+  useEffect(() => {
+    let cancelled = false;
+    setMarketplaceStatus(null);
+    setMarketplaceStatusError(null);
+    if (publishing || !isListingStage || (!shopifyProductId && !ebayOfferId)) {
+      setCheckingMarketplaceStatus(false);
+      return;
+    }
+    setCheckingMarketplaceStatus(true);
+    const verifyChannels = async () => {
+      try {
+        if (shopifyProductId && !/^\d+$/.test(shopifyProductId)) {
+          throw new Error('Cannot verify Shopify listing: invalid product ID.');
+        }
+        const [product, offer] = await Promise.all([
+          shopifyProductId ? getProduct(Number(shopifyProductId)) : Promise.resolve(null),
+          ebayOfferId ? getOffer(ebayOfferId) : Promise.resolve(null),
+        ]);
+        if (cancelled) return;
+        if (product && product.onlineStoreUrl === undefined) {
+          throw new Error('Shopify did not return Online Store publication status.');
+        }
+        setMarketplaceStatus({ shopify: product?.status === 'ACTIVE' && Boolean(product.onlineStoreUrl), ebay: offer?.status === 'PUBLISHED' });
+      } catch (statusError) {
+        if (cancelled) return;
+        setMarketplaceStatusError(`Could not verify marketplace listing status: ${statusError instanceof Error ? statusError.message : String(statusError)}`);
+      } finally {
+        if (!cancelled) setCheckingMarketplaceStatus(false);
+      }
+    };
+    void verifyChannels();
+    return () => { cancelled = true; };
+  }, [shopifyProductId, ebayOfferId, isListingStage, publishing]);
+
+  const lifecycleStatusLabel = publishing
+    ? 'Updating marketplace listings...'
+    : checkingMarketplaceStatus
+    ? 'Checking marketplace listings...'
+    : marketplaceStatus && postPublishSnapshot
+      ? getUsedGearWorkflowLifecycleStatusLabel(postPublishSnapshot.status, marketplaceStatus)
+      : displayValue(workflowRecord.fields['Workflow Status']);
   useEffect(() => {
     setStaleRecoveryDraftStatus(normalizeStaleRecoveryStatus(staleRecoveryStatus));
     setStaleRecoveryDraftNotes(staleRecoveryNotes);
@@ -314,6 +366,7 @@ export function ListingApprovalWorkflowOpsPanel({
           {error}
         </div>
       ) : null}
+      {marketplaceStatusError ? <div className={warningInlineBannerClass}>{marketplaceStatusError}</div> : null}
 
       {postPublishSnapshot || hasPostPublishStatus(workflowRecord.fields['Workflow Status']) ? (
         <details className="rounded-2xl border border-[var(--line)] bg-white/5" open>
@@ -322,7 +375,7 @@ export function ListingApprovalWorkflowOpsPanel({
             <div className="grid gap-3 md:grid-cols-4">
               <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
                 <div>Lifecycle Status</div>
-                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{displayValue(workflowRecord.fields['Workflow Status'])}</div>
+                <div className="mt-1 text-base font-semibold text-[var(--ink)]">{lifecycleStatusLabel}</div>
               </div>
               <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
                 <div>Listed At</div>
@@ -448,7 +501,7 @@ export function ListingApprovalWorkflowOpsPanel({
               </div>
             ) : null}
 
-            <div className="flex flex-wrap gap-2 border-t border-[var(--line)]/70 pt-4">
+            <div className={`${compactActionRowClass} border-t border-[var(--line)]/70 pt-4`}>
               {postPublishSnapshot?.status === 'Listed, Shopify' || postPublishSnapshot?.status === 'Listed, eBay' ? (
                 <button
                   type="button"
@@ -461,26 +514,10 @@ export function ListingApprovalWorkflowOpsPanel({
                   {saving ? 'Saving...' : 'Mark Stale'}
                 </button>
               ) : null}
-              {postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing' ? (
-                <button
-                  type="button"
-                  className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                  onClick={() => {
-                    void runAction(async () => {
-                      const updatedRecord = await moveWorkflowBackToReadyForPublish(selectedRecord.id);
-                      await syncListingSourceMoveBackState();
-                      onMovedBackToReady?.(updatedRecord);
-                      return updatedRecord;
-                    });
-                  }}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Back To Ready For Listing'}
-                </button>
-              ) : null}
               {canTakeDownShopify ? (
                 <button
                   type="button"
+                  title="Remove the Shopify listing and return this record to Ready for listing."
                   className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
                     const confirmed = window.confirm('Take down this Shopify listing and move this record back to Ready?');
@@ -496,12 +533,13 @@ export function ListingApprovalWorkflowOpsPanel({
                   }}
                   disabled={saving}
                 >
-                  {saving ? 'Saving...' : 'Take Down Shopify + Back To Ready'}
+                  {saving ? 'Saving...' : 'Take Down Shopify'}
                 </button>
               ) : null}
               {canTakeDownEbay ? (
                 <button
                   type="button"
+                  title="Remove the eBay listing and return this record to Ready for listing."
                   className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
                     const confirmed = window.confirm('Take down this eBay listing and move this record back to Ready?');
@@ -517,12 +555,13 @@ export function ListingApprovalWorkflowOpsPanel({
                   }}
                   disabled={saving}
                 >
-                  {saving ? 'Saving...' : 'Take Down eBay + Back To Ready'}
+                  {saving ? 'Saving...' : 'Take Down eBay'}
                 </button>
               ) : null}
               {canTakeDownShopify && canTakeDownEbay ? (
                 <button
                   type="button"
+                  title="Remove both listings and return this record to Ready for listing."
                   className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2.5 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={() => {
                     const confirmed = window.confirm('Take down both the Shopify and eBay listings and move this record back to Ready?');
@@ -538,7 +577,7 @@ export function ListingApprovalWorkflowOpsPanel({
                   }}
                   disabled={saving}
                 >
-                  {saving ? 'Saving...' : 'Take Down Both + Back To Ready'}
+                  {saving ? 'Saving...' : 'Take Down Both'}
                 </button>
               ) : null}
             </div>

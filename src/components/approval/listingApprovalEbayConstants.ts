@@ -161,6 +161,15 @@ export const EBAY_BODY_HTML_TEMPLATE_FIELD_CANDIDATES = [
 
 export const EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD = '__ebay_body_description_override__';
 export const EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD = '__ebay_body_template_copy_override__';
+export const EBAY_TEMPLATE_COPY_FIELD_NAME = 'eBay Template Copy';
+
+export function resolveEbayTemplateCopyValue(values: Record<string, string>): string {
+  const fieldName = Object.keys(values).find((name) => name.toLowerCase() === EBAY_TEMPLATE_COPY_FIELD_NAME.toLowerCase());
+  return fieldName !== undefined
+    ? values[fieldName] ?? ''
+    : values[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '';
+}
+
 export const EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML = [
   '<p style="margin:0 0 12px;text-align:center;color:#cc0000;"><strong>SOLD AS-IS</strong></p>',
   '<p style="margin:0 0 12px;text-align:center;color:#cc0000;"><strong>LIST OF DEFECTS IS NOT EXHAUSTIVE - THERE MAY BE ADDITIONAL DEFECTS</strong></p>',

@@ -151,6 +151,8 @@ export interface EbayApprovalPushResult {
 
 export interface EbayUploadedImageResult {
   url: string;
+  sha256?: string;
+  reused?: boolean;
 }
 
 export interface EbayPublishedListing {

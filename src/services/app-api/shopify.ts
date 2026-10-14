@@ -115,6 +115,16 @@ export async function upsertProductWithUnifiedRequest(
   }
 }
 
+export async function publishProductToOnlineStore(productId: number): Promise<ShopifyUnifiedProductResult> {
+  try {
+    return await postJson<ShopifyUnifiedProductResult>('/api/shopify/product-set', {
+      action: 'publish-online-store', productId,
+    });
+  } catch (error) {
+    throw toShopifyError(error);
+  }
+}
+
 export async function upsertExistingProductWithCollectionsInSingleMutation(
   request: ShopifyUnifiedProductSetRequest,
   collectionIds: string[],

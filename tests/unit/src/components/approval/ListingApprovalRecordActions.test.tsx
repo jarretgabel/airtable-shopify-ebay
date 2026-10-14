@@ -169,14 +169,16 @@ describe('ListingApprovalRecordActions', () => {
         {...baseProps}
         shopifyAdminListingUrl="https://example.myshopify.com/admin/products/123"
         shopifyServiceListingUrl="https://example.myshopify.com/products/vintage-amp"
-        ebayAdminListingUrl="https://www.ebay.com/sh/lst/active?offerId=abc"
+        ebayAdminListingUrl="https://www.ebay.com/sh/lst/active"
         ebayServiceListingUrl="https://www.ebay.com/itm/1234567890"
       />,
     );
 
-    expect(screen.getByRole('link', { name: 'Open Shopify Admin' })).toHaveAttribute('href', 'https://example.myshopify.com/admin/products/123');
-    expect(screen.getByRole('link', { name: 'Open Shopify Listing' })).toHaveAttribute('href', 'https://example.myshopify.com/products/vintage-amp');
-    expect(screen.getByRole('link', { name: 'Open eBay Seller' })).toHaveAttribute('href', 'https://www.ebay.com/sh/lst/active?offerId=abc');
-    expect(screen.getByRole('link', { name: 'Open eBay Listing' })).toHaveAttribute('href', 'https://www.ebay.com/itm/1234567890');
+    expect(screen.getByRole('link', { name: 'Shopify Admin' })).toHaveAttribute('href', 'https://example.myshopify.com/admin/products/123');
+    expect(screen.getByRole('link', { name: 'Shopify Listing' })).toHaveAttribute('href', 'https://example.myshopify.com/products/vintage-amp');
+    expect(screen.getByRole('link', { name: 'eBay Seller' })).toHaveAttribute('href', 'https://www.ebay.com/sh/lst/active');
+    expect(screen.getByRole('link', { name: 'eBay Listing' })).toHaveAttribute('href', 'https://www.ebay.com/itm/1234567890');
+    expect(screen.getByRole('link', { name: 'eBay Seller' }).parentElement).toHaveClass('[&>a]:text-xs', '[&>a]:px-3');
+    expect(screen.getByRole('button', { name: 'Save Updates' }).parentElement).toHaveClass('[&>button]:text-xs', '[&>button]:px-3');
   });
 });

@@ -5,6 +5,7 @@ import {
   getProduct,
   getProducts,
   publishApprovalListingToShopify,
+  publishProductToOnlineStore,
   resolveTaxonomyCategory,
   searchCollections,
   searchTaxonomyCategories,
@@ -28,6 +29,17 @@ describe('app-api shopify', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+  });
+
+  it('publishes an existing product through the authenticated local API without upserting its fields', async () => {
+    const product = { id: 123, status: 'ACTIVE', onlineStoreUrl: 'https://test-shop.myshopify.com/products/test' };
+    fetchMock.mockResolvedValueOnce(Response.json(product));
+    expect(await publishProductToOnlineStore(123)).toEqual(product);
+    expect(fetchMock).toHaveBeenCalledWith('/api/shopify/product-set', expect.objectContaining({
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({ action: 'publish-online-store', productId: 123 }),
+    }));
   });
 
   it('calls the Lambda Shopify products endpoint', async () => {

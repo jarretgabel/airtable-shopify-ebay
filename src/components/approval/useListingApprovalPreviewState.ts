@@ -7,7 +7,7 @@ import {
   EBAY_BODY_ABOUT_DEFAULT_TEXT,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
   resolveEbayListingTemplateHtml,
-  EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
+  resolveEbayTemplateCopyValue,
   type EbayListingTemplateId,
 } from '@/components/approval/listingApprovalEbayConstants';
 import {
@@ -102,10 +102,6 @@ function resolveEbayDescriptionPreviewValue(params: {
     params.selectedRecord,
     params.combinedDescriptionFieldName,
   );
-}
-
-function resolveEbayTemplateCopyPreviewValue(formValues: Record<string, string>): string {
-  return (formValues[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '').trim();
 }
 
 function resolveEbayAboutPreviewValue(formValues: Record<string, string>): string {
@@ -243,7 +239,7 @@ export function useListingApprovalPreviewState({
         audiogonRating: resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, 'Audiogon Rating'),
       },
       resolveEbayAboutPreviewValue(formValues),
-      resolveEbayTemplateCopyPreviewValue(formValues),
+      resolveEbayTemplateCopyValue(formValues).trim(),
     );
   }, [
     combinedDescriptionFieldName,
@@ -256,6 +252,7 @@ export function useListingApprovalPreviewState({
     isCombinedApproval,
     mergedDraftSourceFields,
     selectedEbayTemplateHtml,
+    selectedRecord,
   ]);
   const combinedEbayManualBodyHtmlOverride = useMemo(
     () => resolveCombinedPreviewFieldValue(formValues, mergedDraftSourceFields, selectedRecord, combinedEbayBodyHtmlFieldName).trim(),

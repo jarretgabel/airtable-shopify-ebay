@@ -10,6 +10,7 @@ import { mapJotFormSubmissionToWorkflowItems } from './workflowIngestMapper.js';
 import { buildUsedGearItemTitle } from '../../shared/contracts/usedGearItemTitle.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { logError } from '../../shared/logging.js';
+import { isEbayHostedImageCache, type EbayHostedImageCache } from '../../shared/contracts/ebayImages.js';
 
 export interface JotFormWorkflowIngestItemResult {
   recordId: string;
@@ -34,6 +35,7 @@ export interface WorkflowImageMetadataRecord {
   includedInListing: boolean;
   createdAt?: string;
   updatedAt?: string;
+  ebayHostedImageCache?: EbayHostedImageCache;
 }
 
 interface WorkflowIngestDependencies {
@@ -90,6 +92,7 @@ export function parseWorkflowImageMetadata(raw: unknown): WorkflowImageMetadataR
           includedInListing: typeof entry.includedInListing === 'boolean' ? entry.includedInListing : true,
           createdAt: typeof entry.createdAt === 'string' ? entry.createdAt.trim() : undefined,
           updatedAt: typeof entry.updatedAt === 'string' ? entry.updatedAt.trim() : undefined,
+          ebayHostedImageCache: isEbayHostedImageCache(entry.ebayHostedImageCache) ? entry.ebayHostedImageCache : undefined,
         };
       })
       .filter((entry) => entry.url.length > 0);

@@ -9,12 +9,14 @@ const {
   publishApprovalRecordMock,
   trackWorkflowEventMock,
   updateConfiguredRecordMock,
+  getConfiguredRecordMock,
   loadRecordsMock,
   uploadImageUrlToEbayHostedPicturesMock,
 } = vi.hoisted(() => ({
   publishApprovalRecordMock: vi.fn(),
   trackWorkflowEventMock: vi.fn(),
   updateConfiguredRecordMock: vi.fn(),
+  getConfiguredRecordMock: vi.fn(),
   loadRecordsMock: vi.fn(),
   uploadImageUrlToEbayHostedPicturesMock: vi.fn(),
 }));
@@ -29,6 +31,7 @@ vi.mock('@/services/workflowAnalytics', () => ({
 
 vi.mock('@/services/app-api/airtable', () => ({
   updateConfiguredRecord: updateConfiguredRecordMock,
+  getConfiguredRecord: getConfiguredRecordMock,
 }));
 
 vi.mock('@/services/app-api/ebay', () => ({
@@ -74,8 +77,26 @@ describe('approval action notifications', () => {
     publishApprovalRecordMock.mockReset();
     trackWorkflowEventMock.mockReset();
     updateConfiguredRecordMock.mockReset();
+    getConfiguredRecordMock.mockReset().mockResolvedValue({
+      ...record,
+      fields: {
+        ...record.fields,
+        'Workflow Image Metadata JSON': JSON.stringify([{
+          url: 'https://drive.google.com/uc?id=image-1',
+          filename: 'image-1.jpg',
+          alt: 'McIntosh MA6900',
+          sortOrder: 1,
+          sourceStage: 'photos',
+          includedInListing: true,
+        }]),
+      },
+    });
     loadRecordsMock.mockReset();
-    uploadImageUrlToEbayHostedPicturesMock.mockReset();
+    uploadImageUrlToEbayHostedPicturesMock.mockReset().mockImplementation(async (_url: string, index: number) => ({
+      url: `https://i.ebayimg.com/image-${index + 1}.jpg`,
+      sha256: 'a'.repeat(64),
+      reused: false,
+    }));
     loadRecordsMock.mockResolvedValue(undefined);
   });
 
@@ -389,7 +410,7 @@ describe('approval action notifications', () => {
       mergedDraftSourceFields: {
         Name: 'McIntosh MA6900',
         'Workflow Image Metadata JSON': JSON.stringify([{
-          url: 'https://i.ebayimg.com/image-1.jpg',
+          url: 'https://drive.google.com/uc?id=image-1',
           filename: 'image-1.jpg',
           alt: 'McIntosh MA6900',
           sortOrder: 1,
@@ -499,7 +520,7 @@ describe('approval action notifications', () => {
       mergedDraftSourceFields: {
         Name: 'McIntosh MA6900',
         'Workflow Image Metadata JSON': JSON.stringify([{
-          url: 'https://i.ebayimg.com/image-1.jpg',
+          url: 'https://drive.google.com/uc?id=image-1',
           filename: 'image-1.jpg',
           alt: 'McIntosh MA6900',
           sortOrder: 1,
@@ -544,7 +565,20 @@ describe('approval action notifications', () => {
 
   it('advances image progress and retries a transient eBay upload failure', async () => {
     const imageUrls = Array.from({ length: 5 }, (_, index) => `https://drive.google.com/uc?export=view&id=image-${index + 1}`);
-    imageUrls[4] = 'https://cdn.example.com/listing/image-5.jpg';
+    getConfiguredRecordMock.mockResolvedValue({
+      ...record,
+      fields: {
+        ...record.fields,
+        'Workflow Image Metadata JSON': JSON.stringify(imageUrls.map((url, index) => ({
+          url,
+          filename: `image-${index + 1}.jpg`,
+          alt: `McIntosh MA6900 image ${index + 1}`,
+          sortOrder: index + 1,
+          sourceStage: 'photos',
+          includedInListing: true,
+        }))),
+      },
+    });
     const attemptsByIndex = new Map<number, number>();
     uploadImageUrlToEbayHostedPicturesMock.mockImplementation(async (_url: string, index: number) => {
       const attempt = (attemptsByIndex.get(index) ?? 0) + 1;
@@ -552,7 +586,7 @@ describe('approval action notifications', () => {
       if (index === 1 && attempt === 1) {
         throw new Error('The operation was aborted due to timeout');
       }
-      return { url: `https://i.ebayimg.com/image-${index + 1}.jpg` };
+      return { url: `https://i.ebayimg.com/image-${index + 1}.jpg`, sha256: 'a'.repeat(64), reused: false };
     });
     publishApprovalRecordMock.mockResolvedValue({
       target: 'ebay',

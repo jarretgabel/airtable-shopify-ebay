@@ -1,6 +1,7 @@
 import { AccentActionButton } from '@/components/app/AccentActionButton';
 import { PrimaryActionButton } from '@/components/app/PrimaryActionButton';
 import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
+import { compactActionRowClass } from '@/components/app/buttonStyles';
 
 interface ListingApprovalRecordActionsProps {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
@@ -78,7 +79,7 @@ export function ListingApprovalRecordActions({
         : 'Publish Both';
 
   return (
-    <div className="mt-4 flex flex-wrap justify-end gap-3">
+    <div className={`mt-4 justify-end ${compactActionRowClass}`}>
       <SecondaryActionButton
         onClick={onResetData}
         disabled={saving || !hasUnsavedChanges}
@@ -93,22 +94,22 @@ export function ListingApprovalRecordActions({
       </PrimaryActionButton>
       {shopifyAdminListingUrl && (
         <SecondaryActionButton href={shopifyAdminListingUrl} target="_blank" rel="noreferrer noopener">
-          Open Shopify Admin
+          Shopify Admin
         </SecondaryActionButton>
       )}
       {shopifyServiceListingUrl && (
         <SecondaryActionButton href={shopifyServiceListingUrl} target="_blank" rel="noreferrer noopener">
-          Open Shopify Listing
+          Shopify Listing
         </SecondaryActionButton>
       )}
       {ebayAdminListingUrl && (
         <SecondaryActionButton href={ebayAdminListingUrl} target="_blank" rel="noreferrer noopener">
-          Open eBay Seller
+          eBay Seller
         </SecondaryActionButton>
       )}
       {ebayServiceListingUrl && (
         <SecondaryActionButton href={ebayServiceListingUrl} target="_blank" rel="noreferrer noopener">
-          Open eBay Listing
+          eBay Listing
         </SecondaryActionButton>
       )}
       {showCombinedPublishButtons && !isPostPublishLocked && !hasMissingRequiredPublishFields && (

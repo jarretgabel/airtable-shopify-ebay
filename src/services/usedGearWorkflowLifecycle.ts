@@ -123,6 +123,19 @@ export function getUsedGearWorkflowListingChannel(status: UsedGearWorkflowStatus
   }
 }
 
+export function getUsedGearWorkflowLifecycleStatusLabel(
+  status: UsedGearWorkflowStatus,
+  channels: { shopify: boolean; ebay: boolean },
+): string {
+  if (!getUsedGearWorkflowListingChannel(status)) return status;
+  const names = [
+    ...(channels.shopify ? ['Shopify'] : []),
+    ...(channels.ebay ? ['eBay'] : []),
+  ];
+  if (names.length === 0) return 'No active marketplace listings';
+  return `${status.startsWith('Stale Listing') ? 'Stale Listing' : 'Listed'}, ${names.join(' + ')}`;
+}
+
 export function getUsedGearWorkflowPostPublishSnapshot(
   record: AirtableRecord,
   nowMs = Date.now(),
