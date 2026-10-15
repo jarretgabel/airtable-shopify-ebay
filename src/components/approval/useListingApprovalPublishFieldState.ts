@@ -68,7 +68,13 @@ export function useListingApprovalPublishFieldState({
 
   const priceFieldName = useMemo(
     () => approvalChannel === 'shopify'
-      ? resolveFieldName(['Shopify Variant 1 Price', 'Price'], '')
+      ? resolveFieldName([
+        'Shopify Price',
+        'Shopify REST Variant 1 Price',
+        'Shopify Variant 1 Price',
+        'shopify_rest_variant_1_price',
+        'Price',
+      ], '')
       : findEbayPriceFieldName(Object.keys(selectedRecord?.fields ?? {})),
     [approvalChannel, resolveFieldName, selectedRecord],
   );

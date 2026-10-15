@@ -102,6 +102,7 @@ export const SHOPIFY_TITLE_FIELD_CANDIDATES = [
 ] as const;
 
 export const SHOPIFY_PRICE_FIELD_CANDIDATES = [
+  'Shopify Price',
   'Shopify REST Variant 1 Price',
   'Shopify Variant 1 Price',
   'Shopify REST Variant 1 Compare At Price',

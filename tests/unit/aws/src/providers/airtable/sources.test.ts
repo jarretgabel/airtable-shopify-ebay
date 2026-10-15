@@ -234,6 +234,34 @@ test('getConfiguredRecords caches unknown field names to skip repeat retry calls
   }
 });
 
+test('updateConfiguredRecord never silently drops an unknown Shopify price alongside valid changes', async () => {
+  const original = airtableSourceDependencies.updateRecord;
+  const calls: Array<Record<string, unknown>> = [];
+  airtableSourceDependencies.updateRecord = async (_base, _table, _id, fields) => {
+    calls.push(fields);
+    if ('Shopify REST Variant 1 Price' in fields) {
+      throw new HttpError(422, 'Unknown field name: "Shopify REST Variant 1 Price"', {
+        service: 'airtable', code: 'AIRTABLE_API_ERROR', retryable: false,
+      });
+    }
+    return buildRecord(fields);
+  };
+
+  try {
+    const fields = { 'Shopify REST Variant 1 Price': 1200, Description: 'Revised copy' };
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await assert.rejects(
+        updateConfiguredRecord('approval-combined', 'rec123', fields),
+        /Unknown field name: "Shopify REST Variant 1 Price"/,
+      );
+    }
+    assert.ok(calls.every((fields) => 'Shopify REST Variant 1 Price' in fields));
+    assert.ok(calls.length > 0);
+  } finally {
+    airtableSourceDependencies.updateRecord = original;
+  }
+});
+
 test('updateConfiguredRecord drops unknown fields and retries inside the provider', async () => {
   const original = airtableSourceDependencies.updateRecord;
   const originalReference = process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_REF;

@@ -1,6 +1,7 @@
 import { parseCategoryIds, parseCategoryIdsFromFields } from './approvalCategories.js';
 import { collectImageUrlsFromFields, dedupeCaseInsensitive, parseImageUrls } from './approvalImages.js';
 import { getField, getRawField, parseInteger, parseKeyFeatureEntries, type ApprovalFieldMap } from './approvalShared.js';
+import { EBAY_APPROVAL_POLICY_FIELD_CANDIDATES } from '../../shared/contracts/ebayApproval.js';
 import {
   getIncludedWorkflowImages,
   getListingWorkflowImages,
@@ -337,6 +338,9 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
   const connectivity = inferConnectivityValue(connectivityFromFields, title, type, rawKeyFeatures);
   const condition = normalizeEbayCondition(getField(fields, ['__Condition__', 'Item Condition', 'Condition', 'eBay Inventory Condition']));
   const conditionDescription = getField(fields, ['eBay Inventory Condition Description']);
+  const fulfillmentPolicyId = getField(fields, [...EBAY_APPROVAL_POLICY_FIELD_CANDIDATES.fulfillment]);
+  const paymentPolicyId = getField(fields, [...EBAY_APPROVAL_POLICY_FIELD_CANDIDATES.payment]);
+  const returnPolicyId = getField(fields, [...EBAY_APPROVAL_POLICY_FIELD_CANDIDATES.returns]);
   const quantity = parseInteger(getField(fields, ['eBay Inventory Ship To Location Quantity', 'Quantity', 'Qty']), 1);
   const packageWeightRaw = getField(fields, ['eBay Inventory Package Weight Value', 'Shipping Weight', 'Weight']);
   const shippingDimensionsRaw = getField(fields, ['Shipping Dims', 'Shipping Dimensions']);
@@ -427,6 +431,15 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
       pricingSummary: isAuction ? { auctionStartPrice: { value: priceValue, currency } } : { price: { value: priceValue, currency } },
       quantityLimitPerBuyer,
       includeCatalogProductDetails: false,
+      ...((fulfillmentPolicyId || paymentPolicyId || returnPolicyId)
+        ? {
+            listingPolicies: {
+              ...(fulfillmentPolicyId ? { fulfillmentPolicyId } : {}),
+              ...(paymentPolicyId ? { paymentPolicyId } : {}),
+              ...(returnPolicyId ? { returnPolicyId } : {}),
+            },
+          }
+        : {}),
     },
   };
 }

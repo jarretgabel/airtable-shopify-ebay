@@ -3,6 +3,36 @@ export interface EbayApprovalDraftPayloadBundle {
   offer: Record<string, unknown>;
 }
 
+export const EBAY_APPROVAL_POLICY_FIELD_CANDIDATES = {
+  fulfillment: [
+    'eBay Offer Fulfillment Policy ID',
+    'ebay_offer_fulfillment_policy_id',
+    'e_bay_offer_fulfillment_policy_id',
+    'ebay_offer_fulfillmentpolicyid',
+    'e_bay_offer_fulfillmentpolicyid',
+    'Fulfillment Policy ID',
+    'fulfillment_policy_id',
+  ],
+  payment: [
+    'eBay Offer Payment Policy ID',
+    'ebay_offer_payment_policy_id',
+    'e_bay_offer_payment_policy_id',
+    'ebay_offer_paymentpolicyid',
+    'e_bay_offer_paymentpolicyid',
+    'Payment Policy ID',
+    'payment_policy_id',
+  ],
+  returns: [
+    'eBay Offer Return Policy ID',
+    'ebay_offer_return_policy_id',
+    'e_bay_offer_return_policy_id',
+    'ebay_offer_returnpolicyid',
+    'e_bay_offer_returnpolicyid',
+    'Return Policy ID',
+    'return_policy_id',
+  ],
+} as const;
+
 export interface EbayApprovalLocationConfig {
   key: string;
   name: string;

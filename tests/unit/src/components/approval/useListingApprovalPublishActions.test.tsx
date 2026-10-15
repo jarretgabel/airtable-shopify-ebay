@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useListingApprovalPublishActions } from '@/components/approval/useListingApprovalPublishActions';
+import { useEbayShippingPolicyIssueStore } from '@/stores/ebayShippingPolicyIssueStore';
 
 const { publishMock, getRecordMock, updateRecordMock, loadRecordsMock, notifyMock, uploadMock, formValuesMock, inspectMock } = vi.hoisted(() => ({
   publishMock: vi.fn(),
@@ -51,6 +52,7 @@ function createParams(): Parameters<typeof useListingApprovalPublishActions>[0] 
 
 describe('publish lifecycle writeback', () => {
   beforeEach(() => {
+    useEbayShippingPolicyIssueStore.setState({ issue: null });
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-13T23:00:00.000Z'));
     publishMock.mockReset().mockResolvedValue({
@@ -73,6 +75,77 @@ describe('publish lifecycle writeback', () => {
     });
   });
   afterEach(() => vi.useRealTimers());
+
+  it.each(['ebay', 'both'] as const)('associates raw eBay weight rejection with shipping policy for %s without editing weight', async (target) => {
+    const params = createParams();
+    params.mergedDraftSourceFields = {
+      'eBay Offer Fulfillment Policy ID': 'standard',
+      'Shipping Dims': '100lbs (27x24x14)',
+      Description: 'Heavy amplifier',
+      'Workflow Image Metadata JSON': '[{"url":"https://drive.google.com/uc?id=photo","filename":"amplifier-processed.jpg","sourceStage":"photos","includedInListing":true}]',
+    };
+    uploadMock.mockResolvedValue({ url: 'https://i.ebayimg.com/image.jpg', sha256: 'a'.repeat(64), reused: false });
+    getRecordMock.mockResolvedValue({ id: 'rec-republish', fields: params.mergedDraftSourceFields });
+    publishMock.mockResolvedValue({
+      target,
+      failures: [{ target: 'ebay', message: 'publishOffer 400: Invalid Fulfillment policy. Package weight is over the weight limit for service 70 lb. (errorId: 25007)' }],
+    });
+    const { result } = renderHook(() => useListingApprovalPublishActions(params));
+    await act(async () => result.current.runCombinedPush(target));
+
+    expect(publishMock, JSON.stringify(vi.mocked(params.pushInlineActionNotice).mock.calls)).toHaveBeenCalledOnce();
+    expect(useEbayShippingPolicyIssueStore.getState().issue).toEqual({
+      recordId: 'rec-republish', policyId: 'standard',
+      message: expect.stringMatching(/choose a compatible shipping policy.*keep the actual packed weight unchanged/i),
+    });
+    expect(params.setFormValue).not.toHaveBeenCalled();
+    expect(publishMock.mock.calls[0][3].fields['Shipping Dims']).toBe('100lbs (27x24x14)');
+    expect(vi.mocked(params.pushInlineActionNotice).mock.calls).toContainEqual([
+      'error', 'eBay publish failed', expect.stringMatching(/shipping policy/i), expect.any(Object),
+    ]);
+  });
+
+  it('does not associate unrelated eBay or Shopify failures with shipping weight', async () => {
+    const params = createParams();
+    publishMock.mockResolvedValue({
+      target: 'both',
+      failures: [
+        { target: 'ebay', message: 'Invalid category (errorId: 25007)' },
+        { target: 'shopify', message: 'Package weight is over the weight limit' },
+      ],
+    });
+    const { result } = renderHook(() => useListingApprovalPublishActions(params));
+    await act(async () => result.current.runCombinedPush('both'));
+    expect(useEbayShippingPolicyIssueStore.getState().issue).toBeNull();
+  });
+
+  it('does not clear a shipping policy rejection after a Shopify-only success', async () => {
+    const issue = { recordId: 'rec-republish', policyId: 'standard', message: 'Shipping policy weight rejection' };
+    useEbayShippingPolicyIssueStore.setState({ issue });
+    const { result } = renderHook(() => useListingApprovalPublishActions(createParams()));
+    await act(async () => result.current.runCombinedPush('shopify'));
+    expect(useEbayShippingPolicyIssueStore.getState().issue).toEqual(issue);
+  });
+
+  it('associates transport-level eBay weight errors with the policy and clears them after eBay succeeds', async () => {
+    const params = createParams();
+    params.mergedDraftSourceFields = {
+      'eBay Offer Fulfillment Policy ID': 'standard',
+      Description: 'Heavy amplifier',
+      'Workflow Image Metadata JSON': '[{"url":"https://drive.google.com/uc?id=photo","filename":"amplifier-processed.jpg","sourceStage":"photos","includedInListing":true}]',
+    };
+    uploadMock.mockResolvedValue({ url: 'https://i.ebayimg.com/image.jpg', sha256: 'a'.repeat(64), reused: false });
+    getRecordMock.mockResolvedValue({ id: 'rec-republish', fields: params.mergedDraftSourceFields });
+    publishMock.mockRejectedValueOnce(new Error('Package weight exceeds the maximum weight for this service.'));
+    const { result } = renderHook(() => useListingApprovalPublishActions(params));
+    await act(async () => result.current.runCombinedPush('ebay'));
+    expect(useEbayShippingPolicyIssueStore.getState().issue?.policyId).toBe('standard');
+    publishMock.mockResolvedValue({
+      target: 'ebay', ebay: { sku: '11751', offerId: 'offer', listingId: 'listing', mode: 'updated' }, failures: [],
+    });
+    await act(async () => result.current.runCombinedPush('ebay'));
+    expect(useEbayShippingPolicyIssueStore.getState().issue).toBeNull();
+  });
 
   for (const target of ['shopify', 'ebay', 'both'] as const) {
     it(`blocks ${target} before uploads or marketplace writes if a selected photo is unsupported or unverified`, async () => {

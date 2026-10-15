@@ -3,6 +3,48 @@ import test from 'node:test';
 
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '../../../../../../aws/src/providers/ebay/approvalDraft.js';
 
+test('saved heavy-item fulfillment policy reaches the offer without changing weight or stock', () => {
+  const bundle = buildEbayDraftPayloadBundleFromApprovalFields({
+    SKU: '11751',
+    'Shipping Dims': '100lbs (27x24x14)',
+    Quantity: 1,
+    'Ebay Price': 999999,
+    'eBay Offer Fulfillment Policy ID': '331094759021',
+  });
+
+  assert.deepEqual(bundle.offer.listingPolicies, { fulfillmentPolicyId: '331094759021' });
+  assert.deepEqual(bundle.inventoryItem.packageWeightAndSize?.weight, { value: 100, unit: 'POUND' });
+  assert.equal(bundle.offer.availableQuantity, 1);
+  assert.deepEqual(bundle.offer.pricingSummary, { price: { value: '999999', currency: 'USD' } });
+});
+
+for (const fields of [
+  {
+    'ebay_offer_fulfillment_policy_id': 'shipping',
+    'e_bay_offer_paymentpolicyid': 'payment',
+    'ebay_offer_returnpolicyid': 'returns',
+  },
+  {
+    'Fulfillment Policy ID': 'shipping',
+    'Payment Policy ID': 'payment',
+    'Return Policy ID': 'returns',
+  },
+]) {
+  test(`saved business policy aliases reach the server offer: ${Object.keys(fields).join(', ')}`, () => {
+    assert.deepEqual(buildEbayDraftPayloadBundleFromApprovalFields(fields).offer.listingPolicies, {
+      fulfillmentPolicyId: 'shipping', paymentPolicyId: 'payment', returnPolicyId: 'returns',
+    });
+  });
+}
+
+test('absent or blank per-listing policies leave default policy resolution unchanged', () => {
+  const bundle = buildEbayDraftPayloadBundleFromApprovalFields({
+    'eBay Offer Fulfillment Policy ID': ' ',
+    'eBay Offer Payment Policy ID': '',
+  });
+  assert.equal(Object.hasOwn(bundle.offer, 'listingPolicies'), false);
+});
+
 for (const { fields, quantity } of [
   { fields: {}, quantity: 1 },
   { fields: { Quantity: '', Qty: ' ' }, quantity: 1 },

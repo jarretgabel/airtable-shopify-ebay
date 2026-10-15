@@ -21,6 +21,7 @@ const DEFAULT_APPROVAL_QUEUE_FIELDS = [
   'Title',
   'eBay Title',
   'Vendor',
+  'Shopify Price',
   'Shopify REST Variant 1 Price',
   'Shopify Variant 1 Price',
   'eBay Price',

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { HttpError } from '../../../../../../aws/src/shared/errors.js';
 import {
   getDashboardSnapshot,
   getOffers,
@@ -59,6 +60,77 @@ async function withEnvAsync(overrides: Record<string, string | undefined>, run: 
     }
   }
 }
+
+test('weight-limit rejection identifies the shipping policy and never advises lowering package weight', async () => {
+    const originalFetch = global.fetch;
+    const { pushApprovalBundleToEbay } = await import('../../../../../../aws/src/providers/ebay/client.js?weight-policy-error-test');
+    let publishCalls = 0;
+    global.fetch = async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      if (url.includes('/identity/v1/oauth2/token')) return Response.json({ access_token: 'test-token', expires_in: 7200 });
+      if (url.endsWith('/sell/inventory/v1/location/warehouse-1') && method === 'GET') {
+        return Response.json({
+          name: 'Warehouse', locationTypes: ['WAREHOUSE'],
+          location: { address: { country: 'US', postalCode: '11205', city: 'Brooklyn', stateOrProvince: 'NY' } },
+        });
+      }
+      if (url.includes('/sell/inventory/v1/inventory_item/') && method === 'PUT') return new Response(null, { status: 204 });
+      if (url.includes('/sell/inventory/v1/offer?') && method === 'GET') {
+        return Response.json({ offers: [{ offerId: 'offer-heavy', status: 'UNPUBLISHED' }], total: 1 });
+      }
+      if (url.endsWith('/sell/account/v1/fulfillment_policy/standard')) {
+        return Response.json({ shippingOptions: [{ shippingServices: [{ shippingServiceCode: 'USPSPriorityMailInternational' }] }] });
+      }
+      if (url.endsWith('/sell/inventory/v1/offer/offer-heavy') && method === 'PUT') return new Response(null, { status: 204 });
+      if (url.endsWith('/sell/inventory/v1/offer/offer-heavy/publish/') && method === 'POST') {
+        publishCalls += 1;
+        return Response.json({
+          errors: [{
+            errorId: 25007, domain: 'API_INVENTORY', category: 'Request',
+            message: 'The associated Fulfillment policy has invalid data. Package weight is over the weight limit for service 70 lb.',
+            longMessage: 'The maximum weight is err:216138|70 lb.',
+            parameters: [{ name: '0', value: '70 lb' }, { name: '2', value: 'USPS Priority Mail International' }],
+          }],
+        }, { status: 400 });
+      }
+      throw new Error(`Unexpected mocked eBay request: ${method} ${url}`);
+    };
+    try {
+      await withEnvAsync({
+        EBAY_ENV: 'production', EBAY_CLIENT_ID: 'test-client', EBAY_CLIENT_SECRET: 'test-secret', EBAY_REFRESH_TOKEN: 'test-refresh',
+      }, async () => {
+        await assert.rejects(pushApprovalBundleToEbay({
+          inventoryItem: {
+            sku: 'HEAVY', condition: 'USED_EXCELLENT',
+            product: { title: 'Heavy amplifier', imageUrls: ['https://i.ebayimg.com/image.jpg'] },
+            availability: { shipToLocationAvailability: { quantity: 1 } },
+            packageWeightAndSize: { weight: { value: 100, unit: 'POUND' } },
+          },
+          offer: {
+            sku: 'HEAVY', marketplaceId: 'EBAY_US', format: 'FIXED_PRICE', categoryId: '14990',
+            listingDescription: '<p>Heavy amplifier</p>', listingDuration: 'GTC',
+            pricingSummary: { price: { value: '1200', currency: 'USD' } },
+          },
+        }, {
+          locationConfig: { key: 'warehouse-1', name: 'Warehouse', country: 'US', postalCode: '11205', city: 'Brooklyn', stateOrProvince: 'NY' },
+          policyConfig: { fulfillmentPolicyId: 'standard', paymentPolicyId: 'payment', returnPolicyId: 'returns' },
+        }), (error: unknown) => {
+          assert.ok(error instanceof HttpError);
+          assert.equal(error.statusCode, 400);
+          assert.equal(error.code, 'EBAY_FULFILLMENT_POLICY_WEIGHT_LIMIT');
+          assert.match(error.message, /shipping policy "standard"/i);
+          assert.match(error.message, /choose a compatible shipping policy/i);
+          assert.match(error.message, /keep the actual packed weight unchanged/i);
+          assert.doesNotMatch(error.message, /err:216138/);
+          return true;
+        });
+      });
+      assert.equal(publishCalls, 1);
+    } finally {
+      global.fetch = originalFetch;
+    }
+});
 
 test('getRuntimeConfig returns normalized production runtime config when required publish settings exist', () => {
   withEnv(

@@ -12,6 +12,9 @@ import { resolveWorkflowStatusAfterPublish } from '@/services/usedGearWorkflowLi
 import { resolveShopifyBodyHtml } from '@/services/shopifyDraftFromAirtableBody';
 import { getIncludedWorkflowImageMetadata, parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { useApprovalStore } from '@/stores/approvalStore';
+import { useEbayShippingPolicyIssueStore } from '@/stores/ebayShippingPolicyIssueStore';
+import { EBAY_APPROVAL_POLICY_FIELD_CANDIDATES } from '@contracts/ebayApproval';
+import { getEbayShippingPolicyWeightError } from '@contracts/ebayShippingPolicy';
 import { useNotificationStore } from '@/stores/notificationStore';
 import {
   buildListingApprovalPublishErrorNotification,
@@ -75,6 +78,19 @@ export function useListingApprovalPublishActions({
 }: PublishActionsParams) {
   const [pushingTarget, setPushingTarget] = useState<'shopify' | 'ebay' | 'both' | null>(null);
   const pushResultNotification = useNotificationStore.getState().upsertByKey;
+
+  const reportShippingPolicyWeightError = (message: string, fields: Record<string, unknown>): string => {
+    const policyId = EBAY_APPROVAL_POLICY_FIELD_CANDIDATES.fulfillment
+      .map((fieldName) => fields[fieldName])
+      .filter((value): value is string | number => typeof value === 'string' || typeof value === 'number')
+      .map((value) => String(value).trim())
+      .find(Boolean);
+    const issue = getEbayShippingPolicyWeightError(message, policyId);
+    if (issue && selectedRecord) {
+      useEbayShippingPolicyIssueStore.setState({ issue: { ...issue, recordId: selectedRecord.id } });
+    }
+    return issue?.message ?? message;
+  };
 
   const getUnknownFieldNamesFromWriteError = (message: string): string[] => {
     const quotedMatches = Array.from(message.matchAll(/[\"']([^\"']+)[\"']/g))
@@ -509,6 +525,7 @@ export function useListingApprovalPublishActions({
     if (!confirmed) return;
 
     setPushingTarget(target);
+    let submittedFields = mergedDraftSourceFields ?? selectedRecord.fields;
     try {
       if (changedFieldNames.length > 0) {
         if (!savePendingUpdates) {
@@ -535,6 +552,7 @@ export function useListingApprovalPublishActions({
         }
       }
       const publishFields = await prepareEbayHostedImages(target, draftFields);
+      submittedFields = publishFields ?? draftFields ?? selectedRecord.fields;
       if (target === 'ebay' || target === 'both') {
         pushInlineActionNotice(
           'info',
@@ -547,6 +565,9 @@ export function useListingApprovalPublishActions({
         productIdFieldName: 'Shopify REST Product ID',
         fields: publishFields,
       });
+      executionResult.failures = executionResult.failures.map((failure) => failure.target === 'ebay'
+        ? { ...failure, message: reportShippingPolicyWeightError(failure.message, submittedFields) }
+        : failure);
 
       if (executionResult.shopify) {
         const productIdValue = String(executionResult.shopify.productId);
@@ -566,6 +587,9 @@ export function useListingApprovalPublishActions({
       }
 
       if (executionResult.ebay) {
+        if (useEbayShippingPolicyIssueStore.getState().issue?.recordId === selectedRecord.id) {
+          useEbayShippingPolicyIssueStore.setState({ issue: null });
+        }
         pushInlineActionNotice(
           'success',
           executionResult.ebay.mode === 'updated' ? 'eBay listing updated' : 'eBay listing published',
@@ -605,7 +629,10 @@ export function useListingApprovalPublishActions({
         }),
       );
     } catch (pushError) {
-      const message = pushError instanceof Error ? pushError.message : 'Unable to push this listing.';
+      const errorMessage = pushError instanceof Error ? pushError.message : 'Unable to push this listing.';
+      const message = target === 'ebay' || target === 'both'
+        ? reportShippingPolicyWeightError(errorMessage, submittedFields)
+        : errorMessage;
       if (target === 'ebay' || target === 'both') {
         pushInlineActionNotice('error', 'Publish failed', message, { id: EBAY_PUBLISH_PROGRESS_NOTICE_ID });
       } else {

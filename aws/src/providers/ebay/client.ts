@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { HttpError } from '../../shared/errors.js';
+import { getEbayShippingPolicyWeightError } from '../../shared/contracts/ebayShippingPolicy.js';
 import { isEbayHostedImageCache, type EbayHostedImageCache } from '../../shared/contracts/ebayImages.js';
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
@@ -2261,6 +2262,18 @@ async function publishOfferById(
       if (attempt < 2 && isOfferTemporarilyUnavailable(publishData)) {
         await delay(1500 * (attempt + 1));
         continue;
+      }
+
+      const weightError = getEbayShippingPolicyWeightError(
+        (publishData.errors ?? []).map((error) => [error.message, error.longMessage].filter(Boolean).join(' ')).join(' '),
+        context.fulfillmentPolicyId,
+      );
+      if (weightError) {
+        throw new HttpError(response.status, weightError.message, {
+          service: 'ebay',
+          code: 'EBAY_FULFILLMENT_POLICY_WEIGHT_LIMIT',
+          retryable: false,
+        });
       }
 
       if (isFulfillmentPolicyPublishError(publishData, responseText)) {

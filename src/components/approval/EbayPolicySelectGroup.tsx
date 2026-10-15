@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState, type JSX } from 'react';
+import { useEbayShippingPolicyIssueStore } from '@/stores/ebayShippingPolicyIssueStore';
 import {
   getEbayBusinessPolicies,
   getEbayRuntimeConfig,
@@ -10,6 +11,7 @@ const panelClass = 'col-span-1 rounded-xl border border-[var(--line)] bg-[var(--
 const requiredBadgeClass = 'inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]';
 
 interface EbayPolicySelectGroupProps {
+  recordId?: string;
   enabled: boolean;
   marketplaceId: string;
   fulfillmentPolicyFieldName?: string;
@@ -92,6 +94,7 @@ function renderVisuallyRequiredLabel(
 }
 
 export function EbayPolicySelectGroup({
+  recordId,
   enabled,
   marketplaceId,
   fulfillmentPolicyFieldName,
@@ -103,6 +106,8 @@ export function EbayPolicySelectGroup({
   renderFieldLabel,
   getSelectClassName,
 }: EbayPolicySelectGroupProps) {
+  const policyIssue = useEbayShippingPolicyIssueStore((state) => state.issue);
+  const policyErrorId = useId();
   const [policiesByType, setPoliciesByType] = useState<EbayBusinessPoliciesByType | null>(null);
   const [defaultPolicyIds, setDefaultPolicyIds] = useState({
     fulfillmentPolicyId: '',
@@ -188,6 +193,18 @@ export function EbayPolicySelectGroup({
   const hasAnyField = Boolean(fulfillmentPolicyFieldName || paymentPolicyFieldName || returnPolicyFieldName);
   if (!hasAnyField) return null;
 
+  const selectedFulfillmentPolicyId = resolveSelectedPolicyValue(
+    fulfillmentOptions,
+    (formValues[fulfillmentPolicyFieldName ?? ''] ?? '').trim(),
+    defaultPolicyIds.fulfillmentPolicyId,
+  );
+  const shippingPolicyIssue = policyIssue && recordId && policyIssue.recordId === recordId
+    && (policyIssue.policyId
+      ? policyIssue.policyId === selectedFulfillmentPolicyId
+      : !(formValues[fulfillmentPolicyFieldName ?? ''] ?? '').trim())
+    ? policyIssue
+    : null;
+
   return (
     <div className={panelClass}>
       <p className="m-0 mb-2 text-xs text-[var(--muted)]">
@@ -198,12 +215,12 @@ export function EbayPolicySelectGroup({
           <label className="col-span-1 flex flex-col gap-2">
             {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel, 'Fulfillment policy')}
             <ApprovalSelect
-              selectClassName={getSelectClassName(fulfillmentPolicyFieldName)}
-              value={resolveSelectedPolicyValue(
-                fulfillmentOptions,
-                (formValues[fulfillmentPolicyFieldName] ?? '').trim(),
-                defaultPolicyIds.fulfillmentPolicyId,
-              )}
+              selectClassName={`${getSelectClassName(fulfillmentPolicyFieldName)}${shippingPolicyIssue ? ' ring-1 ring-rose-400' : ''}`}
+              value={selectedFulfillmentPolicyId}
+              selectProps={{
+                'aria-invalid': shippingPolicyIssue ? true : undefined,
+                'aria-describedby': shippingPolicyIssue ? policyErrorId : undefined,
+              }}
               onChange={(event) => setFormValue(fulfillmentPolicyFieldName, event.target.value)}
               onFocus={refreshPolicyOptions}
               disabled={disabled}
@@ -213,6 +230,11 @@ export function EbayPolicySelectGroup({
                 <option key={option.id} value={option.id}>{option.label}</option>
               ))}
             </ApprovalSelect>
+            {shippingPolicyIssue && (
+              <p id={policyErrorId} role="alert" className="m-0 text-xs text-rose-300">
+                {shippingPolicyIssue.message}
+              </p>
+            )}
           </label>
         )}
 

@@ -390,6 +390,20 @@ function getUnknownFieldNames(error: unknown): string[] {
   ));
 }
 
+function assertNoUnknownShopifyPrices(fields: Record<string, unknown>, unknownFields: Set<string> | null): void {
+  const unknownPrices = Object.keys(fields).filter((fieldName) => (
+    unknownFields?.has(fieldName)
+    && /^shopify(?:rest)?(?:variant1)?price$/.test(fieldName.toLowerCase().replace(/[^a-z0-9]/g, ''))
+  ));
+  if (unknownPrices.length > 0) {
+    throw new HttpError(422, `Unknown field name: ${unknownPrices.map((fieldName) => `"${fieldName}"`).join(', ')}`, {
+      service: 'airtable',
+      code: 'AIRTABLE_UNKNOWN_PRICE_FIELD',
+      retryable: false,
+    });
+  }
+}
+
 async function updateRecordWithUnknownFieldFallback(
   baseId: string,
   tableName: string,
@@ -398,7 +412,9 @@ async function updateRecordWithUnknownFieldFallback(
   options: { typecast?: boolean },
 ): Promise<AirtableRecord> {
   const cacheKey = buildUnknownFieldCacheKey(baseId, tableName, undefined);
-  let writableFields = stripUnknownFieldValues(fields, getCachedUnknownFields(cacheKey));
+  const cachedUnknownFields = getCachedUnknownFields(cacheKey);
+  assertNoUnknownShopifyPrices(fields, cachedUnknownFields);
+  let writableFields = stripUnknownFieldValues(fields, cachedUnknownFields);
 
   while (Object.keys(writableFields).length > 0) {
     try {
@@ -410,6 +426,7 @@ async function updateRecordWithUnknownFieldFallback(
       }
 
       rememberUnknownFields(cacheKey, unknownFields);
+      assertNoUnknownShopifyPrices(writableFields, new Set(unknownFields));
       const nextFields = stripUnknownFieldValues(writableFields, new Set(unknownFields));
       if (Object.keys(nextFields).length === Object.keys(writableFields).length) {
         throw error;

@@ -400,6 +400,7 @@ function getPrimaryAliasFallbackFieldName(fieldName: string): string | null {
 function getKnownMissingWritableFieldName(fieldName: string): string | null {
   const normalized = fieldName.trim().toLowerCase();
   const canonicalFields: Record<string, string> = {
+    'shopify price': 'Shopify Price',
     'ebay inventory condition': 'eBay Inventory Condition',
     'categories': 'Ebay Categories',
     'e bay categories': 'Ebay Categories',
@@ -562,6 +563,7 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
     || normalized === 'ebay_offer_pricingsummary_auctionstartprice_value'
     || normalized === 'buy it now usd'
     || normalized === 'starting bid usd'
+    || normalized === 'shopify price'
     || normalized === 'shopify rest variant 1 price'
     || normalized === 'shopify variant 1 price'
     || normalized === 'shopify type'
@@ -852,8 +854,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
 
           let writeFieldName = resolveCanonicalFieldName(fieldName, existingFieldNameByLower);
           const normalizedWriteFieldName = writeFieldName.trim().toLowerCase();
-          const canonicalShopifyPriceFieldName = Object.keys(selectedRecord.fields)
-            .find((candidate) => candidate.trim().toLowerCase() === 'shopify price');
+          const canonicalShopifyPriceFieldName = existingFieldNameByLower.get('shopify price');
           if (
             canonicalShopifyPriceFieldName
             && (

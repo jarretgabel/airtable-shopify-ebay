@@ -897,6 +897,50 @@ describe('approvalStorePersistence', () => {
     );
   });
 
+  it('writes a legacy alias to canonical Shopify Price even when the record omits its blank value', async () => {
+    const state = buildStoreState({
+      formValues: { 'Shopify REST Variant 1 Price': '1200', 'Shopify Price': '' },
+      initialFormValues: { 'Shopify REST Variant 1 Price': '', 'Shopify Price': '' },
+      fieldKinds: { 'Shopify REST Variant 1 Price': 'text', 'Shopify Price': 'number' },
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), () => state);
+    updateRecordFromResolvedSourceMock.mockResolvedValue(buildRecord({ 'Shopify Price': 1200 }));
+
+    expect(await saveRecord(
+      false,
+      buildRecord({ 'Ebay Price': 999999, Cost: 300 }),
+      'base/table',
+      'Approval',
+      ['Shopify REST Variant 1 Price', 'Shopify Price', 'Ebay Price', 'Cost'],
+      'Approved',
+      vi.fn(),
+      'full',
+    )).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledExactlyOnceWith(
+      'base/table', 'Approval', 'rec-approval-save-1', { 'Shopify Price': 1200 }, { typecast: true },
+    );
+  });
+
+  it.each([
+    { value: '0', expected: 0 },
+    { value: '', expected: null },
+  ])('preserves an explicit Shopify price edit to "$value"', async ({ value, expected }) => {
+    const state = buildStoreState({
+      formValues: { 'Shopify Price': value },
+      initialFormValues: { 'Shopify Price': '1200' },
+      fieldKinds: { 'Shopify Price': 'number' },
+    });
+    updateRecordFromResolvedSourceMock.mockResolvedValue(buildRecord({ 'Shopify Price': expected }));
+
+    expect(await createSaveRecordAction(vi.fn(), () => state)(
+      false, buildRecord({ 'Shopify Price': 1200, 'Ebay Price': 999999 }),
+      'base/table', 'Approval', ['Shopify Price', 'Ebay Price'], 'Approved', vi.fn(), 'full',
+    )).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledExactlyOnceWith(
+      'base/table', 'Approval', 'rec-approval-save-1', { 'Shopify Price': expected }, { typecast: true },
+    );
+  });
+
   it('persists alias-only source fields by trying canonical fallback field names', async () => {
     const setMock = vi.fn();
     const loadRecordsMock = vi.fn(async () => {});

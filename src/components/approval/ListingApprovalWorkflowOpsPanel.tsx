@@ -35,6 +35,8 @@ import { resolveConfiguredRecordsSource } from '@/services/app-api/airtableSourc
 import { displayValue } from '@/stores/approvalStore';
 import type { AirtableRecord } from '@/types/airtable';
 
+const lifecycleSummaryCardClass = 'rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3';
+
 interface ListingApprovalWorkflowOpsPanelProps {
   selectedRecord: AirtableRecord;
   tableReference: string;
@@ -380,19 +382,19 @@ export function ListingApprovalWorkflowOpsPanel({
           <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--ink)]">Post-Publish Lifecycle</summary>
           <div className="space-y-4 border-t border-[var(--line)] px-4 py-4 text-sm text-[var(--muted)]">
             <div className="grid gap-3 md:grid-cols-4">
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
+              <div className={lifecycleSummaryCardClass}>
                 <div>Lifecycle Status</div>
                 <div className="mt-1 text-base font-semibold text-[var(--ink)]">{lifecycleStatusLabel}</div>
               </div>
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
+              <div className={lifecycleSummaryCardClass}>
                 <div>Listed At</div>
                 <div className="mt-1 text-base font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(workflowRecord.fields['Listed At'])}</div>
               </div>
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
+              <div className={lifecycleSummaryCardClass}>
                 <div>Sold Ready</div>
                 <div className="mt-1 text-base font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(workflowRecord.fields['Sold Ready To Ship At'])}</div>
               </div>
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-3">
+              <div className={lifecycleSummaryCardClass}>
                 <div>Shipped</div>
                 <div className="mt-1 text-base font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(workflowRecord.fields['Shipped At'])}</div>
               </div>
@@ -711,24 +713,21 @@ export function ListingApprovalWorkflowOpsPanel({
           </div>
         </details>
       ) : null}
-      {closureHistory.length > 0 ? (
+      {!isListingStage && closureHistory.length > 0 ? (
         <details className="rounded-2xl border border-[var(--line)] bg-white/5">
           <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--ink)]">Marketplace Closure History</summary>
-          <div className="space-y-4 border-t border-[var(--line)] px-4 py-4 text-sm text-[var(--muted)]">
-            <p className="m-0">
-              Read-only history, not current listing status. Results may belong to an earlier listing after republication.
-              Older eBay close timestamps can also represent failed attempts; an error result does not confirm a takedown.
-            </p>
-            <dl className="space-y-4">
+          <div className="flex flex-col gap-4 border-t border-[var(--line)] px-4 py-4 text-sm text-[var(--muted)]">
+            <p className="m-0 text-xs">History only - not current listing status.</p>
+            <dl className="space-y-3">
               {closureHistory.map(({ channel, result, closedAt }) => (
                 <div key={channel} className="grid gap-3 md:grid-cols-2">
-                  <div>
+                  <div className={lifecycleSummaryCardClass}>
                     <dt>{channel} last close result</dt>
-                    <dd className="mt-1 break-words font-semibold text-[var(--ink)]">{displayValue(result)}</dd>
+                    <dd className="mt-1 break-words text-base font-semibold text-[var(--ink)]">{displayValue(result)}</dd>
                   </div>
-                  <div>
+                  <div className={lifecycleSummaryCardClass}>
                     <dt>{channel} recorded close timestamp</dt>
-                    <dd className="mt-1 font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(closedAt)}</dd>
+                    <dd className="mt-1 text-base font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(closedAt)}</dd>
                   </div>
                 </div>
               ))}

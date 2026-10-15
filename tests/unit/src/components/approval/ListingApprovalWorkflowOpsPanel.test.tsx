@@ -162,7 +162,7 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     expect(screen.queryByText('Listed, Shopify + eBay')).not.toBeInTheDocument();
   });
 
-  it('shows historical closure details read-only without marking a republished listing closed', async () => {
+  it('hides historical closure details without changing a republished listing or its saved history', async () => {
     const record = buildRecord({
       'Shopify REST Product ID': '12345',
       'eBay Offer ID': 'offer-1',
@@ -174,14 +174,89 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
     render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
     expect(await screen.findByText('Listed, Shopify + eBay')).toBeInTheDocument();
-    expect(screen.getByText('Marketplace Closure History')).toBeInTheDocument();
-    expect(screen.getByText('eBay last close result')).toBeInTheDocument();
-    expect(screen.getByText('eBay offer withdrawn')).toBeInTheDocument();
-    expect(screen.getByText('Shopify product deleted')).toBeInTheDocument();
-    expect(screen.getByText(/not current listing status/i)).toBeInTheDocument();
+    expect(screen.queryByText('Marketplace Closure History')).not.toBeInTheDocument();
+    expect(screen.queryByText('eBay offer withdrawn')).not.toBeInTheDocument();
+    expect(screen.queryByText('Shopify product deleted')).not.toBeInTheDocument();
+    expect(record.fields['eBay Close Result']).toBe('eBay offer withdrawn');
+    expect(record.fields['eBay Closed At']).toBe('2026-05-01T12:00:00.000Z');
+    expect(record.fields['Shopify Close Result']).toBe('Shopify product deleted');
+    expect(record.fields['Shopify Closed At']).toBe('2026-04-30T12:00:00.000Z');
     expect(screen.queryByRole('textbox', { name: /close result|closed at/i })).not.toBeInTheDocument();
     expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
     expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['Listed, Shopify', 'Listed, eBay', 'Stale Listing, Shopify', 'Stale Listing, eBay'])(
+    'hides closure history during the %s listing stage',
+    async (status) => {
+      const record = buildRecord({
+        'Workflow Status': status,
+        'Shopify Close Result': 'Shopify product deleted',
+      });
+      loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+      render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+      await waitFor(() => expect(loadUsedGearOperationalRecordContextMock).toHaveBeenCalledWith(record.id));
+      expect(screen.queryByText('Marketplace Closure History')).not.toBeInTheDocument();
+      expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it('shows retained history again after a listed item returns to Ready', async () => {
+    const listed = buildRecord({ 'Shopify Close Result': 'Shopify product deleted', 'Shopify Closed At': '2026-10-15' });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record: listed, group: null });
+    const props = { tableReference: 'used-gear-workflow', loadRecords: vi.fn() };
+    const { rerender } = render(<ListingApprovalWorkflowOpsPanel {...props} selectedRecord={listed} />);
+    await waitFor(() => expect(loadUsedGearOperationalRecordContextMock).toHaveBeenCalledWith(listed.id));
+    expect(screen.queryByText('Marketplace Closure History')).not.toBeInTheDocument();
+
+    const ready = { ...listed, fields: { ...listed.fields, 'Workflow Status': 'Approved for Publish' } };
+    rerender(<ListingApprovalWorkflowOpsPanel {...props} selectedRecord={ready} />);
+    expect(await screen.findByText('Marketplace Closure History')).toBeInTheDocument();
+    expect(screen.getByText('Shopify product deleted')).toBeInTheDocument();
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+    expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).not.toHaveBeenCalled();
+  });
+
+  it('matches lifecycle summary cards and spaces the short note without extra help', async () => {
+    const record = buildRecord({
+      'Workflow Status': 'Sold - Ready to Ship',
+      'eBay Close Result': 'eBay withdraw error: 404 offer not found',
+      'eBay Closed At': '2026-10-14',
+    });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+
+    const note = await screen.findByText('History only - not current listing status.');
+    expect(note.parentElement).toHaveClass('flex', 'flex-col', 'gap-4');
+    const resultCard = screen.getByText('eBay last close result').parentElement;
+    const dateCard = screen.getByText('eBay recorded close timestamp').parentElement;
+    const lifecycleCard = screen.getByText('Lifecycle Status').parentElement;
+    expect(resultCard?.className).toBe(lifecycleCard?.className);
+    expect(dateCard?.className).toBe(lifecycleCard?.className);
+    expect(note.closest('details')).not.toHaveAttribute('open');
+    fireEvent.click(screen.getByText('Marketplace Closure History'));
+    expect(note).toBeVisible();
+    expect(screen.queryByText('About this history')).not.toBeInTheDocument();
+    expect(screen.queryByText(/earlier listing after republication/)).not.toBeInTheDocument();
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+    expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps Shopify history concise and visible before publishing', async () => {
+    const record = buildRecord({
+      'Workflow Status': 'Approved for Publish',
+      'Shopify Close Result': 'Shopify product deleted',
+      'Shopify Closed At': '2026-10-15',
+    });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+
+    expect(await screen.findByText('Shopify product deleted')).toBeInTheDocument();
+    expect(screen.getByText('History only - not current listing status.')).toBeInTheDocument();
+    expect(screen.queryByText('About this history')).not.toBeInTheDocument();
+    expect(screen.queryByText(/earlier listing after republication/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Older eBay close timestamps/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Post-Publish Lifecycle')).not.toBeInTheDocument();
   });
 
   it('keeps failed close history visible when the record is back in Ready', async () => {
@@ -193,14 +268,14 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
     render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
     expect(await screen.findByText('eBay withdraw error: 404 offer not found')).toBeInTheDocument();
-    expect(screen.getByText(/failed attempts/i)).toBeInTheDocument();
+    expect(screen.getByText('History only - not current listing status.')).toBeInTheDocument();
     expect(screen.queryByText('Post-Publish Lifecycle')).not.toBeInTheDocument();
     expect(getOfferMock).not.toHaveBeenCalled();
     expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
   });
 
   it('shows a date-only closure date without shifting the calendar day or inventing a time', async () => {
-    const record = buildRecord({ 'eBay Closed At': '2026-10-14' });
+    const record = buildRecord({ 'Workflow Status': 'Approved for Publish', 'eBay Closed At': '2026-10-14' });
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
     render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
     const expected = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date('2026-10-14'));

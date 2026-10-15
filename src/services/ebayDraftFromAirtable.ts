@@ -1,6 +1,7 @@
 type ApprovalFieldMap = Record<string, unknown>;
 
 import { parseEbayAspects } from '@/services/ebayAspects';
+import { EBAY_APPROVAL_POLICY_FIELD_CANDIDATES } from '@contracts/ebayApproval';
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 import {
   getIncludedWorkflowImageMetadata,
@@ -596,33 +597,9 @@ export function buildEbayDraftPayloadBundleFromApprovalFields(fields: ApprovalFi
     'ebay_offer_listingDuration',
     'ebay_offer_listing_duration',
   ]) || 'GTC';
-  const fulfillmentPolicyId = getField(fields, [
-    'eBay Offer Fulfillment Policy ID',
-    'ebay_offer_fulfillment_policy_id',
-    'e_bay_offer_fulfillment_policy_id',
-    'ebay_offer_fulfillmentpolicyid',
-    'e_bay_offer_fulfillmentpolicyid',
-    'Fulfillment Policy ID',
-    'fulfillment_policy_id',
-  ]);
-  const paymentPolicyId = getField(fields, [
-    'eBay Offer Payment Policy ID',
-    'ebay_offer_payment_policy_id',
-    'e_bay_offer_payment_policy_id',
-    'ebay_offer_paymentpolicyid',
-    'e_bay_offer_paymentpolicyid',
-    'Payment Policy ID',
-    'payment_policy_id',
-  ]);
-  const returnPolicyId = getField(fields, [
-    'eBay Offer Return Policy ID',
-    'ebay_offer_return_policy_id',
-    'e_bay_offer_return_policy_id',
-    'ebay_offer_returnpolicyid',
-    'e_bay_offer_returnpolicyid',
-    'Return Policy ID',
-    'return_policy_id',
-  ]);
+  const fulfillmentPolicyId = getField(fields, [...EBAY_APPROVAL_POLICY_FIELD_CANDIDATES.fulfillment]);
+  const paymentPolicyId = getField(fields, [...EBAY_APPROVAL_POLICY_FIELD_CANDIDATES.payment]);
+  const returnPolicyId = getField(fields, [...EBAY_APPROVAL_POLICY_FIELD_CANDIDATES.returns]);
   const priceValue = getField(fields, [
     'eBay Offer Price Value',
     'eBay Offer Auction Start Price Value',

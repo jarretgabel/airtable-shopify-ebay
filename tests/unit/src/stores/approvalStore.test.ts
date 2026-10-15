@@ -54,6 +54,43 @@ describe('approvalStore saveRecord approve-only', () => {
     vi.mocked(updateRecordFromResolvedSource).mockReset();
   });
 
+  it('saves an initially blank Shopify Price and restores it from the queue after reload', async () => {
+    const record: AirtableRecord = {
+      ...createRecord(),
+      fields: {
+        'Item Title': 'Proceed HPA 2',
+        'Ebay Price': 999999,
+        Cost: 300,
+        Quantity: 1,
+        Images: [{ url: 'https://example.com/proceed-hpa-2.jpg' }],
+        'Workflow Status': 'Ready for Publishing',
+      },
+    };
+    const fieldNames = [...Object.keys(record.fields), 'Shopify Price'];
+    const savedRecord = { ...record, fields: { ...record.fields, 'Shopify Price': 1200 } };
+    useApprovalStore.getState().hydrateForm(record, fieldNames, 'Shopify Approved');
+    useApprovalStore.getState().setFormValue('Shopify Price', '1200');
+    vi.mocked(updateRecordFromResolvedSource).mockResolvedValue(savedRecord);
+    vi.mocked(getRecordsFromResolvedSource).mockImplementation(async (_reference, _name, options) => [{
+      ...savedRecord,
+      fields: Object.fromEntries(Object.entries(savedRecord.fields).filter(([name]) => options?.fields?.includes(name))),
+    }]);
+
+    expect(await useApprovalStore.getState().saveRecord(
+      false, record, 'tblApproval', 'Approval', Object.keys(record.fields),
+      'Shopify Approved', vi.fn(), 'full',
+    )).toBe(true);
+    expect(updateRecordFromResolvedSource).toHaveBeenCalledExactlyOnceWith(
+      'tblApproval', 'Approval', record.id, { 'Shopify Price': 1200 }, { typecast: true },
+    );
+    const reloadedRecord = useApprovalStore.getState().records.find(({ id }) => id === record.id);
+    expect(reloadedRecord?.fields['Shopify Price']).toBe(1200);
+    expect(reloadedRecord?.fields['Ebay Price']).toBe(999999);
+    if (!reloadedRecord) throw new Error('Saved listing was not reloaded');
+    useApprovalStore.getState().hydrateForm(reloadedRecord, fieldNames, 'Shopify Approved');
+    expect(useApprovalStore.getState().formValues['Shopify Price']).toBe('1200');
+  });
+
   it('retries approve-only saves with typecast after a 422', async () => {
     const selectedRecord = createRecord();
     const onSuccess = vi.fn();

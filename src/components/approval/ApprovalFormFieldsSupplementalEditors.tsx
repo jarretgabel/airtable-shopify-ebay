@@ -647,6 +647,7 @@ export function ApprovalFormFieldsSupplementalEditors({
       {isEbayApprovalForm && (
         <Suspense fallback={lazyEditorFallback}>
           <EbayPolicySelectGroup
+            recordId={recordId}
             enabled={hasEbayBusinessPoliciesEditor}
             marketplaceId={ebayMarketplaceId}
             fulfillmentPolicyFieldName={ebayFulfillmentPolicyFieldName}

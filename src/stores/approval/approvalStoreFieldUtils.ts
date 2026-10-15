@@ -142,6 +142,10 @@ export function inferFieldKind(value: unknown): ApprovalFieldKind {
 }
 
 export function inferFieldKindForField(fieldName: string, value: unknown): ApprovalFieldKind {
+  if (fieldName.trim().toLowerCase() === 'shopify price') {
+    return 'number';
+  }
+
   if (isQuantityValueField(fieldName)) {
     return 'number';
   }

@@ -3,6 +3,26 @@ import { describe, expect, it } from 'vitest';
 import { useListingApprovalFieldNames } from '@/components/approval/useListingApprovalFieldNames';
 
 describe('useListingApprovalFieldNames', () => {
+  it.each(['shopify', 'combined'] as const)('uses Shopify Price for an initially blank %s listing', (approvalChannel) => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { 'Item Title': 'Proceed HPA 2', 'Ebay Price': 999999, Cost: 300 } }],
+      approvalChannel,
+    }));
+
+    expect(result.current.allFieldNames).toContain('Shopify Price');
+    expect(result.current.allFieldNames).not.toContain('Shopify REST Variant 1 Price');
+  });
+
+  it('does not inject another price field when canonical Shopify Price is saved', () => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { 'Shopify Price': 1200 } }],
+      approvalChannel: 'combined',
+    }));
+
+    expect(result.current.allFieldNames).toContain('Shopify Price');
+    expect(result.current.allFieldNames).not.toContain('Shopify REST Variant 1 Price');
+  });
+
   it('includes writable flat-fee fields when Airtable omits blank values from records', () => {
     const { result } = renderHook(() => useListingApprovalFieldNames({
       records: [{
