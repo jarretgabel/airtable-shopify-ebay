@@ -302,6 +302,7 @@ describe('TestingFormTab', () => {
     render(<TestingFormTab recordId="rec-testing" />);
     const rating = await screen.findByRole('combobox', { name: 'Audiogon Rating' });
     const fullChoice = '8/10: Very Good - Flawless front face, other minor imperfections.';
+    expect(screen.getByRole('option', { name: fullChoice })).toHaveValue(fullChoice);
     expect(rating).toHaveValue('7/10');
     fireEvent.change(rating, { target: { value: fullChoice } });
     expect(rating).toHaveAccessibleDescription(fullChoice);

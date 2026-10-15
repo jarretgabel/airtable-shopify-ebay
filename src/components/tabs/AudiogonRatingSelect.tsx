@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { audiogonRatingDescription, audiogonRatingLabel, findAudiogonRating } from '@contracts/audiogonRating';
+import { audiogonRatingDescription, findAudiogonRating } from '@contracts/audiogonRating';
 import { tabFormHelpClass } from '@/components/tabs/uiClasses';
 
 export function AudiogonRatingSelect({
@@ -29,7 +29,7 @@ export function AudiogonRatingSelect({
         {legacyValue ? <option value={value}>Current: {value}</option> : null}
         {options.map((option) => {
           const rating = findAudiogonRating(option);
-          return <option key={option} value={option}>{rating ? audiogonRatingLabel(rating) : option}</option>;
+          return <option key={option} value={option}>{rating ? audiogonRatingDescription(rating) : option}</option>;
         })}
       </select>
       {value ? (

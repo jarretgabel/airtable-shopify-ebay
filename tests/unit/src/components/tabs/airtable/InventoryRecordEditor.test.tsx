@@ -28,6 +28,9 @@ describe('InventoryRecordEditor', () => {
       />,
     );
     expect(screen.getByRole('combobox', { name: 'Audiogon Rating' })).toHaveValue('8/10');
+    for (const choice of choices) {
+      expect(screen.getByRole('option', { name: choice })).toHaveValue(choice);
+    }
     expect(onFieldChange).not.toHaveBeenCalled();
     fireEvent.change(screen.getByRole('combobox', { name: 'Audiogon Rating' }), { target: { value: choices[2] } });
     expect(onFieldChange).toHaveBeenCalledWith('Audiogon Rating', choices[2]);
