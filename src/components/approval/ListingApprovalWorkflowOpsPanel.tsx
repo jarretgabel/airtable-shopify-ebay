@@ -66,9 +66,11 @@ function formatLifecycleTimestamp(value: unknown): string {
     return displayValue(value);
   }
 
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
   return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
-    timeStyle: 'short',
+    timeStyle: isDateOnly ? undefined : 'short',
+    timeZone: isDateOnly ? 'UTC' : undefined,
   }).format(date);
 }
 
@@ -187,6 +189,11 @@ export function ListingApprovalWorkflowOpsPanel({
     ? workflowRecord.fields['Shipment Follow-Through Updated At']
     : '';
   const postPublishSnapshot = useMemo(() => getUsedGearWorkflowPostPublishSnapshot(workflowRecord), [workflowRecord]);
+  const closureHistory = (['eBay', 'Shopify'] as const).map((channel) => ({
+    channel,
+    result: workflowRecord.fields[`${channel} Close Result`],
+    closedAt: workflowRecord.fields[`${channel} Closed At`],
+  })).filter(({ result, closedAt }) => Boolean(result || closedAt));
   const showMarkSoldReady = postPublishSnapshot?.bucket === 'active-listing' || postPublishSnapshot?.bucket === 'stale-listing';
   const showMarkShipped = postPublishSnapshot?.status === 'Sold - Ready to Ship';
   const noOutcomeYet = !postPublishSnapshot?.postSaleOutcome;
@@ -701,6 +708,31 @@ export function ListingApprovalWorkflowOpsPanel({
                 ) : null}
               </div>
             ) : null}
+          </div>
+        </details>
+      ) : null}
+      {closureHistory.length > 0 ? (
+        <details className="rounded-2xl border border-[var(--line)] bg-white/5">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-[var(--ink)]">Marketplace Closure History</summary>
+          <div className="space-y-4 border-t border-[var(--line)] px-4 py-4 text-sm text-[var(--muted)]">
+            <p className="m-0">
+              Read-only history, not current listing status. Results may belong to an earlier listing after republication.
+              Older eBay close timestamps can also represent failed attempts; an error result does not confirm a takedown.
+            </p>
+            <dl className="space-y-4">
+              {closureHistory.map(({ channel, result, closedAt }) => (
+                <div key={channel} className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <dt>{channel} last close result</dt>
+                    <dd className="mt-1 break-words font-semibold text-[var(--ink)]">{displayValue(result)}</dd>
+                  </div>
+                  <div>
+                    <dt>{channel} recorded close timestamp</dt>
+                    <dd className="mt-1 font-semibold text-[var(--ink)]">{formatLifecycleTimestamp(closedAt)}</dd>
+                  </div>
+                </div>
+              ))}
+            </dl>
           </div>
         </details>
       ) : null}

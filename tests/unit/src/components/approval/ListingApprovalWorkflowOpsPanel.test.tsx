@@ -162,6 +162,51 @@ describe('ListingApprovalWorkflowOpsPanel', () => {
     expect(screen.queryByText('Listed, Shopify + eBay')).not.toBeInTheDocument();
   });
 
+  it('shows historical closure details read-only without marking a republished listing closed', async () => {
+    const record = buildRecord({
+      'Shopify REST Product ID': '12345',
+      'eBay Offer ID': 'offer-1',
+      'eBay Closed At': '2026-05-01T12:00:00.000Z',
+      'eBay Close Result': 'eBay offer withdrawn',
+      'Shopify Closed At': '2026-04-30T12:00:00.000Z',
+      'Shopify Close Result': 'Shopify product deleted',
+    });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+    expect(await screen.findByText('Listed, Shopify + eBay')).toBeInTheDocument();
+    expect(screen.getByText('Marketplace Closure History')).toBeInTheDocument();
+    expect(screen.getByText('eBay last close result')).toBeInTheDocument();
+    expect(screen.getByText('eBay offer withdrawn')).toBeInTheDocument();
+    expect(screen.getByText('Shopify product deleted')).toBeInTheDocument();
+    expect(screen.getByText(/not current listing status/i)).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /close result|closed at/i })).not.toBeInTheDocument();
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+    expect(takeDownWorkflowMarketplaceListingAndMoveBackMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps failed close history visible when the record is back in Ready', async () => {
+    const record = buildRecord({
+      'Workflow Status': 'Approved for Publish',
+      'eBay Close Result': 'eBay withdraw error: 404 offer not found',
+      'eBay Closed At': '2026-05-01T12:00:00.000Z',
+    });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+    expect(await screen.findByText('eBay withdraw error: 404 offer not found')).toBeInTheDocument();
+    expect(screen.getByText(/failed attempts/i)).toBeInTheDocument();
+    expect(screen.queryByText('Post-Publish Lifecycle')).not.toBeInTheDocument();
+    expect(getOfferMock).not.toHaveBeenCalled();
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a date-only closure date without shifting the calendar day or inventing a time', async () => {
+    const record = buildRecord({ 'eBay Closed At': '2026-10-14' });
+    loadUsedGearOperationalRecordContextMock.mockResolvedValue({ record, group: null });
+    render(<ListingApprovalWorkflowOpsPanel selectedRecord={record} tableReference="used-gear-workflow" loadRecords={vi.fn()} />);
+    const expected = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date('2026-10-14'));
+    expect(await screen.findByText(expected)).toBeInTheDocument();
+  });
+
   it('reports verification errors instead of claiming both channels are live', async () => {
     const record = buildRecord({ 'Shopify REST Product ID': '12345', 'eBay Offer ID': 'offer-1' });
     getOfferMock.mockRejectedValue(new Error('eBay is unavailable'));

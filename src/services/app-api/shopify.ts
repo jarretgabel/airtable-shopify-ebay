@@ -12,6 +12,7 @@ import type {
   ShopifyApprovalTaxonomyCategoryAttribute as ShopifyTaxonomyCategoryAttribute,
 } from '@contracts/shopifyApproval';
 import type { AirtableConfiguredRecordsSource } from './airtableSources';
+import type { ShopifyShippingInspection, ShopifyShippingUpdate } from '@contracts/shopifyShipping';
 import type { ShopifyProductsResponse } from '@/types/shopify';
 import { isAppApiHttpError } from './errors';
 import { getJson, postJson } from './http';
@@ -73,6 +74,14 @@ export async function getCollections(first = 250): Promise<ShopifyCollectionMatc
   }
 }
 
+export async function getProductShippingInspection(id: number): Promise<ShopifyShippingInspection | null> {
+  try {
+    return await getJson<ShopifyShippingInspection | null>(`/api/shopify/products/${id}`, { view: 'shipping' });
+  } catch (error) {
+    throw toShopifyError(error);
+  }
+}
+
 export async function searchCollections(search: string, first = 250): Promise<ShopifyCollectionMatch[]> {
   try {
     return await getJson<ShopifyCollectionMatch[]>('/api/shopify/collections/search', { search, first });
@@ -110,6 +119,16 @@ export async function upsertProductWithUnifiedRequest(
 ): Promise<ShopifyUnifiedProductResult> {
   try {
     return await postJson<ShopifyUnifiedProductResult>('/api/shopify/product-set', { request });
+  } catch (error) {
+    throw toShopifyError(error);
+  }
+}
+
+export async function updateProductShipping(productId: number, shipping: ShopifyShippingUpdate): Promise<ShopifyShippingInspection> {
+  try {
+    return await postJson<ShopifyShippingInspection>('/api/shopify/product-set', {
+      action: 'update-shipping', productId, shipping,
+    });
   } catch (error) {
     throw toShopifyError(error);
   }

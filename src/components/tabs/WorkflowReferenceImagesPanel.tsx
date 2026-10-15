@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { isGoogleDriveImageUrl } from '@/services/workflowImageMetadata';
 import { getConfiguredWorkflowImagePreview } from '@/services/app-api/airtable';
 
-type WorkflowImagePreviewSource = 'used-gear-workflow' | 'approval-combined';
+export type WorkflowImagePreviewSource = 'used-gear-workflow' | 'approval-combined';
 
 interface WorkflowReferenceImage {
   id?: string;
   url?: string;
   filename: string;
+  alt?: string;
 }
 
 interface WorkflowReferenceImagesPanelProps {
@@ -59,7 +60,7 @@ function getReferencePreviewUrl(url?: string): string | undefined {
   return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
 }
 
-function ReferenceImageCard({
+export function WorkflowReferenceImageCard({
   image,
   recordSource,
   recordId,
@@ -123,7 +124,7 @@ function ReferenceImageCard({
         <a href={image.url} target="_blank" rel="noreferrer" className="block">
           <img
             src={previewDataUrl}
-            alt={image.filename}
+            alt={image.alt || image.filename}
             className="aspect-[4/3] w-full bg-slate-950/30 object-cover"
             loading="lazy"
             referrerPolicy="no-referrer"
@@ -169,7 +170,7 @@ export function WorkflowReferenceImagesPanel({
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {googleDriveImages.map((image) => {
           return (
-            <ReferenceImageCard
+            <WorkflowReferenceImageCard
               key={image.id ?? `${image.filename}-${image.url ?? ''}`}
               image={image}
               recordSource={recordSource}

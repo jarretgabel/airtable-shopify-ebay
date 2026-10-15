@@ -3,6 +3,7 @@ import {
   getShopifyApprovalPreview,
   getCollections,
   getProduct,
+  getProductShippingInspection,
   getProducts,
   publishApprovalListingToShopify,
   publishProductToOnlineStore,
@@ -10,6 +11,7 @@ import {
   searchCollections,
   searchTaxonomyCategories,
   updateProductCategory,
+  updateProductShipping,
   uploadImageFile,
   upsertExistingProductWithCollectionsInSingleMutation,
   upsertProductWithUnifiedRequest,
@@ -42,6 +44,17 @@ describe('app-api shopify', () => {
     }));
   });
 
+  it.each([70, undefined])('uses a dedicated shipping action with optional weight %s and no product-set payload', async (weightPounds) => {
+    const shipping = { variantId: 456, ...(weightPounds === undefined ? {} : { weightPounds }), widthInches: 27, depthInches: 25, heightInches: 12 };
+    const result = { productId: 'gid://shopify/Product/123' };
+    fetchMock.mockResolvedValueOnce(Response.json(result));
+    expect(await updateProductShipping(123, shipping)).toEqual(result);
+    expect(fetchMock).toHaveBeenCalledWith('/api/shopify/product-set', expect.objectContaining({
+      method: 'POST', credentials: 'include',
+      body: JSON.stringify({ action: 'update-shipping', productId: 123, shipping }),
+    }));
+  });
+
   it('calls the Lambda Shopify products endpoint', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify([{ id: 2, title: 'DAC', created_at: 'later', updated_at: 'later' }]), {
@@ -58,6 +71,15 @@ describe('app-api shopify', () => {
       headers: { Accept: 'application/json' },
     });
     expect(result).toEqual([{ id: 2, title: 'DAC', created_at: 'later', updated_at: 'later' }]);
+  });
+
+  it('requests the optional shipping view through the authenticated local API', async () => {
+    const inspection = { productId: 'gid://shopify/Product/123', servedApiVersion: '2025-10' };
+    fetchMock.mockResolvedValueOnce(Response.json(inspection));
+    expect(await getProductShippingInspection(123)).toEqual(inspection);
+    expect(fetchMock).toHaveBeenCalledWith('/api/shopify/products/123?view=shipping', expect.objectContaining({
+      cache: 'no-store', credentials: 'include',
+    }));
   });
 
   it('rethrows Lambda Shopify failures as plain Errors', async () => {

@@ -1,4 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
+import type { ShopifyShippingInspection, ShopifyShippingUpdate } from '../../shared/contracts/shopifyShipping.js';
+import { SHOPIFY_SHIPPING_DIMENSION_KEYS } from '../../shared/contracts/shopifyShipping.js';
 import { logInfo } from '../../shared/logging.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
@@ -365,7 +367,11 @@ function toShopifyProductGid(productId: number): string {
   return `gid://shopify/Product/${productId}`;
 }
 
-async function graphQlRequest<TData>(query: string, variables?: Record<string, unknown>): Promise<TData> {
+async function graphQlRequest<TData>(
+  query: string,
+  variables?: Record<string, unknown>,
+  onApiVersion?: (version: string | null) => void,
+): Promise<TData> {
   const storeDomain = requireSecret('SHOPIFY_STORE_DOMAIN');
   const accessToken = requireSecret('SHOPIFY_ACCESS_TOKEN');
   const response = await fetch(`https://${storeDomain}/admin/api/2024-04/graphql.json`, {
@@ -407,6 +413,7 @@ async function graphQlRequest<TData>(query: string, variables?: Record<string, u
     });
   }
 
+  onApiVersion?.(response.headers.get('x-shopify-api-version'));
   return body.data;
 }
 
@@ -750,6 +757,236 @@ export async function getProduct(id: number): Promise<ShopifyUnifiedProductResul
     status: data.product.status,
     ...(data.product.onlineStoreUrl !== undefined ? { onlineStoreUrl: data.product.onlineStoreUrl } : {}),
   };
+}
+
+export async function getProductShippingInspection(productId: number): Promise<ShopifyShippingInspection | null> {
+  type ShippingProduct = {
+    id: string;
+    variants: { nodes: ShopifyShippingInspection['variants']; pageInfo: { hasNextPage: boolean } };
+    width: ShopifyShippingInspection['dimensionMetafields']['width'];
+    depth: ShopifyShippingInspection['dimensionMetafields']['depth'];
+    height: ShopifyShippingInspection['dimensionMetafields']['height'];
+    legacyWidth: ShopifyShippingInspection['dimensionMetafields']['width'];
+    legacyDepth: ShopifyShippingInspection['dimensionMetafields']['depth'];
+    legacyHeight: ShopifyShippingInspection['dimensionMetafields']['height'];
+  };
+  let servedApiVersion: string | null = null;
+  const data = await graphQlRequest<{
+    product: ShippingProduct | null;
+    widthDefinition: { nodes: Array<{ id: string; name: string; type: { name: string } }> };
+    depthDefinition: { nodes: Array<{ id: string; name: string; type: { name: string } }> };
+    heightDefinition: { nodes: Array<{ id: string; name: string; type: { name: string } }> };
+    currentAppInstallation: { accessScopes: Array<{ handle: string }> };
+    measurementInput: { inputFields: Array<{ name: string }> } | null;
+    inventoryItemInput: { inputFields: Array<{ name: string }> } | null;
+    variantInput: { inputFields: Array<{ name: string }> } | null;
+    inventoryItemType: { fields: Array<{ name: string }> } | null;
+    shopType: { fields: Array<{ name: string }> } | null;
+    measurementType: { fields: Array<{ name: string }> } | null;
+    schema: {
+      queryType: { fields: Array<{ name: string }> };
+      mutationType: { fields: Array<{ name: string }> } | null;
+    };
+  }>(
+    `query InspectProductShipping($id: ID!) {
+      product(id: $id) {
+        id
+        variants(first: 100) {
+          nodes {
+            id sku
+            inventoryItem {
+              id requiresShipping
+              measurement { weight { value unit } }
+            }
+          }
+          pageInfo { hasNextPage }
+        }
+        width: metafield(namespace: "custom", key: "${SHOPIFY_SHIPPING_DIMENSION_KEYS.width}") { value type compareDigest definition { id name } }
+        depth: metafield(namespace: "custom", key: "${SHOPIFY_SHIPPING_DIMENSION_KEYS.depth}") { value type compareDigest definition { id name } }
+        height: metafield(namespace: "custom", key: "${SHOPIFY_SHIPPING_DIMENSION_KEYS.height}") { value type compareDigest definition { id name } }
+        legacyWidth: metafield(namespace: "custom", key: "shipping_width") { value type compareDigest definition { id name } }
+        legacyDepth: metafield(namespace: "custom", key: "shipping_depth") { value type compareDigest definition { id name } }
+        legacyHeight: metafield(namespace: "custom", key: "shipping_height") { value type compareDigest definition { id name } }
+      }
+      widthDefinition: metafieldDefinitions(first: 1, ownerType: PRODUCT, namespace: "custom", key: "${SHOPIFY_SHIPPING_DIMENSION_KEYS.width}") { nodes { id name type { name } } }
+      depthDefinition: metafieldDefinitions(first: 1, ownerType: PRODUCT, namespace: "custom", key: "${SHOPIFY_SHIPPING_DIMENSION_KEYS.depth}") { nodes { id name type { name } } }
+      heightDefinition: metafieldDefinitions(first: 1, ownerType: PRODUCT, namespace: "custom", key: "${SHOPIFY_SHIPPING_DIMENSION_KEYS.height}") { nodes { id name type { name } } }
+      currentAppInstallation { accessScopes { handle } }
+      measurementInput: __type(name: "InventoryItemMeasurementInput") { inputFields { name } }
+      inventoryItemInput: __type(name: "InventoryItemInput") { inputFields { name } }
+      variantInput: __type(name: "ProductVariantSetInput") { inputFields { name } }
+      inventoryItemType: __type(name: "InventoryItem") { fields { name } }
+      shopType: __type(name: "Shop") { fields { name } }
+      measurementType: __type(name: "InventoryItemMeasurement") { fields { name } }
+      schema: __schema {
+        queryType { fields { name } }
+        mutationType { fields { name } }
+      }
+    }`,
+    { id: toShopifyProductGid(productId) },
+    (version) => { servedApiVersion = version; },
+  );
+  if (!data.product) return null;
+  const definition = (entry: { id: string; name: string; type: { name: string } } | undefined) =>
+    entry ? { id: entry.id, name: entry.name, type: entry.type.name } : null;
+  return {
+    productId: data.product.id,
+    servedApiVersion,
+    accessScopes: data.currentAppInstallation.accessScopes.map(({ handle }) => handle),
+    packageAssignmentSupported: data.measurementInput?.inputFields.some(({ name }) => name === 'shippingPackageId') ?? false,
+    inventoryPackageFields: data.inventoryItemType?.fields.map(({ name }) => name).filter((name) => /package/i.test(name)) ?? [],
+    shopPackageFields: data.shopType?.fields.map(({ name }) => name).filter((name) => /package/i.test(name)) ?? [],
+    measurementPackageFields: data.measurementType?.fields.map(({ name }) => name).filter((name) => /package/i.test(name)) ?? [],
+    packageQueries: data.schema.queryType.fields.map(({ name }) => name).filter((name) => /package/i.test(name)),
+    packageMutations: data.schema.mutationType?.fields.map(({ name }) => name).filter((name) => /package/i.test(name)) ?? [],
+    packedSizeSchema: {
+      measurementInputFields: data.measurementInput?.inputFields.map(({ name }) => name) ?? [],
+      inventoryItemInputFields: data.inventoryItemInput?.inputFields.map(({ name }) => name) ?? [],
+      variantInputFields: data.variantInput?.inputFields.map(({ name }) => name) ?? [],
+      measurementOutputFields: data.measurementType?.fields.map(({ name }) => name) ?? [],
+      inventoryItemOutputFields: data.inventoryItemType?.fields.map(({ name }) => name) ?? [],
+    },
+    variants: data.product.variants.nodes,
+    variantsTruncated: data.product.variants.pageInfo.hasNextPage,
+    dimensionMetafields: { width: data.product.width, depth: data.product.depth, height: data.product.height },
+    legacyDimensionMetafields: { width: data.product.legacyWidth, depth: data.product.legacyDepth, height: data.product.legacyHeight },
+    dimensionDefinitions: {
+      width: definition(data.widthDefinition.nodes[0]),
+      depth: definition(data.depthDefinition.nodes[0]),
+      height: definition(data.heightDefinition.nodes[0]),
+    },
+  };
+}
+
+function requireShippingUpdate(value: unknown): ShopifyShippingUpdate {
+  const fail = () => new HttpError(400, 'Shipping update requires variantId, positive widthInches/depthInches/heightInches and optional non-negative weightPounds only.', {
+    service: 'shopify', code: 'INVALID_SHOPIFY_SHIPPING_UPDATE', retryable: false,
+  });
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw fail();
+  const fields = value as Record<string, unknown>;
+  const allowed = ['variantId', 'weightPounds', 'widthInches', 'depthInches', 'heightInches'];
+  if (Object.keys(fields).some((key) => !allowed.includes(key))) throw fail();
+  const { variantId, weightPounds, widthInches, depthInches, heightInches } = fields;
+  const positive = (entry: unknown): entry is number => typeof entry === 'number' && Number.isFinite(entry) && entry > 0;
+  if (typeof variantId !== 'number' || !Number.isSafeInteger(variantId) || variantId <= 0
+    || (weightPounds !== undefined && (typeof weightPounds !== 'number' || !Number.isFinite(weightPounds) || weightPounds < 0))
+    || !positive(widthInches) || !positive(depthInches) || !positive(heightInches)) throw fail();
+  return { variantId, ...(weightPounds === undefined ? {} : { weightPounds }), widthInches, depthInches, heightInches };
+}
+
+export async function updateProductShipping(productId: number, value: unknown): Promise<ShopifyShippingInspection> {
+  if (!Number.isSafeInteger(productId) || productId <= 0) {
+    throw new HttpError(400, 'productId must be a positive safe integer.', {
+      service: 'shopify', code: 'INVALID_PRODUCT_ID', retryable: false,
+    });
+  }
+  const shipping = requireShippingUpdate(value);
+  const before = await getProductShippingInspection(productId);
+  const variantId = `gid://shopify/ProductVariant/${shipping.variantId}`;
+  const variant = before?.variants.find((entry) => entry.id === variantId);
+  if (!before || before.productId !== toShopifyProductGid(productId) || before.variantsTruncated || !variant) {
+    throw new HttpError(409, 'Shipping update requires a complete product read and a variant belonging to that product. No changes made.', {
+      service: 'shopify', code: 'SHOPIFY_SHIPPING_TARGET_MISMATCH', retryable: false,
+    });
+  }
+  const dimensions = [
+    { axis: 'width', value: shipping.widthInches },
+    { axis: 'depth', value: shipping.depthInches },
+    { axis: 'height', value: shipping.heightInches },
+  ] as const;
+  const metafields = dimensions.map(({ axis, value: dimension }) => {
+    const definition = before.dimensionDefinitions?.[axis];
+    if (!definition || definition.type !== 'number_decimal') {
+      throw new HttpError(409, `custom.${SHOPIFY_SHIPPING_DIMENSION_KEYS[axis]} requires an existing Decimal number product definition. No changes made.`, {
+        service: 'shopify', code: 'SHOPIFY_SHIPPING_DEFINITION_MISMATCH', retryable: false,
+      });
+    }
+    const existing = before.dimensionMetafields[axis];
+    if (existing && (existing.type !== 'number_decimal' || !existing.compareDigest)) {
+      throw new HttpError(409, 'Shipping metafields require matching decimal types and concurrency digests. No changes made.', {
+        service: 'shopify', code: 'SHOPIFY_SHIPPING_METAFIELD_CONFLICT', retryable: false,
+      });
+    }
+    return {
+      ownerId: before.productId, namespace: 'custom', key: SHOPIFY_SHIPPING_DIMENSION_KEYS[axis],
+      type: 'number_decimal', value: String(dimension), compareDigest: existing?.compareDigest ?? null,
+    };
+  });
+  if (shipping.weightPounds !== undefined) {
+    const weightResult = await graphQlRequest<{
+      inventoryItemUpdate: {
+        inventoryItem: { id: string; measurement: { weight: { value: number; unit: string } | null } } | null;
+        userErrors: Array<{ message: string }>;
+      };
+    }>(
+      `mutation UpdateProductShippingWeight($id: ID!, $input: InventoryItemInput!) {
+        inventoryItemUpdate(id: $id, input: $input) {
+          inventoryItem { id measurement { weight { value unit } } }
+          userErrors { message }
+        }
+      }`,
+      { id: variant.inventoryItem.id, input: { measurement: { weight: { value: shipping.weightPounds, unit: 'POUNDS' } } } },
+    ).catch((error: unknown) => {
+      throw new HttpError(502, `Native weight request was unconfirmed and may have changed the weight; custom dimensions were not written. Re-read shipping before retrying. ${error instanceof Error ? error.message : String(error)}`, {
+        service: 'shopify', code: 'SHOPIFY_SHIPPING_WEIGHT_UNCONFIRMED', retryable: false,
+      });
+    });
+    const weightErrors = weightResult.inventoryItemUpdate.userErrors;
+    const updatedItem = weightResult.inventoryItemUpdate.inventoryItem;
+    if (weightErrors.length || updatedItem?.id !== variant.inventoryItem.id
+      || updatedItem.measurement.weight?.value !== shipping.weightPounds || updatedItem.measurement.weight.unit !== 'POUNDS') {
+      throw new HttpError(502, `Native weight update failed or was unconfirmed; custom dimensions were not written. ${weightErrors.map(({ message }) => message).join('; ')}`, {
+        service: 'shopify', code: 'SHOPIFY_SHIPPING_WEIGHT_UNCONFIRMED', retryable: false,
+      });
+    }
+  }
+  try {
+    const dimensionResult = await graphQlRequest<{
+      metafieldsSet: { metafields: Array<{ key: string; value: string }> | null; userErrors: Array<{ message: string }> };
+    }>(
+      `mutation UpdateProductShippingDimensions($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields { key value }
+          userErrors { message }
+        }
+      }`,
+      { metafields },
+    );
+    const errors = dimensionResult.metafieldsSet.userErrors;
+    if (errors.length) {
+      throw new HttpError(502, errors.map(({ message }) => message).join('; '), {
+        service: 'shopify', code: 'SHOPIFY_SHIPPING_DIMENSIONS_FAILED', retryable: false,
+      });
+    }
+  } catch (error) {
+    const weightStatus = shipping.weightPounds === undefined ? 'Native weight was left unchanged' : 'Native weight was updated';
+    throw new HttpError(502, `${weightStatus}, but custom dimensions were not confirmed. Re-read shipping before retrying. ${error instanceof Error ? error.message : String(error)}`, {
+      service: 'shopify', code: 'SHOPIFY_SHIPPING_PARTIAL_UPDATE', retryable: false,
+    });
+  }
+  const after = await getProductShippingInspection(productId).catch((error: unknown) => {
+    throw new HttpError(502, `Shipping writes were attempted but readback failed. Re-read shipping before retrying. ${error instanceof Error ? error.message : String(error)}`, {
+      service: 'shopify', code: 'SHOPIFY_SHIPPING_READBACK_FAILED', retryable: false,
+    });
+  });
+  const afterVariant = after?.variants.find((entry) => entry.id === variantId);
+  const weight = afterVariant?.inventoryItem.measurement.weight;
+  const expectedWeight = shipping.weightPounds === undefined
+    ? variant.inventoryItem.measurement.weight
+    : { value: shipping.weightPounds, unit: 'POUNDS' };
+  const weightMatches = expectedWeight ? weight?.value === expectedWeight.value && weight.unit === expectedWeight.unit : weight === null;
+  if (!after || after.productId !== before.productId || after.variantsTruncated
+    || afterVariant?.inventoryItem.id !== variant.inventoryItem.id || !weightMatches
+    || dimensions.some(({ axis, value: expected }) => {
+      const field = after.dimensionMetafields[axis];
+      return !field || field.type !== 'number_decimal' || Number(field.value) !== expected
+        || field.definition?.id !== before.dimensionDefinitions?.[axis]?.id;
+    })) {
+    throw new HttpError(502, 'Shipping writes were attempted but exact values could not be verified. Re-read shipping before retrying.', {
+      service: 'shopify', code: 'SHOPIFY_SHIPPING_READBACK_FAILED', retryable: false,
+    });
+  }
+  return after;
 }
 
 export async function publishProductToOnlineStore(productId: number): Promise<ShopifyUnifiedProductResult> {

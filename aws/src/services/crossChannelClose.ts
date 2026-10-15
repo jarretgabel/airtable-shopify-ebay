@@ -221,7 +221,6 @@ export async function closeEbayListingWhenSoldOnShopify(
 
     // Write failure to Airtable for operator recovery
     await updateRecord('used-gear-workflow', recordId, {
-      'eBay Closed At': closedAtIso,
       'eBay Close Result': missingMsg,
     }, { typecast: true }).catch((err) => {
       logError('Failed to write close result to Airtable', err);
@@ -242,7 +241,6 @@ export async function closeEbayListingWhenSoldOnShopify(
     if (!result.success) {
       // Write failure to Airtable
       await updateRecord('used-gear-workflow', recordId, {
-        'eBay Closed At': closedAtIso,
         'eBay Close Result': result.message,
       }, { typecast: true }).catch((err) => {
         logError('Failed to write close result to Airtable', err);
@@ -283,7 +281,6 @@ export async function closeEbayListingWhenSoldOnShopify(
 
     // Write error to Airtable
     await updateRecord('used-gear-workflow', recordId, {
-      'eBay Closed At': closedAtIso,
       'eBay Close Result': errorMsg,
     }, { typecast: true }).catch((err) => {
       logError('Failed to write close result to Airtable', err);

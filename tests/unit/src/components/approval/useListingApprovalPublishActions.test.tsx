@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useListingApprovalPublishActions } from '@/components/approval/useListingApprovalPublishActions';
 
-const { publishMock, getRecordMock, updateRecordMock, loadRecordsMock, notifyMock, uploadMock, formValuesMock } = vi.hoisted(() => ({
+const { publishMock, getRecordMock, updateRecordMock, loadRecordsMock, notifyMock, uploadMock, formValuesMock, inspectMock } = vi.hoisted(() => ({
   publishMock: vi.fn(),
   getRecordMock: vi.fn(),
   updateRecordMock: vi.fn(),
@@ -10,9 +10,13 @@ const { publishMock, getRecordMock, updateRecordMock, loadRecordsMock, notifyMoc
   notifyMock: vi.fn(),
   uploadMock: vi.fn(),
   formValuesMock: vi.fn(),
+  inspectMock: vi.fn(),
 }));
 vi.mock('@/services/app-api/approval', () => ({ publishApprovalRecord: publishMock }));
-vi.mock('@/services/app-api/airtable', () => ({ getConfiguredRecord: getRecordMock, updateConfiguredRecord: updateRecordMock }));
+vi.mock('@/services/app-api/airtable', () => ({
+  getConfiguredRecord: getRecordMock, updateConfiguredRecord: updateRecordMock,
+  inspectWorkflowImageMetadata: inspectMock,
+}));
 vi.mock('@/services/app-api/ebay', () => ({ uploadImageUrlToEbayHostedPictures: uploadMock }));
 vi.mock('@/stores/approvalStore', () => ({ useApprovalStore: { getState: () => ({ loadRecords: loadRecordsMock, formValues: formValuesMock() }) } }));
 vi.mock('@/stores/notificationStore', () => ({ useNotificationStore: { getState: () => ({ upsertByKey: notifyMock }) } }));
@@ -63,8 +67,73 @@ describe('publish lifecycle writeback', () => {
     notifyMock.mockReset();
     uploadMock.mockReset();
     formValuesMock.mockReset().mockReturnValue({});
+    inspectMock.mockReset().mockResolvedValue({
+      validImageUrls: ['new-photo', 'old-photo', 'photo', 'good', 'bad'].map((id) => `https://drive.google.com/uc?id=${id}`),
+      invalidImageUrls: [],
+    });
   });
   afterEach(() => vi.useRealTimers());
+
+  for (const target of ['shopify', 'ebay', 'both'] as const) {
+    it(`blocks ${target} before uploads or marketplace writes if a selected photo is unsupported or unverified`, async () => {
+      const params = createParams();
+      params.mergedDraftSourceFields = {
+        'Workflow Image Metadata JSON': JSON.stringify([
+          { url: 'https://drive.google.com/uc?id=invalid', filename: 'invalid.jpg', sourceStage: 'photos', includedInListing: true },
+        ]),
+      };
+      inspectMock.mockResolvedValue({ validImageUrls: [], invalidImageUrls: ['https://drive.google.com/uc?id=invalid'] });
+      const { result } = renderHook(() => useListingApprovalPublishActions(params));
+      await act(async () => result.current.runCombinedPush(target));
+      expect(publishMock).not.toHaveBeenCalled();
+      expect(uploadMock).not.toHaveBeenCalled();
+      expect(updateRecordMock).not.toHaveBeenCalled();
+      expect(vi.mocked(params.pushInlineActionNotice).mock.calls).toContainEqual(
+        expect.arrayContaining(['error', 'Publish failed', expect.stringMatching(/invalid.jpg/)]),
+      );
+    });
+  }
+
+  it('keeps excluded unsupported sources and blocks temporary inspection failures without publishing', async () => {
+    const params = createParams();
+    params.mergedDraftSourceFields = {
+      'Workflow Image Metadata JSON': JSON.stringify([
+        { url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', includedInListing: true },
+        { url: 'https://drive.google.com/uc?id=invalid', sourceStage: 'photos', includedInListing: false },
+      ]),
+    };
+    const { result } = renderHook(() => useListingApprovalPublishActions(params));
+    await act(async () => result.current.runCombinedPush('shopify'));
+    expect(publishMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(publishMock.mock.calls[0][3].fields['Workflow Image Metadata JSON'])).toHaveLength(2);
+    publishMock.mockClear();
+    inspectMock.mockRejectedValue(new Error('Drive access unavailable'));
+    await act(async () => result.current.runCombinedPush('shopify'));
+    expect(publishMock).not.toHaveBeenCalled();
+    expect(params.pushInlineActionNotice).toHaveBeenCalledWith('error', expect.any(String), 'Drive access unavailable');
+  });
+
+  it('inspects after saving pending changes and does not inspect or publish after a failed save', async () => {
+    const params = createParams();
+    params.changedFieldNames = ['Workflow Image Metadata JSON'];
+    params.mergedDraftSourceFields = {
+      'Workflow Image Metadata JSON': JSON.stringify([
+        { url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', includedInListing: true },
+      ]),
+    };
+    const save = vi.fn(async () => true);
+    params.savePendingUpdates = save;
+    const { result } = renderHook(() => useListingApprovalPublishActions(params));
+    await act(async () => result.current.runCombinedPush('shopify'));
+    expect(save.mock.invocationCallOrder[0]).toBeLessThan(inspectMock.mock.invocationCallOrder[0]);
+    expect(inspectMock.mock.invocationCallOrder[0]).toBeLessThan(publishMock.mock.invocationCallOrder[0]);
+    save.mockResolvedValue(false);
+    inspectMock.mockClear();
+    publishMock.mockClear();
+    await act(async () => result.current.runCombinedPush('shopify'));
+    expect(inspectMock).not.toHaveBeenCalled();
+    expect(publishMock).not.toHaveBeenCalled();
+  });
 
   it('restores Listed At after takedown even when the selected record still has the old date', async () => {
     const params = createParams();

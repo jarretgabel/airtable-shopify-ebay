@@ -20,14 +20,13 @@ import type { AirtableRecord } from '@/types/airtable';
 import {
   filterWorkflowAttachmentsByStage,
   filterWorkflowImageMetadataByStage,
-  mergeWorkflowImageMetadata,
   parseWorkflowImageMetadata,
-  replaceWorkflowImageMetadataStage,
-  serializeWorkflowImageMetadata,
   type WorkflowImageMetadataRecord,
 } from '@/services/workflowImageMetadata';
+import { mergeWorkflowImageStageEdits, WorkflowImageEditError } from '@/services/workflowImageStageEdits';
 import { buildUsedGearItemTitle } from '../../aws/src/shared/contracts/usedGearItemTitle';
 import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
+import { getAudiogonRatingOptions, getAudiogonRatingUpdate } from '@contracts/audiogonRating';
 
 const INVENTORY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_ID = 'fld1zIzmZEciQECah';
@@ -120,6 +119,7 @@ function appendArchivedStageMetadata(
 ): WorkflowImageMetadataRecord[] {
   const currentStageRecords = filterWorkflowImageMetadataByStage(records, 'photos');
   const existingUrls = new Set(currentStageRecords.map((record) => record.url.trim().toLowerCase()));
+  const lastOrder = records.reduce((maximum, record) => Math.max(maximum, record.sortOrder), 0);
   const nowIso = new Date().toISOString();
   const additions = archivedFiles
     .filter((file) => {
@@ -136,7 +136,7 @@ function appendArchivedStageMetadata(
         alt: metadata?.altText?.trim() || '',
         imageRole: metadata?.imageRole,
         customImageRole: metadata?.imageRole === 'custom' && normalizedCustomRole ? normalizedCustomRole : undefined,
-        sortOrder: currentStageRecords.length + index + 1,
+        sortOrder: lastOrder + index + 1,
         sourceStage: 'photos',
         includedInListing: true,
         createdAt: nowIso,
@@ -144,12 +144,14 @@ function appendArchivedStageMetadata(
       } satisfies WorkflowImageMetadataRecord;
     });
 
-  return replaceWorkflowImageMetadataStage(records, 'photos', [...currentStageRecords, ...additions]);
+  return [...records, ...additions];
 }
 
 interface PhotosFormSubmitOptions {
+  originalAudiogonRating?: string;
   recordSource?: PhotosFormRecordSource;
   imageMetadata?: WorkflowImageMetadataRecord[];
+  originalImageMetadata?: WorkflowImageMetadataRecord[];
   imageUploadAssets?: FormImageUploadAsset[];
   completeWorkflowStage?: boolean;
   onImageUploadProgress?: (progress: PhotosFormImageUploadProgress) => void;
@@ -221,32 +223,6 @@ function compactFields(fields: Record<string, unknown>): Record<string, unknown>
   );
 }
 
-function isUnknownFieldNameError(error: unknown, fieldName: string): boolean {
-  return error instanceof Error && error.message.includes(`Unknown field name: "${fieldName}"`);
-}
-
-function omitWorkflowImageMetadataField(fields: Record<string, unknown>): Record<string, unknown> {
-  const nextFields = { ...fields };
-  delete nextFields[WORKFLOW_IMAGE_METADATA_FIELD_NAME];
-  return nextFields;
-}
-
-async function updateRecordWithWorkflowImageMetadataFallback(
-  recordSource: PhotosFormRecordSource,
-  recordId: string,
-  fields: Record<string, unknown>,
-): Promise<AirtableRecord> {
-  try {
-    return await updateConfiguredRecord(recordSource, recordId, fields, { typecast: true });
-  } catch (error) {
-    if (WORKFLOW_IMAGE_METADATA_FIELD_NAME in fields && isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
-      return updateConfiguredRecord(recordSource, recordId, omitWorkflowImageMetadataField(fields), { typecast: true });
-    }
-
-    throw error;
-  }
-}
-
 function assertApprovedPhotosWorkflowRecord(record: AirtableRecord): void {
   const workflowStatus = getUsedGearWorkflowStatus(record.fields);
 
@@ -267,37 +243,16 @@ async function syncWorkflowImageMetadataForRecord(params: {
   recordSource: PhotosFormRecordSource;
   recordId: string;
   existingMetadata: WorkflowImageMetadataRecord[];
-  nextMetadata?: WorkflowImageMetadataRecord[];
+  nextMetadata: WorkflowImageMetadataRecord[];
 }): Promise<void> {
-  const mergedMetadata = params.nextMetadata ?? await (async () => {
-    const latestRecord = await getConfiguredRecord(params.recordSource, params.recordId);
-    const latestAttachments = Array.isArray(latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
-      ? latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
-      : [];
-    return mergeWorkflowImageMetadata({
-      attachments: latestAttachments,
-      existingMetadata: params.existingMetadata,
-      sourceStage: 'photos',
-      nowIso: new Date().toISOString(),
-    });
-  })();
-
-  try {
-    await updateConfiguredRecord(
-      params.recordSource,
-      params.recordId,
-      {
-        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: serializeWorkflowImageMetadata(mergedMetadata),
-      },
-      { typecast: true },
-    );
-  } catch (error) {
-    if (isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
-      return;
-    }
-
-    throw error;
-  }
+  const latestRecord = await getConfiguredRecord(params.recordSource, params.recordId);
+  const metadataJson = mergeWorkflowImageStageEdits(
+    latestRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME], params.nextMetadata, 'photos', params.existingMetadata,
+  );
+  if (metadataJson === undefined) return;
+  await updateConfiguredRecord(params.recordSource, params.recordId, {
+    [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: metadataJson,
+  }, { typecast: true });
 }
 
 async function loadConfiguredPhotosRecord(recordId: string): Promise<{ source: PhotosFormRecordSource; record: AirtableRecord }> {
@@ -344,19 +299,6 @@ function extractAttachments(value: unknown): PhotosFormContextAttachment[] {
   });
 }
 
-function isAttachmentLinkedToMetadata(
-  attachment: PhotosFormContextAttachment,
-  metadata: WorkflowImageMetadataRecord[],
-): boolean {
-  return metadata.some((record) => {
-    if (attachment.id && record.attachmentId) {
-      return attachment.id === record.attachmentId;
-    }
-
-    return Boolean(attachment.url && record.url && attachment.url === record.url);
-  });
-}
-
 function buildCustomerReference(record: AirtableRecord): PhotosFormCustomerReference {
   return {
     cosmeticNotes: extractInventoryScalarValue(record.fields['Customer Cosmetic Notes']),
@@ -366,32 +308,8 @@ function buildCustomerReference(record: AirtableRecord): PhotosFormCustomerRefer
 }
 
 function buildStageContext(record: AirtableRecord): PhotosFormStageContext {
-  const attachments = Array.isArray(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
-    ? record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
-    : [];
   const allAttachments = extractAttachments(record.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME]);
-  const parsedImageMetadata = parseWorkflowImageMetadata(record.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
-  const attachmentsForMetadataMerge = parsedImageMetadata.length > 0
-    ? allAttachments
-      .filter((attachment) => isAttachmentLinkedToMetadata(attachment, parsedImageMetadata))
-      .map((attachment) => ({
-        id: attachment.id,
-        url: attachment.url,
-        filename: attachment.filename,
-      }))
-    : attachments;
-  const mergedPhotosMetadata = parsedImageMetadata.length > 0 && attachments.length > 0
-    ? mergeWorkflowImageMetadata({
-        attachments: attachmentsForMetadataMerge,
-        existingMetadata: filterWorkflowImageMetadataByStage(parsedImageMetadata, 'photos'),
-        sourceStage: 'photos',
-        nowIso: new Date().toISOString(),
-      })
-    : filterWorkflowImageMetadataByStage(parsedImageMetadata, 'photos');
-  const imageMetadata = [
-    ...parsedImageMetadata.filter((entry) => entry.sourceStage !== 'photos'),
-    ...mergedPhotosMetadata,
-  ];
+  const imageMetadata = parseWorkflowImageMetadata(record.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
   const existingAttachments = imageMetadata.length > 0
     ? filterWorkflowAttachmentsByStage(
       allAttachments,
@@ -474,7 +392,8 @@ export async function loadPhotosFormOptionSets(): Promise<PhotosOptionSet> {
 
     return OPTION_FIELD_NAMES.reduce<PhotosOptionSet>((acc, fieldName) => {
       const field = fields.find((entry) => entry.name === fieldName);
-      acc[fieldName] = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
+      const choices = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
+      acc[fieldName] = fieldName === 'Audiogon Rating' ? getAudiogonRatingOptions(choices) : choices;
       return acc;
     }, {
       Status: [],
@@ -541,16 +460,22 @@ export async function submitPhotosForm(
         Remote: arrayOrUndefined(values.remote),
         'Power Cable': arrayOrUndefined(values.powerCable),
         'Additional Items': trimToUndefined(values.additionalItems),
-        'Audiogon Rating': arrayOrUndefined(values.audiogonRating),
+        'Audiogon Rating': getAudiogonRatingUpdate(
+          values.audiogonRating,
+          options.originalAudiogonRating ?? extractInventoryScalarValue(workflowRecord.fields['Audiogon Rating']),
+        ),
         [PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME]: trimToUndefined(values.cosmeticConditionNotes),
         "Photo'd": trimToUndefined(values.photoDate),
         Status: statusValue,
-        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
+        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata
+          ? mergeWorkflowImageStageEdits(workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME], options.imageMetadata, 'photos', options.originalImageMetadata)
+          : undefined,
         ...(options.completeWorkflowStage ? buildWorkflowPhotographyFields(workflowRecord, actorName, photographedAt) : {}),
       });
 
-      const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);
-      let finalImageMetadata = options.imageMetadata ?? [];
+      const updatedRecord = await updateConfiguredRecord(recordSource, recordId, baseFields, { typecast: true });
+      const initialImageMetadata = options.imageMetadata ?? parseWorkflowImageMetadata(workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
+      let finalImageMetadata = initialImageMetadata;
       let usedArchiveOnlyWorkflowUpload = false;
 
       if (values.imageFiles.length > 0) {
@@ -611,20 +536,8 @@ export async function submitPhotosForm(
         await syncWorkflowImageMetadataForRecord({
           recordSource,
           recordId: updatedRecord.id,
-          existingMetadata: finalImageMetadata,
+          existingMetadata: initialImageMetadata,
           nextMetadata: finalImageMetadata,
-        });
-      } else if (options.imageMetadata) {
-        options.onImageUploadProgress?.({
-          total: values.imageFiles.length,
-          completed: values.imageFiles.length,
-          currentFilename: '',
-          phase: 'finalizing',
-        });
-        await syncWorkflowImageMetadataForRecord({
-          recordSource,
-          recordId: updatedRecord.id,
-          existingMetadata: options.imageMetadata,
         });
       }
 
@@ -638,7 +551,7 @@ export async function submitPhotosForm(
       const serviceError = createServiceError({
         service: 'photosForm',
         code: 'PHOTOS_FORM_UPDATE_FAILED',
-        userMessage: 'Unable to update the Photos fields for this workflow item.',
+        userMessage: error instanceof WorkflowImageEditError ? error.message : 'Unable to update the Photos fields for this workflow item.',
         retryable: true,
         cause: error,
       });

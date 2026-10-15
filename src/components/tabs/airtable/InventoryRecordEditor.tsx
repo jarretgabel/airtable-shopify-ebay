@@ -9,6 +9,8 @@ import {
 import { isShopifyCompoundTagsField } from '@/components/approval/approvalFormFieldsShopifyTagHelpers';
 import { ComponentTypeSearchField } from '@/components/tabs/component-type-search-field';
 import { DatePickerField } from '@/components/tabs/date-picker-field';
+import { AudiogonRatingSelect } from '@/components/tabs/AudiogonRatingSelect';
+import { getAudiogonRatingOptions } from '@contracts/audiogonRating';
 import type { InventoryDraftValue, InventoryFieldMetadata } from '@/components/tabs/airtable/inventoryDirectoryTypes';
 import {
   displayInventoryValue,
@@ -405,7 +407,15 @@ export function InventoryRecordEditor({
               ) : null}
 
               {fieldConfig.kind === 'select' ? (
-                field.choices.length > 0 ? (
+                field.name === 'Audiogon Rating' ? (
+                  <AudiogonRatingSelect
+                    className={`${FIELD_CLASS} mt-2`}
+                    value={typeof value === 'string' ? value : ''}
+                    options={getAudiogonRatingOptions(field.choices)}
+                    onChange={(nextValue) => onFieldChange(field.name, nextValue)}
+                    disabled={saving}
+                  />
+                ) : field.choices.length > 0 ? (
                   <select
                     className={`${FIELD_CLASS} mt-2`}
                     value={typeof value === 'string' ? value : ''}

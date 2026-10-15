@@ -3,6 +3,22 @@ import test from 'node:test';
 
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '../../../../../../aws/src/providers/ebay/approvalDraft.js';
 
+for (const { fields, quantity } of [
+  { fields: {}, quantity: 1 },
+  { fields: { Quantity: '', Qty: ' ' }, quantity: 1 },
+  { fields: { 'eBay Inventory Ship To Location Quantity': 0, Quantity: 4, Qty: 5 }, quantity: 0 },
+  { fields: { Quantity: '0', Qty: 5 }, quantity: 0 },
+  { fields: { Qty: 0 }, quantity: 0 },
+  { fields: { 'eBay Inventory Ship To Location Quantity': '3', Quantity: 4 }, quantity: 3 },
+  { fields: { Quantity: 4, Qty: 5, 'eBay Offer Quantity Limit Per Buyer': 99 }, quantity: 4 },
+]) {
+  test(`quantity precedence and zero reach both payload destinations: ${JSON.stringify(fields)}`, () => {
+    const bundle = buildEbayDraftPayloadBundleFromApprovalFields(fields);
+    assert.deepEqual(bundle.inventoryItem.availability, { shipToLocationAvailability: { quantity } });
+    assert.equal(bundle.offer.availableQuantity, quantity);
+  });
+}
+
 test('prepared eBay image URLs override workflow source images', () => {
   const bundle = buildEbayDraftPayloadBundleFromApprovalFields({
     'eBay Inventory SKU': 'SKU-EPS-ONLY',

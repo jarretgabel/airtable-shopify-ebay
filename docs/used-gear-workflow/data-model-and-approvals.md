@@ -167,18 +167,29 @@ These are proposed additions or formalized workflow fields for `tbl0K0nFQL64jQMx
 	- When to use it: use this when you need to answer "where did this row originate?"
 
 #### Shopify Product Shipping Data
+- `Shipping Weight`
+	- Shopify mapping: native variant `inventoryItem.measurement.weight`, with the supported unit retained.
+	- Bare canonical weight values retain the pounds default. Explicit variant fields take precedence; unsupported, conflicting or missing units are errors, not an omitted measurement. Explicit zero is preserved.
+	- Flat drafts can recover a labeled leading legacy weight such as `70lbs (27x25x12)` when explicit weight fields are blank. Per-variant JSON weights remain independent; legacy record weight is not broadcast to all JSON variants.
 - `Shipping Width`
 	- Purpose: store the product's shipping width as a separate numeric value in inches.
-	- Shopify mapping: product metafield `custom.shipping_width` with type `number_decimal`.
+	- Shopify mapping: product metafield `custom.shipping_width_inches` with type `number_decimal`.
 - `Shipping Depth`
 	- Purpose: store the product's shipping depth as a separate numeric value in inches.
-	- Shopify mapping: product metafield `custom.shipping_depth` with type `number_decimal`.
+	- Shopify mapping: product metafield `custom.shipping_depth_inches` with type `number_decimal`.
 - `Shipping Height`
 	- Purpose: store the product's shipping height as a separate numeric value in inches.
-	- Shopify mapping: product metafield `custom.shipping_height` with type `number_decimal`.
+	- Shopify mapping: product metafield `custom.shipping_height_inches` with type `number_decimal`.
+	- Compatibility: generated width/depth/height keys use `_inches`, while old Airtable source aliases still work. Existing non-`_inches` Shopify values are not deleted, overwritten, or migrated automatically. A separately approved copy uses the new target definitions/digests and can omit native weight entirely.
 - `Shipping Dims`
 	- Compatibility: retain as a legacy bundled source for existing rows; it is not the canonical representation for new records.
+	- A leading labeled weight is excluded before the existing positional width/depth/height fallback. For `70lbs (27x25x12)`, the weight is not the width. Separate dimension fields take precedence.
 	- These fields are product data only and are not used for automatic package or carrier-rate calculations.
+- Native Shopify Packed product size
+	- Intended alongside, not instead of, the custom dimension metafields. This is distinct from **Package when shipped alone**, which must remain unchanged.
+	- Contains outer packed length, width, height, and an inch/centimeter unit. Confirm axis mapping from the source width/depth/height contract before writing; do not silently relabel width as length.
+	- The inspected public API 2025-10 inventory/variant inputs do not expose these native dimensions. Current public `InventoryItemMeasurementInput` documentation lists weight and package ID only. Automatic native-size synchronization is blocked pending a supported write/readback path; custom metafields do not populate this control.
+	- Shopify documents admin/CSV editing for Packed product size. A separately approved CSV workflow must supply all four packed-size columns or omit all four. Empty packed-size columns on a variant-data row clear saved size; setting `Requires shipping` to false also clears it. Do not use CSV as a silent fallback.
 - `JotForm Submission ID`
 	- Purpose: store the exact external JotForm submission identity for webhook idempotency, audit, and replay-safe updates.
 	- Plain-language meaning: this is the source submission id that came from JotForm itself; it is separate from workflow grouping so replay/idempotency remains stable even when pickup grouping changes later.
@@ -617,4 +628,3 @@ Operational notes:
 - Preserve original data whenever a workflow field cannot be inferred safely.
 - It is acceptable for some historical rows to remain partially unnormalized if that is safer than inventing workflow history.
 - The purpose of backfill is to make active work operable, not to rewrite the historical truth of the table.
-

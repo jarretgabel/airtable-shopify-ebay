@@ -191,9 +191,9 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     const request = buildShopifyUnifiedProductSetRequest(product);
 
     expect(request.input.metafields).toEqual(expect.arrayContaining([
-      { namespace: 'custom', key: 'shipping_width', type: 'number_decimal', value: '22' },
-      { namespace: 'custom', key: 'shipping_depth', type: 'number_decimal', value: '19' },
-      { namespace: 'custom', key: 'shipping_height', type: 'number_decimal', value: '11' },
+      { namespace: 'custom', key: 'shipping_width_inches', type: 'number_decimal', value: '22' },
+      { namespace: 'custom', key: 'shipping_depth_inches', type: 'number_decimal', value: '19' },
+      { namespace: 'custom', key: 'shipping_height_inches', type: 'number_decimal', value: '11' },
     ]));
   });
 
@@ -207,9 +207,9 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     const request = buildShopifyUnifiedProductSetRequest(product);
 
     expect(request.input.metafields).toEqual(expect.arrayContaining([
-      { namespace: 'custom', key: 'shipping_width', type: 'number_decimal', value: '24' },
-      { namespace: 'custom', key: 'shipping_depth', type: 'number_decimal', value: '19' },
-      { namespace: 'custom', key: 'shipping_height', type: 'number_decimal', value: '11' },
+      { namespace: 'custom', key: 'shipping_width_inches', type: 'number_decimal', value: '24' },
+      { namespace: 'custom', key: 'shipping_depth_inches', type: 'number_decimal', value: '19' },
+      { namespace: 'custom', key: 'shipping_height_inches', type: 'number_decimal', value: '11' },
     ]));
   });
 

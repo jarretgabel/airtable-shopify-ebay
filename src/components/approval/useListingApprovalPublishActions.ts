@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { recordTitle } from '@/app/appNavigation';
 import { getPublishRequiredFieldValidationNotice } from '@/components/approval/listingApprovalActionValidation';
 import { publishApprovalRecord } from '@/services/app-api/approval';
-import { getConfiguredRecord, updateConfiguredRecord } from '@/services/app-api/airtable';
+import { getConfiguredRecord, inspectWorkflowImageMetadata, updateConfiguredRecord } from '@/services/app-api/airtable';
 import { uploadImageUrlToEbayHostedPictures } from '@/services/app-api/ebay';
 import { mergeEbayImageCaches } from '@/services/ebayImageCache';
 import { isEbayHostedImageCache, type EbayHostedImageCache } from '@contracts/ebayImages';
@@ -518,10 +518,23 @@ export function useListingApprovalPublishActions({
         if (!(await savePendingUpdates())) return;
       }
 
-      const publishFields = await prepareEbayHostedImages(
-        target,
-        buildPublishFieldsForTarget(target, mergedDraftSourceFields ?? null),
-      );
+      const draftFields = buildPublishFieldsForTarget(target, mergedDraftSourceFields ?? null);
+      const imageFields = draftFields ?? selectedRecord.fields;
+      const selectedImages = getIncludedWorkflowImageMetadata(parseWorkflowImageMetadata(
+        imageFields['Workflow Image Metadata JSON']
+        ?? imageFields['Workflow Image Metadata']
+        ?? imageFields.workflow_image_metadata_json
+        ?? imageFields.workflow_image_metadata,
+      ));
+      if (approvalPublishSource === 'approval-combined' && selectedImages.length > 0) {
+        const inspection = await inspectWorkflowImageMetadata(selectedRecord.id);
+        const validUrls = new Set(inspection.validImageUrls);
+        const uncheckedImages = selectedImages.filter((image) => !validUrls.has(image.url));
+        if (uncheckedImages.length > 0) {
+          throw new Error(`Cannot publish unsupported or unverified images: ${uncheckedImages.map((image) => image.filename || image.url).join(', ')}. Uncheck unsupported photos, or save new photos and check again. Source photos have not been removed.`);
+        }
+      }
+      const publishFields = await prepareEbayHostedImages(target, draftFields);
       if (target === 'ebay' || target === 'both') {
         pushInlineActionNotice(
           'info',

@@ -500,6 +500,8 @@ export function isSystemManagedListingFieldName(fieldName: string): boolean {
 
   return normalized === 'e bay listing id'
     || normalized === 'e bay offer id'
+    || normalized === 'e bay close result'
+    || normalized === 'e bay closed at'
     || normalized === 'shopify close result'
     || normalized === 'shopify closed at'
     || normalized === 'shipment follow through updated at'
@@ -507,6 +509,8 @@ export function isSystemManagedListingFieldName(fieldName: string): boolean {
     || normalized === 'shopify product id'
     || compact === 'ebaylistingid'
     || compact === 'ebayofferid'
+    || compact === 'ebaycloseresult'
+    || compact === 'ebayclosedat'
     || compact === 'shopifycloseresult'
     || compact === 'shopifyclosedat'
     || compact === 'shipmentfollowthroughupdatedat'

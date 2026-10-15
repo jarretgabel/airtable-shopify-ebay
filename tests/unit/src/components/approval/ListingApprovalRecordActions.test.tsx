@@ -35,6 +35,37 @@ const baseProps = {
 };
 
 describe('ListingApprovalRecordActions', () => {
+  it('places the stock-overwrite warning beside both eBay update actions', () => {
+    render(<ListingApprovalRecordActions {...baseProps} workflowStatus="Listed, eBay" hasExistingEbayOfferId hasExistingShopifyRestProductId />);
+    const warning = screen.getByRole('note', { name: 'eBay stock update warning' });
+    expect(warning).toHaveTextContent('can replace live stock');
+    expect(warning.parentElement).toBe(screen.getByRole('button', { name: 'Update eBay' }).parentElement);
+    expect(warning.parentElement).toBe(screen.getByRole('button', { name: 'Update Both' }).parentElement);
+  });
+
+  it('retains the warning when a publish-labelled action can reuse an existing eBay offer', () => {
+    render(<ListingApprovalRecordActions {...baseProps} hasExistingEbayOfferId />);
+    expect(screen.getByRole('button', { name: 'Publish eBay' })).toBeInTheDocument();
+    expect(screen.getByRole('note', { name: 'eBay stock update warning' })).toBeInTheDocument();
+  });
+
+  it.each([
+    { hasExistingEbayOfferId: false },
+    { approvalChannel: 'shopify', isCombinedApproval: false },
+    { workflowStatus: 'Sold - Ready to Ship' },
+    { workflowStatus: 'Shipped' },
+    { hasMissingEbayRequiredFields: true },
+    { hasMissingShopifyRequiredFields: true },
+  ] as const)('hides the stock warning when there is no relevant eBay update action: %j', (overrides) => {
+    render(<ListingApprovalRecordActions {...baseProps} hasExistingEbayOfferId {...overrides} />);
+    expect(screen.queryByRole('note', { name: 'eBay stock update warning' })).not.toBeInTheDocument();
+  });
+
+  it('also warns beside the single-channel eBay action', () => {
+    render(<ListingApprovalRecordActions {...baseProps} approvalChannel="ebay" isCombinedApproval={false} hasExistingEbayOfferId />);
+    expect(screen.getByRole('note', { name: 'eBay stock update warning' })).toBeInTheDocument();
+  });
+
   it('shows direct publish buttons during listing review', () => {
     const onPublishShopify = vi.fn();
     const onPublishEbay = vi.fn();

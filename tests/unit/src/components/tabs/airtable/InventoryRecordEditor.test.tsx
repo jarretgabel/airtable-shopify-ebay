@@ -12,8 +12,27 @@ vi.mock('@/components/approval/EbayCategoriesSelect', () => ({
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { InventoryRecordEditor } from '@/components/tabs/airtable/InventoryRecordEditor';
+import { AUDIOGON_RATINGS, audiogonRatingDescription } from '@contracts/audiogonRating';
 
 describe('InventoryRecordEditor', () => {
+  it('uses standard Audiogon choices and retains a legacy score until changed', () => {
+    const onFieldChange = vi.fn();
+    const choices = AUDIOGON_RATINGS.map(audiogonRatingDescription);
+    render(
+      <InventoryRecordEditor
+        record={{ id: 'rec-rating', createdTime: '', fields: { 'Audiogon Rating': ['8/10'] } }}
+        editableFields={[{ id: 'fld-rating', name: 'Audiogon Rating', type: 'multipleSelects', editable: true, choices: [...choices, '8/10'] }]}
+        draftValues={{ 'Audiogon Rating': '8/10' }}
+        dirtyFieldNames={[]} loading={false} saving={false} error={null} saveMessage={null}
+        onFieldChange={onFieldChange} onReset={vi.fn()} onReload={vi.fn()} onSave={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('combobox', { name: 'Audiogon Rating' })).toHaveValue('8/10');
+    expect(onFieldChange).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Audiogon Rating' }), { target: { value: choices[2] } });
+    expect(onFieldChange).toHaveBeenCalledWith('Audiogon Rating', choices[2]);
+  });
+
   it('uses the shared Shopify tags editor for Shopify Tags fields', () => {
     const onFieldChange = vi.fn();
 

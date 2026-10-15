@@ -2,6 +2,11 @@ import { useEffect, useRef } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestingFormTab } from '@/components/tabs/TestingFormTab';
+import { AUDIOGON_RATINGS, audiogonRatingDescription } from '@contracts/audiogonRating';
+
+vi.mock('@/services/app-api/airtable', () => ({
+  getConfiguredWorkflowImagePreview: vi.fn(async () => ({ dataUrl: 'data:image/jpeg;base64,/9j/2Q==' })),
+}));
 
 vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
   FormImageUploadEditor: ({
@@ -98,6 +103,7 @@ describe('TestingFormTab', () => {
     loadTestingFormOptionSetsMock.mockResolvedValue({
       Status: ['Tested'],
       'Component Type': ['Amplifier'],
+      'Audiogon Rating': AUDIOGON_RATINGS.map(audiogonRatingDescription),
       'Original Box': ['No'],
       Manual: ['Included'],
       Remote: ['No'],
@@ -112,12 +118,12 @@ describe('TestingFormTab', () => {
         inclusionNotes: '',
       },
       stageContext: {
-        existingAttachments: [{ id: 'att-1', url: 'https://example.com/testing.jpg', filename: 'testing.jpg' }],
-        referenceAttachments: [{ id: 'att-intake', url: 'https://example.com/intake.jpg', filename: 'intake.jpg' }],
+        existingAttachments: [{ id: 'att-1', url: 'https://drive.google.com/uc?id=file-testing', filename: 'testing.jpg' }],
+        referenceAttachments: [{ id: 'att-intake', url: 'https://drive.google.com/uc?id=file-intake', filename: 'intake.jpg' }],
         imageMetadata: [
           {
             attachmentId: 'att-1',
-            url: 'https://example.com/testing.jpg',
+            url: 'https://drive.google.com/uc?id=file-testing',
             filename: 'testing.jpg',
             alt: 'Bench overview',
             sortOrder: 1,
@@ -126,7 +132,7 @@ describe('TestingFormTab', () => {
           },
           {
             attachmentId: 'att-2',
-            url: 'https://example.com/photo.jpg',
+            url: 'https://drive.google.com/uc?id=file-photo',
             filename: 'photo.jpg',
             alt: 'Final photo',
             sortOrder: 2,
@@ -226,11 +232,12 @@ describe('TestingFormTab', () => {
       expect(submitTestingFormMock).toHaveBeenCalledWith(expect.any(Object), 'rec-testing', expect.objectContaining({
         completeWorkflowStage: true,
         recordSource: 'used-gear-workflow',
+        originalImageMetadata: expect.arrayContaining([expect.objectContaining({ alt: 'Bench overview' })]),
         imageUploadAssets: [],
         imageMetadata: [
           expect.objectContaining({
             attachmentId: 'att-1',
-            url: 'https://example.com/testing.jpg',
+            url: 'https://drive.google.com/uc?id=file-testing',
             filename: 'testing.jpg',
             alt: 'Updated bench overview',
             sourceStage: 'testing',
@@ -238,13 +245,22 @@ describe('TestingFormTab', () => {
           }),
           expect.objectContaining({
             attachmentId: 'att-2',
-            url: 'https://example.com/photo.jpg',
+            url: 'https://drive.google.com/uc?id=file-photo',
             filename: 'photo.jpg',
             alt: 'Final photo',
             sourceStage: 'photos',
             includedInListing: true,
           }),
         ],
+      }));
+    });
+    await screen.findByRole('status');
+    fireEvent.change(screen.getByLabelText('Alt text for testing.jpg'), { target: { value: 'Bench overview' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
+    await waitFor(() => {
+      expect(submitTestingFormMock).toHaveBeenLastCalledWith(expect.any(Object), 'rec-testing', expect.objectContaining({
+        originalImageMetadata: expect.arrayContaining([expect.objectContaining({ alt: 'Updated bench overview' })]),
+        imageMetadata: expect.arrayContaining([expect.objectContaining({ alt: 'Bench overview' })]),
       }));
     });
   });
@@ -280,6 +296,22 @@ describe('TestingFormTab', () => {
 
     expect(submittedValues.imageFiles).toHaveLength(1);
     expect(submittedValues.imageFiles[0]?.name).toBe('processed-testing.jpg');
+  });
+
+  it('submits the selected complete Audiogon choice while retaining the loaded rating baseline', async () => {
+    render(<TestingFormTab recordId="rec-testing" />);
+    const rating = await screen.findByRole('combobox', { name: 'Audiogon Rating' });
+    const fullChoice = '8/10: Very Good - Flawless front face, other minor imperfections.';
+    expect(rating).toHaveValue('7/10');
+    fireEvent.change(rating, { target: { value: fullChoice } });
+    expect(rating).toHaveAccessibleDescription(fullChoice);
+    fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
+    await waitFor(() => {
+      expect(submitTestingFormMock).toHaveBeenCalledWith(
+        expect.objectContaining({ audiogonRating: fullChoice }),
+        'rec-testing', expect.objectContaining({ originalAudiogonRating: '7/10' }),
+      );
+    });
   });
 
   it('allows submission when Audiogon Rating is blank', async () => {

@@ -1,6 +1,12 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useListingApprovalCombinedFieldState } from '@/components/approval/useListingApprovalCombinedFieldState';
+import {
+  isSystemManagedListingFieldName,
+  shouldIncludeEbayListingRecordFieldName,
+  shouldIncludeSharedListingRecordFieldName,
+  shouldIncludeShopifyListingRecordFieldName,
+} from '@/components/approval/listingApprovalFieldHelpers';
 import type { AirtableRecord } from '@/types/airtable';
 
 vi.mock('@/components/approval/useListingApprovalCombinedFieldSync', () => ({
@@ -48,6 +54,13 @@ function renderCombinedFieldStateWithFormValues(record: AirtableRecord, formValu
 }
 
 describe('useListingApprovalCombinedFieldState', () => {
+  it.each(['eBay Close Result', 'eBay Closed At', 'ebay_close_result', 'ebay_closed_at', 'Shopify Close Result', 'Shopify Closed At'])('keeps %s out of listing inputs', (fieldName) => {
+    expect(isSystemManagedListingFieldName(fieldName)).toBe(true);
+    expect(shouldIncludeSharedListingRecordFieldName(fieldName)).toBe(false);
+    expect(shouldIncludeEbayListingRecordFieldName(fieldName)).toBe(false);
+    expect(shouldIncludeShopifyListingRecordFieldName(fieldName)).toBe(false);
+  });
+
   it('does not offer a synthetic Description field that is missing from the active source', () => {
     const record = buildRecord({ Title: 'Sansui AU-717' });
 

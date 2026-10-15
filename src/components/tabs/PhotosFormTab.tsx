@@ -176,6 +176,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
   const [customerReference, setCustomerReference] = useState<PhotosFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [stageContext, setStageContext] = useState<PhotosFormStageContext>(EMPTY_STAGE_CONTEXT);
   const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
+  const [originalAudiogonRating, setOriginalAudiogonRating] = useState('');
   const [imageUploadAssets, setImageUploadAssets] = useState<FormImageUploadAsset[]>([]);
   const [inclusionConfirmations, setInclusionConfirmations] = useState<Partial<Record<InclusionConfirmationKey, boolean>>>({});
   const [optionSets, setOptionSets] = useState<PhotosOptionSets | null>(null);
@@ -221,6 +222,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
           setImageUploadProgress(null);
           setInclusionConfirmations({});
           setFormValues(nextFormValues.values);
+          setOriginalAudiogonRating(nextFormValues.values.audiogonRating);
           setUploadEditorResetKey((current) => current + 1);
         }
       } catch (error) {
@@ -266,12 +268,16 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
     try {
       const result = await submitPhotosForm(formValues, recordId, {
         recordSource,
+        originalAudiogonRating,
         imageMetadata,
+        originalImageMetadata: stageContext.imageMetadata,
         imageUploadAssets,
         completeWorkflowStage: submitIntent === 'complete',
         onImageUploadProgress: setImageUploadProgress,
       });
       setSubmitSuccess(result);
+      setOriginalAudiogonRating(formValues.audiogonRating);
+      setStageContext((current) => ({ ...current, imageMetadata }));
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
@@ -533,6 +539,8 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                     afterUploadContent={stageImageMetadata.length > 0 ? (
                       <WorkflowImageMetadataEditor
                         metadata={stageImageMetadata}
+                        recordSource={recordSource === 'used-gear-workflow' ? recordSource : undefined}
+                        recordId={recordId ?? undefined}
                         onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'photos', nextMetadata))}
                         allowReorder
                         disabled={submitting}

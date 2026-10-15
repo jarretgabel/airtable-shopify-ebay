@@ -340,6 +340,21 @@ export async function validateWorkflowImageMetadata(
   );
 }
 
+export interface InspectWorkflowImageMetadataResponse {
+  validImageUrls: string[];
+  invalidImageUrls: string[];
+}
+
+export async function inspectWorkflowImageMetadata(
+  recordId: string,
+): Promise<InspectWorkflowImageMetadataResponse> {
+  return await patchJson<InspectWorkflowImageMetadataResponse>(
+    `/api/airtable/configured-records/approval-combined/${encodeURIComponent(recordId)}`,
+    { action: 'inspect-workflow-image-metadata' },
+    { timeoutMs: 90_000 },
+  );
+}
+
 export async function deleteConfiguredRecord(
   source: AirtableConfiguredWriteSource,
   recordId: string,

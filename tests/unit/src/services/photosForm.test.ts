@@ -46,6 +46,44 @@ describe('photosForm', () => {
     vi.mocked(uploadConfiguredAttachment).mockResolvedValue({ uploaded: true });
   });
 
+  it('loads the canonical photo library unchanged when unrelated archival attachments exist', async () => {
+    const metadata = [
+      {
+        attachmentId: 'drive-photo', url: 'https://drive.google.com/uc?id=drive-photo',
+        filename: 'bel-canto-pre-1-front-angle.jpg', alt: 'Bel Canto PRe1 preamplifier front angle',
+        sortOrder: 1, sourceStage: 'photos', includedInListing: true,
+        ebayHostedImageCache: { url: 'https://i.ebayimg.com/front.jpg', sha256: 'a'.repeat(64) },
+      },
+      {
+        attachmentId: 'drive-intake', url: 'https://drive.google.com/uc?id=drive-intake',
+        filename: 'bel-canto-pre-1-intake.jpg', alt: 'Bel Canto PRe1 preamplifier arrival reference',
+        sortOrder: 2, sourceStage: 'intake', includedInListing: false,
+      },
+      {
+        attachmentId: 'drive-photo-rear', url: 'https://drive.google.com/uc?id=drive-photo-rear',
+        filename: 'bel-canto-pre-1-rear-panel.jpg', alt: 'Bel Canto PRe1 preamplifier rear panel',
+        sortOrder: 3, sourceStage: 'photos', includedInListing: false,
+      },
+    ];
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({
+      SKU: '11750',
+      'Workflow Status': 'Photography In Progress',
+      Images: [{ id: 'old-seed', url: 'https://v5.airtableusercontent.com/sample.jpg', filename: 'photos--11750-sample-processed.jpg' }],
+      'Workflow Image Metadata JSON': JSON.stringify(metadata),
+    }));
+
+    const result = await loadPhotosFormValues('recPhotos123');
+
+    expect(result.stageContext.imageMetadata).toEqual(metadata.map((image) => ({
+      ...image, createdAt: undefined, updatedAt: undefined,
+    })));
+    expect(result.stageContext.existingAttachments).toEqual([
+      { id: 'drive-photo', url: metadata[0].url, filename: metadata[0].filename },
+      { id: 'drive-photo-rear', url: metadata[2].url, filename: metadata[2].filename },
+    ]);
+    expect(updateConfiguredRecord).not.toHaveBeenCalled();
+  });
+
   it('loads Photos values from the authoritative operational row and separates customer reference notes', async () => {
     vi.mocked(getConfiguredRecord).mockImplementation(async (source) => {
       if (source === 'used-gear-workflow') {
@@ -191,7 +229,6 @@ describe('photosForm', () => {
     expect(result.values.cost).toBe('1499.99');
 
     expect(result.stageContext.existingAttachments).toEqual([
-      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
       { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
@@ -430,17 +467,10 @@ describe('photosForm', () => {
       status: "Photo'd",
     };
 
-    vi.mocked(updateConfiguredRecord)
-      .mockResolvedValueOnce(buildRecord({}))
-      .mockResolvedValueOnce(buildRecord({}));
+    vi.mocked(updateConfiguredRecord).mockResolvedValue(buildRecord({}));
     vi.mocked(getConfiguredRecord)
-      .mockResolvedValueOnce(buildRecord({
+      .mockResolvedValue(buildRecord({
         'Workflow Status': 'Photography In Progress',
-      }))
-      .mockResolvedValueOnce(buildRecord({
-        Images: [
-          { id: 'att-9', url: 'https://drive.google.com/detail.jpg', filename: 'detail.jpg' },
-        ],
       }));
 
     await submitPhotosForm(values, 'recPhotos123', {
@@ -460,10 +490,10 @@ describe('photosForm', () => {
     });
 
     expect(updateConfiguredRecord).toHaveBeenNthCalledWith(
-      2,
+      1,
       'used-gear-workflow',
       'recPhotos123',
-      {
+      expect.objectContaining({
         'Workflow Image Metadata JSON': JSON.stringify([
           {
             attachmentId: 'att-9',
@@ -475,12 +505,12 @@ describe('photosForm', () => {
             includedInListing: true,
           },
         ]),
-      },
+      }),
       { typecast: true },
     );
   });
 
-  it('retries without workflow image metadata when the Airtable base does not expose that field', async () => {
+  it('reports image-save failure instead of silently dropping metadata when the Airtable field is unavailable', async () => {
     const values: PhotosFormValues = {
       sku: 'SKU-311',
       make: 'Marantz',
@@ -498,17 +528,13 @@ describe('photosForm', () => {
       status: "Photo'd",
     };
 
-    vi.mocked(updateConfiguredRecord)
-      .mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'))
-      .mockResolvedValueOnce(buildRecord({}))
-      .mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'));
+    vi.mocked(updateConfiguredRecord).mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'));
     vi.mocked(getConfiguredRecord)
-      .mockResolvedValueOnce(buildRecord({
+      .mockResolvedValue(buildRecord({
         'Workflow Status': 'Photography In Progress',
-      }))
-      .mockResolvedValueOnce(buildRecord({ Images: [] }));
+      }));
 
-    const result = await submitPhotosForm(values, 'recPhotos123', {
+    await expect(submitPhotosForm(values, 'recPhotos123', {
       recordSource: 'used-gear-workflow',
       completeWorkflowStage: true,
       imageMetadata: [
@@ -522,23 +548,10 @@ describe('photosForm', () => {
           includedInListing: true,
         },
       ],
-    });
-
-    expect(result).toEqual({
-      recordId: 'recPhotos123',
-      sku: 'SKU-311',
-      action: 'updated',
-    });
+    })).rejects.toThrow('Unable to update the Photos fields');
     const updateConfiguredRecordMock = vi.mocked(updateConfiguredRecord);
 
-    expect(updateConfiguredRecordMock).toHaveBeenCalledTimes(3);
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[0]).toBe('used-gear-workflow');
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[1]).toBe('recPhotos123');
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[2]).not.toHaveProperty('Workflow Image Metadata JSON');
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[3]).toEqual({ typecast: true });
-    expect(updateConfiguredRecordMock.mock.calls[2]?.[2]).toEqual({
-      'Workflow Image Metadata JSON': '',
-    });
+    expect(updateConfiguredRecordMock).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to metadata-backed photo attachments when workflow records have no Airtable image attachments', async () => {
@@ -695,14 +708,13 @@ describe('photosForm', () => {
     const result = await loadPhotosFormValues('recPhotosStage');
 
     expect(result.stageContext.existingAttachments).toEqual([
-      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
       { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
     expect(result.stageContext.testingReferenceAttachments).toEqual([
       { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
     ]);
-    expect(result.stageContext.imageMetadata).toHaveLength(3);
-    expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos', 'photos']);
+    expect(result.stageContext.imageMetadata).toHaveLength(2);
+    expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos']);
   });
 });

@@ -232,13 +232,68 @@ function buildEbayProps(): ListingApprovalCombinedEbaySectionProps {
     bodyHtmlPreview: '<p>Preview body</p>',
     isEbayPayloadPreviewContext: true,
     ebayDraftPayloadBundle: {
-      inventoryItem: {},
-      offer: { listingDescription: '<p>Rendered eBay body</p>' },
+      inventoryItem: { availability: { shipToLocationAvailability: { quantity: 1 } } },
+      offer: { listingDescription: '<p>Rendered eBay body</p>', availableQuantity: 1 },
     },
   };
 }
 
 describe('combined approval sections', () => {
+  it.each([1, 3])('hides redundant quantity details when both eBay quantities equal %i', (quantity) => {
+    const props = buildEbayProps();
+    props.ebayDraftPayloadBundle = {
+      inventoryItem: { availability: { shipToLocationAvailability: { quantity } } },
+      offer: { availableQuantity: quantity, quantityLimitPerBuyer: 99 },
+    };
+    render(<ListingApprovalCombinedEbaySection {...props} />);
+    expect(screen.queryByRole('region', { name: 'eBay quantity to send' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inventory availability')).not.toBeInTheDocument();
+    expect(screen.queryByText('Offer availability')).not.toBeInTheDocument();
+    expect(props.setFormValue).not.toHaveBeenCalled();
+    expect(props.setDerivedFormValue).not.toHaveBeenCalled();
+  });
+
+  it('keeps an explicit zero warning without a quantity panel or defaulting to 1', () => {
+    const props = buildEbayProps();
+    props.ebayDraftPayloadBundle = {
+      inventoryItem: { availability: { shipToLocationAvailability: { quantity: 0 } } },
+      offer: { availableQuantity: 0 },
+    };
+    render(<ListingApprovalCombinedEbaySection {...props} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Zero available');
+    expect(screen.queryByRole('region', { name: 'eBay quantity to send' })).not.toBeInTheDocument();
+    expect(props.setFormValue).not.toHaveBeenCalled();
+    expect(props.setDerivedFormValue).not.toHaveBeenCalled();
+  });
+
+  it('does not invent quantity 1 while the payload preview is unavailable', () => {
+    const props = buildEbayProps();
+    render(<ListingApprovalCombinedEbaySection {...props} ebayDraftPayloadBundle={null} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Quantity preview is not available yet');
+    expect(screen.queryByRole('region', { name: 'eBay quantity to send' })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { inventoryItem: {}, offer: {} },
+    { inventoryItem: { availability: { shipToLocationAvailability: { quantity: 0 } } }, offer: { availableQuantity: 1 } },
+    { inventoryItem: { availability: { shipToLocationAvailability: { quantity: -1 } } }, offer: { availableQuantity: -1 } },
+    { inventoryItem: { availability: { shipToLocationAvailability: { quantity: 1.5 } } }, offer: { availableQuantity: 1.5 } },
+    { inventoryItem: { availability: { shipToLocationAvailability: { quantity: '1' } } }, offer: { availableQuantity: 1 } },
+  ])('reports missing, negative or inconsistent quantity previews explicitly', (bundle) => {
+    render(<ListingApprovalCombinedEbaySection {...buildEbayProps()} ebayDraftPayloadBundle={bundle} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Unable to verify the eBay quantity preview');
+    expect(screen.queryByRole('region', { name: 'eBay quantity to send' })).not.toBeInTheDocument();
+  });
+
+  it('includes both outbound quantities in a compact mismatch warning', () => {
+    render(<ListingApprovalCombinedEbaySection {...buildEbayProps()} ebayDraftPayloadBundle={{
+      inventoryItem: { availability: { shipToLocationAvailability: { quantity: 0 } } },
+      offer: { availableQuantity: 1 },
+    }} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Inventory: 0; offer: 1');
+  });
+
   beforeEach(() => {
     approvalFormFieldsSpy.mockReset();
     bodyHtmlPreviewSpy.mockReset();

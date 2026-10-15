@@ -1,4 +1,6 @@
 import { getHandleField, resolveShopifyBodyHtml } from './approvalDraftBody.js';
+import { SHOPIFY_SHIPPING_DIMENSION_KEYS } from '../../shared/contracts/shopifyShipping.js';
+import { parseLegacyShopifyShippingDetails, parseShopifyShippingWeight, resolveShopifyShippingWeight } from '../../shared/contracts/shopifyShippingWeight.js';
 import {
   getField,
   getRawField,
@@ -7,7 +9,6 @@ import {
   normalizeInventoryPolicy,
   normalizePublishedScope,
   normalizeStatus,
-  normalizeWeightUnit,
   parseBoolean,
   parseInteger,
   parseJsonArray,
@@ -27,9 +28,9 @@ const SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD_CANDIDATES = [
 ] as const;
 
 const SHIPPING_DIMENSION_METAFIELD_CANDIDATES = [
-  { key: 'shipping_width', fields: ['Shipping Width', 'Shopify Shipping Width', 'shipping_width'] },
-  { key: 'shipping_depth', fields: ['Shipping Depth', 'Shopify Shipping Depth', 'shipping_depth'] },
-  { key: 'shipping_height', fields: ['Shipping Height', 'Shopify Shipping Height', 'shipping_height'] },
+  { key: SHOPIFY_SHIPPING_DIMENSION_KEYS.width, fields: ['Shipping Width', 'Shopify Shipping Width', 'shipping_width'] },
+  { key: SHOPIFY_SHIPPING_DIMENSION_KEYS.depth, fields: ['Shipping Depth', 'Shopify Shipping Depth', 'shipping_depth'] },
+  { key: SHOPIFY_SHIPPING_DIMENSION_KEYS.height, fields: ['Shipping Height', 'Shopify Shipping Height', 'shipping_height'] },
 ] as const;
 
 function hasAnyFieldValue(fields: ApprovalFieldMap, candidates: string[]): boolean {
@@ -108,7 +109,9 @@ function buildMetafields(fields: ApprovalFieldMap): ShopifyMetafield[] | undefin
     });
   }
 
-  const legacyDimensions = getField(fields, ['Shipping Dims', 'Shipping Dimensions', 'Shopify Shipping Dimensions', 'shipping_dimensions'])
+  const legacyDimensions = parseLegacyShopifyShippingDetails(
+    getField(fields, ['Shipping Dims', 'Shipping Dimensions', 'Shopify Shipping Dimensions', 'shipping_dimensions']),
+  ).dimensionsText
     .match(/[+-]?(?:\d+(?:\.\d*)?|\.\d+)/g)
     ?.map((value) => Number(value))
     .filter((value) => Number.isFinite(value)) ?? [];
@@ -248,9 +251,12 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
     fulfillment_service: getField(fields, ['Shopify REST Variant 1 Fulfillment Service', 'shopify_rest_variant_1_fulfillment_service']) || undefined,
     taxable: parseBoolean(getField(fields, ['Shopify REST Variant 1 Taxable', 'shopify_rest_variant_1_taxable']), true),
     requires_shipping: parseBoolean(getField(fields, ['Shopify REST Variant 1 Requires Shipping', 'shopify_rest_variant_1_requires_shipping']), true),
-    weight: parseNumber(getField(fields, ['Shopify REST Variant 1 Weight', 'Shopify Variant 1 Weight', 'Weight', 'Shipping Weight', 'shopify_rest_variant_1_weight'])),
-    weight_unit: getField(fields, ['Shopify REST Variant 1 Weight Unit', 'Shopify Variant 1 Weight Unit', 'Weight Unit', 'shopify_rest_variant_1_weight_unit'])
-      || (getField(fields, ['Weight', 'Shipping Weight']) ? 'lb' : undefined),
+    ...resolveShopifyShippingWeight({
+      value: getField(fields, ['Shopify REST Variant 1 Weight', 'Shopify Variant 1 Weight', 'Weight', 'Shipping Weight', 'shopify_rest_variant_1_weight']),
+      unit: getField(fields, ['Shopify REST Variant 1 Weight Unit', 'Shopify Variant 1 Weight Unit', 'Weight Unit', 'shopify_rest_variant_1_weight_unit']),
+      defaultUnit: getField(fields, ['Weight', 'Shipping Weight']) ? 'lb' : undefined,
+      legacyDetails: getField(fields, ['Shipping Dims', 'Shipping Dimensions', 'Shopify Shipping Dimensions', 'shipping_dimensions']),
+    }),
     country_of_origin: getField(fields, ['Shopify Country of Origin', 'Country of Origin', 'Shopify REST Country of Origin', 'country_of_origin']) || undefined,
     harmonized_system_code: getField(fields, ['Shopify Harmonized System Code', 'Harmonized System Code', 'HS Code', 'Shopify HS Code', 'harmonized_system_code']) || undefined,
     shipping_dimensions: getField(fields, ['Shipping Dims', 'Shipping Dimensions', 'Shopify Shipping Dimensions', 'shipping_dimensions']) || undefined,
@@ -289,8 +295,7 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
     const inventoryQuantity = typeof variant.inventory_quantity === 'number' ? variant.inventory_quantity : parseInteger(String(variant.inventory_quantity ?? ''));
     const inventoryManagement = normalizeInventoryManagement(variant.inventory_management);
     const inventoryPolicy = normalizeInventoryPolicy(variant.inventory_policy);
-    const weight = typeof variant.weight === 'number' ? variant.weight : parseNumber(String(variant.weight ?? ''));
-    const weightUnit = normalizeWeightUnit(variant.weight_unit);
+    const shippingWeight = parseShopifyShippingWeight(variant.weight, variant.weight_unit);
     return {
       ...(price ? { price } : {}),
       compare_at_price: (() => {
@@ -309,8 +314,8 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
       fulfillment_service: variant.fulfillment_service,
       taxable: typeof variant.taxable === 'boolean' ? variant.taxable : undefined,
       requires_shipping: typeof variant.requires_shipping === 'boolean' ? variant.requires_shipping : undefined,
-      weight,
-      weight_unit: weightUnit,
+      weight: shippingWeight.weight,
+      weight_unit: shippingWeight.weight_unit,
       country_of_origin: typeof variant.country_of_origin === 'string' ? variant.country_of_origin.trim() || undefined : undefined,
       harmonized_system_code: typeof variant.harmonized_system_code === 'string' ? variant.harmonized_system_code.trim() || undefined : undefined,
       shipping_dimensions: typeof variant.shipping_dimensions === 'string' ? variant.shipping_dimensions.trim() || undefined : undefined,

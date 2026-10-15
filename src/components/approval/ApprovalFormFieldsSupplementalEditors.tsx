@@ -9,8 +9,8 @@ import {
   parseWorkflowSelectedImageRows,
   type WorkflowListingImageAttachment,
 } from './workflowListingImageHelpers';
-import { parseWorkflowImageMetadata, serializeWorkflowImageMetadata } from '@/services/workflowImageMetadata';
-import { validateWorkflowImageMetadata } from '@/services/app-api/airtable';
+import { getListingWorkflowImageMetadata, parseWorkflowImageMetadata, serializeWorkflowImageMetadata } from '@/services/workflowImageMetadata';
+import { inspectWorkflowImageMetadata } from '@/services/app-api/airtable';
 import { insetPanelClass, sharedIconActionButtonClass } from '@/components/tabs/uiClasses';
 
 const EbayAttributesEditor = lazy(async () => ({
@@ -218,7 +218,6 @@ export function ApprovalFormFieldsSupplementalEditors({
   formValues,
   testingSectionValues,
   setFormValue,
-  setDerivedFormValue,
   validateWorkflowImageFormats = false,
   saving,
   isReadOnlyApprovalField,
@@ -287,49 +286,35 @@ export function ApprovalFormFieldsSupplementalEditors({
       shopifyImagePayloadFieldName ? (formValues[shopifyImagePayloadFieldName] ?? '') : '',
     )
     : [];
-  const workflowImageAltByUrl = Object.fromEntries(
-    currentWorkflowImageRows
-      .map((row) => [row.src.trim().toLowerCase(), row.alt.trim()] as const)
-      .filter(([url]) => url.length > 0),
+  const workflowMetadataAltByUrl = Object.fromEntries(
+    parseWorkflowImageMetadata(workflowImageMetadataFieldName ? formValues[workflowImageMetadataFieldName] : '')
+      .map((image) => [image.url.trim().toLowerCase(), image.alt] as const),
   );
-  const applyDerivedFormValue = setDerivedFormValue ?? setFormValue;
+  const workflowImageAltByUrl = {
+    ...workflowMetadataAltByUrl,
+    ...Object.fromEntries(
+      currentWorkflowImageRows
+        .map((row) => [row.src.trim().toLowerCase(), row.alt.trim()] as const)
+        .filter(([url]) => url.length > 0),
+    ),
+  };
   const [imageFormatValidation, setImageFormatValidation] = useState<{
     recordId: string;
     status: 'idle' | 'checking' | 'ready' | 'error';
     validKeys: string[];
-    removedCount: number;
+    invalidKeys: string[];
     error: string;
   }>({
     recordId: '',
     status: 'idle',
     validKeys: [],
-    removedCount: 0,
+    invalidKeys: [],
     error: '',
   });
   const validationRequestRef = useRef<{
     recordId: string;
-    promise: ReturnType<typeof validateWorkflowImageMetadata>;
+    promise: ReturnType<typeof inspectWorkflowImageMetadata>;
   } | null>(null);
-  const validationInputsRef = useRef({
-    selectedWorkflowImageUrls,
-    workflowImageAttachments,
-    currentWorkflowImageRows,
-    imageUrlSourceField,
-    imageAltTextSourceField,
-    shopifyImagePayloadFieldName,
-    workflowImageMetadataFieldName,
-    applyDerivedFormValue,
-  });
-  validationInputsRef.current = {
-    selectedWorkflowImageUrls,
-    workflowImageAttachments,
-    currentWorkflowImageRows,
-    imageUrlSourceField,
-    imageAltTextSourceField,
-    shopifyImagePayloadFieldName,
-    workflowImageMetadataFieldName,
-    applyDerivedFormValue,
-  };
   const shouldValidateWorkflowImages = Boolean(
     validateWorkflowImageFormats
     && showWorkflowImageSelector
@@ -346,7 +331,7 @@ export function ApprovalFormFieldsSupplementalEditors({
     if (!request || request.recordId !== recordId) {
       request = {
         recordId,
-        promise: validateWorkflowImageMetadata(recordId),
+        promise: inspectWorkflowImageMetadata(recordId),
       };
       validationRequestRef.current = request;
     }
@@ -356,7 +341,7 @@ export function ApprovalFormFieldsSupplementalEditors({
       recordId,
       status: 'checking',
       validKeys: [],
-      removedCount: 0,
+      invalidKeys: [],
       error: '',
     });
 
@@ -364,44 +349,11 @@ export function ApprovalFormFieldsSupplementalEditors({
       .then((result) => {
         if (!active) return;
 
-        const validKeys = result.validImageUrls.map(getWorkflowImageValidationKey);
-        const validKeySet = new Set(validKeys);
-        const current = validationInputsRef.current;
-        if (result.removedCount > 0) {
-          current.applyDerivedFormValue(current.workflowImageMetadataFieldName!, result.metadataJson);
-        }
-
-        const selectedUrls = current.selectedWorkflowImageUrls.filter((url) => (
-          validKeySet.has(getWorkflowImageValidationKey(url))
-        ));
-        if (selectedUrls.length !== current.selectedWorkflowImageUrls.length) {
-          const validAttachments = current.workflowImageAttachments.filter((attachment) => (
-            validKeySet.has(getWorkflowImageValidationKey(attachment.url))
-          ));
-          const nextValues = buildWorkflowListingImageSelectionValues({
-            selectedUrls,
-            attachments: validAttachments,
-            currentRows: current.currentWorkflowImageRows,
-          });
-          if (current.imageUrlSourceField) {
-            current.applyDerivedFormValue(current.imageUrlSourceField, nextValues.imageValue);
-          }
-          if (current.imageAltTextSourceField) {
-            current.applyDerivedFormValue(current.imageAltTextSourceField, nextValues.imageAltTextValue);
-          }
-          if (
-            current.shopifyImagePayloadFieldName
-            && current.shopifyImagePayloadFieldName !== current.imageUrlSourceField
-          ) {
-            current.applyDerivedFormValue(current.shopifyImagePayloadFieldName, nextValues.shopifyImagePayloadValue);
-          }
-        }
-
         setImageFormatValidation({
           recordId,
           status: 'ready',
-          validKeys,
-          removedCount: result.removedCount,
+          validKeys: result.validImageUrls.map(getWorkflowImageValidationKey),
+          invalidKeys: result.invalidImageUrls.map(getWorkflowImageValidationKey),
           error: '',
         });
       })
@@ -411,7 +363,7 @@ export function ApprovalFormFieldsSupplementalEditors({
           recordId,
           status: 'error',
           validKeys: [],
-          removedCount: 0,
+          invalidKeys: [],
           error: error instanceof Error ? error.message : 'Unable to check workflow images.',
         });
       });
@@ -424,19 +376,21 @@ export function ApprovalFormFieldsSupplementalEditors({
   const activeImageValidationState = shouldValidateWorkflowImages
     ? imageFormatValidation.recordId === recordId
       ? imageFormatValidation
-      : { recordId: recordId ?? '', status: 'checking' as const, validKeys: [], removedCount: 0, error: '' }
-    : { recordId: '', status: 'idle' as const, validKeys: [], removedCount: 0, error: '' };
+      : { recordId: recordId ?? '', status: 'checking' as const, validKeys: [], invalidKeys: [], error: '' }
+    : { recordId: '', status: 'idle' as const, validKeys: [], invalidKeys: [], error: '' };
   const validImageKeySet = new Set(activeImageValidationState.validKeys);
-  const selectorAttachments = activeImageValidationState.status === 'ready'
-    ? workflowImageAttachments.filter((attachment) => validImageKeySet.has(getWorkflowImageValidationKey(attachment.url)))
-    : activeImageValidationState.status === 'idle'
-      ? workflowImageAttachments
-      : [];
-  const selectorSelectedUrls = activeImageValidationState.status === 'ready'
-    ? selectedWorkflowImageUrls.filter((url) => validImageKeySet.has(getWorkflowImageValidationKey(url)))
-    : activeImageValidationState.status === 'idle'
-      ? selectedWorkflowImageUrls
-      : [];
+  const invalidImageKeySet = new Set(activeImageValidationState.invalidKeys);
+  const getImageValidationMessage = (url: string): string => {
+    if (activeImageValidationState.status === 'idle') return '';
+    const key = getWorkflowImageValidationKey(url);
+    if (activeImageValidationState.status === 'ready') {
+      if (validImageKeySet.has(key)) return '';
+      if (invalidImageKeySet.has(key)) {
+        return 'Unsupported image format or source. Uncheck this image before publishing; its source is preserved.';
+      }
+    }
+    return 'Image format not checked. Save any new uploads and reopen the listing to check again.';
+  };
   const hasTestingSection = testingSectionFields.length > 0;
   const effectiveTestingSectionValues = testingSectionValues ?? formValues;
   const workflowHeaderAction = recordId && workflowManagedListingContent && onOpenOperationalRecord ? (
@@ -479,17 +433,17 @@ export function ApprovalFormFieldsSupplementalEditors({
     <>
       {showWorkflowImageSelector && imageSelectionWritableFieldName && (
         <WorkflowListingImageSelector
-          attachments={selectorAttachments}
-          selectedUrls={selectorSelectedUrls}
+          attachments={workflowImageAttachments}
+          selectedUrls={selectedWorkflowImageUrls}
           imageAltByUrl={workflowImageAltByUrl}
-          disabled={saving || activeImageValidationState.status === 'checking' || activeImageValidationState.status === 'error'}
+          disabled={saving}
           validationStatus={activeImageValidationState.status}
           validationError={activeImageValidationState.error}
-          validationRemovedCount={activeImageValidationState.removedCount}
+          getImageValidationMessage={getImageValidationMessage}
           onSelectionChange={(nextSelectedUrls) => {
             const nextValues = buildWorkflowListingImageSelectionValues({
               selectedUrls: nextSelectedUrls,
-              attachments: selectorAttachments,
+              attachments: workflowImageAttachments,
               currentRows: currentWorkflowImageRows,
             });
 
@@ -519,8 +473,7 @@ export function ApprovalFormFieldsSupplementalEditors({
               );
               const metadataRecords = parseWorkflowImageMetadata(formValues[workflowImageMetadataFieldName] ?? '');
               const stagedRecords = metadataRecords.filter((record) => record.sourceStage !== 'intake');
-              const processedRecords = stagedRecords.filter((record) => isProcessedWorkflowImage(record.filename, record.url));
-              const managedRecords = processedRecords.length > 0 ? processedRecords : stagedRecords;
+              const managedRecords = getListingWorkflowImageMetadata(stagedRecords);
               const managedRecordSet = new Set(managedRecords);
               const unmanagedRecords = metadataRecords.filter((record) => !managedRecordSet.has(record));
               const managedIdentityLookup = new Set(

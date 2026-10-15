@@ -1,6 +1,20 @@
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '@/services/ebayDraftFromAirtable';
 
 describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
+  it.each([
+    { fields: {}, quantity: 1 },
+    { fields: { Quantity: '', Qty: ' ' }, quantity: 1 },
+    { fields: { 'eBay Inventory Ship To Location Quantity': 0, Quantity: 4, Qty: 5 }, quantity: 0 },
+    { fields: { Quantity: '0', Qty: 5 }, quantity: 0 },
+    { fields: { Qty: 0 }, quantity: 0 },
+    { fields: { 'eBay Inventory Ship To Location Quantity': '3', Quantity: 4 }, quantity: 3 },
+    { fields: { Quantity: 4, Qty: 5, 'eBay Offer Quantity Limit Per Buyer': 99 }, quantity: 4 },
+  ])('preserves quantity precedence and zero in both eBay payload destinations: $fields', ({ fields, quantity }) => {
+    const payload = buildEbayDraftPayloadBundleFromApprovalFields(fields);
+    expect(payload.inventoryItem.availability).toEqual({ shipToLocationAvailability: { quantity } });
+    expect(payload.offer.availableQuantity).toBe(quantity);
+  });
+
   it('maps canonical shipping fields to eBay package weight and dimensions', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       SKU: 'SKU-PACKAGE',

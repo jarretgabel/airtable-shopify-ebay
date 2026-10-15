@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
+import { EbayQuantitySummary } from '@/components/approval/EbayQuantitySummary';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { isDeveloperRole } from '@/auth/roleAccess';
@@ -135,6 +136,7 @@ export function ListingApprovalCombinedEbaySection({
         title="eBay-Specific Fields"
         actions={ebayDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={ebayDrawerRequiredStatus.allFilled} /> : null}
       />
+      <EbayQuantitySummary payload={ebayDraftPayloadBundle} />
       <div>
         <ApprovalFormFields
           recordId={selectedRecord.id}

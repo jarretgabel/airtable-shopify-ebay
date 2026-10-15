@@ -3,18 +3,20 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { publishProductToOnlineStore, upsertProductWithUnifiedRequest, type ShopifyUnifiedProductSetRequest } from '../../providers/shopify/client.js';
+import { publishProductToOnlineStore, updateProductShipping, upsertProductWithUnifiedRequest, type ShopifyUnifiedProductSetRequest } from '../../providers/shopify/client.js';
 
 interface UpsertProductBody {
   request?: ShopifyUnifiedProductSetRequest;
-  action?: 'publish-online-store';
+  action?: 'publish-online-store' | 'update-shipping';
   productId?: number;
+  shipping?: unknown;
 }
 
 interface UpsertProductDependencies {
   requireRouteAccess: typeof requireRouteAccess;
   upsertProductWithUnifiedRequest: typeof upsertProductWithUnifiedRequest;
   publishProductToOnlineStore: typeof publishProductToOnlineStore;
+  updateProductShipping?: typeof updateProductShipping;
 }
 
 export function createHandler(dependencies: UpsertProductDependencies = {
@@ -25,6 +27,16 @@ export function createHandler(dependencies: UpsertProductDependencies = {
     try {
       await dependencies.requireRouteAccess(event);
       const body = requireJsonBody<UpsertProductBody>(event, 'shopify', 'INVALID_SHOPIFY_REQUEST_BODY');
+      if (body.action === 'update-shipping') {
+        if (body.request || typeof body.productId !== 'number' || !Number.isSafeInteger(body.productId) || body.productId <= 0 || !body.shipping) {
+          throw new HttpError(400, 'update-shipping requires a positive productId, shipping values and no product-set request.', {
+            service: 'shopify', code: 'INVALID_SHOPIFY_SHIPPING_UPDATE', retryable: false,
+          });
+        }
+        const result = await (dependencies.updateProductShipping ?? updateProductShipping)(body.productId, body.shipping);
+        logInfo('Updated and verified Shopify shipping only', { productId: body.productId });
+        return jsonOk(result, { origin });
+      }
       if (body.action !== undefined) {
         if (body.action !== 'publish-online-store' || body.request || typeof body.productId !== 'number' || !Number.isSafeInteger(body.productId) || body.productId <= 0) {
           throw new HttpError(400, 'publish-online-store requires a positive productId and no product-set request.', {

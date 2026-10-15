@@ -11,6 +11,7 @@ import {
   getListings,
   getRecordsFromResolvedSource,
   getRecordsSummaryFromResolvedSource,
+  inspectWorkflowImageMetadata,
   updateConfiguredRecord,
   updateRecordFromResolvedSource,
   uploadConfiguredAttachment,
@@ -31,6 +32,20 @@ describe('app-api airtable', () => {
     window.__APP_RUNTIME_CONFIG__ = {};
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+  });
+
+  it('requests read-only inspection using a distinct action, never the legacy cleanup action', async () => {
+    const result = { validImageUrls: ['valid'], invalidImageUrls: ['invalid'] };
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(result), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    }));
+    await expect(inspectWorkflowImageMetadata('rec-images')).resolves.toEqual(result);
+    expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records/approval-combined/rec-images',
+      expect.objectContaining({
+        method: 'PATCH',
+        credentials: 'include',
+        body: JSON.stringify({ action: 'inspect-workflow-image-metadata' }),
+      }));
   });
 
   it('calls the Lambda listings endpoint', async () => {

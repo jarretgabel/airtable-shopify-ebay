@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { createUpdateHandler } from '../../../../../../aws/src/handlers/airtable/upsertConfiguredRecord.js';
+import { HttpError } from '../../../../../../aws/src/shared/errors.js';
 
 function createEvent(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewayProxyEventV2 {
   return {
@@ -46,6 +47,50 @@ function createEvent(overrides: Partial<APIGatewayProxyEventV2> = {}): APIGatewa
     ...overrides,
   } as APIGatewayProxyEventV2;
 }
+
+test('inspection uses the protected combined-listing route without dispatching a write or cleanup', async () => {
+  let inspectedId = '';
+  const handler = createUpdateHandler({
+    requireRouteAccess: async () => ({
+      userId: 'editor', airtableRecordId: 'rec-user', name: 'Editor', email: 'editor@example.com',
+      mustChangePassword: false, role: 'processor', allowedPages: ['listings'],
+    }),
+    inspectWorkflowImageMetadata: async (id) => {
+      inspectedId = id;
+      return { validImageUrls: ['valid'], invalidImageUrls: ['invalid'] };
+    },
+    validateWorkflowImageMetadata: async () => { throw new Error('Must not cleanup'); },
+    updateConfiguredRecord: async () => { throw new Error('Must not write'); },
+  });
+  const response = await handler(createEvent({
+    pathParameters: { source: 'approval-combined', recordId: 'rec-images' },
+    body: JSON.stringify({ action: 'inspect-workflow-image-metadata' }),
+  }));
+  assert.equal(response.statusCode, 200);
+  assert.equal(inspectedId, 'rec-images');
+  assert.deepEqual(JSON.parse(response.body || '{}'), { validImageUrls: ['valid'], invalidImageUrls: ['invalid'] });
+});
+
+test('inspection rejects unauthorized access and unsupported sources before inspecting', async () => {
+  for (const forbidden of [true, false]) {
+    const handler = createUpdateHandler({
+      requireRouteAccess: async () => {
+        if (forbidden) throw new HttpError(403, 'Forbidden', { service: 'auth', code: 'AUTH_FORBIDDEN', retryable: false });
+        return {
+          userId: 'editor', airtableRecordId: 'rec-user', name: 'Editor', email: 'editor@example.com',
+          mustChangePassword: false, role: 'processor', allowedPages: ['listings'],
+        };
+      },
+      inspectWorkflowImageMetadata: async () => { throw new Error('Must not inspect'); },
+      updateConfiguredRecord: async () => { throw new Error('Must not write'); },
+    });
+    const response = await handler(createEvent({
+      pathParameters: { source: forbidden ? 'approval-combined' : 'used-gear-workflow', recordId: 'rec-images' },
+      body: JSON.stringify({ action: 'inspect-workflow-image-metadata' }),
+    }));
+    assert.equal(response.statusCode, forbidden ? 403 : 400);
+  }
+});
 
 test('allows non-admin users to update their own Airtable user record when protected fields match the active session', async () => {
   let capturedOverride: object | undefined;

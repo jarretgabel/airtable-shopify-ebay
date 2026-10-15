@@ -9,12 +9,12 @@ import {
   updateConfiguredRecord,
   type AirtableConfiguredWriteSource,
 } from '../../providers/airtable/sources.js';
-import { validateConfiguredWorkflowImageMetadata } from '../../providers/airtable/workflowImageMetadataValidation.js';
+import { inspectConfiguredWorkflowImageMetadata, validateConfiguredWorkflowImageMetadata } from '../../providers/airtable/workflowImageMetadataValidation.js';
 
 interface AirtableWriteBody {
   fields?: Record<string, unknown>;
   typecast?: boolean;
-  action?: 'validate-workflow-image-metadata';
+  action?: 'validate-workflow-image-metadata' | 'inspect-workflow-image-metadata';
 }
 
 const SELF_SERVICE_USER_WRITE_FIELD_NAMES = new Set([
@@ -192,6 +192,7 @@ interface UpsertConfiguredRecordDependencies {
   createConfiguredRecord?: typeof createConfiguredRecord;
   updateConfiguredRecord?: typeof updateConfiguredRecord;
   validateWorkflowImageMetadata?: typeof validateConfiguredWorkflowImageMetadata;
+  inspectWorkflowImageMetadata?: typeof inspectConfiguredWorkflowImageMetadata;
 }
 
 export function createCreateHandler(dependencies: UpsertConfiguredRecordDependencies = {}) {
@@ -220,6 +221,7 @@ export function createUpdateHandler(dependencies: UpsertConfiguredRecordDependen
   const requireAccess = dependencies.requireRouteAccess ?? requireRouteAccess;
   const updateRecord = dependencies.updateConfiguredRecord ?? updateConfiguredRecord;
   const validateWorkflowImages = dependencies.validateWorkflowImageMetadata ?? validateConfiguredWorkflowImageMetadata;
+  const inspectWorkflowImages = dependencies.inspectWorkflowImageMetadata ?? inspectConfiguredWorkflowImageMetadata;
 
   return async function updateConfiguredRecordHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
     const origin = getRequestOrigin(event);
@@ -231,13 +233,19 @@ export function createUpdateHandler(dependencies: UpsertConfiguredRecordDependen
         ? await requireAccess(event, {})
         : await requireAccess(event);
 
-      if (body.action === 'validate-workflow-image-metadata') {
+      if (body.action === 'validate-workflow-image-metadata' || body.action === 'inspect-workflow-image-metadata') {
         if (source !== 'approval-combined') {
           throw new HttpError(400, 'Workflow image metadata validation is only supported for combined listings.', {
             service: 'airtable',
             code: 'WORKFLOW_IMAGE_METADATA_SOURCE_UNSUPPORTED',
             retryable: false,
           });
+        }
+
+        if (body.action === 'inspect-workflow-image-metadata') {
+          const result = await inspectWorkflowImages(recordId);
+          logInfo('Inspected combined listing image formats without modifying metadata', { source, recordId });
+          return jsonOk(result, { origin });
         }
 
         const result = await validateWorkflowImages(recordId);

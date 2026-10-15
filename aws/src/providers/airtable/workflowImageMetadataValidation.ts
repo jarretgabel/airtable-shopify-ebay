@@ -13,6 +13,11 @@ export interface WorkflowImageMetadataValidationResult {
   removedCount: number;
 }
 
+export interface WorkflowImageMetadataInspectionResult {
+  validImageUrls: string[];
+  invalidImageUrls: string[];
+}
+
 interface WorkflowImageMetadataValidationDependencies {
   getRecord?: typeof getConfiguredRecord;
   updateRecord?: typeof updateConfiguredRecord;
@@ -164,12 +169,11 @@ export async function validateWorkflowImageMetadataRecords(
   };
 }
 
-export async function validateConfiguredWorkflowImageMetadata(
+async function readWorkflowImageInspection(
   recordId: string,
-  dependencies: WorkflowImageMetadataValidationDependencies = {},
-): Promise<WorkflowImageMetadataValidationResult> {
+  dependencies: WorkflowImageMetadataValidationDependencies,
+) {
   const getRecord = dependencies.getRecord ?? getConfiguredRecord;
-  const updateRecord = dependencies.updateRecord ?? updateConfiguredRecord;
   const downloadFileHeader = dependencies.downloadFileHeader ?? downloadGoogleDriveFileHeader;
   const record = await getRecord('approval-combined', recordId);
   const metadataFieldName = findMetadataFieldName(record.fields);
@@ -181,11 +185,31 @@ export async function validateConfiguredWorkflowImageMetadata(
     });
   }
 
-  const result = await validateWorkflowImageMetadataRecords(
-    parseMetadataRecords(record.fields[metadataFieldName]),
-    downloadFileHeader,
-    getWorkflowAttachmentUrls(record.fields),
-  );
+  const records = parseMetadataRecords(record.fields[metadataFieldName]);
+  const attachmentUrls = getWorkflowAttachmentUrls(record.fields);
+  const result = await validateWorkflowImageMetadataRecords(records, downloadFileHeader, attachmentUrls);
+  return { metadataFieldName, records, attachmentUrls, result };
+}
+
+export async function inspectConfiguredWorkflowImageMetadata(
+  recordId: string,
+  dependencies: WorkflowImageMetadataValidationDependencies = {},
+): Promise<WorkflowImageMetadataInspectionResult> {
+  const { records, attachmentUrls, result } = await readWorkflowImageInspection(recordId, dependencies);
+  const validUrls = new Set(result.validImageUrls);
+  return {
+    validImageUrls: result.validImageUrls,
+    invalidImageUrls: Array.from(new Set([...records.map(getMetadataUrl), ...attachmentUrls]
+      .filter((url) => url && !validUrls.has(url)))),
+  };
+}
+
+export async function validateConfiguredWorkflowImageMetadata(
+  recordId: string,
+  dependencies: WorkflowImageMetadataValidationDependencies = {},
+): Promise<WorkflowImageMetadataValidationResult> {
+  const { metadataFieldName, result } = await readWorkflowImageInspection(recordId, dependencies);
+  const updateRecord = dependencies.updateRecord ?? updateConfiguredRecord;
   if (result.removedCount > 0) {
     await updateRecord('approval-combined', recordId, {
       [metadataFieldName]: result.metadataJson,

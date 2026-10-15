@@ -19,6 +19,7 @@ import { DatePickerField } from '@/components/tabs/date-picker-field';
 import { FormImageUploadEditor } from '@/components/tabs/FormImageUploadEditor';
 import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenceImagesPanel';
 import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMetadataEditor';
+import { AudiogonRatingSelect } from '@/components/tabs/AudiogonRatingSelect';
 import type { FormImageProcessingSummary } from '@/components/tabs/FormImageUploadEditor';
 import type { FormImageUploadAsset } from '@/services/formImageUploads';
 import { isImageRoleComplete } from '@/services/imageNamingFormatter';
@@ -140,6 +141,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
   const [customerReference, setCustomerReference] = useState<TestingFormCustomerReference>(EMPTY_CUSTOMER_REFERENCE);
   const [stageContext, setStageContext] = useState<TestingFormStageContext>(EMPTY_STAGE_CONTEXT);
   const [imageMetadata, setImageMetadata] = useState<WorkflowImageMetadataRecord[]>([]);
+  const [originalAudiogonRating, setOriginalAudiogonRating] = useState('');
   const [imageUploadAssets, setImageUploadAssets] = useState<FormImageUploadAsset[]>([]);
   const [optionSets, setOptionSets] = useState<TestingOptionSets | null>(null);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -183,6 +185,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
           setImageProcessingSummary(EMPTY_IMAGE_PROCESSING_SUMMARY);
           setImageUploadProgress(null);
           setFormValues(nextFormValues.values);
+          setOriginalAudiogonRating(nextFormValues.values.audiogonRating);
           setUploadEditorResetKey((current) => current + 1);
         }
       } catch (error) {
@@ -241,12 +244,16 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
     try {
       const result = await submitTestingForm(formValues, recordId, {
         recordSource,
+        originalAudiogonRating,
         imageMetadata,
+        originalImageMetadata: stageContext.imageMetadata,
         imageUploadAssets,
         completeWorkflowStage: submitIntent === 'complete',
         onImageUploadProgress: setImageUploadProgress,
       });
       setSubmitSuccess(result);
+      setOriginalAudiogonRating(formValues.audiogonRating);
+      setStageContext((current) => ({ ...current, imageMetadata }));
       if (result.action === 'updated') {
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
@@ -309,6 +316,8 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
           afterUploadContent={stageImageMetadata.length > 0 ? (
             <WorkflowImageMetadataEditor
               metadata={stageImageMetadata}
+              recordSource={recordSource === 'used-gear-workflow' ? recordSource : undefined}
+              recordId={recordId ?? undefined}
               onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'testing', nextMetadata))}
               allowReorder
               disabled={submitting}
@@ -318,6 +327,18 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
               className="border-0 bg-transparent p-0"
             />
           ) : null}
+        />
+      );
+    }
+
+    if (definition.name === 'audiogonRating') {
+      return (
+        <AudiogonRatingSelect
+          className={FIELD_CLASS}
+          value={formValues.audiogonRating}
+          options={optionSets?.['Audiogon Rating'] ?? []}
+          onChange={(nextValue) => setFieldValue('audiogonRating', nextValue)}
+          disabled={submitting}
         />
       );
     }

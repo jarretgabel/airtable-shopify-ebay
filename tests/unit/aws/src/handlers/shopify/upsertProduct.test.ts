@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { createHandler } from '../../../../../../aws/src/handlers/shopify/upsertProduct.js';
 import { HttpError } from '../../../../../../aws/src/shared/errors.js';
+import type { ShopifyShippingInspection } from '../../../../../../aws/src/shared/contracts/shopifyShipping.js';
 
 function createEvent(body: unknown): APIGatewayProxyEventV2 {
   return {
@@ -71,4 +72,62 @@ test('invalid and ambiguous publication requests fail explicitly', async () => {
     if (typeof response === 'string') throw new Error('Expected structured response');
     assert.equal(response.statusCode, 400);
   }
+});
+
+const shipping = { variantId: 456, weightPounds: 70, widthInches: 27, depthInches: 25, heightInches: 12 };
+const inspection: ShopifyShippingInspection = {
+  productId: 'gid://shopify/Product/123', servedApiVersion: '2025-10', accessScopes: [],
+  packageAssignmentSupported: true, inventoryPackageFields: [], shopPackageFields: [], measurementPackageFields: [],
+  packageQueries: [], packageMutations: [],
+  packedSizeSchema: {
+    measurementInputFields: ['weight'], inventoryItemInputFields: ['measurement'], variantInputFields: ['inventoryItem'],
+    measurementOutputFields: ['weight'], inventoryItemOutputFields: ['measurement'],
+  },
+  variants: [], variantsTruncated: false, dimensionMetafields: { width: null, depth: null, height: null },
+};
+
+test('shipping-only action uses its dedicated provider without publishing or upserting', async () => {
+  const handler = createHandler({
+    requireRouteAccess: requireAccess,
+    upsertProductWithUnifiedRequest: async () => { throw new Error('Must not upsert'); },
+    publishProductToOnlineStore: async () => { throw new Error('Must not publish'); },
+    updateProductShipping: async (id, value) => {
+      assert.equal(id, 123);
+      assert.deepEqual(value, shipping);
+      return inspection;
+    },
+  });
+  const response = await handler(createEvent({ action: 'update-shipping', productId: 123, shipping }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(JSON.parse(String(response.body)), inspection);
+});
+
+test('shipping-only action preserves access gating and rejects ambiguous product-set requests', async () => {
+  let calls = 0;
+  const dependencies = {
+    requireRouteAccess: requireAccess,
+    upsertProductWithUnifiedRequest: async () => { throw new Error('Must not upsert'); },
+    publishProductToOnlineStore: async () => { throw new Error('Must not publish'); },
+    updateProductShipping: async () => { calls += 1; return inspection; },
+  };
+  const handler = createHandler(dependencies);
+  for (const body of [
+    { action: 'update-shipping', productId: 123, shipping, request: { input: { title: 'Amp' } } },
+    { action: 'update-shipping', productId: -1, shipping },
+    { action: 'update-shipping', productId: '123', shipping },
+    { action: 'update-shipping', productId: 123 },
+  ]) {
+    const response = await handler(createEvent(body));
+    if (typeof response === 'string') throw new Error('Expected structured response');
+    assert.equal(response.statusCode, 400);
+  }
+  const denied = createHandler({
+    ...dependencies,
+    requireRouteAccess: async () => { throw new HttpError(403, 'Access denied', { service: 'auth', code: 'ACCESS_DENIED' }); },
+  });
+  const response = await denied(createEvent({ action: 'update-shipping', productId: 123, shipping }));
+  if (typeof response === 'string') throw new Error('Expected structured response');
+  assert.equal(response.statusCode, 403);
+  assert.equal(calls, 0);
 });

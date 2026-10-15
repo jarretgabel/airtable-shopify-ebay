@@ -55,6 +55,7 @@ describe('Cross-Channel Close Service', () => {
           updateRecord.mock.calls[0]?.arguments[2]['eBay Close Result'],
           'eBay offer withdrawn',
         );
+        assert.equal(typeof updateRecord.mock.calls[0]?.arguments[2]['eBay Closed At'], 'string');
       } finally {
         globalThis.fetch = originalFetch;
         if (originalEnv === undefined) delete process.env.EBAY_ENV;
@@ -100,6 +101,7 @@ describe('Cross-Channel Close Service', () => {
           String(updateRecord.mock.calls[0]?.arguments[2]['eBay Close Result']),
           /404 offer not found/,
         );
+        assert.equal(Object.hasOwn(updateRecord.mock.calls[0]?.arguments[2], 'eBay Closed At'), false);
       } finally {
         globalThis.fetch = originalFetch;
         if (originalEnv === undefined) delete process.env.EBAY_ENV;
@@ -118,6 +120,7 @@ describe('Cross-Channel Close Service', () => {
       const result = await closeEbayListingWhenSoldOnShopify('record-123', {
         'eBay Listing ID': 'listing-123',
         'eBay Listing Status': 'ACTIVE',
+        'eBay Closed At': '2024-01-01T12:00:00Z',
       }, { updateRecord });
 
       assert.equal(result.success, false);
@@ -126,12 +129,12 @@ describe('Cross-Channel Close Service', () => {
       const [source, recordId, fields, options] = updateRecord.mock.calls[0].arguments;
       assert.equal(source, 'used-gear-workflow');
       assert.equal(recordId, 'record-123');
-      assert.equal(typeof fields['eBay Closed At'], 'string');
+      assert.equal(Object.hasOwn(fields, 'eBay Closed At'), false);
       assert.match(String(fields['eBay Close Result']), /Missing eBay Offer ID/);
       assert.deepEqual(options, { typecast: true });
     });
 
-    it('records a timestamp when eBay close validation fails', async () => {
+    it('preserves the attempt timestamp response contract when eBay close validation fails', async () => {
       const before = Date.now();
       const result = await closeEbayListingWhenSoldOnShopify('record-123', {
         'eBay Listing ID': 'listing-123',
@@ -141,6 +144,44 @@ describe('Cross-Channel Close Service', () => {
       const closedAt = new Date(result.closedAt).getTime();
       assert.ok(closedAt >= before);
       assert.ok(closedAt <= Date.now());
+    });
+
+    it('does not overwrite closure history when a successful withdrawal cannot be recorded', async (t) => {
+      const credentials = {
+        EBAY_ENV: 'production',
+        EBAY_CLIENT_ID: 'client-id',
+        EBAY_CLIENT_SECRET: 'client-secret',
+        EBAY_REFRESH_TOKEN: 'refresh-token',
+      };
+      const previous = Object.fromEntries(Object.keys(credentials).map((key) => [key, process.env[key]]));
+      t.after(() => {
+        for (const [key, value] of Object.entries(previous)) {
+          if (value === undefined) delete process.env[key];
+          else process.env[key] = value;
+        }
+      });
+      Object.assign(process.env, credentials);
+      t.mock.method(globalThis, 'fetch', async (input: string | URL | Request) =>
+        String(input).endsWith('/identity/v1/oauth2/token')
+          ? Response.json({ access_token: 'test-token' })
+          : new Response('', { status: 200 }));
+      const writes: Record<string, unknown>[] = [];
+      const updateRecord = mock.fn(async (_source: string, recordId: string, fields: Record<string, unknown>) => {
+        writes.push(fields);
+        if (writes.length === 1) throw new Error('record write unavailable');
+        return { id: recordId, createdTime: '2026-05-01T00:00:00.000Z', fields };
+      });
+      const result = await closeEbayListingWhenSoldOnShopify('record-123', {
+        'eBay Offer ID': 'offer-123',
+        'eBay Listing ID': 'listing-123',
+        'eBay Closed At': '2024-01-01T12:00:00Z',
+      }, { updateRecord });
+      assert.equal(result.success, false);
+      assert.match(result.message, /record write unavailable/);
+      assert.equal(writes.length, 2);
+      assert.equal(typeof writes[0]['eBay Closed At'], 'string');
+      assert.equal(Object.hasOwn(writes[1], 'eBay Closed At'), false);
+      assert.match(String(writes[1]['eBay Close Result']), /record write unavailable/);
     });
   });
 

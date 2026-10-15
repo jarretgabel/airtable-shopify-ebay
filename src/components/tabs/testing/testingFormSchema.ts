@@ -1,6 +1,7 @@
 export type TestingFormOptionFieldName =
   | 'Status'
   | 'Component Type'
+  | 'Audiogon Rating'
   | 'Original Box'
   | 'Manual'
   | 'Remote'
@@ -155,8 +156,8 @@ export const testingFormFields: TestingFormFieldDefinition[] = [
     name: 'audiogonRating',
     airtableFieldName: 'Audiogon Rating',
     label: 'Audiogon Rating',
-    type: 'text',
-    description: '1-10',
+    type: 'select',
+    optionFieldName: 'Audiogon Rating',
   },
   {
     name: 'cosmeticConditionNotes',

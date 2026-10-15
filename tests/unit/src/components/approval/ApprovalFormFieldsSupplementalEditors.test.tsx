@@ -189,24 +189,24 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     testingNotesTextareaEditorSpy.mockReset();
     const values = buildWorkflowListingImageSelectionValues({
       selectedUrls: [
-        'https://cdn.example.com/image-b.jpg',
-        'https://cdn.example.com/image-a.jpg',
+        'https://drive.google.com/uc?id=file-image-b',
+        'https://drive.google.com/uc?id=file-image-a',
       ],
       attachments: [
-        { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
-        { id: 'att-2', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
+        { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
+        { id: 'att-2', url: 'https://drive.google.com/uc?id=file-image-b', filename: 'image-b.jpg' },
       ],
       currentRows: [
-        { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 1 },
-        { src: 'https://cdn.example.com/image-b.jpg', alt: 'Rear view', position: 2 },
+        { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
+        { src: 'https://drive.google.com/uc?id=file-image-b', alt: 'Rear view', position: 2 },
       ],
     });
 
-    expect(values.imageValue).toBe('https://cdn.example.com/image-b.jpg, https://cdn.example.com/image-a.jpg');
+    expect(values.imageValue).toBe('https://drive.google.com/uc?id=file-image-b, https://drive.google.com/uc?id=file-image-a');
     expect(values.imageAltTextValue).toBe('Rear view, Front view');
     expect(values.shopifyImagePayloadValue).toBe(JSON.stringify([
-      { src: 'https://cdn.example.com/image-b.jpg', alt: 'Rear view', position: 1 },
-      { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 2 },
+      { src: 'https://drive.google.com/uc?id=file-image-b', alt: 'Rear view', position: 1 },
+      { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 2 },
     ]));
   });
 
@@ -224,15 +224,15 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField="Images Alt Text"
         shopifyImagePayloadFieldName="Shopify REST Images JSON"
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
-          { id: 'att-2', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
+          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
+          { id: 'att-2', url: 'https://drive.google.com/uc?id=file-image-b', filename: 'image-b.jpg' },
         ]}
-        selectedWorkflowImageUrls={['https://cdn.example.com/image-a.jpg']}
+        selectedWorkflowImageUrls={['https://drive.google.com/uc?id=file-image-a']}
         formValues={{
-          Images: 'https://cdn.example.com/image-a.jpg',
+          Images: 'https://drive.google.com/uc?id=file-image-a',
           'Images Alt Text': 'Front view',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 1 },
+            { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
           ]),
         }}
         setFormValue={setFormValue}
@@ -283,11 +283,11 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[1]);
 
-    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://cdn.example.com/image-a.jpg, https://cdn.example.com/image-b.jpg');
+    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://drive.google.com/uc?id=file-image-a, https://drive.google.com/uc?id=file-image-b');
     expect(setFormValue).toHaveBeenNthCalledWith(2, 'Images Alt Text', 'Front view, ');
     expect(setFormValue).toHaveBeenNthCalledWith(3, 'Shopify REST Images JSON', JSON.stringify([
-      { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 1 },
-      { src: 'https://cdn.example.com/image-b.jpg', alt: '', position: 2 },
+      { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
+      { src: 'https://drive.google.com/uc?id=file-image-b', alt: '', position: 2 },
     ]));
   });
 
@@ -305,19 +305,19 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField="Images Alt Text"
         shopifyImagePayloadFieldName="Shopify REST Images JSON"
         workflowImageAttachments={[
-          { id: 'att-testing', url: 'https://cdn.example.com/testing-reference.jpg', filename: 'testing-reference.jpg' },
-          { id: 'att-photos', url: 'https://cdn.example.com/photos-hero.jpg', filename: 'photos-hero.jpg' },
+          { id: 'att-testing', url: 'https://drive.google.com/uc?id=file-testing-reference', filename: 'testing-reference.jpg' },
+          { id: 'att-photos', url: 'https://drive.google.com/uc?id=file-photos-hero', filename: 'photos-hero.jpg' },
         ]}
         selectedWorkflowImageUrls={[
-          'https://cdn.example.com/testing-reference.jpg',
-          'https://cdn.example.com/photos-hero.jpg',
+          'https://drive.google.com/uc?id=file-testing-reference',
+          'https://drive.google.com/uc?id=file-photos-hero',
         ]}
         formValues={{
-          Images: 'https://cdn.example.com/testing-reference.jpg, https://cdn.example.com/photos-hero.jpg',
+          Images: 'https://drive.google.com/uc?id=file-testing-reference, https://drive.google.com/uc?id=file-photos-hero',
           'Images Alt Text': 'Testing reference, Photos hero',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://cdn.example.com/testing-reference.jpg', alt: 'Testing reference', position: 1 },
-            { src: 'https://cdn.example.com/photos-hero.jpg', alt: 'Photos hero', position: 2 },
+            { src: 'https://drive.google.com/uc?id=file-testing-reference', alt: 'Testing reference', position: 1 },
+            { src: 'https://drive.google.com/uc?id=file-photos-hero', alt: 'Photos hero', position: 2 },
           ]),
         }}
         setFormValue={setFormValue}
@@ -368,10 +368,10 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
 
-    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://cdn.example.com/photos-hero.jpg');
+    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://drive.google.com/uc?id=file-photos-hero');
     expect(setFormValue).toHaveBeenNthCalledWith(2, 'Images Alt Text', 'Photos hero');
     expect(setFormValue).toHaveBeenNthCalledWith(3, 'Shopify REST Images JSON', JSON.stringify([
-      { src: 'https://cdn.example.com/photos-hero.jpg', alt: 'Photos hero', position: 1 },
+      { src: 'https://drive.google.com/uc?id=file-photos-hero', alt: 'Photos hero', position: 1 },
     ]));
   });
 
@@ -389,15 +389,15 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField="Images Alt Text"
         shopifyImagePayloadFieldName="Shopify REST Images JSON"
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
-          { id: 'att-2', url: 'https://cdn.example.com/image-b.jpg', filename: 'image-b.jpg' },
+          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
+          { id: 'att-2', url: 'https://drive.google.com/uc?id=file-image-b', filename: 'image-b.jpg' },
         ]}
-        selectedWorkflowImageUrls={['https://cdn.example.com/image-a.jpg']}
+        selectedWorkflowImageUrls={['https://drive.google.com/uc?id=file-image-a']}
         formValues={{
-          Images: 'https://cdn.example.com/image-a.jpg',
+          Images: 'https://drive.google.com/uc?id=file-image-a',
           'Images Alt Text': 'Front view',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 1 },
+            { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
           ]),
         }}
         setFormValue={setFormValue}
@@ -448,15 +448,15 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[1]);
 
-    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://cdn.example.com/image-a.jpg, https://cdn.example.com/image-b.jpg');
+    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://drive.google.com/uc?id=file-image-a, https://drive.google.com/uc?id=file-image-b');
     expect(setFormValue).toHaveBeenNthCalledWith(2, 'Images Alt Text', 'Front view, ');
     expect(setFormValue).toHaveBeenNthCalledWith(3, 'Shopify REST Images JSON', JSON.stringify([
-      { src: 'https://cdn.example.com/image-a.jpg', alt: 'Front view', position: 1 },
-      { src: 'https://cdn.example.com/image-b.jpg', alt: '', position: 2 },
+      { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
+      { src: 'https://drive.google.com/uc?id=file-image-b', alt: '', position: 2 },
     ]));
   });
 
-  it('persists deselection into workflow metadata when selected URLs are variants', () => {
+  it('keeps normally named photography selected when a processed image is excluded using URL variants', () => {
     shippingEditorsSpy.mockReset();
     keyFeaturesEditorSpy.mockReset();
     testingNotesTextareaEditorSpy.mockReset();
@@ -478,20 +478,20 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
           },
           {
             id: 'att-photo-2',
-            url: 'https://cdn.example.com/photo-2-processed.jpg',
-            filename: 'photo-2-processed.jpg',
+            url: 'https://drive.google.com/uc?id=file-photo-2',
+            filename: 'brand-model-amplifier-rear.jpg',
           },
         ]}
         selectedWorkflowImageUrls={[
           'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600',
-          'https://cdn.example.com/photo-2-processed.jpg',
+          'https://drive.google.com/uc?id=file-photo-2',
         ]}
         formValues={{
-          Images: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600, https://cdn.example.com/photo-2-processed.jpg',
+          Images: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600, https://drive.google.com/uc?id=file-photo-2',
           'Images Alt Text': '',
           'Shopify REST Images JSON': JSON.stringify([
             { src: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600', alt: '', position: 1 },
-            { src: 'https://cdn.example.com/photo-2-processed.jpg', alt: '', position: 2 },
+            { src: 'https://drive.google.com/uc?id=file-photo-2', alt: '', position: 2 },
           ]),
           'Workflow Image Metadata JSON': JSON.stringify([
             {
@@ -505,8 +505,8 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
             },
             {
               attachmentId: 'att-photo-2',
-              url: 'https://cdn.example.com/photo-2-processed.jpg',
-              filename: 'photo-2-processed.jpg',
+              url: 'https://drive.google.com/uc?id=file-photo-2',
+              filename: 'brand-model-amplifier-rear.jpg',
               alt: '',
               sortOrder: 2,
               sourceStage: 'photos',
@@ -567,6 +567,9 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     const serializedMetadata = String(metadataCall?.[1] ?? '');
     expect(serializedMetadata).toContain('"attachmentId":"att-photo-1"');
     expect(serializedMetadata).toContain('"includedInListing":false');
+    const metadataRows = JSON.parse(serializedMetadata);
+    expect(metadataRows).toHaveLength(2);
+    expect(metadataRows.find((row: { attachmentId: string }) => row.attachmentId === 'att-photo-2')).toMatchObject({ includedInListing: true });
   });
 
   it('adds missing processed metadata rows when selecting from available images', () => {
@@ -586,28 +589,28 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         workflowImageAttachments={[
           {
             id: 'att-photo-1',
-            url: 'https://cdn.example.com/photo-1-processed.jpg',
+            url: 'https://drive.google.com/uc?id=file-photo-1',
             filename: 'photo-1-processed.jpg',
           },
           {
             id: 'att-photo-2',
-            url: 'https://cdn.example.com/photo-2-processed.jpg',
+            url: 'https://drive.google.com/uc?id=file-photo-2',
             filename: 'photo-2-processed.jpg',
           },
         ]}
         selectedWorkflowImageUrls={[
-          'https://cdn.example.com/photo-1-processed.jpg',
+          'https://drive.google.com/uc?id=file-photo-1',
         ]}
         formValues={{
-          Images: 'https://cdn.example.com/photo-1-processed.jpg',
+          Images: 'https://drive.google.com/uc?id=file-photo-1',
           'Images Alt Text': '',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://cdn.example.com/photo-1-processed.jpg', alt: '', position: 1 },
+            { src: 'https://drive.google.com/uc?id=file-photo-1', alt: '', position: 1 },
           ]),
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-photo-1',
-              url: 'https://cdn.example.com/photo-1-processed.jpg',
+              url: 'https://drive.google.com/uc?id=file-photo-1',
               filename: 'photo-1-processed.jpg',
               alt: '',
               sortOrder: 1,
@@ -668,7 +671,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     expect(metadataCall).toBeDefined();
     const serializedMetadata = String(metadataCall?.[1] ?? '');
     expect(serializedMetadata).toContain('"attachmentId":"att-photo-2"');
-    expect(serializedMetadata).toContain('"url":"https://cdn.example.com/photo-2-processed.jpg"');
+    expect(serializedMetadata).toContain('"url":"https://drive.google.com/uc?id=file-photo-2"');
     expect(serializedMetadata).toContain('"includedInListing":true');
   });
 
@@ -689,28 +692,28 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         workflowImageAttachments={[
           {
             id: 'att-photo-1',
-            url: 'https://cdn.example.com/photo-1-processed.jpg',
+            url: 'https://drive.google.com/uc?id=file-photo-1',
             filename: 'photo-1-processed.jpg',
           },
           {
             id: 'att-photo-2',
-            url: 'https://cdn.example.com/photo-2-processed.jpg',
+            url: 'https://drive.google.com/uc?id=file-photo-2',
             filename: 'photo-2-processed.jpg',
           },
         ]}
         selectedWorkflowImageUrls={[
-          'https://cdn.example.com/photo-1-processed.jpg',
+          'https://drive.google.com/uc?id=file-photo-1',
         ]}
         formValues={{
-          Images: 'https://cdn.example.com/photo-1-processed.jpg',
+          Images: 'https://drive.google.com/uc?id=file-photo-1',
           'Images Alt Text': '',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://cdn.example.com/photo-1-processed.jpg', alt: '', position: 1 },
+            { src: 'https://drive.google.com/uc?id=file-photo-1', alt: '', position: 1 },
           ]),
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-photo-1',
-              url: 'https://cdn.example.com/photo-1-processed.jpg',
+              url: 'https://drive.google.com/uc?id=file-photo-1',
               filename: 'photo-1-processed.jpg',
               alt: '',
               sortOrder: 1,
@@ -882,7 +885,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField={undefined}
         shopifyImagePayloadFieldName={undefined}
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
         ]}
         selectedWorkflowImageUrls={[]}
         formValues={{ Images: '' }}
@@ -953,7 +956,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField={undefined}
         shopifyImagePayloadFieldName={undefined}
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://cdn.example.com/image-a.jpg', filename: 'image-a.jpg' },
+          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
         ]}
         selectedWorkflowImageUrls={[]}
         formValues={{

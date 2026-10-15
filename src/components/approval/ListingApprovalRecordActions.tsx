@@ -2,6 +2,7 @@ import { AccentActionButton } from '@/components/app/AccentActionButton';
 import { PrimaryActionButton } from '@/components/app/PrimaryActionButton';
 import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
 import { compactActionRowClass } from '@/components/app/buttonStyles';
+import { warningInlineBannerClass } from '@/components/tabs/uiClasses';
 
 interface ListingApprovalRecordActionsProps {
   approvalChannel: 'shopify' | 'ebay' | 'combined';
@@ -68,6 +69,8 @@ export function ListingApprovalRecordActions({
   const shouldForcePublishLabels = workflowStatus === 'Approved for Publish' || workflowStatus === 'Awaiting Pre-Listing Review';
   const hasExistingShopifyForActionLabel = hasExistingShopifyRestProductId && !shouldForcePublishLabels;
   const hasExistingEbayForActionLabel = hasExistingEbayOfferId && !shouldForcePublishLabels;
+  const showEbayStockWarning = hasExistingEbayOfferId && !isPostPublishLocked
+    && (showCombinedPublishButtons ? !hasMissingRequiredPublishFields : approvalChannel === 'ebay');
   const shopifyActionLabel = hasExistingShopifyForActionLabel ? 'Update Shopify' : 'Publish Shopify';
   const ebayActionLabel = hasExistingEbayForActionLabel ? 'Update eBay' : 'Publish eBay';
   const bothActionLabel = hasExistingShopifyForActionLabel && hasExistingEbayForActionLabel
@@ -80,6 +83,11 @@ export function ListingApprovalRecordActions({
 
   return (
     <div className={`mt-4 justify-end ${compactActionRowClass}`}>
+      {showEbayStockWarning ? (
+        <p className={`${warningInlineBannerClass} m-0 basis-full`} role="note" aria-label="eBay stock update warning">
+          Updating eBay sends the draft quantity and can replace live stock. Verify available stock before updating, including through Update Both.
+        </p>
+      ) : null}
       <SecondaryActionButton
         onClick={onResetData}
         disabled={saving || !hasUnsavedChanges}

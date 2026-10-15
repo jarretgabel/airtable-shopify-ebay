@@ -482,7 +482,7 @@ describe('WorkflowListingImageSelector', () => {
     expect(availableCardsAfter[0]).toHaveTextContent('photo-2-processed.jpg');
   });
 
-  it('withholds image choices until format validation completes', () => {
+  it('keeps saved photo choices visible while format validation runs', () => {
     render(
       <WorkflowListingImageSelector
         attachments={[
@@ -495,7 +495,7 @@ describe('WorkflowListingImageSelector', () => {
     );
 
     expect(screen.getByRole('status')).toHaveTextContent('Checking image formats');
-    expect(screen.queryByTestId('selected-listing-image-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('selected-listing-image-card')).toBeInTheDocument();
   });
 
   it('explains when image format validation fails', () => {
@@ -512,6 +512,6 @@ describe('WorkflowListingImageSelector', () => {
     );
 
     expect(screen.getByRole('alert')).toHaveTextContent('Drive access unavailable.');
-    expect(screen.queryByTestId('selected-listing-image-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('selected-listing-image-card')).toBeInTheDocument();
   });
 });

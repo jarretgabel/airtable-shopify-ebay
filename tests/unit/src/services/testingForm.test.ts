@@ -243,7 +243,7 @@ describe('testingForm', () => {
         'Inventory Notes': 'Initial notes',
         'Serial Number': 'SN-123',
         Voltage: '120V',
-        'Audiogon Rating': '8/10',
+        'Audiogon Rating': ['8/10'],
         'Testing Cosmetic Notes': 'Very clean',
         'Original Box': ['Yes'],
         Manual: ['Included'],
@@ -702,20 +702,14 @@ describe('testingForm', () => {
     };
 
     vi.mocked(updateConfiguredRecord)
-      .mockResolvedValueOnce({
+      .mockResolvedValue({
         id: 'recWorkflow123',
         createdTime: '2026-05-05T12:00:00.000Z',
         fields: {},
-      })
-      .mockResolvedValueOnce(buildRecord({}));
+      });
     vi.mocked(getConfiguredRecord)
-      .mockResolvedValueOnce(buildRecord({
+      .mockResolvedValue(buildRecord({
         'Workflow Status': 'Testing In Progress',
-      }))
-      .mockResolvedValueOnce(buildRecord({
-        Images: [
-          { id: 'att-5', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
-        ],
       }));
 
     await submitTestingForm(values, 'recWorkflow123', {
@@ -734,10 +728,10 @@ describe('testingForm', () => {
     });
 
     expect(updateConfiguredRecord).toHaveBeenNthCalledWith(
-      2,
+      1,
       'used-gear-workflow',
       'recWorkflow123',
-      {
+      expect.objectContaining({
         'Workflow Image Metadata JSON': JSON.stringify([
           {
             attachmentId: 'att-5',
@@ -749,12 +743,12 @@ describe('testingForm', () => {
             includedInListing: false,
           },
         ]),
-      },
+      }),
       { typecast: true },
     );
   });
 
-  it('retries workflow updates without image metadata when the Airtable field is unavailable', async () => {
+  it('reports image-save failure instead of silently dropping metadata when the Airtable field is unavailable', async () => {
     const values: TestingFormValues = {
       sku: 'SKU-202',
       arrivalDate: '',
@@ -786,20 +780,13 @@ describe('testingForm', () => {
     };
 
     vi.mocked(updateConfiguredRecord)
-      .mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'))
-      .mockResolvedValueOnce({
-        id: 'recWorkflow123',
-        createdTime: '2026-05-05T12:00:00.000Z',
-        fields: {},
-      })
       .mockRejectedValueOnce(new Error('Unknown field name: "Workflow Image Metadata JSON"'));
     vi.mocked(getConfiguredRecord)
-      .mockResolvedValueOnce(buildRecord({
+      .mockResolvedValue(buildRecord({
         'Workflow Status': 'Testing In Progress',
-      }))
-      .mockResolvedValueOnce(buildRecord({ Images: [] }));
+      }));
 
-    const result = await submitTestingForm(values, 'recWorkflow123', {
+    await expect(submitTestingForm(values, 'recWorkflow123', {
       recordSource: 'used-gear-workflow',
       imageMetadata: [
         {
@@ -812,23 +799,10 @@ describe('testingForm', () => {
           includedInListing: false,
         },
       ],
-    });
-
-    expect(result).toEqual({
-      recordId: 'recWorkflow123',
-      sku: 'SKU-202',
-      action: 'updated',
-    });
+    })).rejects.toThrow('Unable to update the Testing fields');
     const updateConfiguredRecordMock = vi.mocked(updateConfiguredRecord);
 
-    expect(updateConfiguredRecordMock).toHaveBeenCalledTimes(3);
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[0]).toBe('used-gear-workflow');
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[1]).toBe('recWorkflow123');
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[2]).not.toHaveProperty('Workflow Image Metadata JSON');
-    expect(updateConfiguredRecordMock.mock.calls[1]?.[3]).toEqual({ typecast: true });
-    expect(updateConfiguredRecordMock.mock.calls[2]?.[2]).toEqual({
-      'Workflow Image Metadata JSON': '',
-    });
+    expect(updateConfiguredRecordMock).toHaveBeenCalledTimes(1);
   });
 
   it('loads only testing-stage saved attachments into the testing context while preserving combined metadata', async () => {

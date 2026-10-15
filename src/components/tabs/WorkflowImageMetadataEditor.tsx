@@ -17,6 +17,7 @@ import {
   type WorkflowImageRoleSelectOption,
 } from '@/services/workflowImageRoles';
 import { ApprovalSelect } from '@/components/approval/ApprovalSelect';
+import { WorkflowReferenceImageCard, type WorkflowImagePreviewSource } from './WorkflowReferenceImagesPanel';
 
 export interface WorkflowImageMetadataEditorProps {
   metadata: WorkflowImageMetadataRecord[];
@@ -27,6 +28,8 @@ export interface WorkflowImageMetadataEditorProps {
   description: string;
   emptyMessage: string;
   className?: string;
+  recordSource?: WorkflowImagePreviewSource;
+  recordId?: string;
 }
 
 function getNextIsoTimestamp(): string {
@@ -42,6 +45,8 @@ export function WorkflowImageMetadataEditor({
   description,
   emptyMessage,
   className = '',
+  recordSource,
+  recordId,
 }: WorkflowImageMetadataEditorProps) {
   const sortedMetadata = getSortedWorkflowImageMetadata(metadata);
   const [imageRoleOptions, setImageRoleOptions] = useState<WorkflowImageRoleSelectOption[]>([]);
@@ -164,11 +169,10 @@ export function WorkflowImageMetadataEditor({
               >
                 <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-slate-950/20">
                   {isGoogleDriveImageUrl(record.url) ? (
-                    <img
-                      src={record.url}
-                      alt={record.alt || record.filename}
-                      className="h-full min-h-[140px] w-full object-cover"
-                      loading="lazy"
+                    <WorkflowReferenceImageCard
+                      image={record}
+                      recordSource={recordSource}
+                      recordId={recordId}
                     />
                   ) : (
                     <div className="flex min-h-[140px] items-center justify-center px-3 text-center text-xs text-[var(--muted)]">

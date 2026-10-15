@@ -11,7 +11,7 @@ interface WorkflowListingImageSelectorProps {
   sourceActions?: ReactNode;
   validationStatus?: 'idle' | 'checking' | 'ready' | 'error';
   validationError?: string;
-  validationRemovedCount?: number;
+  getImageValidationMessage?: (url: string) => string;
 }
 
 function getGoogleDriveFileId(url: string): string | null {
@@ -176,7 +176,7 @@ export function WorkflowListingImageSelector({
   sourceActions,
   validationStatus = 'idle',
   validationError = '',
-  validationRemovedCount = 0,
+  getImageValidationMessage,
 }: WorkflowListingImageSelectorProps) {
   const [previewAttachment, setPreviewAttachment] = useState<WorkflowListingImageAttachment | null>(null);
   useEffect(() => {
@@ -365,7 +365,7 @@ export function WorkflowListingImageSelector({
           <input
             checked={checked}
             className="mt-1 h-4 w-4 rounded border-[var(--line)] bg-transparent text-[var(--accent)] focus:ring-[var(--accent)]"
-            disabled={disabled}
+            disabled={disabled || (!checked && Boolean(getImageValidationMessage?.(attachment.url)))}
             onChange={(event) => handleToggle(attachment.url, event.currentTarget.checked)}
             type="checkbox"
           />
@@ -374,6 +374,9 @@ export function WorkflowListingImageSelector({
               <p className="m-0 break-words text-sm font-semibold text-[var(--ink)]">{attachment.filename}</p>
             </div>
             <p className="mt-1 text-xs text-[var(--muted)]">{getImageAltText(attachment)}</p>
+            {getImageValidationMessage?.(attachment.url) ? (
+              <p className="mt-1 text-xs text-amber-200">{getImageValidationMessage(attachment.url)}</p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -437,11 +440,6 @@ export function WorkflowListingImageSelector({
               {sourceActions}
             </div>
           ) : null}
-          {validationStatus === 'ready' && validationRemovedCount > 0 ? (
-            <p className="mt-3 text-xs text-amber-200" role="status">
-              {validationRemovedCount} unsupported image{validationRemovedCount === 1 ? '' : 's'} removed from listing metadata.
-            </p>
-          ) : null}
         </div>
         <div className="rounded-full border border-[var(--line)] bg-[var(--panel)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ink)]">
           {selectedCount} of {totalDistinctAttachments} selected
@@ -450,13 +448,14 @@ export function WorkflowListingImageSelector({
 
       {validationStatus === 'checking' ? (
         <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--panel)]/60 px-4 py-6 text-sm text-[var(--muted)]" role="status">
-          Checking image formats before showing listing images...
+          Checking image formats. Saved photos and your selection will not be changed.
         </div>
       ) : validationStatus === 'error' ? (
         <div className="mt-4 rounded-xl border border-rose-400/35 bg-rose-500/10 px-4 py-4 text-sm text-rose-200" role="alert">
-          Image formats could not be verified, so image choices are withheld. {validationError}
+          Image formats could not be verified. Saved photos and your selection are unchanged. {validationError}
         </div>
-      ) : uniqueAttachments.length === 0 ? (
+      ) : null}
+      {uniqueAttachments.length === 0 && selectedAttachments.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-[var(--line)] bg-[var(--panel)]/60 px-4 py-6 text-sm text-[var(--muted)]">
           Upload images in the Testing or Photos form before selecting them for the listing.
         </div>

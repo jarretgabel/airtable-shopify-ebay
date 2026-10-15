@@ -22,12 +22,12 @@ import {
   filterWorkflowImageMetadataByStage,
   mergeWorkflowImageMetadata,
   parseWorkflowImageMetadata,
-  replaceWorkflowImageMetadataStage,
-  serializeWorkflowImageMetadata,
   type WorkflowImageMetadataRecord,
 } from '@/services/workflowImageMetadata';
+import { mergeWorkflowImageStageEdits, WorkflowImageEditError } from '@/services/workflowImageStageEdits';
 import { buildUsedGearItemTitle } from '../../aws/src/shared/contracts/usedGearItemTitle';
 import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
+import { getAudiogonRatingOptions, getAudiogonRatingUpdate } from '@contracts/audiogonRating';
 
 const INVENTORY_IMAGE_ATTACHMENT_FIELD_ID = 'fldMXp0EaUHGglU8M';
 const WORKFLOW_IMAGE_ATTACHMENT_FIELD_ID = 'fld1zIzmZEciQECah';
@@ -38,6 +38,7 @@ const TESTING_COSMETIC_NOTES_FIELD_NAME = 'Testing Cosmetic Notes';
 const OPTION_FIELD_NAMES = [
   'Status',
   'Component Type',
+  'Audiogon Rating',
   'Original Box',
   'Manual',
   'Remote',
@@ -112,6 +113,7 @@ function appendArchivedStageMetadata(
 ): WorkflowImageMetadataRecord[] {
   const currentStageRecords = filterWorkflowImageMetadataByStage(records, 'testing');
   const existingUrls = new Set(currentStageRecords.map((record) => record.url.trim().toLowerCase()));
+  const lastOrder = records.reduce((maximum, record) => Math.max(maximum, record.sortOrder), 0);
   const nowIso = new Date().toISOString();
   const additions = archivedFiles
     .filter((file) => {
@@ -128,7 +130,7 @@ function appendArchivedStageMetadata(
         alt: metadata?.altText?.trim() || '',
         imageRole: metadata?.imageRole,
         customImageRole: metadata?.imageRole === 'custom' && normalizedCustomRole ? normalizedCustomRole : undefined,
-        sortOrder: currentStageRecords.length + index + 1,
+        sortOrder: lastOrder + index + 1,
         sourceStage: 'testing',
         includedInListing: true,
         createdAt: nowIso,
@@ -136,12 +138,14 @@ function appendArchivedStageMetadata(
       } satisfies WorkflowImageMetadataRecord;
     });
 
-  return replaceWorkflowImageMetadataStage(records, 'testing', [...currentStageRecords, ...additions]);
+  return [...records, ...additions];
 }
 
 interface TestingFormSubmitOptions {
+  originalAudiogonRating?: string;
   recordSource?: TestingFormRecordSource;
   imageMetadata?: WorkflowImageMetadataRecord[];
+  originalImageMetadata?: WorkflowImageMetadataRecord[];
   imageUploadAssets?: FormImageUploadAsset[];
   completeWorkflowStage?: boolean;
   onImageUploadProgress?: (progress: TestingFormImageUploadProgress) => void;
@@ -200,32 +204,6 @@ function compactFields(fields: Record<string, unknown>): Record<string, unknown>
   );
 }
 
-function isUnknownFieldNameError(error: unknown, fieldName: string): boolean {
-  return error instanceof Error && error.message.includes(`Unknown field name: "${fieldName}"`);
-}
-
-function omitWorkflowImageMetadataField(fields: Record<string, unknown>): Record<string, unknown> {
-  const nextFields = { ...fields };
-  delete nextFields[WORKFLOW_IMAGE_METADATA_FIELD_NAME];
-  return nextFields;
-}
-
-async function updateRecordWithWorkflowImageMetadataFallback(
-  recordSource: TestingFormRecordSource,
-  recordId: string,
-  fields: Record<string, unknown>,
-): Promise<AirtableRecord> {
-  try {
-    return await updateConfiguredRecord(recordSource, recordId, fields, { typecast: true });
-  } catch (error) {
-    if (WORKFLOW_IMAGE_METADATA_FIELD_NAME in fields && isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
-      return updateConfiguredRecord(recordSource, recordId, omitWorkflowImageMetadataField(fields), { typecast: true });
-    }
-
-    throw error;
-  }
-}
-
 function assertApprovedTestingWorkflowRecord(record: AirtableRecord): void {
   const workflowStatus = getUsedGearWorkflowStatus(record.fields);
 
@@ -238,37 +216,16 @@ async function syncWorkflowImageMetadataForRecord(params: {
   recordSource: TestingFormRecordSource;
   recordId: string;
   existingMetadata: WorkflowImageMetadataRecord[];
-  nextMetadata?: WorkflowImageMetadataRecord[];
+  nextMetadata: WorkflowImageMetadataRecord[];
 }): Promise<void> {
-  const mergedMetadata = params.nextMetadata ?? await (async () => {
-    const latestRecord = await getConfiguredRecord(params.recordSource, params.recordId);
-    const latestAttachments = Array.isArray(latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME])
-      ? latestRecord.fields[WORKFLOW_IMAGE_ATTACHMENT_FIELD_NAME] as Array<Record<string, unknown>>
-      : [];
-    return mergeWorkflowImageMetadata({
-      attachments: latestAttachments,
-      existingMetadata: params.existingMetadata,
-      sourceStage: 'testing',
-      nowIso: new Date().toISOString(),
-    });
-  })();
-
-  try {
-    await updateConfiguredRecord(
-      params.recordSource,
-      params.recordId,
-      {
-        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: serializeWorkflowImageMetadata(mergedMetadata),
-      },
-      { typecast: true },
-    );
-  } catch (error) {
-    if (isUnknownFieldNameError(error, WORKFLOW_IMAGE_METADATA_FIELD_NAME)) {
-      return;
-    }
-
-    throw error;
-  }
+  const latestRecord = await getConfiguredRecord(params.recordSource, params.recordId);
+  const metadataJson = mergeWorkflowImageStageEdits(
+    latestRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME], params.nextMetadata, 'testing', params.existingMetadata,
+  );
+  if (metadataJson === undefined) return;
+  await updateConfiguredRecord(params.recordSource, params.recordId, {
+    [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: metadataJson,
+  }, { typecast: true });
 }
 
 async function loadConfiguredTestingRecord(recordId: string): Promise<{ source: TestingFormRecordSource; record: AirtableRecord }> {
@@ -429,11 +386,13 @@ export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
 
     return OPTION_FIELD_NAMES.reduce<TestingOptionSet>((acc, fieldName) => {
       const field = fields.find((entry) => entry.name === fieldName);
-      acc[fieldName] = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
+      const choices = dedupeOptions((field?.options?.choices ?? []).map((choice) => choice.name));
+      acc[fieldName] = fieldName === 'Audiogon Rating' ? getAudiogonRatingOptions(choices) : choices;
       return acc;
     }, {
       Status: [],
       'Component Type': [],
+      'Audiogon Rating': [],
       'Original Box': [],
       Manual: [],
       Remote: [],
@@ -496,7 +455,10 @@ export async function submitTestingForm(
       'Inventory Notes': trimToUndefined(values.inventoryNotes),
       'Serial Number': trimToUndefined(values.serialNumber),
       Voltage: trimToUndefined(values.voltage),
-      'Audiogon Rating': trimToUndefined(values.audiogonRating),
+      'Audiogon Rating': getAudiogonRatingUpdate(
+        values.audiogonRating,
+        options.originalAudiogonRating ?? extractInventoryScalarValue(workflowRecord.fields['Audiogon Rating']),
+      ),
       [TESTING_COSMETIC_NOTES_FIELD_NAME]: trimToUndefined(values.cosmeticConditionNotes),
       'Original Box': arrayOrUndefined(values.originalBox),
       Manual: arrayOrUndefined(values.manual),
@@ -512,12 +474,15 @@ export async function submitTestingForm(
       'Service Time': serviceTimeMinutes ? Number.parseFloat(serviceTimeMinutes) * 60 : undefined,
       Tested: trimToUndefined(values.testingDate),
       Status: statusValue,
-      [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata ? serializeWorkflowImageMetadata(options.imageMetadata) : undefined,
+      [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata
+        ? mergeWorkflowImageStageEdits(workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME], options.imageMetadata, 'testing', options.originalImageMetadata)
+        : undefined,
       ...(options.completeWorkflowStage ? buildWorkflowTestingFields(workflowRecord, actorName, testedAt) : {}),
     });
 
-    const updatedRecord = await updateRecordWithWorkflowImageMetadataFallback(recordSource, recordId, baseFields);
-    let finalImageMetadata = options.imageMetadata ?? [];
+    const updatedRecord = await updateConfiguredRecord(recordSource, recordId, baseFields, { typecast: true });
+    const initialImageMetadata = options.imageMetadata ?? parseWorkflowImageMetadata(workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
+    let finalImageMetadata = initialImageMetadata;
     let usedArchiveOnlyWorkflowUpload = false;
 
     if (values.imageFiles.length > 0) {
@@ -578,20 +543,8 @@ export async function submitTestingForm(
       await syncWorkflowImageMetadataForRecord({
         recordSource,
         recordId: updatedRecord.id,
-        existingMetadata: finalImageMetadata,
+        existingMetadata: initialImageMetadata,
         nextMetadata: finalImageMetadata,
-      });
-    } else if (options.imageMetadata) {
-      options.onImageUploadProgress?.({
-        total: values.imageFiles.length,
-        completed: values.imageFiles.length,
-        currentFilename: '',
-        phase: 'finalizing',
-      });
-      await syncWorkflowImageMetadataForRecord({
-        recordSource,
-        recordId: updatedRecord.id,
-        existingMetadata: options.imageMetadata,
       });
     }
 
@@ -605,7 +558,7 @@ export async function submitTestingForm(
     const serviceError = createServiceError({
       service: 'testingForm',
       code: 'TESTING_FORM_UPDATE_FAILED',
-      userMessage: 'Unable to update the Testing fields for this workflow item.',
+      userMessage: error instanceof WorkflowImageEditError ? error.message : 'Unable to update the Testing fields for this workflow item.',
       retryable: true,
       cause: error,
     });
