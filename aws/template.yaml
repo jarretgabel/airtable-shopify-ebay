@@ -105,6 +105,10 @@ Parameters:
   EbayWebhookBaseUrl:
     Type: String
     Default: ''
+  EbayNotificationVerificationToken:
+    Type: String
+    NoEcho: true
+    Default: ''
   JotformApiKey:
     Type: String
     NoEcho: true
@@ -226,6 +230,7 @@ Globals:
         EBAY_LISTING_API: !Ref EbayListingApi
         EBAY_WEBHOOK_SECRET: !Ref EbayWebhookSecret
         EBAY_WEBHOOK_BASE_URL: !Ref EbayWebhookBaseUrl
+        EBAY_NOTIFICATION_VERIFICATION_TOKEN: !Ref EbayNotificationVerificationToken
         JOTFORM_API_KEY: !Ref JotformApiKey
         JOTFORM_WEBHOOK_SECRET: !Ref JotformWebhookSecret
         GITHUB_TOKEN: !If
@@ -748,6 +753,27 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/hooks/ebay/listings
+
+  EbayReceiveNotificationFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ebay/receiveNotification.handler
+      Events:
+        ChallengeEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/hooks/ebay/notifications
+        NotificationEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/hooks/ebay/notifications
 
   EbayCreateSampleListingFunction:
     Type: AWS::Serverless::Function

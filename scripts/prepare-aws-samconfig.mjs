@@ -90,6 +90,12 @@ const replacements = [
   ['EbayPaymentPolicyId', String(getOptionalEnv('VITE_EBAY_PAYMENT_POLICY_ID')).split(' ')[0]],
   ['EbayReturnPolicyId', String(getOptionalEnv('VITE_EBAY_RETURN_POLICY_ID')).split(' ')[0]],
   ['EbayListingApi', getOptionalEnv('VITE_EBAY_LISTING_API') || 'inventory'],
+  // Webhook values. A non-VITE variable wins so staging and prod deploys can each target their own public URL.
+  ['ShopifyWebhookSecret', getOptionalEnv('SHOPIFY_WEBHOOK_SECRET') || getOptionalEnv('VITE_SHOPIFY_WEBHOOK_SECRET') || getOptionalEnv('VITE_SHOPIFY_CLIENT_SECRET')],
+  ['ShopifyWebhookBaseUrl', getOptionalEnv('SHOPIFY_WEBHOOK_BASE_URL') || getOptionalEnv('VITE_SHOPIFY_WEBHOOK_BASE_URL')],
+  ['EbayWebhookSecret', getOptionalEnv('EBAY_WEBHOOK_SECRET') || getOptionalEnv('VITE_EBAY_WEBHOOK_SECRET')],
+  ['EbayWebhookBaseUrl', getOptionalEnv('EBAY_WEBHOOK_BASE_URL') || getOptionalEnv('VITE_EBAY_WEBHOOK_BASE_URL')],
+  ['EbayNotificationVerificationToken', getOptionalEnv('EBAY_NOTIFICATION_VERIFICATION_TOKEN') || getOptionalEnv('VITE_EBAY_NOTIFICATION_VERIFICATION_TOKEN')],
 ];
 
 const sectionPattern = new RegExp(`(\\[${deployEnv}\\.deploy\\.parameters\\][\\s\\S]*?parameter_overrides = ")([^\"]*)(")`);

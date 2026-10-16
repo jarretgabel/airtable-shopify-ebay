@@ -60,6 +60,9 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - `Relist Candidate`: treat this as a manual disposition only after post-sale review. Returned or refunded items must not auto-relist.
   - repeated multi-event history is out of scope for this phase, so operators should keep the first approved outcome on the row instead of trying to build a separate event log.
 - Current webhook automation boundary:
+  - A confirmed sale (Shopify `ORDERS_PAID` or an eBay `order.*` sale event) keeps the Shopify product instead of deleting it: stock is set to 0, overselling is denied and the product is tagged `sold-archive`, which moves it into the `Sold Archive` collection. A Shopify sale also withdraws the eBay offer. Only single-unit items are automated; multi-unit or untracked products are left alone and noted in `Shopify Close Result` for you to review. Refunds, cancellations and returns never restock or untag a product.
+  - To relist a sold item, first remove the `sold-archive` tag in Shopify; until then **Update Shopify** is refused with a clear message so it cannot restock or untag the sold item. The manual **Take Down** button still deletes the Shopify product.
+  - These sale actions only run once the webhooks are registered and deployed; if a Shopify or eBay step fails temporarily the platform redelivers the event, and permanent failures appear in the record's close-result field.
   - Shopify `orders/cancelled` and eBay `order.cancelled` can automatically set `Cancelled` when the webhook matches the authoritative row and the row is not sync-locked.
   - Shopify `refunds/create` and eBay `order.refunded` can automatically populate `Refund Amount` / `Refund Reason` when the payload provides them and the row is not sync-locked.
   - Refund webhooks can automatically infer `Partial Refund` when the webhook supplies a refund amount that is smaller than the row's `Paid Amount`; otherwise they fall back to `Refunded`.

@@ -1,10 +1,13 @@
 import { updateConfiguredRecord } from '../providers/airtable/sources.js';
 import { logError, logInfo } from '../shared/logging.js';
 import { getOptionalSecret, requireSecret } from '../shared/secrets.js';
+import { retainSoldShopifyProduct, type SoldRetentionOutcome } from './soldRetention.js';
 
 interface CrossChannelCloseDependencies {
   updateRecord?: typeof updateConfiguredRecord;
   forceShopifyDelete?: boolean;
+  retainShopifyProduct?: typeof retainSoldShopifyProduct;
+  productIdHint?: string;
 }
 
 function normalizeFieldValue(value: unknown): string {
@@ -36,7 +39,18 @@ function getFieldValue(fields: Record<string, unknown>, fieldNames: string[]): s
 function isAlreadyClosed(fields: Record<string, unknown>, channel: 'shopify' | 'ebay'): boolean {
   if (channel === 'ebay') {
     const status = getFieldValue(fields, ['eBay Listing Status', 'eBay Offer Status']);
-    return status === 'ENDED' || status === 'NOT_ACTIVE';
+    if (status === 'ENDED' || status === 'NOT_ACTIVE') {
+      return true;
+    }
+
+    // A withdrawal recorded by an earlier attempt counts only if it happened after the latest publish,
+    // so a relisted offer is still withdrawn when it later sells.
+    const closedAt = Date.parse(getFieldValue(fields, ['eBay Closed At']));
+    if (!Number.isFinite(closedAt) || !getFieldValue(fields, ['eBay Close Result']).toLowerCase().includes('withdrawn')) {
+      return false;
+    }
+    const publishedAt = Date.parse(getFieldValue(fields, ['eBay Published At']));
+    return !Number.isFinite(publishedAt) || closedAt >= publishedAt;
   }
   if (channel === 'shopify') {
     const closedAt = getFieldValue(fields, ['Shopify Closed At']);
@@ -114,7 +128,20 @@ async function deleteShopifyProduct(productId: string): Promise<{ success: boole
   }
 }
 
-async function withdrawEbayOffer(offerId: string): Promise<{ success: boolean; message: string }> {
+// Network and server-side failures are worth retrying; client errors and missing configuration will not fix themselves.
+function isRetryableError(error: unknown): boolean {
+  const flag = (error as { retryable?: unknown } | null)?.retryable;
+  if (typeof flag === 'boolean') {
+    return flag;
+  }
+  return !/Missing required environment variable/i.test(error instanceof Error ? error.message : String(error));
+}
+
+function httpFailure(message: string, status: number): Error {
+  return Object.assign(new Error(message), { retryable: status >= 500 || status === 429 });
+}
+
+async function withdrawEbayOffer(offerId: string): Promise<{ success: boolean; message: string; retryable?: boolean }> {
   try {
     const apiBase = (getOptionalSecret('EBAY_ENV') ?? '').toLowerCase() !== 'production'
       ? 'https://api.sandbox.ebay.com'
@@ -144,7 +171,7 @@ async function withdrawEbayOffer(offerId: string): Promise<{ success: boolean; m
     });
 
     if (!tokenResponse.ok) {
-      throw new Error(`eBay token request failed: ${tokenResponse.status}`);
+      throw httpFailure(`eBay token request failed: ${tokenResponse.status}`, tokenResponse.status);
     }
 
     const tokenData = await tokenResponse.json() as { access_token: string };
@@ -166,7 +193,7 @@ async function withdrawEbayOffer(offerId: string): Promise<{ success: boolean; m
 
     if (!withdrawResponse.ok) {
       const errorText = await withdrawResponse.text();
-      throw new Error(`eBay withdraw failed: ${withdrawResponse.status} ${errorText.slice(0, 200)}`);
+      throw httpFailure(`eBay withdraw failed: ${withdrawResponse.status} ${errorText.slice(0, 200)}`, withdrawResponse.status);
     }
 
     return {
@@ -177,6 +204,7 @@ async function withdrawEbayOffer(offerId: string): Promise<{ success: boolean; m
     return {
       success: false,
       message: `eBay withdraw error: ${error instanceof Error ? error.message : String(error)}`,
+      retryable: isRetryableError(error),
     };
   }
 }
@@ -185,6 +213,8 @@ interface CloseResult {
   success: boolean;
   message: string;
   closedAt: string;
+  retryable?: boolean;
+  outcome?: SoldRetentionOutcome;
 }
 
 export async function closeEbayListingWhenSoldOnShopify(
@@ -230,6 +260,7 @@ export async function closeEbayListingWhenSoldOnShopify(
       success: false,
       message: missingMsg,
       closedAt: closedAtIso,
+      retryable: false,
     };
   }
 
@@ -256,6 +287,7 @@ export async function closeEbayListingWhenSoldOnShopify(
         success: false,
         message: result.message,
         closedAt: closedAtIso,
+        retryable: result.retryable ?? true,
       };
     }
 
@@ -292,6 +324,7 @@ export async function closeEbayListingWhenSoldOnShopify(
       success: false,
       message: errorMsg,
       closedAt: closedAtIso,
+      retryable: isRetryableError(error),
     };
   }
 }
@@ -412,4 +445,70 @@ export async function closeShopifyProductWhenSoldOnEbay(
       closedAt: closedAtIso,
     };
   }
+}
+
+function normalizeShopifyProductId(raw: string): number | null {
+  const id = raw.includes('gid://shopify/Product/') ? raw.split('/').pop()?.trim() ?? '' : raw.trim();
+  return /^\d+$/.test(id) ? Number(id) : null;
+}
+
+async function retainShopifyProductAfterSale(
+  soldOn: 'shopify' | 'ebay',
+  recordId: string,
+  fields: Record<string, unknown>,
+  dependencies: CrossChannelCloseDependencies,
+): Promise<CloseResult> {
+  const updateRecord = dependencies.updateRecord ?? updateConfiguredRecord;
+  const retainProduct = dependencies.retainShopifyProduct ?? retainSoldShopifyProduct;
+  const closedAtIso = new Date().toISOString();
+  const recordResult = (message: string, extra: Record<string, unknown> = {}) => updateRecord('used-gear-workflow', recordId, {
+    'Shopify Close Result': message,
+    ...extra,
+  }, { typecast: true }).catch((err) => {
+    logError('Failed to write close result to Airtable', err);
+  });
+
+  // The sold order's own product is authoritative on a Shopify sale; otherwise use the record's saved product.
+  const productId = normalizeShopifyProductId(dependencies.productIdHint ?? '')
+    ?? normalizeShopifyProductId(getFieldValue(fields, ['Shopify REST Product ID']));
+  if (productId === null) {
+    const missingMsg = 'Missing Shopify REST Product ID (cannot retain Shopify product)';
+    logError('Cannot retain Shopify product: missing required identifier', { recordId, soldOn });
+    await recordResult(missingMsg);
+    return { success: false, message: missingMsg, closedAt: closedAtIso, retryable: false };
+  }
+
+  const result = await retainProduct({ productId, soldOn });
+
+  if (result.outcome === 'retained') {
+    await recordResult(result.message, { 'Shopify Closed At': closedAtIso });
+    logInfo('Shopify product retained as sold', { recordId, productId, soldOn });
+  } else if (result.outcome !== 'already-retained') {
+    await recordResult(result.message);
+    if (result.success) {
+      logInfo('Shopify product left unchanged after sale', { recordId, productId, soldOn, outcome: result.outcome, message: result.message });
+    } else {
+      logError('Failed to retain sold Shopify product', new Error(result.message), { recordId, productId, soldOn, retryable: result.retryable });
+    }
+  }
+
+  return { success: result.success, message: result.message, closedAt: closedAtIso, retryable: result.retryable, outcome: result.outcome };
+}
+
+// eBay sale: keep the Shopify product as a sold, non-purchasable archive entry instead of deleting it.
+export async function retainShopifyProductWhenSoldOnEbay(
+  recordId: string,
+  fields: Record<string, unknown>,
+  dependencies: CrossChannelCloseDependencies = {},
+): Promise<CloseResult> {
+  return retainShopifyProductAfterSale('ebay', recordId, fields, dependencies);
+}
+
+// Shopify sale: Shopify already reduced stock; make sure the product is tagged and cannot be oversold.
+export async function retainShopifyProductWhenSoldOnShopify(
+  recordId: string,
+  fields: Record<string, unknown>,
+  dependencies: CrossChannelCloseDependencies = {},
+): Promise<CloseResult> {
+  return retainShopifyProductAfterSale('shopify', recordId, fields, dependencies);
 }

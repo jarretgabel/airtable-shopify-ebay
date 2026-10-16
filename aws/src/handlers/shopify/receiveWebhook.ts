@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import type { ShopifyWebhookSubscriptionKey, ShopifyWebhookTopic } from '../../providers/shopify/client.js';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
-import { closeEbayListingWhenSoldOnShopify } from '../../services/crossChannelClose.js';
+import { closeEbayListingWhenSoldOnShopify, retainShopifyProductWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
@@ -97,6 +97,7 @@ interface ShopifyWebhookDependencies {
   getConfiguredRecords?: typeof getConfiguredRecords;
   updateConfiguredRecord?: typeof updateConfiguredRecord;
   closeEbayListingWhenSoldOnShopify?: typeof closeEbayListingWhenSoldOnShopify;
+  retainShopifyProductWhenSoldOnShopify?: typeof retainShopifyProductWhenSoldOnShopify;
 }
 
 const TOPIC_BY_PATH: Record<ShopifyWebhookPathTopic, { headerValue: string; topic: ShopifyWebhookSubscriptionKey; subscriptionTopic: ShopifyWebhookTopic }> = {
@@ -597,6 +598,7 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
   const listRecords = dependencies.getConfiguredRecords ?? getConfiguredRecords;
   const updateRecord = dependencies.updateConfiguredRecord ?? updateConfiguredRecord;
   const closeEbayListing = dependencies.closeEbayListingWhenSoldOnShopify ?? closeEbayListingWhenSoldOnShopify;
+  const retainShopifyProduct = dependencies.retainShopifyProductWhenSoldOnShopify ?? retainShopifyProductWhenSoldOnShopify;
 
   return async function receiveShopifyWebhookHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
     const origin = getRequestOrigin(event);
@@ -701,6 +703,53 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
         currentRecord.fields,
       );
 
+      // A sale's marketplace side effects must finish before the event is recorded as processed. Otherwise a
+      // retried delivery would be skipped as a duplicate and a failed withdrawal/retention would never recover.
+      if (normalizedEvent.topic === 'ORDERS_PAID') {
+        const saleFields = { ...currentRecord.fields, ...updateFields };
+        const sideEffects: Array<{ label: string; run: () => Promise<{ success: boolean; message: string; retryable?: boolean }> }> = [
+          { label: 'eBay close', run: () => closeEbayListing(matchedRecordId, saleFields) },
+          { label: 'Shopify retention', run: () => retainShopifyProduct(matchedRecordId, saleFields, { productIdHint: firstProductId }) },
+        ];
+        const retryableFailures: string[] = [];
+
+        for (const sideEffect of sideEffects) {
+          try {
+            const outcome = await sideEffect.run();
+            if (outcome.success) {
+              infoLogger(`Cross-channel ${sideEffect.label} completed for Shopify sale`, {
+                recordId: matchedRecordId,
+                orderId: normalizedEvent.orderId,
+                message: outcome.message,
+              });
+            } else {
+              logError(`Cross-channel ${sideEffect.label} failed`, new Error(outcome.message), {
+                recordId: matchedRecordId,
+                orderId: normalizedEvent.orderId,
+                retryable: outcome.retryable ?? false,
+              });
+              if (outcome.retryable) {
+                retryableFailures.push(`${sideEffect.label}: ${outcome.message}`);
+              }
+            }
+          } catch (sideEffectError) {
+            logError(`Exception during cross-channel ${sideEffect.label} (Shopify sale)`, sideEffectError, {
+              recordId: matchedRecordId,
+              orderId: normalizedEvent.orderId,
+            });
+            retryableFailures.push(`${sideEffect.label}: ${sideEffectError instanceof Error ? sideEffectError.message : String(sideEffectError)}`);
+          }
+        }
+
+        if (retryableFailures.length > 0) {
+          throw new HttpError(503, `Shopify sale side effects need a retry: ${retryableFailures.join(' | ')}`, {
+            service: 'shopify',
+            code: 'SHOPIFY_SALE_SIDE_EFFECT_RETRYABLE',
+            retryable: true,
+          });
+        }
+      }
+
       // Apply the update
       const updatedRecord = await updateRecord('used-gear-workflow', matchedRecordId, updateFields, { typecast: true });
 
@@ -711,37 +760,6 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
         eventId: normalizedEvent.eventId,
         updatedFieldNames: Object.keys(updateFields),
       });
-
-      // If item sold on Shopify (ORDERS_PAID), trigger cross-channel eBay close
-      if (normalizedEvent.topic === 'ORDERS_PAID') {
-        try {
-          const closeResult = await closeEbayListing(
-            matchedRecordId,
-            {
-              ...currentRecord.fields,
-              ...updateFields,
-            },
-          );
-
-          if (closeResult.success) {
-            infoLogger('Cross-channel eBay close triggered from Shopify sale', {
-              recordId: matchedRecordId,
-              orderId: normalizedEvent.orderId,
-              message: closeResult.message,
-            });
-          } else {
-            logError('Cross-channel eBay close failed', new Error(closeResult.message), {
-              recordId: matchedRecordId,
-              orderId: normalizedEvent.orderId,
-            });
-          }
-        } catch (closeError) {
-          logError('Exception during cross-channel eBay close (Shopify sale)', closeError, {
-            recordId: matchedRecordId,
-            orderId: normalizedEvent.orderId,
-          });
-        }
-      }
 
       return jsonOk({
         received: true,

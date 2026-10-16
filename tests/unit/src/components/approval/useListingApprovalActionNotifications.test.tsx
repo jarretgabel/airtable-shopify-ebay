@@ -834,10 +834,11 @@ describe('approval action notifications', () => {
           { src: 'https://legacy.example/6.jpg', alt: '', position: 6 },
         ]),
         'Workflow Image Metadata JSON': JSON.stringify([
-          { url: 'https://approved.example/a.jpg', alt: 'A', sortOrder: 1, includedInListing: true },
-          { url: 'https://approved.example/b.jpg', alt: 'B', sortOrder: 2, includedInListing: true },
-          { url: 'https://approved.example/c.jpg', alt: 'C', sortOrder: 3, includedInListing: true },
-          { url: 'https://approved.example/d.jpg', alt: 'D', sortOrder: 4, includedInListing: false },
+          { url: 'https://drive.google.com/uc?export=view&id=approved-a', alt: 'A', sortOrder: 1, includedInListing: true },
+          { url: 'https://drive.google.com/uc?export=view&id=approved-b', alt: 'B', sortOrder: 2, includedInListing: true },
+          { url: 'https://drive.google.com/uc?export=view&id=approved-c', alt: 'C', sortOrder: 3, includedInListing: true },
+          { url: 'https://drive.google.com/uc?export=view&id=approved-d', alt: 'D', sortOrder: 4, includedInListing: false },
+          { url: 'https://approved.example/not-drive.jpg', alt: 'E', sortOrder: 5, includedInListing: true },
         ]),
       },
       workflowPublishSummary: null,
@@ -855,10 +856,11 @@ describe('approval action notifications', () => {
     const imageJsonRaw = publishOptions?.fields?.['Shopify REST Images JSON'];
     const imageRows = typeof imageJsonRaw === 'string' ? JSON.parse(imageJsonRaw) as Array<{ src: string }> : [];
 
+    // Only included Google Drive images are sent; excluded and non-Drive rows never override the stale legacy JSON.
     expect(imageRows.map((row) => row.src)).toEqual([
-      'https://approved.example/a.jpg',
-      'https://approved.example/b.jpg',
-      'https://approved.example/c.jpg',
+      'https://drive.google.com/uc?export=view&id=approved-a',
+      'https://drive.google.com/uc?export=view&id=approved-b',
+      'https://drive.google.com/uc?export=view&id=approved-c',
     ]);
   });
 

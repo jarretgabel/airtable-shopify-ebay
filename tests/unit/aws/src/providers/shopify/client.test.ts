@@ -120,6 +120,22 @@ test('getRequiredShopifyWebhookCallbackUrl builds HTTPS callback URLs from env c
   }
 });
 
+test('getRequiredShopifyWebhookCallbackUrl never doubles /api when the base URL already ends in /api', () => {
+  const originalBaseUrl = process.env.SHOPIFY_WEBHOOK_BASE_URL;
+
+  try {
+    for (const base of ['https://example.com/api', 'https://example.com/api/', ' https://example.com/API ']) {
+      process.env.SHOPIFY_WEBHOOK_BASE_URL = base;
+      assert.equal(getRequiredShopifyWebhookCallbackUrl('ORDERS_PAID'), 'https://example.com/api/hooks/shopify/orders-paid', base);
+    }
+
+    process.env.SHOPIFY_WEBHOOK_BASE_URL = 'https://example.com/api-gateway';
+    assert.equal(getRequiredShopifyWebhookCallbackUrl('ORDERS_PAID'), 'https://example.com/api-gateway/api/hooks/shopify/orders-paid');
+  } finally {
+    process.env.SHOPIFY_WEBHOOK_BASE_URL = originalBaseUrl;
+  }
+});
+
 test('listWebhookSubscriptions returns normalized HTTP webhook subscriptions', async () => {
   const originalFetch = globalThis.fetch;
   const originalStoreDomain = process.env.SHOPIFY_STORE_DOMAIN;

@@ -2,6 +2,7 @@ import { HttpError } from '../../shared/errors.js';
 import type { ShopifyShippingInspection, ShopifyShippingUpdate } from '../../shared/contracts/shopifyShipping.js';
 import { SHOPIFY_SHIPPING_DIMENSION_KEYS } from '../../shared/contracts/shopifyShipping.js';
 import { parseShopifyUnitCost, SHOPIFY_UNIT_COST_CURRENCY } from '../../shared/contracts/shopifyUnitCost.js';
+import { hasSoldArchiveTag, SHOPIFY_SOLD_ARCHIVE_TAG } from '../../shared/contracts/shopifySoldArchive.js';
 import { logInfo } from '../../shared/logging.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
@@ -416,7 +417,8 @@ interface ShopifyGraphQlResponse<TData> {
 }
 
 function getShopifyWebhookBaseUrl(): string {
-  const baseUrl = requireSecret('SHOPIFY_WEBHOOK_BASE_URL').replace(/\/+$/, '');
+  // The callback paths already start with /api, so a base URL that ends in /api (as in .env.example) must not double it.
+  const baseUrl = requireSecret('SHOPIFY_WEBHOOK_BASE_URL').trim().replace(/\/+$/, '').replace(/\/api$/i, '');
   if (!/^https:\/\//i.test(baseUrl)) {
     throw new HttpError(500, 'Shopify webhook base URL must use HTTPS.', {
       service: 'shopify',
@@ -1119,10 +1121,145 @@ export async function publishProductToOnlineStore(productId: number): Promise<Sh
   return publishedProduct;
 }
 
+export interface ShopifyProductSaleState {
+  id: number;
+  status: string | null;
+  tags: string[];
+  totalInventory: number | null;
+  variantsTruncated: boolean;
+  variants: Array<{
+    id: string;
+    sku: string | null;
+    position: number | null;
+    inventoryPolicy: string;
+    inventoryQuantity: number | null;
+    tracked: boolean | null;
+  }>;
+}
+
+function requirePositiveProductId(productId: number): void {
+  if (!Number.isSafeInteger(productId) || productId <= 0) {
+    throw new HttpError(400, 'productId must be a positive integer.', {
+      service: 'shopify', code: 'INVALID_PRODUCT_ID', retryable: false,
+    });
+  }
+}
+
+function throwOnUserErrors(userErrors: Array<{ message: string }> | undefined, code: string, fallback: string): void {
+  const errors = userErrors ?? [];
+  if (errors.length === 0) return;
+  throw new HttpError(502, errors.map(({ message }) => message?.trim()).filter(Boolean).join('; ') || fallback, {
+    service: 'shopify', code, retryable: false,
+  });
+}
+
+export async function getProductSaleState(productId: number): Promise<ShopifyProductSaleState | null> {
+  requirePositiveProductId(productId);
+  const data = await graphQlRequest<{
+    product: {
+      id: string;
+      status: string | null;
+      tags: string[];
+      totalInventory: number | null;
+      variants: {
+        nodes: Array<{
+          id: string;
+          sku: string | null;
+          position: number | null;
+          inventoryPolicy: string;
+          inventoryQuantity: number | null;
+          inventoryItem: { tracked: boolean | null } | null;
+        }>;
+        pageInfo: { hasNextPage: boolean };
+      };
+    } | null;
+  }>(
+    `query GetProductSaleState($id: ID!) {
+      product(id: $id) {
+        id status tags totalInventory
+        variants(first: 100) {
+          nodes { id sku position inventoryPolicy inventoryQuantity inventoryItem { tracked } }
+          pageInfo { hasNextPage }
+        }
+      }
+    }`,
+    { id: toShopifyProductGid(productId) },
+  );
+  if (!data.product) return null;
+
+  return {
+    id: parseShopifyNumericId(data.product.id),
+    status: data.product.status,
+    tags: data.product.tags ?? [],
+    totalInventory: data.product.totalInventory,
+    variantsTruncated: data.product.variants.pageInfo.hasNextPage,
+    variants: data.product.variants.nodes.map((node) => ({
+      id: node.id,
+      sku: node.sku,
+      position: node.position,
+      inventoryPolicy: node.inventoryPolicy,
+      inventoryQuantity: node.inventoryQuantity,
+      tracked: node.inventoryItem?.tracked ?? null,
+    })),
+  };
+}
+
+// tagsAdd appends tags; unlike productSet's tag list it never replaces or removes the product's existing tags.
+export async function addProductTags(productId: number, tags: string[]): Promise<void> {
+  requirePositiveProductId(productId);
+  const cleaned = Array.from(new Set(tags.map((tag) => tag.trim()).filter(Boolean)));
+  if (cleaned.length === 0) return;
+
+  const data = await graphQlRequest<{ tagsAdd: { userErrors: Array<{ message: string }> } }>(
+    `mutation AddProductTags($id: ID!, $tags: [String!]!) {
+      tagsAdd(id: $id, tags: $tags) {
+        node { id }
+        userErrors { field message }
+      }
+    }`,
+    { id: toShopifyProductGid(productId), tags: cleaned },
+  );
+  throwOnUserErrors(data.tagsAdd.userErrors, 'SHOPIFY_TAGS_ADD_FAILED', 'Shopify rejected the tag update.');
+}
+
+export async function denyVariantOversell(productId: number, variantIds: string[]): Promise<void> {
+  requirePositiveProductId(productId);
+  if (variantIds.length === 0) return;
+
+  const data = await graphQlRequest<{ productVariantsBulkUpdate: { userErrors: Array<{ message: string }> } }>(
+    `mutation DenyVariantOversell($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+        productVariants { id inventoryPolicy }
+        userErrors { field message }
+      }
+    }`,
+    { productId: toShopifyProductGid(productId), variants: variantIds.map((id) => ({ id, inventoryPolicy: 'DENY' })) },
+  );
+  throwOnUserErrors(data.productVariantsBulkUpdate.userErrors, 'SHOPIFY_VARIANT_POLICY_FAILED', 'Shopify rejected the inventory policy update.');
+}
+
+// productSet replaces a product's whole tag list and publish re-applies the Airtable quantity, so updating a sold
+// product could silently remove `sold-archive` and restock it. Relisting must be a deliberate step: remove the tag first.
+async function assertProductNotSoldArchived(request: ShopifyUnifiedProductSetRequest): Promise<void> {
+  const identifier = request.identifier?.id;
+  if (!identifier) return;
+
+  const productId = parseShopifyNumericId(identifier);
+  const state = await getProductSaleState(productId);
+  if (state && hasSoldArchiveTag(state.tags)) {
+    throw new HttpError(409, `Shopify product #${productId} is tagged ${SHOPIFY_SOLD_ARCHIVE_TAG}. Updating it could restock or untag a sold item. Remove the tag in Shopify first if you intend to relist it. No changes made.`, {
+      service: 'shopify',
+      code: 'SHOPIFY_PRODUCT_SOLD_ARCHIVED',
+      retryable: false,
+    });
+  }
+}
+
 export async function upsertProductWithUnifiedRequest(
   request: ShopifyUnifiedProductSetRequest,
 ): Promise<ShopifyUnifiedProductResult> {
   const ensuredRequest = ensureValidUnitCostsInRequest(ensureConditionMetafieldInRequest(request));
+  await assertProductNotSoldArchived(ensuredRequest);
   const data = await graphQlRequest<{
     productSet: {
       product: {
@@ -1198,6 +1335,7 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
     };
   }
 
+  await assertProductNotSoldArchived(ensuredRequest);
   const variableDefs: string[] = [
     '$input: ProductSetInput!',
     '$identifier: ProductSetIdentifiers!',

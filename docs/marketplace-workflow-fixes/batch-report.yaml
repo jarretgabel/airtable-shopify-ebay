@@ -160,6 +160,68 @@ batch_2_unit_cost:
     themes: "eBay Close Result/Closed At listing-input visibility, quantity warning panels, eBay template-copy/body editors."
   live_side_effects: "None. No product created/updated, no cost written, no Airtable or schema write, no deployment."
   remaining: "Controlled single-item Shopify write with cost readback requires explicit approval; production deployment and acceptance pending."
+batch_7_sold_retention:
+  scope: "REQ-004, T003/T004; owner-approved behavior; built test-first; no live changes"
+  owner_decision: "Approve: eBay sale keeps the Shopify product (stock 0, tagged sold-archive); Shopify sale tags it and withdraws eBay; multi-unit flagged; refunds/cancellations/returns never restock or untag; failures retry; manual takedown unchanged."
+  discovery_before_build:
+    shopify_sale_before: "eBay offer withdrawn; Shopify product left sold out but never tagged"
+    ebay_sale_before: "Shopify product permanently deleted"
+    failure_handling_before: "close failures logged, webhook answered 200, no retry"
+    data: "No quantity above 1 in 3,438 records; 12 live-listed with blank quantity; 2 live dual-channel"
+    webhooks: "0 Shopify webhook subscriptions visible to the app"
+  behavior:
+    retention: "single-unit only; stock 0 via existing inventory sync, overselling denied, tag appended with tagsAdd, verified by readback; multi-unit/untracked/multi-page flagged"
+    ordering: "sale side effects run before the processed marker; retryable failure -> HTTP 503 and nothing recorded; permanent failure -> recorded and 200"
+    ebay_withdraw: "retry classification (5xx/429/network retryable; 4xx/missing credentials permanent); earlier withdrawal counts only if closed at or after latest publish"
+    publish_guard: "updating an existing product tagged sold-archive -> HTTP 409 SHOPIFY_PRODUCT_SOLD_ARCHIVED before any write; creation unaffected"
+    unchanged: "manual takedown delete; refunds/cancellations/returns; Airtable sold workflow status stays manual"
+  files_changed:
+    - { file: aws/src/services/soldRetention.ts, change_type: created }
+    - { file: aws/src/shared/contracts/shopifySoldArchive.ts, change_type: created }
+    - { file: aws/src/providers/shopify/client.ts, change_type: modified, description: "getProductSaleState, addProductTags, denyVariantOversell, publish guard" }
+    - { file: aws/src/services/crossChannelClose.ts, change_type: modified }
+    - { file: aws/src/handlers/shopify/receiveWebhook.ts, change_type: modified }
+    - { file: aws/src/handlers/ebay/receiveWebhook.ts, change_type: modified }
+    - { file: tests/unit/aws/src/services/soldRetention.test.ts, change_type: created, tests: 19 }
+    - { file: tests/unit/aws/src/providers/shopify/soldRetention.test.ts, change_type: created, tests: 7 }
+    - { file: tests/unit/aws/src/services/crossChannelRetention.test.ts, change_type: created }
+    - { file: tests/unit/aws/src/handlers/shopify/receiveWebhookSoldRetention.test.ts, change_type: created, tests: 8 }
+    - { file: tests/unit/aws/src/handlers/ebay/receiveWebhookSoldRetention.test.ts, change_type: created, tests: 8 }
+    - { file: tests/unit/aws/src/providers/shopify/soldArchiveGuard.test.ts, change_type: created, tests: 8 }
+    - { file: tests/unit/aws/src/handlers/ebay/receiveWebhook.test.ts, change_type: modified, description: "renamed injected dependency and test titles only" }
+    - { file: tests/unit/aws/src/handlers/shopify/receiveWebhook.test.ts, change_type: modified, description: "offline wrapper so paid-order tests do not reach Shopify/eBay" }
+    - { file: docs/PROJECT_REFERENCE_SUMMARY.md, change_type: modified, description: "Sold Retention section; corrected deferred-statement" }
+    - { file: docs/used-gear-workflow/operator-guide.md, change_type: modified, description: "sale automation and relist rule" }
+  results:
+    aws_full: { command: "node --import tsx --import ./tests/unit/aws/network-guard.ts --test <all tests/unit/aws/**/*.test.ts>", passed: 351, failed: 0 }
+    frontend_full: { command: "npm run test:web", files: 164, passed: 1147, failed: 0 }
+    typecheck: { aws: 0, frontend: 0 }
+    lint: "0 errors, 0 warnings on all touched files after fixing one prefer-const error and two unused-parameter warnings in new tests"
+    mutation_check: "With the eBay handler's retry disabled, 3 of 8 handler tests failed; restored and re-verified (16 handler tests pass)."
+  live_side_effects: "None. No Shopify/eBay/Airtable writes; no webhooks registered; nothing deployed."
+  remaining:
+    - "Deploy, then register Shopify webhooks (live store change; needs explicit approval) and confirm eBay notification delivery"
+    - "Controlled one-unit test per channel with Shopify read-back"
+    - "Existing 7 sold-archive products can no longer be updated through the app by design"
+    - "Decide whether to set the Airtable sold workflow status automatically (still manual)"
+batch_6_workflow_image_tests:
+  scope: "Owner-requested: look at the 2 failing workflow-image tests"
+  finding: "Both were outdated test fixtures, not code defects. Source behavior matches the documented policy and contract."
+  tests:
+    - file: tests/unit/src/components/approval/useListingApprovalActionNotifications.test.tsx
+      name: "forces Shopify publish to use included workflow images from metadata over stale Shopify image JSON"
+      cause: "Fixture used approved.example URLs. getIncludedWorkflowImageMetadata keeps only included Google Drive URLs (Drive-only policy), so the rows were filtered out and the stale legacy JSON (6 images) was sent."
+      change: "Fixture now uses Drive URLs; added an included non-Drive row to prove it stays excluded."
+    - file: tests/unit/src/components/tabs/WorkflowSnapshotPage.test.tsx
+      name: "renders workflow snapshot scaffolding from operational record context"
+      cause: "Expected a direct Drive thumbnail src from July. WorkflowReferenceImagesPanel (refactored Oct 9-14) now loads previews lazily through the authenticated record preview API and renders data URLs."
+      change: "Mocks getConfiguredWorkflowImagePreview (partial module mock); asserts data-URL src, loader called for exactly the two Drive images, and the Airtable-only image is neither shown nor requested."
+  source_files_changed: 0
+  results:
+    frontend_full: { command: "npm run test:web", files: 164, passed: 1147, failed: 0 }
+    typecheck_frontend: 0
+    lint: "0 errors, 0 warnings on both test files"
+  side_effects: "None; test files only."
 batch_5_template_copy_live_test:
   scope: "T009 acceptance: edit, save, reload and preview of eBay Template Copy; owner-chosen test record"
   record: { id: recmqmULLCS5kXqCq, sku: "11773", item: "Cary 303/200", stage: "Awaiting Pre-Listing Review", live_marketplace_presence: "none (no Shopify product ID, no eBay offer/listing ID)" }
@@ -208,7 +270,8 @@ batch_4_rollback_resolution:
     lint: "0 errors; 2 warnings in files restored from HEAD (unused _status; react-refresh export)"
     browser: "Record page reloads cleanly; Shopify Price 3500; required-category badge shown; 'Advanced: eBay Template Copy' and 'Advanced: HEAA About Copy' sections present; no error banner."
   remaining_failures:
-    count: 2
+    status: "resolved later in batch_6_workflow_image_tests (outdated fixtures; test-only fix)"
+    count_at_time: 2
     tests:
       - "tests/unit/src/components/approval/useListingApprovalActionNotifications.test.tsx > forces Shopify publish to use included workflow images from metadata over stale Shopify image JSON"
       - "tests/unit/src/components/tabs/WorkflowSnapshotPage.test.tsx > renders workflow snapshot scaffolding from operational record context"
@@ -321,6 +384,32 @@ production_observation:
   minimal_read_listed_count: 12
   broad_one_record_read_status: 200
   root_cause_limit: "Broad read isolated as the failing path; specific server/platform failure not verified from logs."
+batch_8_ebay_notifications:
+  scope: "REQ-004 support; eBay native Notification API receiver; built offline; no live changes"
+  discovery: "Read-only GET /commerce/notification/v1/topic with the app token listed 28 topics; seller topics ORDER_CONFIRMATION, ORDER_CANCELLATION_ACTIVITY, ORDER_RETURN_ACTIVITY, ORDER_INQUIRY_ACTIVITY, ITEM_MARKED_SHIPPED exist. No refund topic."
+  built:
+    - "aws/src/services/ebayNotifications.ts: challenge hash, ECDSA signature verification (fails closed), ORDER_CONFIRMATION mapping"
+    - "aws/src/handlers/ebay/receiveNotification.ts: GET challenge, POST receiver; 200 for unmatched/permanent, 503 for retryable"
+    - "aws/src/providers/ebay/client.ts: getNotificationPublicKey (1h cache), getOrderLineItems"
+    - "aws/template.yaml route, EbayNotificationVerificationToken parameter; scripts/start-local-api.mjs route and env mapping"
+  validation:
+    - "node --import tsx --import ./tests/unit/aws/network-guard.ts --test <all tests/unit/aws>: 364/364 (13 new)"
+    - "npm --prefix aws run typecheck: exit 0"
+    - "mutation: disabling the signature rejection failed 1 test; restored"
+  not_done: "re-authorize eBay, deploy and set verification token, run --apply, live test; cancellation/return/inquiry topics unmapped pending real payload samples"
+  registration:
+    - "scripts/setup-ebay-notifications.ts + npm run ebay:notifications:setup (dry run default, --check-access read-only, --apply writes); aws/src/services/ebayNotificationSetup.ts; provider list/create/topic/probe functions"
+    - "shared endpoint builder strips a trailing /api so handler and registration hash the identical URL"
+  live_read_only_findings:
+    - "GET /commerce/notification/v1/topic (app token): 28 topics incl. ORDER_CONFIRMATION, ORDER_CANCELLATION_ACTIVITY, ORDER_RETURN_ACTIVITY, ORDER_INQUIRY_ACTIVITY"
+    - "--check-access: Fulfillment order read HTTP 403 (error 1100); subscription read ok. Token needs re-authorization with sell.fulfillment (and cancellation/return/subscription scopes)."
+    - "No eBay writes performed; dry run not executed because no verification token is configured."
+  shopify_callback_fix: "buildShopifyWebhookCallbackUrl strips trailing /api; test failed first, then passed"
+  deploy_and_security:
+    - "prepare-aws-samconfig.mjs now passes ShopifyWebhookSecret, ShopifyWebhookBaseUrl, EbayWebhookSecret, EbayWebhookBaseUrl, EbayNotificationVerificationToken (previously none were deployed)"
+    - "eBay listings webhook fails closed without EBAY_WEBHOOK_SECRET (test failed first); previously unauthenticated"
+  oauth: "after owner re-authorization: --check-access orders ok, subscriptions ok"
+  validation_update: "30 new tests; full AWS suite 386/386; AWS typecheck exit 0"
 environment:
   node: "v24.14.0"
   docker: "Unavailable; no container infrastructure required for this read-only batch."
@@ -331,8 +420,8 @@ warnings:
   - "Authenticated all-route local API reconciliation now passes; production deployment and deployed acceptance remain pending."
   - "Other plan workstreams retain their cost, copy, sale-policy, and live-configuration prerequisites."
   - "VS Code runTests reported no tests found; repository Vitest/Node runners were used instead."
-  - "The full frontend suite now has 2 failures (workflow image selection) that also fail at a clean checkout of HEAD; they are pre-existing in committed code, unrelated to this plan, and unchanged."
+  - "The full frontend suite passes (164 files, 1,147 tests). Two formerly failing tests (workflow image selection) were outdated fixtures, updated without source changes; see batch_6_workflow_image_tests."
   - "Shopify private cost has not been written to or read back from the live store; no controlled live test was run."
   - "eBay template-copy save, reload and preview were verified live on one owner-chosen record (restored afterward). The replacement blurb (T010) has not been supplied."
 overall: NEEDS_SIGNOFF
-overall_reason: "Full AWS suite passes (287/287); the full frontend suite has 2 failures that also fail at clean HEAD; both typechecks and lint (0 errors) pass. A working-tree rollback of the Oct 14-15 work was identified and reversed (backup patch kept). Live Shopify cost write/readback, template-copy persistence, and production deployment remain unverified."
+overall_reason: "Full AWS suite passes (287/287) and the full frontend suite passes (164 files, 1,147 tests); both typechecks and lint (0 errors) pass. A working-tree rollback of the Oct 14-15 work was identified and reversed (backup patch kept). Live Shopify cost write/readback and production deployment remain unverified; template-copy persistence was verified live."

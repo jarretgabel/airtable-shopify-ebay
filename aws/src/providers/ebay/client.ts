@@ -677,6 +677,178 @@ export async function registerWebhookSubscription(input: EbayWebhookSubscription
   return normalizeWebhookSubscriptionResponse(responseBody, input.callbackUrl, input.eventTypes);
 }
 
+const EBAY_NOTIFICATION_API = '/commerce/notification/v1';
+
+async function ebayNotificationWrite(path: string, token: string, body: Record<string, unknown>): Promise<{ id: string; body: Record<string, unknown> }> {
+  const response = await ebayRestFetch(resolveApiUrl(`${EBAY_NOTIFICATION_API}${path}`), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Accept-Language': 'en-US',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `eBay notification setup failed: ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_NOTIFICATION_SETUP_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+
+  const text = await response.text();
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = text ? JSON.parse(text) as Record<string, unknown> : {};
+  } catch {
+    parsed = {};
+  }
+
+  const location = response.headers.get('Location') ?? '';
+  return { id: location.split('/').filter(Boolean).pop() ?? '', body: parsed };
+}
+
+async function ebayNotificationList<T>(path: string, token: string, key: string): Promise<T[]> {
+  const items: T[] = [];
+  let next: string | undefined = `${EBAY_NOTIFICATION_API}${path}?limit=100`;
+  for (let page = 0; next && page < 10; page += 1) {
+    const response: { next?: string } & Record<string, unknown> = await ebayJsonRequest(next, token);
+    items.push(...((response[key] as T[] | undefined) ?? []));
+    next = typeof response.next === 'string' && response.next ? response.next : undefined;
+  }
+
+  return items;
+}
+
+export async function listNotificationDestinations(): Promise<Array<{ destinationId: string; endpoint: string; status: string }>> {
+  const items = await ebayNotificationList<{ destinationId?: string; status?: string; deliveryConfig?: { endpoint?: string } }>('/destination', await getAppToken(), 'destinations');
+  return items.map((item) => ({
+    destinationId: cleanOptional(item.destinationId),
+    endpoint: cleanOptional(item.deliveryConfig?.endpoint),
+    status: cleanOptional(item.status),
+  }));
+}
+
+export async function listNotificationSubscriptions(): Promise<Array<{ subscriptionId: string; topicId: string; destinationId: string; status: string }>> {
+  const items = await ebayNotificationList<{ subscriptionId?: string; topicId?: string; destinationId?: string; status?: string }>('/subscription', await getValidUserToken(), 'subscriptions');
+  return items.map((item) => ({
+    subscriptionId: cleanOptional(item.subscriptionId),
+    topicId: cleanOptional(item.topicId),
+    destinationId: cleanOptional(item.destinationId),
+    status: cleanOptional(item.status),
+  }));
+}
+
+export async function getNotificationTopicSchemaVersion(topicId: string): Promise<string> {
+  const topic = await ebayJsonRequest<{ supportedPayloads?: Array<{ schemaVersion?: string; deliveryProtocol?: string; format?: string[] }> }>(
+    `${EBAY_NOTIFICATION_API}/topic/${encodeURIComponent(topicId)}`,
+    await getAppToken(),
+  );
+  const payload = (topic.supportedPayloads ?? []).find((item) => cleanOptional(item.deliveryProtocol) === 'HTTPS' && (item.format ?? []).includes('JSON'));
+  const schemaVersion = cleanOptional(payload?.schemaVersion);
+  if (!schemaVersion) {
+    throw new HttpError(502, `eBay topic ${topicId} has no HTTPS/JSON payload schema version.`, {
+      service: 'ebay',
+      code: 'EBAY_NOTIFICATION_TOPIC_SCHEMA_MISSING',
+      retryable: false,
+    });
+  }
+
+  return schemaVersion;
+}
+
+// eBay verifies the endpoint with the challenge handshake while this call is in flight, so the endpoint must already be deployed.
+export async function createNotificationDestination(input: { name: string; endpoint: string; verificationToken: string }): Promise<string> {
+  const result = await ebayNotificationWrite('/destination', await getAppToken(), {
+    name: input.name,
+    status: 'ENABLED',
+    deliveryConfig: { endpoint: input.endpoint, verificationToken: input.verificationToken },
+  });
+
+  if (!result.id) {
+    throw new HttpError(502, 'eBay created the destination but returned no identifier.', {
+      service: 'ebay',
+      code: 'EBAY_NOTIFICATION_DESTINATION_ID_MISSING',
+      retryable: false,
+    });
+  }
+
+  return result.id;
+}
+
+export async function createNotificationSubscription(input: { destinationId: string; topicId: string; schemaVersion: string }): Promise<string> {
+  const result = await ebayNotificationWrite('/subscription', await getValidUserToken(), {
+    topicId: input.topicId,
+    status: 'ENABLED',
+    destinationId: input.destinationId,
+    payload: { format: 'JSON', schemaVersion: input.schemaVersion, deliveryProtocol: 'HTTPS' },
+  });
+
+  return result.id || cleanOptional(result.body.subscriptionId);
+}
+
+// Read-only. The fulfillment read shows whether the token can read orders; the subscription read shows whether it
+// carries the notification-subscription scope that creating subscriptions needs.
+export async function probeNotificationAccess(): Promise<{ orders: string; subscriptions: string }> {
+  const token = await getValidUserToken();
+  const probe = async (path: string): Promise<string> => {
+    try {
+      await ebayJsonRequest(path, token);
+      return 'ok';
+    } catch (error) {
+      return error instanceof HttpError ? `HTTP ${error.statusCode}: ${error.message.slice(0, 200)}` : 'failed';
+    }
+  };
+
+  return {
+    orders: await probe('/sell/fulfillment/v1/order?limit=1'),
+    subscriptions: await probe(`${EBAY_NOTIFICATION_API}/subscription?limit=10`),
+  };
+}
+
+const NOTIFICATION_PUBLIC_KEY_TTL_MS = 60 * 60 * 1000;
+const notificationPublicKeyCache = new Map<string, { value: { key: string; algorithm?: string; digest?: string }; expiresAt: number }>();
+
+export async function getNotificationPublicKey(keyId: string): Promise<{ key: string; algorithm?: string; digest?: string }> {
+  const cached = notificationPublicKeyCache.get(keyId);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.value;
+  }
+
+  const token = await getAppToken();
+  const response = await ebayJsonRequest<{ key?: string; algorithm?: string; digest?: string }>(
+    `/commerce/notification/v1/public_key/${encodeURIComponent(keyId)}`,
+    token,
+  );
+  const key = cleanOptional(response.key);
+  if (!key) {
+    throw new HttpError(502, 'eBay returned no public key for the notification signature.', {
+      service: 'ebay',
+      code: 'EBAY_NOTIFICATION_PUBLIC_KEY_MISSING',
+      retryable: true,
+    });
+  }
+
+  const value = { key, algorithm: cleanOptional(response.algorithm) || undefined, digest: cleanOptional(response.digest) || undefined };
+  notificationPublicKeyCache.set(keyId, { value, expiresAt: Date.now() + NOTIFICATION_PUBLIC_KEY_TTL_MS });
+  return value;
+}
+
+export async function getOrderLineItems(orderId: string): Promise<Array<{ legacyItemId: string; sku: string }>> {
+  const token = await getValidUserToken();
+  const order = await ebayJsonRequest<{ lineItems?: Array<{ legacyItemId?: string; sku?: string }> }>(
+    `/sell/fulfillment/v1/order/${encodeURIComponent(orderId)}`,
+    token,
+  );
+
+  return (order.lineItems ?? []).map((item) => ({
+    legacyItemId: cleanOptional(item.legacyItemId),
+    sku: cleanOptional(item.sku),
+  }));
+}
+
 export async function deleteWebhookSubscription(subscriptionId: string, requestUrl?: string): Promise<void> {
   const token = await getValidUserToken();
   const resolvedRequestUrl = requestUrl?.trim() || `${getEbayWebhookSubscriptionUrl().replace(/\/$/, '')}/${encodeURIComponent(subscriptionId)}`;

@@ -5,11 +5,40 @@ metadata:
 summary:
   total_tasks: 14
   completed_tasks: 1
-  in_progress_tasks: 9
+  in_progress_tasks: 11
   pending_tasks: 1
-  blocked_tasks: 3
+  blocked_tasks: 1
   completion_percentage: 7.1
 tasks:
+  - task_id: T003
+    description: "Sale-retention operation for sold single-unit Shopify products"
+    status: in-progress
+    implementation:
+      files_changed:
+        - { file: aws/src/services/soldRetention.ts, description: "Policy: stock 0, deny oversell, append sold-archive, verify; multi-unit/untracked flagged" }
+        - { file: aws/src/shared/contracts/shopifySoldArchive.ts, description: "Tag constant and case-insensitive check" }
+        - { file: aws/src/providers/shopify/client.ts, description: "getProductSaleState, addProductTags, denyVariantOversell" }
+    verification:
+      build_passed: true
+      notes: "18 policy + 7 operation tests; manual takedown delete unchanged. No live product changed."
+    upstream_trace:
+      plan_item: "2.1"
+      requirements: [REQ-004]
+  - task_id: T004
+    description: "Wire both webhooks to retention with retry-safe ordering; protect sold items from publish"
+    status: in-progress
+    implementation:
+      files_changed:
+        - { file: aws/src/services/crossChannelClose.ts, description: "retainShopifyProductWhenSoldOnEbay/Shopify; eBay withdraw retry classification and relist-aware idempotency" }
+        - { file: aws/src/handlers/shopify/receiveWebhook.ts, description: "Side effects before processed marker; 503 on retryable failure" }
+        - { file: aws/src/handlers/ebay/receiveWebhook.ts, description: "Retention instead of delete; same retry contract" }
+        - { file: aws/src/providers/shopify/client.ts, description: "Publish guard: HTTP 409 for sold-archive products" }
+    verification:
+      build_passed: true
+      notes: "Handler, close-service and guard tests pass; retry mutation check failed 3 tests as expected. Not deployed; webhooks not registered (0 subscriptions); no controlled end-to-end test run."
+    upstream_trace:
+      plan_item: "2.1"
+      requirements: [REQ-004]
   - task_id: T007
     status: in-progress
     notes: "Read-only discovery done: no Pre-Owned Hifi collection exists; 131 collections; component collections are smart with inconsistent rules; Sold Archive = tag sold-archive. Rule/convention decision and any store change need owner approval."
@@ -93,14 +122,13 @@ tasks:
     status: in-progress
     notes: "Reference, operator guide, and plan updated. One explicitly authorized Shopify-price backfill verified; no production deployment or bulk backfill."
 pending_tasks:
-  - { task_id: T003, status: blocked, description: "Sale policy/quantity semantics confirmation needed" }
-  - { task_id: T004, status: blocked, description: "Depends on T003 and verified sale-event semantics" }
   - { task_id: T008, status: pending, description: "Approved collection rules and classification" }
   - { task_id: T010, status: blocked, description: "Replacement blurb not supplied" }
 untracked_changes: []
 traceability_chain:
   - { requirement: REQ-006, plan_item: "6.1", tasks: [T011, T012], status: partial }
   - { requirement: REQ-001, plan_item: "3.1", tasks: [T005, T006], status: "implemented locally; live write/readback unverified" }
+  - { requirement: REQ-004, plan_item: "2.1", tasks: [T003, T004], status: "implemented locally; not deployed, webhooks unregistered, no controlled end-to-end test" }
 validation:
   passed: false
   errors: []
@@ -108,7 +136,8 @@ validation:
     - "Local implementation and focused validation are not production acceptance."
     - "Unrelated existing worktree edits were preserved."
     - "Shopify private cost has not been written to or read back from the live store; that needs an explicitly approved single-item test."
-    - "Full frontend suite has 2 failures (workflow image selection) that also fail at clean HEAD; pre-existing, unrelated to this plan."
+    - "Sold retention has not run against the live store: the app sees 0 Shopify webhook subscriptions, nothing is deployed, and registration is a live store change needing explicit approval."
+    - "Full frontend suite passes (164 files, 1,147 tests); the two formerly failing workflow-image tests were outdated fixtures, fixed without source changes."
     - "A working-tree rollback of the Oct 14-15 work was reversed by restoring ten files to HEAD; the pre-restore patch is saved. Template-copy save, reload and preview were verified live on one owner-chosen record, which was restored to its original state."
   blocking_issues:
     - "Production deployment and deployed read reconciliation remain outstanding."

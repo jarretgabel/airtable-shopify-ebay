@@ -297,7 +297,7 @@ test('preserves manual refund fields when eBay refund details already exist', as
   assert.equal(capturedFields?.['Refund Reason'], undefined);
 });
 
-test('triggers cross-channel Shopify close for sale-confirming eBay order events', async () => {
+test('triggers cross-channel Shopify retention for sale-confirming eBay order events', async () => {
   const closeCalls: Array<{ recordId: string; fields: Record<string, unknown> }> = [];
 
   const handler = createHandler({
@@ -313,7 +313,7 @@ test('triggers cross-channel Shopify close for sale-confirming eBay order events
       },
     ] as never),
     updateConfiguredRecord: async (_source, recordId, fields) => ({ id: recordId, createdTime: 'now', fields } as never),
-    closeShopifyProductWhenSoldOnEbay: async (recordId, fields) => {
+    retainShopifyProductWhenSoldOnEbay: async (recordId, fields) => {
       closeCalls.push({ recordId, fields });
       return { success: true, message: 'closed Shopify product' };
     },
@@ -332,7 +332,7 @@ test('triggers cross-channel Shopify close for sale-confirming eBay order events
   assert.equal(closeCalls[0]?.fields['eBay Last Webhook Event'], 'order.created');
 });
 
-test('does not trigger cross-channel Shopify close for cancel or refund order events', async () => {
+test('does not trigger cross-channel Shopify retention for cancel or refund order events', async () => {
   let closeCallCount = 0;
 
   const handler = createHandler({
@@ -348,7 +348,7 @@ test('does not trigger cross-channel Shopify close for cancel or refund order ev
       },
     ] as never),
     updateConfiguredRecord: async (_source, recordId, fields) => ({ id: recordId, createdTime: 'now', fields } as never),
-    closeShopifyProductWhenSoldOnEbay: async () => {
+    retainShopifyProductWhenSoldOnEbay: async () => {
       closeCallCount += 1;
       return { success: true, message: 'should not run' };
     },
@@ -463,7 +463,7 @@ test('does not write post-sale outcome for non-order events', async () => {
       capturedFields = fields;
       return { id: _recordId, createdTime: 'now', fields } as never;
     },
-    closeShopifyProductWhenSoldOnEbay: async () => {
+    retainShopifyProductWhenSoldOnEbay: async () => {
       closeCallCount += 1;
       return { success: true, message: 'should not run' };
     },
@@ -484,4 +484,27 @@ test('does not write post-sale outcome for non-order events', async () => {
   // Audit fields should still be updated
   assert.equal(capturedFields?.['eBay Last Webhook Event'], 'listing.updated');
   assert.equal(closeCallCount, 0);
+});
+test('rejects every request when no webhook secret is configured, instead of accepting unauthenticated sale events', async () => {
+  const previous = process.env.EBAY_WEBHOOK_SECRET;
+  delete process.env.EBAY_WEBHOOK_SECRET;
+  let touched = false;
+
+  try {
+    const handler = createHandler({
+      getConfiguredRecords: async () => { touched = true; return []; },
+      updateConfiguredRecord: async () => { touched = true; return {} as never; },
+    });
+    const result = await handler(createEvent({ eventType: 'order.created', listingId: '1', occurredAt: 'now' })) as { statusCode: number; body: string };
+    assert.equal(result.statusCode, 500);
+    assert.equal(JSON.parse(result.body).code, 'EBAY_WEBHOOK_SECRET_MISSING');
+    assert.equal(touched, false);
+
+    process.env.EBAY_WEBHOOK_SECRET = 'right-secret';
+    const wrong = await handler({ ...createEvent({ eventType: 'order.created' }), headers: { 'x-ebay-webhook-secret': 'wrong' } }) as { statusCode: number };
+    assert.equal(wrong.statusCode, 401);
+    assert.equal(touched, false);
+  } finally {
+    if (previous === undefined) delete process.env.EBAY_WEBHOOK_SECRET; else process.env.EBAY_WEBHOOK_SECRET = previous;
+  }
 });

@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
-import { closeShopifyProductWhenSoldOnEbay } from '../../services/crossChannelClose.js';
+import { retainShopifyProductWhenSoldOnEbay } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getOptionalQueryParam, getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
@@ -42,7 +42,7 @@ interface EbayWebhookDependencies {
   getConfiguredRecords?: typeof getConfiguredRecords;
   updateConfiguredRecord?: typeof updateConfiguredRecord;
   getWebhookSecret?: () => string | undefined;
-  closeShopifyProductWhenSoldOnEbay?: typeof closeShopifyProductWhenSoldOnEbay;
+  retainShopifyProductWhenSoldOnEbay?: typeof retainShopifyProductWhenSoldOnEbay;
 }
 
 const EBAY_SYNC_LOCK_FIELD = 'eBay Sync Locked';
@@ -88,9 +88,19 @@ function decodeWebhookPayload(event: APIGatewayProxyEventV2): EbayWebhookPayload
   return requireJsonBody<EbayWebhookPayload>(event, 'ebay', 'INVALID_EBAY_WEBHOOK_BODY');
 }
 
-function requireWebhookSecret(event: APIGatewayProxyEventV2, getWebhookSecret: () => string | undefined): void {
+// `secretRequired` is true when the real environment secret is the source. A caller that injects its own secret
+// getter (an already-authenticated internal caller, or a test) may opt out by returning no secret.
+function requireWebhookSecret(event: APIGatewayProxyEventV2, getWebhookSecret: () => string | undefined, secretRequired: boolean): void {
   const configuredSecret = getWebhookSecret()?.trim();
   if (!configuredSecret) {
+    if (secretRequired) {
+      throw new HttpError(500, 'Missing required environment variable: EBAY_WEBHOOK_SECRET', {
+        service: 'ebay',
+        code: 'EBAY_WEBHOOK_SECRET_MISSING',
+        retryable: false,
+      });
+    }
+
     return;
   }
 
@@ -285,12 +295,13 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
   const listRecords = dependencies.getConfiguredRecords ?? getConfiguredRecords;
   const updateRecord = dependencies.updateConfiguredRecord ?? updateConfiguredRecord;
   const getWebhookSecret = dependencies.getWebhookSecret ?? (() => getOptionalSecret('EBAY_WEBHOOK_SECRET'));
-  const closeShopifyProduct = dependencies.closeShopifyProductWhenSoldOnEbay ?? closeShopifyProductWhenSoldOnEbay;
+  const secretRequired = dependencies.getWebhookSecret === undefined;
+  const retainShopifyProduct = dependencies.retainShopifyProductWhenSoldOnEbay ?? retainShopifyProductWhenSoldOnEbay;
 
   return async function receiveEbayWebhookHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
     const origin = getRequestOrigin(event);
     try {
-      requireWebhookSecret(event, getWebhookSecret);
+      requireWebhookSecret(event, getWebhookSecret, secretRequired);
       const payload = decodeWebhookPayload(event);
       const normalizedEvent = normalizeWebhookEvent(payload);
       const records = await listRecords('used-gear-workflow');
@@ -340,6 +351,47 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
       }
 
       const updateFields = buildUpdateFields(normalizedEvent, currentRecord.fields);
+
+      // A sale's side effect must finish before the event is recorded as processed. Otherwise a retried delivery
+      // would be skipped as a duplicate and a failed retention would never recover.
+      if (shouldTriggerCrossChannelClose(normalizedEvent)) {
+        let retryableFailure = '';
+        try {
+          const retainResult = await retainShopifyProduct(recordId, { ...currentRecord.fields, ...updateFields });
+
+          if (retainResult.success) {
+            logInfo('Shopify product retention completed for eBay order event', {
+              recordId,
+              eventType: normalizedEvent.eventType,
+              message: retainResult.message,
+            });
+          } else {
+            logError('Shopify product retention failed', new Error(retainResult.message), {
+              recordId,
+              eventType: normalizedEvent.eventType,
+              retryable: retainResult.retryable ?? false,
+            });
+            if (retainResult.retryable) {
+              retryableFailure = retainResult.message;
+            }
+          }
+        } catch (retainError) {
+          logError('Exception during Shopify product retention (eBay order event)', retainError, {
+            recordId,
+            eventType: normalizedEvent.eventType,
+          });
+          retryableFailure = retainError instanceof Error ? retainError.message : String(retainError);
+        }
+
+        if (retryableFailure) {
+          throw new HttpError(503, `Shopify retention needs a retry: ${retryableFailure}`, {
+            service: 'shopify',
+            code: 'EBAY_SALE_SIDE_EFFECT_RETRYABLE',
+            retryable: true,
+          });
+        }
+      }
+
       const updatedRecord = await updateRecord('used-gear-workflow', recordId, updateFields, { typecast: true });
 
       logInfo('Applied eBay webhook update to Airtable', {
@@ -349,38 +401,6 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
         sku: normalizedEvent.sku,
         updatedFieldNames: Object.keys(updateFields),
       });
-
-      // Trigger Shopify close only for sale-confirming eBay order events.
-      if (shouldTriggerCrossChannelClose(normalizedEvent)) {
-        try {
-          const closeResult = await closeShopifyProduct(
-            recordId,
-            {
-              ...currentRecord.fields,
-              ...updateFields,
-            },
-          );
-
-          if (closeResult.success) {
-            logInfo('Cross-channel Shopify close triggered from eBay order event', {
-              recordId,
-              eventType: normalizedEvent.eventType,
-              message: closeResult.message,
-            });
-          } else {
-            logError('Cross-channel Shopify close failed', new Error(closeResult.message), {
-              recordId,
-              eventType: normalizedEvent.eventType,
-            });
-          }
-        } catch (closeError) {
-          logError('Exception during cross-channel Shopify close (eBay order event)', closeError, {
-            recordId,
-            eventType: normalizedEvent.eventType,
-          });
-        }
-      }
-
       return jsonOk({
         received: true,
         skipped: false,

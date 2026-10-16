@@ -2,7 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
-import { createHandler } from '../../../../../../aws/src/handlers/shopify/receiveWebhook.js';
+import { createHandler as createWebhookHandler } from '../../../../../../aws/src/handlers/shopify/receiveWebhook.js';
+
+// Paid-order side effects reach Shopify and eBay. Keep these tests offline and deterministic unless a test injects its own.
+const offlineSaleSideEffects = {
+  closeEbayListingWhenSoldOnShopify: async () => ({ success: true, message: 'offline', closedAt: 'now' }),
+  retainShopifyProductWhenSoldOnShopify: async () => ({ success: true, message: 'offline', closedAt: 'now' }),
+};
+
+function createHandler(dependencies: Parameters<typeof createWebhookHandler>[0] = {}) {
+  return createWebhookHandler({ ...offlineSaleSideEffects, ...dependencies });
+}
 
 function createEvent(topicPath: string, topicHeader: string, body: Record<string, unknown>, secret = 'test-secret'): APIGatewayProxyEventV2 {
   const rawBody = JSON.stringify(body);

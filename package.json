@@ -71,6 +71,8 @@
     "probe:lambda:ebay": "node scripts/probe-lambda-ebay-writes.mjs",
     "shopify:webhooks:register": "node --import tsx scripts/register-shopify-webhooks.ts",
     "shopify:webhooks:delete": "node --import tsx scripts/delete-shopify-webhooks.ts",
+    "ebay:oauth": "node scripts/ebay-oauth.mjs",
+    "ebay:notifications:setup": "node --import tsx scripts/setup-ebay-notifications.ts",
     "ebay:webhooks:register": "node --import tsx scripts/register-ebay-webhooks.ts",
     "ebay:webhooks:delete": "node --import tsx scripts/delete-ebay-webhooks.ts",
     "jotform:webhooks:register": "node --import tsx scripts/register-jotform-webhooks.ts",

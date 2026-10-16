@@ -1,15 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkflowSnapshotPage } from '@/components/tabs/WorkflowSnapshotPage';
 
 const {
   loadUsedGearOperationalRecordContextMock,
+  getConfiguredWorkflowImagePreviewMock,
 } = vi.hoisted(() => ({
   loadUsedGearOperationalRecordContextMock: vi.fn(),
+  getConfiguredWorkflowImagePreviewMock: vi.fn(),
 }));
 
 vi.mock('@/services/usedGearQueue', () => ({
   loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
+}));
+
+vi.mock('@/services/app-api/airtable', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/app-api/airtable')>()),
+  getConfiguredWorkflowImagePreview: getConfiguredWorkflowImagePreviewMock,
 }));
 
 vi.mock('@/components/approval/ListingApprovalWorkflowSummary', () => ({
@@ -35,6 +42,9 @@ vi.mock('@/services/usedGearWorkflowLifecycle', () => ({
 describe('WorkflowSnapshotPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getConfiguredWorkflowImagePreviewMock.mockImplementation(async (_source: string, _recordId: string, fileId: string) => ({
+      dataUrl: `data:image/jpeg;base64,${fileId}`,
+    }));
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({
       record: {
         id: 'rec-workflow-1',
@@ -105,12 +115,20 @@ describe('WorkflowSnapshotPage', () => {
 
     expect(await screen.findByText('Workflow timeline')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'McIntosh MC240 - workflow-1' })).toBeInTheDocument();
-    screen.getAllByAltText('testing-processed.jpg').forEach((image) => {
-      expect(image).toHaveAttribute('src', 'https://drive.google.com/thumbnail?id=testing-file&sz=w1600');
+
+    // Drive images load through the authenticated record preview API and render as data URLs.
+    await waitFor(() => {
+      screen.getAllByAltText('testing-processed.jpg').forEach((image) => {
+        expect(image).toHaveAttribute('src', 'data:image/jpeg;base64,testing-file');
+      });
+      screen.getAllByAltText('photo-processed.jpg').forEach((image) => {
+        expect(image).toHaveAttribute('src', 'data:image/jpeg;base64,photo-file');
+      });
     });
-    screen.getAllByAltText('photo-processed.jpg').forEach((image) => {
-      expect(image).toHaveAttribute('src', 'https://drive.google.com/thumbnail?id=photo-file&sz=w1600');
-    });
+    expect(getConfiguredWorkflowImagePreviewMock).toHaveBeenCalledWith('used-gear-workflow', 'rec-workflow-1', 'testing-file');
+    expect(getConfiguredWorkflowImagePreviewMock).toHaveBeenCalledWith('used-gear-workflow', 'rec-workflow-1', 'photo-file');
+    // Airtable-only attachments are never shown or requested.
     expect(screen.queryByAltText('airtable-only.jpg')).not.toBeInTheDocument();
+    expect(getConfiguredWorkflowImagePreviewMock.mock.calls.every(([, , fileId]) => ['testing-file', 'photo-file'].includes(fileId))).toBe(true);
   });
 });
