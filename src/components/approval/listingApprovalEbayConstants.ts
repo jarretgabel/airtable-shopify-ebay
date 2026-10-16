@@ -163,11 +163,27 @@ export const EBAY_BODY_DESCRIPTION_FALLBACK_EDITOR_FIELD = '__ebay_body_descript
 export const EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD = '__ebay_body_template_copy_override__';
 export const EBAY_TEMPLATE_COPY_FIELD_NAME = 'eBay Template Copy';
 
+const EBAY_TEMPLATE_COPY_CONTENT_TAG = /<(img|hr|iframe|video|audio|table|a)\b/i;
+
+// A cleared rich-text editor leaves wrappers such as <p><br></p>; treat copy with no text or media as blank
+// so it is neither saved nor rendered as an empty block.
+function normalizeEbayTemplateCopy(value: string): string {
+  if (!value.trim()) return '';
+  if (EBAY_TEMPLATE_COPY_CONTENT_TAG.test(value)) return value;
+
+  const visibleText = value
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .trim();
+  return visibleText ? value : '';
+}
+
 export function resolveEbayTemplateCopyValue(values: Record<string, string>): string {
   const fieldName = Object.keys(values).find((name) => name.toLowerCase() === EBAY_TEMPLATE_COPY_FIELD_NAME.toLowerCase());
-  return fieldName !== undefined
+  return normalizeEbayTemplateCopy(fieldName !== undefined
     ? values[fieldName] ?? ''
-    : values[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '';
+    : values[EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD] ?? '');
 }
 
 export const EBAY_BODY_TEMPLATE_COPY_DEFAULT_HTML = [

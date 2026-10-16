@@ -1,6 +1,7 @@
 import { HttpError } from '../../shared/errors.js';
 import type { ShopifyShippingInspection, ShopifyShippingUpdate } from '../../shared/contracts/shopifyShipping.js';
 import { SHOPIFY_SHIPPING_DIMENSION_KEYS } from '../../shared/contracts/shopifyShipping.js';
+import { parseShopifyUnitCost, SHOPIFY_UNIT_COST_CURRENCY } from '../../shared/contracts/shopifyUnitCost.js';
 import { logInfo } from '../../shared/logging.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
@@ -182,6 +183,7 @@ export interface ShopifyUnifiedProductResult {
   handle?: string | null;
   status?: string | null;
   onlineStoreUrl?: string | null;
+  warnings?: string[];
 }
 
 type ShopifyGraphQlProductStatus = 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
@@ -220,6 +222,7 @@ export interface ShopifyUnifiedInventoryItemInput {
   requiresShipping?: boolean;
   countryCodeOfOrigin?: string;
   harmonizedSystemCode?: string;
+  cost?: string;
   measurement?: {
     weight: {
       value: number;
@@ -303,6 +306,84 @@ function ensureConditionMetafieldInRequest(request: ShopifyUnifiedProductSetRequ
       metafields: Array.from(deduped.values()),
     },
   };
+}
+
+function ensureValidUnitCostsInRequest(request: ShopifyUnifiedProductSetRequest): ShopifyUnifiedProductSetRequest {
+  const variants = request.input.variants;
+  if (!variants?.some((variant) => variant.inventoryItem?.cost !== undefined)) return request;
+
+  return {
+    ...request,
+    input: {
+      ...request.input,
+      variants: variants.map((variant) => {
+        const rawCost = variant.inventoryItem?.cost;
+        if (rawCost === undefined || !variant.inventoryItem) return variant;
+
+        const parsed = parseShopifyUnitCost(rawCost);
+        if (parsed.error) {
+          throw new HttpError(400, `Shopify unit cost "${String(rawCost).trim()}" is invalid. ${parsed.error} No changes made.`, {
+            service: 'shopify',
+            code: 'INVALID_SHOPIFY_UNIT_COST',
+            retryable: false,
+          });
+        }
+
+        const inventoryItem = { ...variant.inventoryItem };
+        if (parsed.cost) inventoryItem.cost = parsed.cost;
+        else delete inventoryItem.cost;
+        return { ...variant, inventoryItem };
+      }),
+    },
+  };
+}
+
+// A failed or mismatched readback must never fail the publish: the product is already saved and its ID must reach Airtable.
+async function verifyVariantUnitCosts(productGid: string, request: ShopifyUnifiedProductSetRequest): Promise<string[]> {
+  const expected = (request.input.variants ?? []).flatMap((variant) => (
+    variant.inventoryItem?.cost === undefined ? [] : [{ sku: variant.sku?.trim() || variant.inventoryItem.sku?.trim() || '', cost: variant.inventoryItem.cost }]
+  ));
+  if (expected.length === 0) return [];
+
+  try {
+    const data = await graphQlRequest<{
+      product: {
+        variants: {
+          nodes: Array<{
+            sku?: string | null;
+            inventoryItem: { unitCost: { amount: string; currencyCode: string } | null } | null;
+          }>;
+        };
+      } | null;
+    }>(
+      `query ReadVariantUnitCosts($id: ID!) {
+        product(id: $id) {
+          variants(first: 100) {
+            nodes {
+              sku
+              inventoryItem { unitCost { amount currencyCode } }
+            }
+          }
+        }
+      }`,
+      { id: productGid },
+    );
+    const nodes = data.product?.variants.nodes ?? [];
+    return expected.flatMap(({ sku, cost }) => {
+      const label = sku ? `SKU ${sku}` : 'the product variant';
+      const node = sku ? nodes.find((candidate) => (candidate.sku ?? '').trim() === sku) : (nodes.length === 1 ? nodes[0] : undefined);
+      const unitCost = node?.inventoryItem?.unitCost;
+      if (!unitCost) return [`Shopify unit cost for ${label} could not be confirmed after publish (expected ${cost} ${SHOPIFY_UNIT_COST_CURRENCY}).`];
+      if (unitCost.currencyCode !== SHOPIFY_UNIT_COST_CURRENCY) {
+        return [`Shopify unit cost for ${label} is stored in ${unitCost.currencyCode}, not ${SHOPIFY_UNIT_COST_CURRENCY}; verify the store currency (sent ${cost}, read ${unitCost.amount}).`];
+      }
+      return Number(unitCost.amount) === Number(cost)
+        ? []
+        : [`Shopify unit cost for ${label} read back as ${unitCost.amount} ${unitCost.currencyCode} instead of ${cost}.`];
+    });
+  } catch (error) {
+    return [`Shopify unit cost could not be read back after publish: ${error instanceof Error ? error.message : String(error)}`];
+  }
 }
 
 interface ShopifyStagedUploadParameter {
@@ -1041,7 +1122,7 @@ export async function publishProductToOnlineStore(productId: number): Promise<Sh
 export async function upsertProductWithUnifiedRequest(
   request: ShopifyUnifiedProductSetRequest,
 ): Promise<ShopifyUnifiedProductResult> {
-  const ensuredRequest = ensureConditionMetafieldInRequest(request);
+  const ensuredRequest = ensureValidUnitCostsInRequest(ensureConditionMetafieldInRequest(request));
   const data = await graphQlRequest<{
     productSet: {
       product: {
@@ -1082,11 +1163,13 @@ export async function upsertProductWithUnifiedRequest(
     throw new Error('Shopify product mutation returned no product ID.');
   }
 
+  const costWarnings = await verifyVariantUnitCosts(product.id, ensuredRequest);
   return {
     id: parseShopifyNumericId(product.id),
     adminGraphqlApiId: product.id,
     title: product.title,
     status: product.status,
+    ...(costWarnings.length > 0 ? { warnings: costWarnings } : {}),
   };
 }
 
@@ -1094,7 +1177,7 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
   request: ShopifyUnifiedProductSetRequest,
   collectionIds: string[],
 ): Promise<ShopifyUnifiedUpsertWithCollectionsResult> {
-  const ensuredRequest = ensureConditionMetafieldInRequest(request);
+  const ensuredRequest = ensureValidUnitCostsInRequest(ensureConditionMetafieldInRequest(request));
   if (!request.identifier?.id) {
     throw new Error('Single-mutation collection update requires an existing Shopify product ID identifier.');
   }
@@ -1202,12 +1285,14 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
     collectionFailures.push(`${collectionId}: ${message || 'Shopify rejected this collection assignment.'}`);
   });
 
+  const costWarnings = await verifyVariantUnitCosts(product.id, ensuredRequest);
   return {
     product: {
       id: parseShopifyNumericId(product.id),
       adminGraphqlApiId: product.id,
       title: product.title,
       status: product.status,
+      ...(costWarnings.length > 0 ? { warnings: costWarnings } : {}),
     },
     collectionFailures,
   };

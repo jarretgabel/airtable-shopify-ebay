@@ -263,6 +263,24 @@ describe('useAppData', () => {
     });
   });
 
+  it.each([
+    { loading: true, error: null },
+    { loading: false, error: 'Queue load failed' },
+  ])('excludes unavailable Post-Publish counts from dashboard insights: %j', (state) => {
+    mockUseUsedGearWorkflowPostPublishSummary.mockReturnValue({
+      ...mockUseUsedGearWorkflowPostPublishSummary(),
+      ...state,
+      staleListingCount: 3,
+    });
+    renderHook(() => useAppData({
+      activeTab: 'dashboard',
+      canAccessPage: () => true,
+      currentUserName: 'Taylor Reviewer',
+      users: [{ role: 'admin' }],
+    }));
+    expect(mockUseDashboardMetrics).toHaveBeenLastCalledWith([], [], [], undefined);
+  });
+
   it('disables optional feature fetches when runtime config is unavailable', () => {
     const { result } = renderHook(() => useAppData({
       activeTab: 'dashboard',

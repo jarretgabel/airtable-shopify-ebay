@@ -1,0 +1,84 @@
+metadata:
+  generated: "2026-10-16"
+  source_plan: "../plan.md"
+  target_tasks: "../plan.md"
+summary:
+  total_plan_items: 7
+  covered_plan_items: 7
+  missing_plan_items: 0
+  coverage_percentage: 100.0
+  total_tasks_generated: 14
+  orphan_tasks: 0
+phases:
+  - phase_id: "Phase-1"
+    phase_name: "Discovery"
+    items:
+      - item_id: "1.1"
+        description: "Confirm prerequisites"
+        tasks:
+          - { task_id: T001, description: "Confirm semantics and owner decisions" }
+          - { task_id: T002, description: "Capture schema, rules, webhooks, and failing Post-Publish request evidence" }
+  - phase_id: "Phase-2"
+    phase_name: "Sold safety"
+    items:
+      - item_id: "2.1"
+        description: "Retain sold products"
+        tasks:
+          - { task_id: T003, description: "Separate sale retention from manual deletion" }
+          - { task_id: T004, description: "Wire recoverable sale processing and preserve sold state" }
+  - phase_id: "Phase-3"
+    phase_name: "Cost"
+    items:
+      - item_id: "3.1"
+        description: "Sync private unit cost"
+        tasks:
+          - { task_id: T005, description: "Extend contracts, mappers, and projections" }
+          - { task_id: T006, description: "Write cost and determine eBay support" }
+  - phase_id: "Phase-4"
+    phase_name: "Collections"
+    items:
+      - item_id: "4.1"
+        description: "Automate and explain membership"
+        tasks:
+          - { task_id: T007, description: "Diagnose missing umbrella collection" }
+          - { task_id: T008, description: "Implement classification, rule configuration, and UI" }
+  - phase_id: "Phase-5"
+    phase_name: "Copy"
+    items:
+      - item_id: "5.1"
+        description: "Repair blurb persistence"
+        tasks:
+          - { task_id: T009, description: "Verify writable field and save behavior" }
+          - { task_id: T010, description: "Apply supplied copy without replacing overrides" }
+  - phase_id: "Phase-6"
+    phase_name: "Post-Publish"
+    items:
+      - item_id: "6.1"
+        description: "Restore relevant listings and truthful load states"
+        tasks:
+          - { task_id: T011, description: "Fix confirmed queue load or eligibility root cause" }
+          - { task_id: T012, description: "Correct error, empty, retry, and summary presentation" }
+  - phase_id: "Phase-7"
+    phase_name: "Rollout"
+    items:
+      - item_id: "7.1"
+        description: "Verify and roll out"
+        tasks:
+          - { task_id: T013, description: "Run targeted validation and approved remote checks" }
+          - { task_id: T014, description: "Document, deploy, and propose dry-run backfills" }
+missing_plan_items: []
+orphan_tasks: []
+upstream_trace:
+  - { plan_item: "1.1", source_requirements: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-006], tasks: [T001, T002] }
+  - { plan_item: "2.1", source_requirements: [REQ-004], tasks: [T003, T004] }
+  - { plan_item: "3.1", source_requirements: [REQ-001], tasks: [T005, T006] }
+  - { plan_item: "4.1", source_requirements: [REQ-003], tasks: [T007, T008] }
+  - { plan_item: "5.1", source_requirements: [REQ-002], tasks: [T009, T010] }
+  - { plan_item: "6.1", source_requirements: [REQ-006], tasks: [T011, T012] }
+  - { plan_item: "7.1", source_requirements: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-006], tasks: [T013, T014] }
+validation:
+  passed: false
+  errors:
+    - "Implementation readiness remains blocked on owner decisions and live configuration checks."
+  warnings:
+    - "All proposed plan items have tasks; no implementation is claimed."

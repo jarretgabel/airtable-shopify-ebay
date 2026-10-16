@@ -87,6 +87,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           shopifyQueuePending={workflow.shopifyApprovalPending}
           shopifyQueueTotal={workflow.shopifyApprovalTotal}
           workflowPostPublishLoading={workflow.workflowPostPublishLoading}
+          workflowPostPublishError={workflow.workflowPostPublishError}
           workflowAnalytics={workflow.workflowAnalytics}
           workflowActiveListingCount={workflow.workflowActiveListingCount}
           workflowStaleListingCount={workflow.workflowStaleListingCount}

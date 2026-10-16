@@ -34,6 +34,7 @@ export interface ShopifyProductVariant {
   weight_unit?: string;
   country_of_origin?: string;
   harmonized_system_code?: string;
+  unit_cost?: string;
   shipping_dimensions?: string;
   option1?: string | null;
   option2?: string | null;

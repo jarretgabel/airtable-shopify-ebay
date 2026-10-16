@@ -162,6 +162,23 @@ describe('app-api airtable', () => {
     expect(result).toEqual([{ id: 'recList1', fields: { Title: 'Receiver' }, createdTime: 'later' }]);
   });
 
+  it('supports requesting the post-publish subset with projected fields in Lambda mode', async () => {
+    const records = [{ id: 'recPublished', fields: { 'Workflow Status': 'Listed, Shopify' }, createdTime: 'later' }];
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(records), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    }));
+
+    expect(await getConfiguredRecords('used-gear-workflow', {
+      subset: 'post-publish',
+      fields: ['Workflow Status', 'Listed At'],
+    })).toEqual(records);
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/airtable/configured-records?source=used-gear-workflow&fields=Workflow+Status%2CListed+At&subset=post-publish',
+      { cache: 'no-store', credentials: 'include', headers: { Accept: 'application/json' } },
+    );
+  });
+
   it('supports requesting maxRecords in Lambda mode', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify([{ id: 'recList2', fields: { Title: 'Preamp' }, createdTime: 'later' }]), {

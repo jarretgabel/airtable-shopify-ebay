@@ -256,6 +256,7 @@ export interface DashboardActionsSectionProps {
   shopifyQueuePending: number;
   shopifyQueueTotal: number;
   workflowPostPublishLoading: boolean;
+  workflowPostPublishError?: string | null;
   workflowAnalytics: UsedGearWorkflowAnalyticsSnapshotState;
   workflowActiveListingCount: number;
   workflowStaleListingCount: number;
@@ -291,6 +292,7 @@ export function DashboardActionsSection({
   shopifyQueuePending,
   shopifyQueueTotal,
   workflowPostPublishLoading,
+  workflowPostPublishError,
   workflowAnalytics,
   workflowActiveListingCount,
   workflowStaleListingCount,
@@ -375,7 +377,20 @@ export function DashboardActionsSection({
     });
   }
 
-  if (canAccessInventory && !workflowPostPublishLoading && workflowSoldReadyCount > 0) {
+  if (canAccessInventory && workflowPostPublishError) {
+    items.push({
+      key: 'used-gear-post-publish-unavailable',
+      label: 'Post-Publish unavailable',
+      count: 0,
+      detail: workflowPostPublishError,
+      severity: 'warning',
+      targetTab: 'inventory',
+      inventoryPostPublishBucket: 'active-listing',
+      unavailable: true,
+    });
+  }
+
+  if (canAccessInventory && !workflowPostPublishLoading && !workflowPostPublishError && workflowSoldReadyCount > 0) {
     items.push({
       key: 'used-gear-sold-ready',
       label: `${workflowSoldReadyCount} sold ready to ship`,
@@ -387,7 +402,7 @@ export function DashboardActionsSection({
     });
   }
 
-  if (canAccessInventory && !workflowPostPublishLoading && workflowStaleListingCount > 0) {
+  if (canAccessInventory && !workflowPostPublishLoading && !workflowPostPublishError && workflowStaleListingCount > 0) {
     items.push({
       key: 'used-gear-stale',
       label: `${workflowStaleListingCount} stale listing${workflowStaleListingCount === 1 ? '' : 's'}`,

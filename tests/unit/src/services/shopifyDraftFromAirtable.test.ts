@@ -180,6 +180,37 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     });
   });
 
+  it('maps intake Cost to the private inventory-item cost without changing price or stock', () => {
+    const base = { 'Shopify REST Title': 'Cost Product', 'Shopify Price': 1999, Quantity: 1 };
+    const without = buildShopifyUnifiedProductSetRequest(buildShopifyDraftProductFromApprovalFields(base));
+    const withCost = buildShopifyUnifiedProductSetRequest(buildShopifyDraftProductFromApprovalFields({ ...base, Cost: 1500 }));
+
+    expect(withCost.input.variants?.[0]?.inventoryItem?.cost).toBe('1500.00');
+    expect(withCost.input.variants?.[0]?.price).toBe(without.input.variants?.[0]?.price);
+    expect(without.input.variants?.[0]?.inventoryItem?.cost).toBeUndefined();
+  });
+
+  it('omits a blank Cost but keeps an explicit zero', () => {
+    const cost = (value: unknown) => buildShopifyUnifiedProductSetRequest(
+      buildShopifyDraftProductFromApprovalFields({ 'Shopify REST Title': 'Cost Product', Cost: value }),
+    ).input.variants?.[0]?.inventoryItem?.cost;
+
+    expect(cost('')).toBeUndefined();
+    expect(cost(0)).toBe('0.00');
+    expect(cost('$1,250.50')).toBe('1250.50');
+  });
+
+  it('never throws on an invalid Cost and carries it unnormalized so the server rejects it explicitly', () => {
+    for (const value of ['-5', 'abc', '125.555']) {
+      const build = () => buildShopifyUnifiedProductSetRequest(
+        buildShopifyDraftProductFromApprovalFields({ 'Shopify REST Title': 'Cost Product', Cost: value }),
+      );
+
+      expect(build).not.toThrow();
+      expect(build().input.variants?.[0]?.inventoryItem?.cost).toBe(value);
+    }
+  });
+
   it('maps separate shipping dimensions to product metafields', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Shipping Dimensions Product',

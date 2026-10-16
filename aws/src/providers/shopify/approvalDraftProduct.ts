@@ -1,5 +1,7 @@
 import { getHandleField, resolveShopifyBodyHtml } from './approvalDraftBody.js';
+import { HttpError } from '../../shared/errors.js';
 import { SHOPIFY_SHIPPING_DIMENSION_KEYS } from '../../shared/contracts/shopifyShipping.js';
+import { parseShopifyUnitCost } from '../../shared/contracts/shopifyUnitCost.js';
 import { parseLegacyShopifyShippingDetails, parseShopifyShippingWeight, resolveShopifyShippingWeight } from '../../shared/contracts/shopifyShippingWeight.js';
 import {
   getField,
@@ -32,6 +34,18 @@ const SHIPPING_DIMENSION_METAFIELD_CANDIDATES = [
   { key: SHOPIFY_SHIPPING_DIMENSION_KEYS.depth, fields: ['Shipping Depth', 'Shopify Shipping Depth', 'shipping_depth'] },
   { key: SHOPIFY_SHIPPING_DIMENSION_KEYS.height, fields: ['Shipping Height', 'Shopify Shipping Height', 'shipping_height'] },
 ] as const;
+
+function resolveVariantUnitCost(raw: unknown): string | undefined {
+  const parsed = parseShopifyUnitCost(raw);
+  if (parsed.error) {
+    throw new HttpError(400, `Shopify unit cost "${String(raw).trim()}" is invalid. ${parsed.error}`, {
+      service: 'shopify',
+      code: 'INVALID_SHOPIFY_UNIT_COST',
+      retryable: false,
+    });
+  }
+  return parsed.cost;
+}
 
 function hasAnyFieldValue(fields: ApprovalFieldMap, candidates: string[]): boolean {
   return candidates.some((candidate) => {
@@ -259,6 +273,8 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
     }),
     country_of_origin: getField(fields, ['Shopify Country of Origin', 'Country of Origin', 'Shopify REST Country of Origin', 'country_of_origin']) || undefined,
     harmonized_system_code: getField(fields, ['Shopify Harmonized System Code', 'Harmonized System Code', 'HS Code', 'Shopify HS Code', 'harmonized_system_code']) || undefined,
+    // Intake Cost is per sellable listing unit; only this single-variant draft receives it.
+    unit_cost: getField(fields, ['Cost']) || undefined,
     shipping_dimensions: getField(fields, ['Shipping Dims', 'Shipping Dimensions', 'Shopify Shipping Dimensions', 'shipping_dimensions']) || undefined,
     option1,
     option2,
@@ -296,6 +312,7 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
     const inventoryManagement = normalizeInventoryManagement(variant.inventory_management);
     const inventoryPolicy = normalizeInventoryPolicy(variant.inventory_policy);
     const shippingWeight = parseShopifyShippingWeight(variant.weight, variant.weight_unit);
+    const unitCost = resolveVariantUnitCost(variant.unit_cost);
     return {
       ...(price ? { price } : {}),
       compare_at_price: (() => {
@@ -318,6 +335,7 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
       weight_unit: shippingWeight.weight_unit,
       country_of_origin: typeof variant.country_of_origin === 'string' ? variant.country_of_origin.trim() || undefined : undefined,
       harmonized_system_code: typeof variant.harmonized_system_code === 'string' ? variant.harmonized_system_code.trim() || undefined : undefined,
+      ...(unitCost ? { unit_cost: unitCost } : {}),
       shipping_dimensions: typeof variant.shipping_dimensions === 'string' ? variant.shipping_dimensions.trim() || undefined : undefined,
       option1: typeof variant.option1 === 'string' ? variant.option1.trim() || undefined : undefined,
       option2: typeof variant.option2 === 'string' ? variant.option2.trim() || undefined : undefined,

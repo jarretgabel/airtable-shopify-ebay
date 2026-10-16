@@ -1,0 +1,69 @@
+metadata:
+  generated: "2026-10-16"
+  source_spec: "Planning conversation; request IDs recorded in ../plan.md"
+  target_plan: "../plan.md"
+summary:
+  total_requirements: 5
+  covered_requirements: 5
+  missing_requirements: 0
+  coverage_percentage: 100.0
+requirements:
+  - req_id: REQ-001
+    req_description: "Private unit cost synchronization"
+    priority: P1
+    plan_mapping:
+      phase: "Multiple"
+      phase_name: "Discovery, cost, rollout"
+      items:
+        - { item_id: "1.1", description: "Confirm prerequisites" }
+        - { item_id: "3.1", description: "Sync unit cost" }
+        - { item_id: "7.1", description: "Verify and roll out" }
+  - req_id: REQ-002
+    req_description: "Persist eBay blurb"
+    priority: P3
+    plan_mapping:
+      phase: "Multiple"
+      phase_name: "Discovery, copy, rollout"
+      items:
+        - { item_id: "1.1", description: "Confirm prerequisites" }
+        - { item_id: "5.1", description: "Repair copy persistence" }
+        - { item_id: "7.1", description: "Verify and roll out" }
+  - req_id: REQ-003
+    req_description: "Predictable pre-owned collection membership"
+    priority: P2
+    plan_mapping:
+      phase: "Multiple"
+      phase_name: "Discovery, collections, rollout"
+      items:
+        - { item_id: "1.1", description: "Confirm prerequisites" }
+        - { item_id: "4.1", description: "Automate and explain membership" }
+        - { item_id: "7.1", description: "Verify and roll out" }
+  - req_id: REQ-004
+    req_description: "Retain sold products and prevent resale"
+    priority: P1
+    plan_mapping:
+      phase: "Multiple"
+      phase_name: "Discovery, sales, rollout"
+      items:
+        - { item_id: "1.1", description: "Confirm prerequisites" }
+        - { item_id: "2.1", description: "Retain sold products" }
+        - { item_id: "7.1", description: "Verify and roll out" }
+  - req_id: REQ-006
+    req_description: "Restore relevant Post-Publish listings and distinguish failures from empty queues"
+    priority: P1
+    plan_mapping:
+      phase: "Multiple"
+      phase_name: "Discovery, Post-Publish, rollout"
+      items:
+        - { item_id: "1.1", description: "Confirm prerequisites" }
+        - { item_id: "6.1", description: "Restore Post-Publish listings and truthful load states" }
+        - { item_id: "7.1", description: "Verify and roll out" }
+missing_requirements: []
+orphan_plan_items: []
+validation:
+  passed: false
+  errors:
+    - "Implementation readiness is blocked on the preconditions in plan.md."
+    - "No independently approved feature specification was supplied."
+  warnings:
+    - "Coverage describes the proposal, not completed implementation or live verification."

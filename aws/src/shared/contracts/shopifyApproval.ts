@@ -102,6 +102,7 @@ export interface ShopifyApprovalInventoryItemInput {
   sku?: string;
   tracked?: boolean;
   requiresShipping?: boolean;
+  cost?: string;
   measurement?: {
     weight: {
       value: number;

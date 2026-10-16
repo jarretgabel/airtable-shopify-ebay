@@ -238,6 +238,9 @@ This guide is the day-to-day reference for operators using the in-app used-gear 
   - recording `Cancelled`, `Refunded`, `Returned`, and manual restock disposition follow-through on the authoritative row
 - Note:
   - use the operational record from this page when the post-sale work needs the approved phase-1 fields and notes; do not create a separate post-sale page family
+  - a load error does not mean there are no listings. Use **Retry post-publish queue** to reload; stage-empty guidance is shown only after a successful read
+  - refresh failures hide unverified queue results until retry succeeds. Search with no matches is different from an empty queue; clear the search before concluding a listing is missing
+  - Post-Publish uses a lightweight lifecycle read rather than loading every inventory field. Listed rows retain the existing 45-day active/stale boundary; shipped rows belong in Archive
 
 ### Archive
 - Purpose:

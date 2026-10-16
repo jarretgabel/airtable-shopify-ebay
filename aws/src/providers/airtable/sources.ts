@@ -12,6 +12,7 @@ import {
 } from './client.js';
 import { parseAirtableReferenceCandidates } from './reference.js';
 import { invalidateConfiguredRecordsCache } from './configuredRecordsCache.js';
+import { USED_GEAR_POST_PUBLISH_FIELDS, USED_GEAR_POST_PUBLISH_STATUSES } from '../../shared/contracts/usedGearPostPublish.js';
 
 export const airtableSourceDependencies = {
   createRecord,
@@ -36,7 +37,7 @@ export type AirtableConfiguredRecordsSource =
 export type AirtableConfiguredWriteSource = AirtableConfiguredRecordsSource;
 export type AirtableConfiguredMetadataSource = 'inventory-directory' | 'used-gear-workflow';
 export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
-export type AirtableConfiguredRecordsSubset = 'ready-for-publishing' | 'listings-page';
+export type AirtableConfiguredRecordsSubset = 'ready-for-publishing' | 'listings-page' | 'post-publish';
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
@@ -74,6 +75,18 @@ function resolveSubsetFilterByFormula(
   subset: AirtableConfiguredRecordsSubset | undefined,
 ): string | undefined {
   if (!subset) return undefined;
+
+  if (subset === 'post-publish') {
+    if (source !== 'used-gear-workflow') {
+      throw new HttpError(400, 'post-publish subset is only supported for used-gear-workflow.', {
+        service: 'airtable',
+        code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
+        retryable: false,
+      });
+    }
+
+    return `OR(${USED_GEAR_POST_PUBLISH_STATUSES.map((status) => `{Workflow Status}='${status}'`).join(', ')})`;
+  }
 
   if (subset === 'ready-for-publishing') {
     if (source !== 'approval-combined') {
@@ -688,6 +701,7 @@ export async function getConfiguredRecords(
   const subsetFilterByFormula = resolveSubsetFilterByFormula(source, options.subset);
   const baseReadOptions: AirtableConfiguredReadOptions = {
     ...options,
+    fields: options.fields ?? (options.subset === 'post-publish' ? [...USED_GEAR_POST_PUBLISH_FIELDS] : undefined),
     maxRecords: options.maxRecords ?? (options.subset === 'listings-page' ? LISTINGS_PAGE_MAX_RECORDS : undefined),
   };
 

@@ -1,6 +1,7 @@
 import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { HttpError } from '../../../../../../aws/src/shared/errors.js';
+import { USED_GEAR_POST_PUBLISH_FIELDS } from '../../../../../../aws/src/shared/contracts/usedGearPostPublish.js';
 import {
   airtableSourceDependencies,
   clearAirtableSourceCaches,
@@ -234,33 +235,35 @@ test('getConfiguredRecords caches unknown field names to skip repeat retry calls
   }
 });
 
-test('updateConfiguredRecord never silently drops an unknown Shopify price alongside valid changes', async () => {
-  const original = airtableSourceDependencies.updateRecord;
-  const calls: Array<Record<string, unknown>> = [];
-  airtableSourceDependencies.updateRecord = async (_base, _table, _id, fields) => {
-    calls.push(fields);
-    if ('Shopify REST Variant 1 Price' in fields) {
-      throw new HttpError(422, 'Unknown field name: "Shopify REST Variant 1 Price"', {
-        service: 'airtable', code: 'AIRTABLE_API_ERROR', retryable: false,
-      });
-    }
-    return buildRecord(fields);
-  };
+for (const priceField of ['Shopify Price', 'Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'shopify_rest_variant_1_price']) {
+  test(`updateConfiguredRecord surfaces unknown ${priceField} on fresh and cached writes instead of silently saving only other fields`, async () => {
+    const original = airtableSourceDependencies.updateRecord;
+    const calls: Array<Record<string, unknown>> = [];
+    airtableSourceDependencies.updateRecord = async (_base, _table, _id, fields) => {
+      calls.push({ ...fields });
+      if (priceField in fields) {
+        throw new HttpError(422, `Unknown field name: "${priceField}"`, {
+          service: 'airtable', code: 'AIRTABLE_HTTP_ERROR', retryable: false,
+        });
+      }
+      return buildRecord(fields);
+    };
 
-  try {
-    const fields = { 'Shopify REST Variant 1 Price': 1200, Description: 'Revised copy' };
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      await assert.rejects(
-        updateConfiguredRecord('approval-combined', 'rec123', fields),
-        /Unknown field name: "Shopify REST Variant 1 Price"/,
-      );
+    try {
+      const fields = { [priceField]: 3500, Description: 'Revised copy' };
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        await assert.rejects(
+          updateConfiguredRecord('approval-combined', 'rec123', fields),
+          (error: unknown) => error instanceof HttpError
+            && error.statusCode === 422 && error.message.includes(priceField),
+        );
+      }
+      assert.deepEqual(calls, [fields]);
+    } finally {
+      airtableSourceDependencies.updateRecord = original;
     }
-    assert.ok(calls.every((fields) => 'Shopify REST Variant 1 Price' in fields));
-    assert.ok(calls.length > 0);
-  } finally {
-    airtableSourceDependencies.updateRecord = original;
-  }
-});
+  });
+}
 
 test('updateConfiguredRecord drops unknown fields and retries inside the provider', async () => {
   const original = airtableSourceDependencies.updateRecord;
@@ -328,6 +331,30 @@ test('getConfiguredRecords applies ready-for-publishing subset filter for approv
       fields: ['Workflow Status', 'Title'],
       filterByFormula: "{Workflow Status}='Approved for Publish'",
     }]);
+  } finally {
+    airtableSourceDependencies.getRecords = original;
+  }
+});
+
+test('getConfiguredRecords filters the post-publish subset without limiting the number of records', async () => {
+  const original = airtableSourceDependencies.getRecords;
+  const calls: Array<{ fields?: string[]; filterByFormula?: string; maxRecords?: number }> = [];
+  airtableSourceDependencies.getRecords = async (_base, _table, _view, options) => {
+    calls.push({ fields: options?.fields, filterByFormula: options?.filterByFormula, maxRecords: options?.maxRecords });
+    return [];
+  };
+
+  try {
+    await getConfiguredRecords('used-gear-workflow', { subset: 'post-publish' });
+    assert.deepEqual(calls, [{
+      fields: [...USED_GEAR_POST_PUBLISH_FIELDS],
+      filterByFormula: "OR({Workflow Status}='Listed, Shopify', {Workflow Status}='Listed, eBay', {Workflow Status}='Stale Listing, Shopify', {Workflow Status}='Stale Listing, eBay', {Workflow Status}='Sold - Ready to Ship', {Workflow Status}='Shipped')",
+      maxRecords: undefined,
+    }]);
+    await assert.rejects(
+      getConfiguredRecords('approval-combined', { subset: 'post-publish' }),
+      /post-publish subset is only supported for used-gear-workflow/,
+    );
   } finally {
     airtableSourceDependencies.getRecords = original;
   }

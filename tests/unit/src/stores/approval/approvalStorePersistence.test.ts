@@ -897,47 +897,90 @@ describe('approvalStorePersistence', () => {
     );
   });
 
-  it('writes a legacy alias to canonical Shopify Price even when the record omits its blank value', async () => {
+  it.each([
+    { value: '3500', expected: 3500 },
+    { value: '0', expected: 0 },
+  ])('saves an initially omitted Shopify Price as $expected without copying the eBay price', async ({ value, expected }) => {
     const state = buildStoreState({
-      formValues: { 'Shopify REST Variant 1 Price': '1200', 'Shopify Price': '' },
-      initialFormValues: { 'Shopify REST Variant 1 Price': '', 'Shopify Price': '' },
-      fieldKinds: { 'Shopify REST Variant 1 Price': 'text', 'Shopify Price': 'number' },
+      formValues: { 'Shopify Price': value, 'Ebay Price': '3750' },
+      initialFormValues: { 'Shopify Price': '', 'Ebay Price': '3750' },
+      fieldKinds: { 'Shopify Price': 'number', 'Ebay Price': 'number' },
     });
     const saveRecord = createSaveRecordAction(vi.fn(), () => state);
-    updateRecordFromResolvedSourceMock.mockResolvedValue(buildRecord({ 'Shopify Price': 1200 }));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
 
     expect(await saveRecord(
       false,
-      buildRecord({ 'Ebay Price': 999999, Cost: 300 }),
+      buildRecord({ 'Ebay Price': 3750 }),
       'base/table',
       'Approval',
-      ['Shopify REST Variant 1 Price', 'Shopify Price', 'Ebay Price', 'Cost'],
+      ['Ebay Price'],
       'Approved',
-      vi.fn(),
-      'full',
+      () => undefined,
     )).toBe(true);
     expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledExactlyOnceWith(
-      'base/table', 'Approval', 'rec-approval-save-1', { 'Shopify Price': 1200 }, { typecast: true },
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Shopify Price': expected },
+      { typecast: true },
     );
   });
 
   it.each([
     { value: '0', expected: 0 },
     { value: '', expected: null },
-  ])('preserves an explicit Shopify price edit to "$value"', async ({ value, expected }) => {
+  ])('preserves an explicit saved Shopify price change to $expected', async ({ value, expected }) => {
     const state = buildStoreState({
       formValues: { 'Shopify Price': value },
-      initialFormValues: { 'Shopify Price': '1200' },
+      initialFormValues: { 'Shopify Price': '3500' },
       fieldKinds: { 'Shopify Price': 'number' },
     });
-    updateRecordFromResolvedSourceMock.mockResolvedValue(buildRecord({ 'Shopify Price': expected }));
+    const saveRecord = createSaveRecordAction(vi.fn(), () => state);
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
 
-    expect(await createSaveRecordAction(vi.fn(), () => state)(
-      false, buildRecord({ 'Shopify Price': 1200, 'Ebay Price': 999999 }),
-      'base/table', 'Approval', ['Shopify Price', 'Ebay Price'], 'Approved', vi.fn(), 'full',
+    expect(await saveRecord(
+      false,
+      buildRecord({ 'Shopify Price': 3500 }),
+      'base/table',
+      'Approval',
+      ['Shopify Price'],
+      'Approved',
+      () => undefined,
     )).toBe(true);
     expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledExactlyOnceWith(
-      'base/table', 'Approval', 'rec-approval-save-1', { 'Shopify Price': expected }, { typecast: true },
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Shopify Price': expected },
+      { typecast: true },
+    );
+  });
+
+  it('writes a legacy price edit to the canonical field known from metadata when its value is omitted', async () => {
+    const state = buildStoreState({
+      formValues: { 'Shopify REST Variant 1 Price': '3500', 'Shopify Price': '' },
+      initialFormValues: { 'Shopify REST Variant 1 Price': '', 'Shopify Price': '' },
+      fieldKinds: { 'Shopify REST Variant 1 Price': 'number', 'Shopify Price': 'number' },
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), () => state);
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    expect(await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title', 'Shopify REST Variant 1 Price', 'Shopify Price'],
+      'Approved',
+      () => undefined,
+    )).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledExactlyOnceWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      { 'Shopify Price': 3500 },
+      { typecast: true },
     );
   });
 

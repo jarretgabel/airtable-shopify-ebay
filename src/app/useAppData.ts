@@ -66,7 +66,12 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, currentUs
   const adminCount = useMemo(() => users.filter((user) => user.role === 'admin').length, [users]);
   const ebayPublishedCount = useMemo(() => ebay.offers.filter((offer) => offer.status === 'PUBLISHED').length, [ebay.offers]);
   const ebayDraftCount = useMemo(() => ebay.offers.filter((offer) => offer.status === 'UNPUBLISHED').length, [ebay.offers]);
-  const metrics = useDashboardMetrics(nonEmptyListings, shopify.products, jotform.submissions, usedGearWorkflowPostPublish);
+  const metrics = useDashboardMetrics(
+    nonEmptyListings,
+    shopify.products,
+    jotform.submissions,
+    usedGearWorkflowPostPublish.error || usedGearWorkflowPostPublish.loading ? undefined : usedGearWorkflowPostPublish,
+  );
 
   return {
     airtable: {

@@ -34,7 +34,6 @@ export function useUsedGearWorkflowPostPublishSummary(enabled = true, currentUse
       const records = await loadWorkflowPostPublishQueue();
       setSummary(summarizeUsedGearWorkflowPostPublishQueue(records, currentUserName));
     } catch (loadError) {
-      setSummary(EMPTY_SUMMARY);
       setError(loadError instanceof Error ? loadError.message : 'Unable to load used-gear post-publish workflow counts.');
     } finally {
       setLoading(false);

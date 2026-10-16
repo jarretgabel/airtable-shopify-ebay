@@ -23,6 +23,7 @@ import {
 } from '@/services/usedGearWorkflowLifecycle';
 import { assertUsedGearWorkflowReadyForPublish } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
+import { USED_GEAR_POST_PUBLISH_FIELDS, USED_GEAR_POST_PUBLISH_STATUSES } from '@contracts/usedGearPostPublish';
 
 const WORKFLOW_TRANSITION_REQUEST_TIMEOUT_MS = 45000;
 
@@ -185,14 +186,7 @@ const USED_GEAR_PROGRESS_STATUSES = new Set([
   PHOTOGRAPHY_IN_PROGRESS_STATUS,
 ]);
 
-const USED_GEAR_POST_PUBLISH_STATUSES = new Set([
-  LISTED_SHOPIFY_STATUS,
-  LISTED_EBAY_STATUS,
-  STALE_LISTING_SHOPIFY_STATUS,
-  STALE_LISTING_EBAY_STATUS,
-  SOLD_READY_TO_SHIP_STATUS,
-  SHIPPED_STATUS,
-]);
+const USED_GEAR_POST_PUBLISH_STATUS_SET = new Set<string>(USED_GEAR_POST_PUBLISH_STATUSES);
 
 const USED_GEAR_WORKFLOW_NOTIFICATION_FIELDS = [
   USED_GEAR_WORKFLOW_STATUS_FIELD,
@@ -813,13 +807,16 @@ export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {
 }
 
 export async function loadWorkflowPostPublishQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearOperationalRecords();
+  const records = await getConfiguredRecords('used-gear-workflow', {
+    subset: 'post-publish',
+    fields: [...USED_GEAR_POST_PUBLISH_FIELDS],
+  });
 
   return records
     .map(withWorkflow)
     .filter((record) => {
       const status = getUsedGearWorkflowStatus(record.fields);
-      return Boolean(status && USED_GEAR_POST_PUBLISH_STATUSES.has(status));
+      return Boolean(status && USED_GEAR_POST_PUBLISH_STATUS_SET.has(status));
     });
 }
 

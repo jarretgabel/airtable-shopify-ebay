@@ -38,6 +38,7 @@ interface ShopifyUnifiedInventoryItemInput {
   requiresShipping?: boolean;
   countryCodeOfOrigin?: string;
   harmonizedSystemCode?: string;
+  cost?: string;
   measurement?: {
     weight: {
       value: number;
@@ -134,15 +135,17 @@ function buildUnifiedVariantInventoryItem(variant: ShopifyProductVariant): Shopi
   const harmonizedSystemCode = variant.harmonized_system_code?.trim() || undefined;
   const weightValue = typeof variant.weight === 'number' && Number.isFinite(variant.weight) ? variant.weight : undefined;
   const weightUnit = toShopifyGraphQlWeightUnit(variant.weight_unit);
+  const cost = variant.unit_cost?.trim() || undefined;
   const inventoryItem: ShopifyUnifiedInventoryItemInput = {
     sku,
     tracked,
     requiresShipping,
     countryCodeOfOrigin,
     harmonizedSystemCode,
+    cost,
     measurement: weightValue !== undefined && weightUnit ? { weight: { value: weightValue, unit: weightUnit } } : undefined,
   };
-  if (!inventoryItem.sku && inventoryItem.tracked === undefined && inventoryItem.requiresShipping === undefined && !inventoryItem.countryCodeOfOrigin && !inventoryItem.harmonizedSystemCode && !inventoryItem.measurement) {
+  if (!inventoryItem.sku && inventoryItem.tracked === undefined && inventoryItem.requiresShipping === undefined && !inventoryItem.countryCodeOfOrigin && !inventoryItem.harmonizedSystemCode && !inventoryItem.cost && !inventoryItem.measurement) {
     return undefined;
   }
   return inventoryItem;

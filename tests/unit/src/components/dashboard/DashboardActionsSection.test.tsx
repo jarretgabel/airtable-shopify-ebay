@@ -83,6 +83,45 @@ function buildWorkflowAnalyticsOverrides(overrides: Record<string, unknown> = {}
 }
 
 describe('DashboardActionsSection', () => {
+  it('reports Post-Publish as unavailable instead of all-clear or stale summary counts', () => {
+    render(<DashboardActionsSection
+      accessiblePages={['dashboard', 'inventory']}
+      currentUserRole="admin"
+      currentUserName="Taylor Reviewer"
+      ebayAuthenticated={false}
+      ebayDraftCount={0}
+      ebayPublishedCount={0}
+      ebayTotal={0}
+      shopifyQueueApproved={0}
+      shopifyQueuePending={0}
+      shopifyQueueTotal={0}
+      workflowPostPublishLoading={false}
+      workflowPostPublishError="Queue load failed"
+      workflowAnalytics={buildWorkflowAnalyticsOverrides({
+        age: { progressAlertCount: 0, pendingReviewAlertCount: 0 },
+      })}
+      workflowActiveListingCount={12}
+      workflowStaleListingCount={3}
+      workflowStaleListingMineCount={0}
+      workflowStaleListingUnassignedCount={0}
+      workflowSoldReadyCount={2}
+      workflowSoldReadyMineCount={0}
+      workflowSoldReadyUnassignedCount={0}
+      workflowShippedCount={20}
+      workflowPendingReviewOldestGroupId={null}
+      workflowPendingReviewOldestGroupLabel={null}
+      workflowProgressOldestGroupId={null}
+      workflowProgressOldestGroupLabel={null}
+      onSelectTab={vi.fn()}
+      onOpenInventoryWorkflowView={vi.fn()}
+      onOpenInventoryPostPublishBucket={vi.fn()}
+    />);
+    expect(screen.getByText('Post-Publish unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('All clear — no actions required right now.')).not.toBeInTheDocument();
+    expect(screen.queryByText('2 sold ready to ship')).not.toBeInTheDocument();
+    expect(screen.queryByText('3 stale listings')).not.toBeInTheDocument();
+  });
+
   it('shows unavailable action cards when runtime-gated features are degraded', () => {
     render(
       <DashboardActionsSection

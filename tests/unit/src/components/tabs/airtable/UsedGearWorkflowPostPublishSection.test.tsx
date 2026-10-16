@@ -54,6 +54,7 @@ vi.mock('@/services/usedGearQueue', async () => {
 
 describe('UsedGearWorkflowPostPublishSection', () => {
   beforeEach(() => {
+    loadWorkflowPostPublishQueueMock.mockReset();
     Element.prototype.scrollIntoView = vi.fn();
     clipboardWriteTextMock.mockReset();
     Object.assign(navigator, {
@@ -73,6 +74,75 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     resolveWorkflowRestockDispositionMock.mockReset();
     saveWorkflowStaleRecoveryMock.mockReset();
     window.history.replaceState({}, '', '/workflow-hub');
+  });
+
+  it('shows a retryable load error without asserting that the queue or its stages are empty', async () => {
+    loadWorkflowPostPublishQueueMock
+      .mockRejectedValueOnce(new Error('Internal Server Error'))
+      .mockResolvedValueOnce([{
+        id: 'rec-recovered',
+        createdTime: '2026-10-16T00:00:00.000Z',
+        fields: { SKU: 'RECOVERED', 'Workflow Status': 'Listed, Shopify', 'Listed At': '2099-01-01' },
+      }]);
+
+    render(<UsedGearWorkflowPostPublishSection
+      currentUserName="Taylor Reviewer"
+      sectionSearchEnabled
+      onOpenOperationalRecord={vi.fn()}
+      onOpenListingsRecord={vi.fn()}
+      onOpenSoldReadyRecord={vi.fn()}
+      onOpenShipmentRecord={vi.fn()}
+    />);
+
+    expect(await screen.findByText('Internal Server Error')).toBeInTheDocument();
+    expect(screen.queryByText('No post-publish operational rows')).not.toBeInTheDocument();
+    expect(screen.queryByText('No rows currently match this post-publish stage.')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry post-publish queue' }));
+    expect(await screen.findByText('RECOVERED')).toBeInTheDocument();
+    expect(screen.queryByText('Internal Server Error')).not.toBeInTheDocument();
+  });
+
+  it('does not present an empty last-successful result as current after refresh fails', async () => {
+    loadWorkflowPostPublishQueueMock
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce(new Error('Refresh failed'));
+
+    render(<UsedGearWorkflowPostPublishSection
+      currentUserName="Taylor Reviewer"
+      sectionSearchEnabled
+      onOpenOperationalRecord={vi.fn()}
+      onOpenListingsRecord={vi.fn()}
+      onOpenSoldReadyRecord={vi.fn()}
+      onOpenShipmentRecord={vi.fn()}
+    />);
+
+    expect(await screen.findByText('No post-publish operational rows')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh Active Listings' }));
+    expect(await screen.findByText('Refresh failed')).toBeInTheDocument();
+    expect(screen.queryByText('No post-publish operational rows')).not.toBeInTheDocument();
+    expect(screen.queryByText('No rows currently match this post-publish stage.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry post-publish queue' })).toBeInTheDocument();
+  });
+
+  it('distinguishes a global search with no matches from a genuinely empty queue', async () => {
+    loadWorkflowPostPublishQueueMock.mockResolvedValue([{
+      id: 'rec-search',
+      createdTime: '2026-10-16T00:00:00.000Z',
+      fields: { SKU: 'SEARCHABLE', 'Workflow Status': 'Listed, eBay', 'Listed At': '2099-01-01' },
+    }]);
+    render(<UsedGearWorkflowPostPublishSection
+      currentUserName="Taylor Reviewer"
+      onOpenOperationalRecord={vi.fn()}
+      onOpenListingsRecord={vi.fn()}
+      onOpenSoldReadyRecord={vi.fn()}
+      onOpenShipmentRecord={vi.fn()}
+    />);
+    await screen.findByText('SEARCHABLE');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search used gear post-publish queue' }), {
+      target: { value: 'no-matching-listing' },
+    });
+    expect(screen.getByText('No rows match the current search')).toBeInTheDocument();
+    expect(screen.queryByText('No post-publish operational rows')).not.toBeInTheDocument();
   });
 
   it('keeps all sections visible and announces the deep-linked lifecycle section', async () => {

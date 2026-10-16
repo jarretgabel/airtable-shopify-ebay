@@ -27,7 +27,7 @@ interface AirtableWriteOptions {
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
-  subset?: 'ready-for-publishing' | 'listings-page';
+  subset?: 'ready-for-publishing' | 'listings-page' | 'post-publish';
   maxRecords?: number;
   searchQuery?: string;
   searchFields?: string[];

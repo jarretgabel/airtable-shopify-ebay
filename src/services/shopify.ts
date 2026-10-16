@@ -62,6 +62,7 @@ export interface ShopifyUnifiedInventoryItemInput {
   sku?: string;
   tracked?: boolean;
   requiresShipping?: boolean;
+  cost?: string;
   measurement?: {
     weight: {
       value: number;
@@ -247,11 +248,13 @@ function buildUnifiedVariantInventoryItem(variant: ShopifyProductVariant): Shopi
     ? variant.weight
     : undefined;
   const weightUnit = toShopifyGraphQlWeightUnit(variant.weight_unit);
+  const cost = variant.unit_cost?.trim() || undefined;
 
   const inventoryItem: ShopifyUnifiedInventoryItemInput = {
     sku,
     tracked,
     requiresShipping,
+    cost,
     measurement: weightValue !== undefined && weightUnit
       ? {
           weight: {
@@ -262,7 +265,7 @@ function buildUnifiedVariantInventoryItem(variant: ShopifyProductVariant): Shopi
       : undefined,
   };
 
-  if (!inventoryItem.sku && inventoryItem.tracked === undefined && inventoryItem.requiresShipping === undefined && !inventoryItem.measurement) {
+  if (!inventoryItem.sku && inventoryItem.tracked === undefined && inventoryItem.requiresShipping === undefined && !inventoryItem.cost && !inventoryItem.measurement) {
     return undefined;
   }
 

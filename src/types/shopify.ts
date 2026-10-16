@@ -29,6 +29,7 @@ export interface ShopifyProductVariant {
   requires_shipping?: boolean;
   weight?: number;
   weight_unit?: string;
+  unit_cost?: string;
   option1?: string | null;
   option2?: string | null;
   option3?: string | null;

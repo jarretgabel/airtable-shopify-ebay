@@ -6,7 +6,7 @@ import { CompactIconActionButton } from '@/components/app/CompactIconActionButto
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
-import { EmptySurface } from '@/components/app/StateSurfaces';
+import { EmptySurface, ErrorSurface } from '@/components/app/StateSurfaces';
 import { getWorkflowStatusChipClasses } from '@/components/app/workflowStatusChips';
 import { displayInventoryValue } from '@/services/inventoryDirectory';
 import { displayReadableValue } from '@/utils/valueDisplay';
@@ -263,6 +263,8 @@ export function UsedGearWorkflowPostPublishSection({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [updatingRecordIds, setUpdatingRecordIds] = useState<string[]>([]);
@@ -299,10 +301,11 @@ export function UsedGearWorkflowPostPublishSection({
         const nextRecords = await loadWorkflowPostPublishQueue();
         if (!cancelled) {
           setRecords(nextRecords);
+          setHasLoaded(true);
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Unable to load the used-gear post-publish queue.');
+          setLoadError(loadError instanceof Error ? loadError.message : 'Unable to load the used-gear post-publish queue.');
         }
       } finally {
         if (!cancelled) {
@@ -359,11 +362,13 @@ export function UsedGearWorkflowPostPublishSection({
   const refreshQueue = async () => {
     setRefreshing(true);
     setError(null);
+    setLoadError(null);
 
     try {
       setRecords(await loadWorkflowPostPublishQueue());
+      setHasLoaded(true);
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : 'Unable to refresh the used-gear post-publish queue.');
+      setLoadError(refreshError instanceof Error ? refreshError.message : 'Unable to refresh the used-gear post-publish queue.');
     } finally {
       setRefreshing(false);
     }
@@ -790,20 +795,38 @@ export function UsedGearWorkflowPostPublishSection({
         </div>
       ) : null}
 
-      {!loading && filteredRecords.length === 0 ? (
-        <EmptySurface title={emptyStateTitle} message={emptyStateMessage}>
-          <p className="mt-3 text-sm text-[var(--muted)]">
-            {nextRouteMessage}
-          </p>
+      {loadError ? (
+        <ErrorSurface title={`Unable to load ${queueNoun}`} message={loadError}>
+          <button
+            type="button"
+            className={compactRowSecondaryActionButtonClass}
+            onClick={() => { void refreshQueue(); }}
+            disabled={refreshing}
+          >
+            {`Retry ${queueNoun}`}
+          </button>
+        </ErrorSurface>
+      ) : null}
+
+      {!loading && !refreshing && !loadError && hasLoaded && filteredRecords.length === 0 ? (
+        <EmptySurface
+          title={records.length > 0 ? 'No rows match the current search' : emptyStateTitle}
+          message={records.length > 0 ? 'Adjust the search terms or clear the filter to see all items.' : emptyStateMessage}
+        >
+          {records.length === 0 ? (
+            <p className="mt-3 text-sm text-[var(--muted)]">
+              {nextRouteMessage}
+            </p>
+          ) : null}
         </EmptySurface>
       ) : null}
 
       <div className="space-y-4">
-        {loading ? (
+        {loading || refreshing ? (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
             {`Loading used-gear ${queueNoun}...`}
           </div>
-        ) : sectionDefinitions.map((section) => {
+        ) : !loadError && hasLoaded ? sectionDefinitions.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
           const sectionSearchTerm = sectionSearchEnabled ? sectionSearchTerms[section.key] ?? '' : searchTerm;
           const normalizedSectionSearch = sectionSearchTerm.trim().toLowerCase();
@@ -870,7 +893,7 @@ export function UsedGearWorkflowPostPublishSection({
               )}
             </AppPageSectionSurface>
           );
-        })}
+        }) : null}
       </div>
     </section>
   );

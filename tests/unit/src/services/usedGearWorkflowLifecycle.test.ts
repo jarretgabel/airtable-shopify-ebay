@@ -42,6 +42,18 @@ describe('usedGearWorkflowLifecycle', () => {
     expect(snapshot?.staleThresholdDays).toBe(USED_GEAR_STALE_THRESHOLD_DAYS);
   });
 
+  it.each(['Listed, Shopify', 'Listed, eBay'])('keeps the exact 45-day boundary for %s', (status) => {
+    const listedAt = Date.parse('2026-09-01T12:00:00.000Z');
+    const boundary = listedAt + 45 * 24 * 60 * 60 * 1000;
+    const record: AirtableRecord = {
+      id: 'rec-boundary',
+      createdTime: '2026-09-01T12:00:00.000Z',
+      fields: { 'Workflow Status': status, 'Listed At': '2026-09-01T12:00:00.000Z' },
+    };
+    expect(getUsedGearWorkflowPostPublishSnapshot(record, boundary - 1)?.bucket).toBe('active-listing');
+    expect(getUsedGearWorkflowPostPublishSnapshot(record, boundary)?.bucket).toBe('stale-listing');
+  });
+
   it('keeps sold-ready and shipped rows in their dedicated lifecycle buckets', () => {
     const soldReady: AirtableRecord = {
       id: 'rec-sold',

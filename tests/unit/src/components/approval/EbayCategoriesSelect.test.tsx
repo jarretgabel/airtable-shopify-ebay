@@ -3,6 +3,28 @@ import { describe, expect, it, vi } from 'vitest';
 import { EbayCategoriesSelect } from '@/components/approval/EbayCategoriesSelect';
 
 describe('EbayCategoriesSelect', () => {
+  it('keeps an optional empty category neutral and does not change its selection', () => {
+    const onChange = vi.fn();
+    render(
+      <EbayCategoriesSelect
+        fieldName="Categories"
+        label="eBay Categories"
+        marketplaceId="EBAY_US"
+        value={[]}
+        disabled
+        onChange={onChange}
+      />,
+    );
+
+    const input = screen.getByRole('textbox', { name: 'eBay Categories' });
+    expect(screen.queryByText('eBay Required')).not.toBeInTheDocument();
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(input).not.toHaveClass('border-rose-400/45');
+    expect(input).not.toHaveAttribute('required');
+    expect(screen.getByText('No categories selected.')).toHaveClass('text-[var(--muted)]');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('marks a required category as missing until one is selected', () => {
     render(
       <EbayCategoriesSelect

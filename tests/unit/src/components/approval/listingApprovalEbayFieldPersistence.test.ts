@@ -5,6 +5,7 @@ import {
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
   EBAY_BODY_TEMPLATE_COPY_FALLBACK_EDITOR_FIELD,
   EBAY_TEMPLATE_COPY_FIELD_NAME,
+  resolveEbayTemplateCopyValue,
 } from '@/components/approval/listingApprovalEbayConstants';
 import { createSaveRecordAction } from '@/stores/approval/approvalStorePersistence';
 import { useApprovalStore } from '@/stores/approvalStore';
@@ -231,6 +232,55 @@ describe('listingApprovalEbayFieldPersistence', () => {
     expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledExactlyOnceWith(
       'base/table', undefined, 'rec-clear-copy', { [EBAY_TEMPLATE_COPY_FIELD_NAME]: '' }, undefined,
     );
+  });
+
+  it('treats the empty paragraph a cleared visual editor emits as blank and clears the saved copy', async () => {
+    updateRecordFromResolvedSourceMock.mockResolvedValue({});
+    for (const emptyHtml of ['<p><br></p>', '<p><br/></p>', '<p>&nbsp;</p>', '<div><br></div><p> </p>']) {
+      updateRecordFromResolvedSourceMock.mockClear();
+      await saveEbayApprovalSupplementalFields({
+        selectedRecord: {
+          id: 'rec-empty-editor',
+          createdTime: '2026-05-08T00:00:00.000Z',
+          fields: { [EBAY_TEMPLATE_COPY_FIELD_NAME]: '<p>Previous copy</p>' },
+        },
+        tableReference: 'base/table',
+        formValues: { [EBAY_TEMPLATE_COPY_FIELD_NAME]: emptyHtml },
+        setFormValue: vi.fn(),
+        priceFieldName: '',
+        bodyHtmlPreview: '',
+        ebayBodyHtmlSaveFieldName: '',
+        shouldForceEbayBodyHtmlSave: false,
+      });
+      expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledExactlyOnceWith(
+        'base/table', undefined, 'rec-empty-editor', { [EBAY_TEMPLATE_COPY_FIELD_NAME]: '' }, undefined,
+      );
+    }
+  });
+
+  it('does not create a copy value on a record that never had one when the editor is only an empty paragraph', async () => {
+    await saveEbayApprovalSupplementalFields({
+      selectedRecord: { id: 'rec-never-had-copy', createdTime: '2026-05-08T00:00:00.000Z', fields: {} },
+      tableReference: 'base/table',
+      formValues: { [EBAY_TEMPLATE_COPY_FIELD_NAME]: '<p><br></p>' },
+      setFormValue: vi.fn(),
+      priceFieldName: '',
+      bodyHtmlPreview: '',
+      ebayBodyHtmlSaveFieldName: '',
+      shouldForceEbayBodyHtmlSave: false,
+    });
+    expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
+  });
+
+  it('resolves visually empty copy to blank but keeps real text, images and links', () => {
+    const resolve = (value: string) => resolveEbayTemplateCopyValue({ [EBAY_TEMPLATE_COPY_FIELD_NAME]: value });
+
+    for (const empty of ['', '   ', '<p><br></p>', '<p>&nbsp;</p>', '<p><strong> </strong></p>']) {
+      expect(resolve(empty)).toBe('');
+    }
+    for (const real of ['<p>Sold as-is</p>', '<p><img src="https://example.com/a.jpg"></p>', '<p><a href="https://example.com">x</a></p>', '<hr>']) {
+      expect(resolve(real)).toBe(real);
+    }
   });
 
   it('rejects a stale body preview instead of saving the previous template copy', async () => {

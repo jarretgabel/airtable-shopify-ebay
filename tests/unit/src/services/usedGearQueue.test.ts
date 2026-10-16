@@ -250,6 +250,31 @@ describe('usedGearQueue', () => {
         fields: { 'Workflow Status': 'Listed, Shopify', SKU: 'L-1' },
       },
       {
+        id: 'recEbay',
+        createdTime: 'now',
+        fields: { 'Workflow Status': 'Listed, eBay', SKU: 'E-1' },
+      },
+      {
+        id: 'recBoth',
+        createdTime: 'now',
+        fields: {
+          'Workflow Status': 'Listed, Shopify',
+          'Shopify REST Product ID': '123',
+          'eBay Listing ID': '456',
+          SKU: 'B-1',
+        },
+      },
+      {
+        id: 'recStale',
+        createdTime: 'now',
+        fields: { 'Workflow Status': 'Stale Listing, eBay', SKU: 'ST-1' },
+      },
+      {
+        id: 'recShipped',
+        createdTime: 'now',
+        fields: { 'Workflow Status': 'Shipped', SKU: 'SH-1' },
+      },
+      {
         id: 'recSold',
         createdTime: 'later',
         fields: { 'Workflow Status': 'Sold - Ready to Ship', SKU: 'S-1' },
@@ -263,10 +288,10 @@ describe('usedGearQueue', () => {
 
     const records = await loadWorkflowPostPublishQueue();
 
-    expect(records.map((record) => record.id)).toEqual(['recListed', 'recSold']);
+    expect(records.map((record) => record.id)).toEqual(['recListed', 'recEbay', 'recBoth', 'recStale', 'recShipped', 'recSold']);
   });
 
-  it('requests the live Airtable price fields for queue reads without stale aliases', async () => {
+  it('requests only post-publish rows and lightweight lifecycle fields without a record cap', async () => {
     mockGetConfiguredRecords.mockResolvedValueOnce([]);
 
     await loadWorkflowPostPublishQueue();
@@ -274,7 +299,13 @@ describe('usedGearQueue', () => {
     expect(mockGetConfiguredRecords).toHaveBeenCalledWith(
       'used-gear-workflow',
       expect.objectContaining({
+        subset: 'post-publish',
         fields: expect.arrayContaining([
+          'Workflow Status',
+          'Listed At',
+          'Stale Listing At',
+          'Sold Ready To Ship At',
+          'Shipped At',
           'Shopify Price',
           'Ebay Price',
         ]),
@@ -288,6 +319,10 @@ describe('usedGearQueue', () => {
     expect(fields).not.toContain('eBay Price');
     expect(fields).not.toContain('Shipment Follow-Through Notes');
     expect(fields).not.toContain('Shipment Follow-Through Updated At');
+    expect(fields).not.toContain('Workflow Image Metadata JSON');
+    expect(fields).not.toContain('Testing Notes');
+    expect(fields).not.toContain('Customer Functional Notes');
+    expect(mockGetConfiguredRecords.mock.calls[0]?.[1]?.maxRecords).toBeUndefined();
   });
 
   it('preserves optional shipment fields returned with a single operational record', async () => {

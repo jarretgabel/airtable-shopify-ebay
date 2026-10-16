@@ -316,6 +316,7 @@ export async function upsertWithCollectionFallback(params: {
     });
     if (params.existingProductId && normalizedCollectionIds.length > 0) {
       const combinedResult = await dependencies.upsertExistingProductWithCollectionsInSingleMutation(request, normalizedCollectionIds);
+      warnings.push(...(combinedResult.product.warnings ?? []));
       if (combinedResult.collectionFailures.length > 0) {
         warnings.push(`Collection assignment failed for ${combinedResult.collectionFailures.length} collection(s): ${combinedResult.collectionFailures.join(' | ')}`);
         try {
@@ -328,6 +329,7 @@ export async function upsertWithCollectionFallback(params: {
     }
 
     const upserted = await dependencies.upsertProductWithUnifiedRequest(request);
+    warnings.push(...(upserted.warnings ?? []));
     try {
       await ensureCollectionsApplied(upserted.id);
     } catch (collectionApplyError) {
@@ -364,6 +366,7 @@ export async function upsertWithCollectionFallback(params: {
       categoryId: params.categoryId,
       existingProductId: params.existingProductId,
     }));
+    warnings.push(...(retried.warnings ?? []));
     try {
       await ensureCollectionsApplied(retried.id);
     } catch (collectionApplyError) {

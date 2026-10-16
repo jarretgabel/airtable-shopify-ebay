@@ -1,6 +1,7 @@
 import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 import { SHOPIFY_SHIPPING_DIMENSION_KEYS } from '@contracts/shopifyShipping';
 import { parseLegacyShopifyShippingDetails, parseShopifyShippingWeight, resolveShopifyShippingWeight } from '@contracts/shopifyShippingWeight';
+import { parseShopifyUnitCost } from '@contracts/shopifyUnitCost';
 import type { ShopifyMetafield, ShopifyProduct, ShopifyProductOption, ShopifyProductVariant } from '@/types/shopify';
 import { buildImages, buildTags, sanitizeImages } from '@/services/shopifyDraftFromAirtableAssets';
 import { getHandleField, resolveShopifyBodyHtml } from '@/services/shopifyDraftFromAirtableBody';
@@ -41,6 +42,13 @@ const SHIPPING_DIMENSION_METAFIELD_CANDIDATES = [
   { key: SHOPIFY_SHIPPING_DIMENSION_KEYS.depth, fields: ['Shipping Depth', 'Shopify Shipping Depth', 'shipping_depth'] },
   { key: SHOPIFY_SHIPPING_DIMENSION_KEYS.height, fields: ['Shipping Height', 'Shopify Shipping Height', 'shipping_height'] },
 ] as const;
+
+// Invalid values are carried through unchanged (never thrown) so the editor keeps rendering and the server rejects them explicitly.
+function resolveVariantUnitCost(raw: unknown): string | undefined {
+  const parsed = parseShopifyUnitCost(raw);
+  if (parsed.error) return coerceToString(raw) || undefined;
+  return parsed.cost;
+}
 
 function hasFlatOptionFields(fields: ApprovalFieldMap): boolean {
   const candidates: string[] = [];
@@ -336,6 +344,8 @@ function buildVariant(fields: ApprovalFieldMap, options: ShopifyProductOption[])
       defaultUnit: getField(fields, ['Weight', 'Shipping Weight']) ? 'lb' : undefined,
       legacyDetails: getField(fields, ['Shipping Dims', 'Shipping Dimensions', 'Shopify Shipping Dimensions', 'shipping_dimensions']),
     }),
+    // Intake Cost is per sellable listing unit; only this single-variant draft receives it.
+    unit_cost: getField(fields, ['Cost']) || undefined,
     option1,
     option2,
     option3,
@@ -381,6 +391,7 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
     const inventoryPolicy = normalizeInventoryPolicy(variant.inventory_policy);
     const fulfillmentService = normalizeFulfillmentService(variant.fulfillment_service);
     const shippingWeight = parseShopifyShippingWeight(variant.weight, variant.weight_unit);
+    const unitCost = resolveVariantUnitCost(variant.unit_cost);
 
     return {
       ...(price ? { price } : {}),
@@ -402,6 +413,7 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
       requires_shipping: typeof variant.requires_shipping === 'boolean' ? variant.requires_shipping : undefined,
       weight: shippingWeight.weight,
       weight_unit: shippingWeight.weight_unit,
+      ...(unitCost ? { unit_cost: unitCost } : {}),
       option1: coerceToString(variant.option1 ?? '') || undefined,
       option2: coerceToString(variant.option2 ?? '') || undefined,
       option3: coerceToString(variant.option3 ?? '') || undefined,
