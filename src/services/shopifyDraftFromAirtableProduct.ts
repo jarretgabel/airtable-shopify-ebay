@@ -1,6 +1,7 @@
 import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
 import { SHOPIFY_SHIPPING_DIMENSION_KEYS } from '@contracts/shopifyShipping';
 import { parseLegacyShopifyShippingDetails, parseShopifyShippingWeight, resolveShopifyShippingWeight } from '@contracts/shopifyShippingWeight';
+import { withPreOwnedHifiTag } from '@contracts/shopifyPreOwnedTag';
 import { parseShopifyUnitCost } from '@contracts/shopifyUnitCost';
 import type { ShopifyMetafield, ShopifyProduct, ShopifyProductOption, ShopifyProductVariant } from '@/types/shopify';
 import { buildImages, buildTags, sanitizeImages } from '@/services/shopifyDraftFromAirtableAssets';
@@ -478,7 +479,7 @@ export function buildShopifyDraftProductFromApprovalFields(fields: ApprovalField
     published_at: getField(fields, ['Shopify REST Published At', 'Shopify Published At']) || undefined,
     published_scope: getField(fields, ['Shopify REST Published Scope', 'Shopify Published Scope', 'shopify_rest_published_scope']) || undefined,
     template_suffix: getField(fields, ['Shopify REST Template Suffix', 'Shopify Template Suffix', 'Shopify GraphQL Template Suffix', 'shopify_rest_template_suffix']) || undefined,
-    tags: buildTags(fields),
+    tags: withPreOwnedHifiTag(buildTags(fields), condition),
     status: normalizeStatus(getField(fields, ['Shopify REST Status', 'Shopify Status', 'Shopify GraphQL Status'])) ?? 'draft',
     options,
     variants,

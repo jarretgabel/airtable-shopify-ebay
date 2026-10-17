@@ -25,9 +25,9 @@ export type {
 import {
   buildShopifyCollectionIdsFromApprovalFields,
   buildShopifyDraftProductFromApprovalFields,
-  buildShopifyTagValuesFromApprovalFields,
   buildShopifyUnifiedProductSetRequest,
   normalizeShopifyProductForUpsert,
+  parseShopifyTagList,
   type ShopifyProduct,
 } from './approvalDraft.js';
 import { resolveCollectionPreview } from './approvalCollectionPreview.js';
@@ -84,7 +84,7 @@ export function buildShopifyApprovalPreviewFromFields(fields: ApprovalFieldMap):
   const productCategoryResolution = resolveProductCategory(fields, draftProduct);
   const categoryIdResolution = resolveCategoryId(fields);
   const categoryLookupValue = categoryIdResolution.value || productCategoryResolution.value;
-  const tagValues = buildShopifyTagValuesFromApprovalFields(fields);
+  const tagValues = parseShopifyTagList(draftProduct.tags);
   const collectionIds = buildShopifyCollectionIdsFromApprovalFields(fields);
 
   return Promise.all([

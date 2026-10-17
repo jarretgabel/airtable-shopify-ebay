@@ -19,6 +19,7 @@ import {
   trimShopifyProductType,
 } from './approvalDraftFieldUtils.js';
 import { buildImages } from './approvalDraftImages.js';
+import { withPreOwnedHifiTag } from '../../shared/contracts/shopifyPreOwnedTag.js';
 import { buildTags } from './approvalDraftTags.js';
 import type { ApprovalFieldMap, ShopifyMetafield, ShopifyProduct, ShopifyProductOption, ShopifyProductVariant } from './approvalDraftTypes.js';
 import { CONDITION_LABELS, SHOPIFY_DEFAULT_VENDOR, SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES } from './approvalDraftTypes.js';
@@ -407,7 +408,7 @@ export function buildShopifyDraftProductFromApprovalFields(fields: ApprovalField
     published_at: getField(fields, ['Shopify REST Published At', 'Shopify Published At']) || undefined,
     published_scope: getField(fields, ['Shopify REST Published Scope', 'Shopify Published Scope', 'shopify_rest_published_scope']) || undefined,
     template_suffix: getField(fields, ['Shopify REST Template Suffix', 'Shopify Template Suffix', 'Shopify GraphQL Template Suffix', 'shopify_rest_template_suffix']) || undefined,
-    tags: buildTags(fields),
+    tags: withPreOwnedHifiTag(buildTags(fields), getConditionFromFields(fields)),
     status: normalizeStatus(getField(fields, ['Shopify REST Status', 'Shopify Status', 'Shopify GraphQL Status'])) ?? 'draft',
     options,
     variants,

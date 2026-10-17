@@ -103,3 +103,17 @@ test('Shopify rejects invalid, conflicting and missing weight units instead of s
     assert.throws(() => buildShopifyDraftProductFromApprovalFields({ Title: 'Amp', ...fields }), /weight/i);
   }
 });
+
+test('Used items are tagged Pre-Owned Hifi after their own tags, once, and other conditions are not', () => {
+  const tagsFor = (fields: Record<string, unknown>) => buildShopifyDraftProductFromApprovalFields({ 'Shopify REST Title': 'T', ...fields }).tags;
+
+  assert.equal(tagsFor({ Condition: 'Used' }), 'Pre-Owned Hifi');
+  assert.equal(tagsFor({ __Condition__: 'Used', 'Shopify Tags': 'Amplifier, Mark Levinson' }), 'Amplifier, Mark Levinson, Pre-Owned Hifi');
+  assert.equal(tagsFor({ 'eBay Inventory Condition': 'USED_EXCELLENT', Tags: 'Amplifier' }), 'Amplifier, Pre-Owned Hifi');
+  assert.equal(tagsFor({ Condition: 'Used', 'Shopify Tags': 'pre-owned hifi, Amplifier' }), 'pre-owned hifi, Amplifier');
+
+  assert.equal(tagsFor({ Condition: 'New', 'Shopify Tags': 'Amplifier' }), 'Amplifier');
+  assert.equal(tagsFor({ Condition: 'Open Box' }), undefined);
+  assert.equal(tagsFor({ Condition: 'For parts or not working' }), undefined);
+  assert.equal(tagsFor({}), undefined);
+});

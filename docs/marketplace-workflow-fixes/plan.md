@@ -112,6 +112,15 @@ Batch 8 progress (2026-10-16; eBay notification receiver, built test-first, noth
 - **Registered (2026-10-16, owner-approved).** `ebay:notifications:setup -- --apply` created one eBay destination (the challenge handshake passed against the deployed endpoint) and three subscriptions (`ORDER_CONFIRMATION`, `ORDER_CANCELLATION_ACTIVITY`, `ORDER_RETURN_ACTIVITY`); a re-run reports all four as existing with no warnings. Six Shopify subscriptions exist (see above; owner chose to keep them). The owner deferred any test purchase, so **no end-to-end sale has been verified on either channel**.
 - **Not done:** a controlled end-to-end test on each channel (deferred by the owner) and mapping of cancellation/return payloads once real samples arrive. The signature scheme follows eBay's published sample and has not been run against a real eBay notification.
 
+Batch 9 progress (2026-10-16; code only, nothing live): **"Pre-Owned Hifi" tag on publish (REQ-003, partial).**
+
+- Owner decision: rely on a Shopify smart collection with rule `Tag equals "Pre-Owned Hifi"`, new products only (no backfill), tag added by the app only for used items.
+- `aws/src/shared/contracts/shopifyPreOwnedTag.ts` (`withPreOwnedHifiTag`) appends `Pre-Owned Hifi` after the listing's own tags when the normalized condition is **Used** (Condition / Item Condition / `__Condition__` / eBay Inventory Condition, including eBay `USED_*` values). New, Open Box, For Parts and a blank condition are left untouched; an existing copy (any case) is not duplicated. Used by both the backend draft builder and the frontend builder, and the publish preview now takes its tags from the same draft so it shows what will be published.
+- Verification: 2 new tests (one per builder), each failed first; AWS suite 387/387, frontend 164 files / 1,148 tests, both typechecks pass.
+- **Collection created (2026-10-16, owner-approved live write):** smart collection "Pre-Owned Hifi" (`gid://shopify/Collection/526321058114`, handle `pre-owned-hifi`) with rules `Tag equals "Pre-Owned Hifi"` AND `Inventory greater than 0`. Read back and verified. Undo = delete the collection. It is additive and starts empty; no product or existing collection was changed. Sales-channel visibility was not set by the app.
+- **Superseded note:** the following item is now done for the umbrella collection; component collections remain undecided:
+- **Formerly needed in Shopify:** create the smart collection "Pre-Owned Hifi" with `Tag equals "Pre-Owned Hifi"` and `Inventory greater than 0`. Nothing happens visibly until it exists. Existing products are not tagged. An app update of an existing product replaces its tags with the Airtable tags plus this tag (unchanged replace behavior). Per-component collections still need the Option A/B decision.
+
 ### P3.1: Sync private unit cost to Shopify
 
 Requirement: REQ-001.

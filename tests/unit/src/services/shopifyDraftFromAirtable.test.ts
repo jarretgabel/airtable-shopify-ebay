@@ -349,6 +349,17 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     });
   });
 
+  it('tags Used items Pre-Owned Hifi once and leaves other conditions alone', () => {
+    const tagsFor = (fields: Record<string, unknown>) => buildShopifyDraftProductFromApprovalFields({ 'Shopify REST Title': 'T', ...fields } as never).tags;
+
+    expect(tagsFor({ Condition: 'Used' })).toBe('Pre-Owned Hifi');
+    expect(tagsFor({ __Condition__: 'Used', 'Shopify Tags': 'Amplifier, Mark Levinson' })).toBe('Amplifier, Mark Levinson, Pre-Owned Hifi');
+    expect(tagsFor({ Condition: 'Used', 'Shopify Tags': 'pre-owned hifi, Amplifier' })).toBe('pre-owned hifi, Amplifier');
+    expect(tagsFor({ Condition: 'New', 'Shopify Tags': 'Amplifier' })).toBe('Amplifier');
+    expect(tagsFor({ Condition: 'Open Box' })).toBeUndefined();
+    expect(tagsFor({})).toBeUndefined();
+  });
+
   it('maps generic Airtable Tags field into Shopify tags payload', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Generic Tags Product',
