@@ -1,14 +1,14 @@
 metadata:
   generated: "2026-10-16"
   source_tasks: "../plan.md"
-  last_updated: "2026-10-16"
+  last_updated: "2026-10-17"
 summary:
-  total_tasks: 14
-  completed_tasks: 1
-  in_progress_tasks: 11
-  pending_tasks: 1
+  total_tasks: 19
+  completed_tasks: 9
+  in_progress_tasks: 9
+  pending_tasks: 0
   blocked_tasks: 1
-  completion_percentage: 7.1
+  completion_percentage: 47.4
 tasks:
   - task_id: T003
     description: "Sale-retention operation for sold single-unit Shopify products"
@@ -20,7 +20,7 @@ tasks:
         - { file: aws/src/providers/shopify/client.ts, description: "getProductSaleState, addProductTags, denyVariantOversell" }
     verification:
       build_passed: true
-      notes: "18 policy + 7 operation tests; manual takedown delete unchanged. No live product changed."
+      notes: "18 policy + 7 operation tests; manual takedown delete unchanged. Deployed by the owner (2026-10-16/17). No live product changed and no controlled sale run."
     upstream_trace:
       plan_item: "2.1"
       requirements: [REQ-004]
@@ -35,22 +35,22 @@ tasks:
         - { file: aws/src/providers/shopify/client.ts, description: "Publish guard: HTTP 409 for sold-archive products" }
     verification:
       build_passed: true
-      notes: "Handler, close-service and guard tests pass; retry mutation check failed 3 tests as expected. Not deployed; webhooks not registered (0 subscriptions); no controlled end-to-end test run."
+      notes: "Handler, close-service and guard tests pass; retry mutation check failed 3 tests. Endpoints deployed; 6 Shopify webhook subscriptions registered (one was an unapproved assistant error, owner chose to keep) and the eBay destination plus 3 subscriptions registered with approval. No controlled end-to-end sale on either channel."
     upstream_trace:
       plan_item: "2.1"
       requirements: [REQ-004]
   - task_id: T007
-    status: in-progress
-    notes: "Read-only discovery done: no Pre-Owned Hifi collection exists; 131 collections; component collections are smart with inconsistent rules; Sold Archive = tag sold-archive. Rule/convention decision and any store change need owner approval."
+    status: completed
+    notes: "Read-only discovery done: no Pre-Owned Hifi collection existed; 131 collections; component collections are smart with inconsistent rules; Sold Archive = tag sold-archive. Owner chose smart collections plus a Pre-Owned Hifi tag."
   - task_id: T009
-    status: in-progress
+    status: completed
     notes: "eBay Template Copy exists (multilineText). Save, reload and preview verified live on owner-chosen record recmqmULLCS5kXqCq (record restored to original; zero diff). Empty-editor HTML now normalized to blank. Replacement blurb (T010) still not supplied."
   - task_id: T001
-    status: in-progress
-    notes: "Cost per sellable listing unit and USD store currency owner-confirmed; Shopify cost/unitCost schema and inventory scopes verified read-only. Other workstream decisions remain pending."
+    status: completed
+    notes: "Cost per sellable listing unit and USD currency owner-confirmed; Shopify cost schema and scopes verified read-only; collection and sale-policy decisions since made by the owner."
   - task_id: T005
     description: "Map intake Cost to Shopify private inventory-item cost"
-    status: in-progress
+    status: completed
     implementation:
       files_changed:
         - { file: aws/src/shared/contracts/shopifyUnitCost.ts, description: "Shared parser: blank omitted, zero valid, invalid rejected" }
@@ -81,8 +81,8 @@ tasks:
       plan_item: "3.1"
       requirements: [REQ-001]
   - task_id: T002
-    status: in-progress
-    notes: "Post-Publish read-only evidence captured; other workstream discovery remains."
+    status: completed
+    notes: "Discovery done for every workstream: Post-Publish evidence, cost/eBay capability, collections (131, read-only), sold-archive, template copy, webhooks, eBay notification topics."
   - task_id: T011
     description: "Restore relevant Post-Publish records"
     status: in-progress
@@ -117,18 +117,90 @@ tasks:
       requirements: [REQ-006]
   - task_id: T013
     status: completed
-    notes: "Current batch gate: 197 frontend/57 AWS tests, both typechecks, category-control lint, isolated-output build, API health, authenticated queue read, and no-session 401 pass. Optional-empty category regression added; approval script remains skipped without its login credentials. Repeat the gate for every later batch."
+    notes: "Gate repeated 2026-10-17: AWS 399/399, frontend 164 files / 1,148 tests, both typechecks pass; lint clean on touched files."
   - task_id: T014
+    status: completed
+    notes: "Reference summary, operator guide, plan and batch report updated through batch 10 (webhooks, deploy gap, fail-closed secret, Pre-Owned Hifi tag and collections, shipping cleanup)."
+  - task_id: T015
+    description: "eBay native notification receiver and registration"
     status: in-progress
-    notes: "Reference, operator guide, and plan updated. One explicitly authorized Shopify-price backfill verified; no production deployment or bulk backfill."
+    implementation:
+      files_changed:
+        - { file: aws/src/handlers/ebay/receiveNotification.ts, description: "GET challenge, POST receiver; 200 for unmatched/permanent, 503 for retryable" }
+        - { file: aws/src/services/ebayNotifications.ts, description: "Challenge hash, ECDSA signature verification (fails closed), ORDER_CONFIRMATION mapping, payload-shape logging" }
+        - { file: aws/src/services/ebayNotificationSetup.ts, description: "Idempotent additive destination/subscription setup" }
+        - { file: aws/src/providers/ebay/client.ts, description: "Public key, order lookup, destination/subscription list/create, access probe" }
+        - { file: scripts/setup-ebay-notifications.ts, description: "Dry run by default; --check-access; --apply" }
+        - { file: scripts/ebay-oauth.mjs, description: "Consent URL and code exchange without creating a listing" }
+    verification:
+      build_passed: true
+      notes: "Registered with approval: 1 destination, 3 subscriptions (ORDER_CONFIRMATION, ORDER_CANCELLATION_ACTIVITY, ORDER_RETURN_ACTIVITY). Token re-authorized; access check orders ok. Cancellation/return payloads unmapped until real samples arrive; no real eBay notification received yet."
+    upstream_trace:
+      plan_item: "2.1"
+      requirements: [REQ-004]
+  - task_id: T016
+    description: "Deploy parameters and fail-closed webhook secret"
+    status: completed
+    implementation:
+      files_changed:
+        - { file: scripts/prepare-aws-samconfig.mjs, description: "Passes Shopify/eBay webhook secrets, base URLs and notification verification token" }
+        - { file: aws/src/handlers/ebay/receiveWebhook.ts, description: "Rejects every request when EBAY_WEBHOOK_SECRET is unset" }
+        - { file: aws/src/providers/shopify/client.ts, description: "Webhook base URL no longer doubles /api" }
+        - { file: aws/template.yaml, description: "Notification route and verification-token parameter" }
+    verification:
+      build_passed: true
+      notes: "Failing-first tests; deployed endpoints probed: challenge hash matches, unsigned POSTs return 401."
+    upstream_trace:
+      plan_item: "2.1"
+      requirements: [REQ-004]
+  - task_id: T017
+    description: "Pre-Owned Hifi tag on used publishes"
+    status: in-progress
+    implementation:
+      files_changed:
+        - { file: aws/src/shared/contracts/shopifyPreOwnedTag.ts, description: "Adds the tag only when condition is Used; never duplicates" }
+        - { file: aws/src/providers/shopify/approvalDraftProduct.ts, description: "Backend builder" }
+        - { file: src/services/shopifyDraftFromAirtableProduct.ts, description: "Frontend builder" }
+        - { file: aws/src/providers/shopify/approvalPreview.ts, description: "Preview shows the final tags" }
+    verification:
+      build_passed: true
+      notes: "Failing-first tests for both builders. Not yet deployed or exercised by a real publish."
+    upstream_trace:
+      plan_item: "4.1"
+      requirements: [REQ-003]
+  - task_id: T018
+    description: "Shipping weight/dimensions cleanup and undo"
+    status: completed
+    implementation:
+      files_changed:
+        - { file: aws/src/shared/contracts/shippingDimsCleanup.ts, description: "Single-package split, weight format, undo planner" }
+        - { file: scripts/clean-shipping-dims.ts, description: "Report by default; --apply with backup and readback" }
+        - { file: scripts/restore-shipping-dims.ts, description: "Undo that skips records edited since" }
+    verification:
+      build_passed: true
+      notes: "Ran live with approval: canary, bulk single-package split, 48 weight-format fixes; all verified. Left for the owner: 367 multi-package, 91 unrecognized, 1 implausible dimensions and 15 free-text weights that make Shopify publish throw."
+    upstream_trace:
+      plan_item: "7.1"
+      requirements: [REQ-001]
+  - task_id: T019
+    description: "Shopify Price persistence and category selector"
+    status: in-progress
+    verification:
+      build_passed: true
+      notes: "Price save path fixed and tested; one record backfilled with approval; eBay category selector required prop restored. Other records missing a Shopify price are not previewed or backfilled."
+    upstream_trace:
+      plan_item: "6.1"
+      requirements: [REQ-006]
 pending_tasks:
-  - { task_id: T008, status: pending, description: "Approved collection rules and classification" }
+  - { task_id: T008, status: in-progress, description: "Collections created (umbrella + 9 component); remaining: deploy, one real publish test, Online Store availability, legacy-collection decision" }
   - { task_id: T010, status: blocked, description: "Replacement blurb not supplied" }
 untracked_changes: []
 traceability_chain:
   - { requirement: REQ-006, plan_item: "6.1", tasks: [T011, T012], status: partial }
   - { requirement: REQ-001, plan_item: "3.1", tasks: [T005, T006], status: "implemented locally; live write/readback unverified" }
-  - { requirement: REQ-004, plan_item: "2.1", tasks: [T003, T004], status: "implemented locally; not deployed, webhooks unregistered, no controlled end-to-end test" }
+  - { requirement: REQ-004, plan_item: "2.1", tasks: [T003, T004, T015, T016], status: "implemented, deployed and registered on both channels; no controlled end-to-end sale test yet" }
+  - { requirement: REQ-003, plan_item: "4.1", tasks: [T007, T008, T017], status: "tag code and 10 collections done; deploy, real publish test and Online Store availability pending" }
+  - { requirement: REQ-002, plan_item: "5.1", tasks: [T009, T010], status: "save, reload and preview verified; replacement blurb not supplied" }
 validation:
   passed: false
   errors: []
@@ -136,8 +208,11 @@ validation:
     - "Local implementation and focused validation are not production acceptance."
     - "Unrelated existing worktree edits were preserved."
     - "Shopify private cost has not been written to or read back from the live store; that needs an explicitly approved single-item test."
-    - "Sold retention has not run against the live store: the app sees 0 Shopify webhook subscriptions, nothing is deployed, and registration is a live store change needing explicit approval."
-    - "Full frontend suite passes (164 files, 1,147 tests); the two formerly failing workflow-image tests were outdated fixtures, fixed without source changes."
+    - "Sold retention has not processed a real sale: webhooks are registered (Shopify 6, eBay 3) and endpoints deployed, but no controlled test purchase has run on either channel."
+    - "Six Shopify webhooks were registered by an assistant mistake (a --help run of the register script); the owner chose to keep them."
+    - "Pre-Owned Hifi collections exist but Online Store availability is unchecked and no real publish has exercised the tag."
+    - "Open data items for the owner: 15 free-text weights (Shopify publish throws), multi-package dimensions, other records missing a Shopify price."
+    - "Full frontend suite passes (164 files, 1,148 tests) and AWS suite 399/399; the two formerly failing workflow-image tests were outdated fixtures, fixed without source changes."
     - "A working-tree rollback of the Oct 14-15 work was reversed by restoring ten files to HEAD; the pre-restore patch is saved. Template-copy save, reload and preview were verified live on one owner-chosen record, which was restored to its original state."
   blocking_issues:
     - "Production deployment and deployed read reconciliation remain outstanding."
