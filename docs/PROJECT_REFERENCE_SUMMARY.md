@@ -74,6 +74,9 @@
 ### Pre-Owned Hifi Tag
 - Publishing a listing whose normalized condition is `Used` appends the Shopify tag `Pre-Owned Hifi` (`aws/src/shared/contracts/shopifyPreOwnedTag.ts`) in both the backend and frontend draft builders and the publish preview. Other or blank conditions are not tagged, and the tag is never duplicated. It feeds a Shopify smart collection with the rule `Tag equals "Pre-Owned Hifi"`; the collection itself is created in Shopify and existing products are not backfilled.
 
+### Shipping Weight / Dimensions Cleanup
+- The canonical split is `Weight` (text such as `70 lbs`) and `Shipping Dims` (`27x25x12`). Older records hold `70lbs (27x25x12)` in `Shipping Dims`; Shopify and eBay publishing read the embedded weight, so output is unchanged either way. `npm run airtable:clean-shipping-dims` reports (default, read-only), applies (`--apply [--limit N]`, verified, with a backup in `tmp/`) the single-package conversions; `npm run airtable:restore-shipping-dims -- <backup> [--apply]` undoes them (only records still holding the cleanup's output; later edits are skipped) defined in `aws/src/shared/contracts/shippingDimsCleanup.ts`. Multi-package and ambiguous values are never converted.
+
 ### Post-Publish Queue Reads
 - Post-Publish, Archive, and their summary counts use the `post-publish` configured-record subset on `used-gear-workflow`, with shared lifecycle statuses and a lightweight field projection from `aws/src/shared/contracts/usedGearPostPublish.ts`. The provider applies the workflow-stage filter before pagination; no default record cap is added. Do not fetch intake/testing notes or image metadata for these directories.
 - Preserve canonical workflow status eligibility and the existing 45-day stale threshold. A dual-channel listing remains one operational row; historical closure fields do not establish its current lifecycle state.

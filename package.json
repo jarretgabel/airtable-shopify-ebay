@@ -71,6 +71,8 @@
     "probe:lambda:ebay": "node scripts/probe-lambda-ebay-writes.mjs",
     "shopify:webhooks:register": "node --import tsx scripts/register-shopify-webhooks.ts",
     "shopify:webhooks:delete": "node --import tsx scripts/delete-shopify-webhooks.ts",
+    "airtable:restore-shipping-dims": "node --import tsx scripts/restore-shipping-dims.ts",
+    "airtable:clean-shipping-dims": "node --import tsx scripts/clean-shipping-dims.ts",
     "ebay:oauth": "node scripts/ebay-oauth.mjs",
     "ebay:notifications:setup": "node --import tsx scripts/setup-ebay-notifications.ts",
     "ebay:webhooks:register": "node --import tsx scripts/register-ebay-webhooks.ts",
