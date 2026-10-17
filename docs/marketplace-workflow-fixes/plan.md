@@ -150,6 +150,13 @@ Batch 11 progress (2026-10-17): **missing Shopify prices, read-only preview then
 
 Batch 12 note (2026-10-17): **no post-publish price writeback.** A writeback of the published Shopify price to Airtable was built and then removed at the owner's direction. Publishing already saves unsaved form changes to Airtable before it publishes (`savePendingUpdates` in `useListingApprovalPublishActions.ts`, shown in the confirmation as "Unsaved listing changes will be saved to Airtable before publishing"), so the form save is the single place the price is written. The earlier price losses came from defects in that save path (canonical `Shopify Price` alias targeting, blank writes, and silent dropping of unknown price fields), fixed in an earlier batch. If a price goes missing again, the cause should be found in the save path rather than patched after publish.
 
+Batch 13 progress (2026-10-17; offline replay, one code fix, not deployed): **full-chain sold-flow replay found that Shopify sales could never be matched.**
+
+- `tests/unit/aws/src/replay/soldFlowReplay.test.ts` replays Shopify and eBay payloads (eBay in the real `data.order` shape) through the real handlers and services against an in-memory Airtable, Shopify store and eBay API (only `fetch` and the stores are faked). 10 scenarios: Shopify sale (match, eBay withdraw, archive, existing tags kept), redelivery with no repeated effects, temporary Shopify failure then recovery (503, nothing recorded, redelivery completes), Shopify cancel/refund/return (outcomes only, no product or eBay change), unknown product, eBay sale (archive, recorded once), eBay temporary failure then recovery, unknown eBay listing, multi-unit flagged for review, and the known gap that eBay cancel/return notifications change nothing yet.
+- **Bug found and fixed:** the Shopify webhook handler matched an order to a record only by `Shopify Product ID` / `Product ID` / `Shopify Order ID`, but the app writes `Shopify REST Product ID` and that is the only product-id field with data (7 records). Every real Shopify sale would have been reported "unmatched" and nothing would have happened (no archive, no eBay withdrawal, no cancel/refund/return outcome). `Shopify REST Product ID` is now the first match field; the replay failed first and passes after, and reverting the fix fails 2 scenarios again.
+- Consequence for earlier work: the Shopify product-id backfills (Luxman C-900u, VPI HW-40) only enable sale matching once this fix is deployed.
+- Verification: AWS suite 412/412; typecheck passes. **Needs a deploy to take effect.**
+
 ### P3.1: Sync private unit cost to Shopify
 
 Requirement: REQ-001.

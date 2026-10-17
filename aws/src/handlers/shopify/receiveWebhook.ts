@@ -111,7 +111,8 @@ const TOPIC_BY_PATH: Record<ShopifyWebhookPathTopic, { headerValue: string; topi
 
 const SHOPIFY_SYNC_LOCK_FIELD = 'Shopify Sync Locked';
 const SHOPIFY_ORDER_ID_FIELDS = ['Shopify Order ID'];
-const SHOPIFY_PRODUCT_ID_FIELDS = ['Shopify Product ID', 'Product ID'];
+// 'Shopify REST Product ID' is the field the app writes on publish; the others are kept for older data.
+const SHOPIFY_PRODUCT_ID_FIELDS = ['Shopify REST Product ID', 'Shopify Product ID', 'Product ID'];
 
 function parseNumericValue(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -319,8 +320,8 @@ function resolveMatchingRecordId(
   if (firstProductId) {
     const matchedRecord = records.find((record) => {
       const fields = record.fields;
-      const storedProductId = getFieldValue(fields, SHOPIFY_PRODUCT_ID_FIELDS);
-      return storedProductId === firstProductId;
+      // Any stored id field may carry the product id (the app writes 'Shopify REST Product ID'; older data used the others).
+      return SHOPIFY_PRODUCT_ID_FIELDS.some((fieldName) => getFieldValue(fields, [fieldName]) === firstProductId);
     });
 
     if (matchedRecord) {
