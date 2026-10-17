@@ -6,6 +6,7 @@ import {
   listNotificationDestinations,
   listNotificationSubscriptions,
   probeNotificationAccess,
+  testNotificationSubscription,
 } from '../aws/src/providers/ebay/client.js';
 import {
   DEFAULT_EBAY_NOTIFICATION_TOPICS,
@@ -20,10 +21,25 @@ for (const name of ['CLIENT_ID', 'CLIENT_SECRET', 'REFRESH_TOKEN', 'ENV', 'WEBHO
   process.env[`EBAY_${name}`] = process.env[`EBAY_${name}`] || process.env[`VITE_EBAY_${name}`] || '';
 }
 
-// Usage: npm run ebay:notifications:setup [-- --check-access | --apply]
+// Usage: npm run ebay:notifications:setup [-- --check-access | --apply | --test TOPIC]
+// --test asks eBay to send a mocked signed notification for TOPIC to the deployed endpoint (no real order is touched).
 // With no flag this is a dry run that only reads. --apply is the only mode that writes to eBay.
 async function main(): Promise<void> {
   const args = new Set(process.argv.slice(2));
+
+  const testIndex = process.argv.indexOf('--test');
+  if (testIndex >= 0) {
+    const topic = process.argv[testIndex + 1] || 'ORDER_CONFIRMATION';
+    const endpoint = buildEbayNotificationEndpoint(process.env.EBAY_WEBHOOK_BASE_URL);
+    const destination = (await listNotificationDestinations()).find((item) => item.endpoint === endpoint);
+    const subscription = destination
+      ? (await listNotificationSubscriptions()).find((item) => item.topicId === topic && item.destinationId === destination.destinationId)
+      : undefined;
+    if (!subscription) throw new Error(`No ${topic} subscription found for ${endpoint}. Run setup --apply first.`);
+    await testNotificationSubscription(subscription.subscriptionId);
+    console.log(`eBay accepted the ${topic} test request (subscription ${subscription.subscriptionId}). Check the receiver logs for a notification with a test notificationId.`);
+    return;
+  }
 
   if (args.has('--check-access')) {
     console.log(JSON.stringify(await probeNotificationAccess(), null, 2));

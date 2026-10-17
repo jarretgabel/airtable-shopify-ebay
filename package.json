@@ -73,6 +73,7 @@
     "shopify:webhooks:delete": "node --import tsx scripts/delete-shopify-webhooks.ts",
     "airtable:restore-shipping-dims": "node --import tsx scripts/restore-shipping-dims.ts",
     "airtable:clean-shipping-dims": "node --import tsx scripts/clean-shipping-dims.ts",
+    "shopify:webhooks:probe": "node scripts/probe-shopify-webhook.mjs",
     "ebay:oauth": "node scripts/ebay-oauth.mjs",
     "ebay:notifications:setup": "node --import tsx scripts/setup-ebay-notifications.ts",
     "ebay:webhooks:register": "node --import tsx scripts/register-ebay-webhooks.ts",

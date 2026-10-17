@@ -9,6 +9,7 @@ import {
   listNotificationDestinations,
   listNotificationSubscriptions,
   probeNotificationAccess,
+  testNotificationSubscription,
 } from '../../../../../../aws/src/providers/ebay/client.js';
 
 interface Call { method: string; url: string; auth: string; body: Record<string, unknown> | null }
@@ -167,5 +168,18 @@ test('the access probe is read-only and reports each failure without throwing', 
     assert.equal(result.orders, 'ok');
     assert.match(result.subscriptions, /^HTTP 403/);
     assert.ok(calls.every((call) => call.method === 'GET'));
+  });
+});
+
+test('a subscription test posts with no body using the user token and accepts 202', async () => {
+  await withMockedEbay((call) => {
+    if (call.method === 'POST' && call.url.endsWith('/commerce/notification/v1/subscription/sub-5/test')) return new Response(null, { status: 202 });
+    if (call.method === 'POST' && call.url.endsWith('/commerce/notification/v1/subscription/missing/test')) return json({ errors: [{ errorId: 195009 }] }, 404);
+    return undefined;
+  }, async (calls) => {
+    await testNotificationSubscription('sub-5');
+    assert.equal(calls[0].body, null);
+    assert.equal(calls[0].auth, 'Bearer USER-TOKEN');
+    await assert.rejects(testNotificationSubscription('missing'), (error: { statusCode?: number }) => error.statusCode === 404);
   });
 });

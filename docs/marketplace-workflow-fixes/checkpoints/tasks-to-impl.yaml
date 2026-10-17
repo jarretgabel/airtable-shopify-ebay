@@ -134,7 +134,7 @@ tasks:
         - { file: scripts/ebay-oauth.mjs, description: "Consent URL and code exchange without creating a listing" }
     verification:
       build_passed: true
-      notes: "Registered with approval: 1 destination, 3 subscriptions (ORDER_CONFIRMATION, ORDER_CANCELLATION_ACTIVITY, ORDER_RETURN_ACTIVITY). Token re-authorized; access check orders ok. Cancellation/return payloads unmapped until real samples arrive; no real eBay notification received yet."
+      notes: "Registered with approval: 1 destination, 3 subscriptions (ORDER_CONFIRMATION, ORDER_CANCELLATION_ACTIVITY, ORDER_RETURN_ACTIVITY). Token re-authorized; access check orders ok. Cancellation/return payloads unmapped until real samples arrive; eBay mocked test notifications received and signature-verified (2026-10-17); real ORDER_CONFIRMATION shape is data.order, mapper fixed, deployed and verified with eBay's mocked order (recognized, unmatched, acknowledged, no writes); cancellation/return line-item identifiers still unknown."
     upstream_trace:
       plan_item: "2.1"
       requirements: [REQ-004]

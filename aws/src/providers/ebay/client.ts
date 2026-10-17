@@ -808,6 +808,22 @@ export async function probeNotificationAccess(): Promise<{ orders: string; subsc
   };
 }
 
+// Asks eBay to send a mocked, signed test notification (it carries a notificationId) to the subscription's destination.
+export async function testNotificationSubscription(subscriptionId: string): Promise<void> {
+  const response = await ebayRestFetch(resolveApiUrl(`${EBAY_NOTIFICATION_API}/subscription/${encodeURIComponent(subscriptionId)}/test`), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${await getValidUserToken()}`, 'Accept-Language': 'en-US' },
+  });
+
+  if (!response.ok) {
+    throw new HttpError(response.status, `eBay subscription test failed: ${await readErrorPayload(response)}`, {
+      service: 'ebay',
+      code: 'EBAY_NOTIFICATION_TEST_FAILED',
+      retryable: response.status >= 500,
+    });
+  }
+}
+
 const NOTIFICATION_PUBLIC_KEY_TTL_MS = 60 * 60 * 1000;
 const notificationPublicKeyCache = new Map<string, { value: { key: string; algorithm?: string; digest?: string }; expiresAt: number }>();
 

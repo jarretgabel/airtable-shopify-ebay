@@ -21,7 +21,11 @@ export interface EbayNotificationEnvelope {
   notification?: {
     notificationId?: string;
     eventDate?: string;
-    data?: { orderId?: unknown };
+    // Real ORDER_CONFIRMATION notifications nest everything under data.order (confirmed from eBay's own test notification).
+    data?: {
+      orderId?: unknown;
+      order?: { orderId?: unknown; orderLineItems?: Array<{ listingId?: unknown }> };
+    };
   };
 }
 
@@ -124,13 +128,17 @@ export async function mapEbayNotification(
     return { kind: 'ignored', reason: `topic-not-mapped:${topic}` };
   }
 
-  const orderId = trim(envelope.notification?.data?.orderId);
+  const data = envelope.notification?.data;
+  const orderId = trim(data?.order?.orderId) || trim(data?.orderId);
   if (!orderId) {
     return { kind: 'ignored', reason: 'order-id-missing' };
   }
 
   const occurredAt = trim(envelope.notification?.eventDate);
-  const events = (await dependencies.getOrderLineItems(orderId))
+  // The notification already lists each line item's listing id; the Fulfillment API is only needed when it does not.
+  const inlineItems = (data?.order?.orderLineItems ?? []).map((item) => ({ legacyItemId: trim(item.listingId), sku: '' }));
+  const lineItems = inlineItems.some((item) => item.legacyItemId) ? inlineItems : await dependencies.getOrderLineItems(orderId);
+  const events = lineItems
     .map((item) => ({ listingId: trim(item.legacyItemId), sku: trim(item.sku) }))
     .filter((item) => item.listingId || item.sku)
     .map((item): MappedEbayOrderEvent => ({ eventType: 'order.created', ...item, orderId, occurredAt }));

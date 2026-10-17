@@ -128,3 +128,33 @@ test('the endpoint is the same whether or not the base URL already ends in /api 
   }
   assert.equal(buildEbayNotificationEndpoint(''), '');
 });
+
+test('maps the real eBay ORDER_CONFIRMATION shape (data.order with its own line items) without an order lookup', async () => {
+  const result = await mapEbayNotification(
+    {
+      metadata: { topic: 'ORDER_CONFIRMATION' },
+      notification: {
+        notificationId: 'n-2',
+        eventDate: '2026-10-17T22:11:28.000Z',
+        data: { order: { orderId: '12-34567-89012', orderLineItems: [{ listingId: '1111', orderLineItemId: 'li-1', quantity: 1 }, { listingId: '2222', quantity: 2 }] } },
+      },
+    },
+    { getOrderLineItems: async () => { throw new Error('must not be called'); } },
+  );
+
+  assert.deepEqual(result, {
+    kind: 'events',
+    events: [
+      { eventType: 'order.created', listingId: '1111', sku: '', orderId: '12-34567-89012', occurredAt: '2026-10-17T22:11:28.000Z' },
+      { eventType: 'order.created', listingId: '2222', sku: '', orderId: '12-34567-89012', occurredAt: '2026-10-17T22:11:28.000Z' },
+    ],
+  });
+});
+
+test('falls back to the order lookup when the real shape carries an order id but no line items', async () => {
+  const result = await mapEbayNotification(
+    { metadata: { topic: 'ORDER_CONFIRMATION' }, notification: { eventDate: 't', data: { order: { orderId: 'O-9' } } } },
+    { getOrderLineItems: async (orderId) => [{ legacyItemId: '3333', sku: 'S-3' }].map((item) => ({ ...item, orderId })) },
+  );
+  assert.deepEqual(result, { kind: 'events', events: [{ eventType: 'order.created', listingId: '3333', sku: 'S-3', orderId: 'O-9', occurredAt: 't' }] });
+});
