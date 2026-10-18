@@ -12,7 +12,7 @@ import { resolveListingApprovalTestingSectionFields } from '@/components/approva
 import { tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
 import { isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
-import { generateListingDescription } from '@/services/app-api/ai';
+import { generateListingDescription, generateListingKeyFeatures, generateListingTitle } from '@/services/app-api/ai';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const KeyFeaturesEditor = lazy(async () => ({
@@ -108,31 +108,52 @@ export function ListingApprovalCombinedSharedSection({
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [descriptionError, setDescriptionError] = useState('');
 
+  const [generatingTitle, setGeneratingTitle] = useState(false);
+  const [titleError, setTitleError] = useState('');
+
+  const collectListingFields = (excludedFieldName: string) => Object.fromEntries(
+    Object.entries(formValues).filter(([name, value]) => (
+      name !== excludedFieldName
+      && typeof value === 'string'
+      && value.trim().length > 0
+      && value.length <= 1500
+      && !/json|html|image|photo|url|^id$|record/i.test(name)
+    )),
+  );
+
   const handleGenerateDescription = async () => {
     const existingDescription = formValues[combinedDescriptionFieldName] ?? '';
     if (existingDescription.trim() && !window.confirm('Replace the current description with an AI-generated one?')) {
       return;
     }
 
-    const listingFields = Object.fromEntries(
-      Object.entries(formValues).filter(([name, value]) => (
-        name !== combinedDescriptionFieldName
-        && typeof value === 'string'
-        && value.trim().length > 0
-        && value.length <= 1500
-        && !/json|html|image|photo|url|^id$|record/i.test(name)
-      )),
-    );
-
     setGeneratingDescription(true);
     setDescriptionError('');
     try {
-      const description = await generateListingDescription(listingFields, existingDescription);
+      const description = await generateListingDescription(collectListingFields(combinedDescriptionFieldName), existingDescription);
       setFormValue(combinedDescriptionFieldName, description);
     } catch (error) {
       setDescriptionError(error instanceof Error ? error.message : 'Could not generate a description.');
     } finally {
       setGeneratingDescription(false);
+    }
+  };
+
+  const handleGenerateTitle = async () => {
+    const existingTitle = formValues[titleFieldName] ?? '';
+    if (existingTitle.trim() && !window.confirm('Replace the current title with an AI-generated one?')) {
+      return;
+    }
+
+    setGeneratingTitle(true);
+    setTitleError('');
+    try {
+      const title = await generateListingTitle(collectListingFields(titleFieldName), existingTitle);
+      setFormValue(titleFieldName, title);
+    } catch (error) {
+      setTitleError(error instanceof Error ? error.message : 'Could not generate a title.');
+    } finally {
+      setGeneratingTitle(false);
     }
   };
 
@@ -223,6 +244,21 @@ export function ListingApprovalCombinedSharedSection({
           />
         )}
 
+        {titleFieldName && (
+          <div className="-mt-2 flex items-center gap-3">
+            <button
+              type="button"
+              className="rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => { void handleGenerateTitle(); }}
+              disabled={saving || generatingTitle}
+            >
+              {generatingTitle ? 'Generating…' : 'Generate title with AI'}
+            </button>
+            <span className="text-xs text-[var(--muted)]">{(formValues[titleFieldName] ?? '').length}/80 characters</span>
+            {titleError && <span role="alert" className="text-xs text-rose-400">{titleError}</span>}
+          </div>
+        )}
+
         {combinedDescriptionFieldName && (
           <div className="flex flex-col gap-2">
             <div className={`mb-1 flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] ${descriptionIsMissing ? 'text-[var(--required-label-ink)]' : 'text-[var(--muted)]'}`}>
@@ -285,6 +321,11 @@ export function ListingApprovalCombinedSharedSection({
               disabled={saving}
               componentTypeValue={componentTypeValue}
               hiddenFeatureNames={COMBINED_HIDDEN_KEY_FEATURE_NAMES}
+              onGenerateFeatures={(existingFeatureNames) => generateListingKeyFeatures(
+                collectListingFields(combinedSharedKeyFeaturesFieldName),
+                existingFeatureNames,
+                COMBINED_HIDDEN_KEY_FEATURE_NAMES,
+              )}
               helperNotice={(
                 <p className="m-0 leading-5">
                   <span className="font-semibold uppercase tracking-[0.08em]">Automatic Mapping</span>{' '}

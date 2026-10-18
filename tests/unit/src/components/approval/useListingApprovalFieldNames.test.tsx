@@ -23,6 +23,24 @@ describe('useListingApprovalFieldNames', () => {
     expect(result.current.allFieldNames).not.toContain('Shopify REST Variant 1 Price');
   });
 
+  it('keeps the key features field available when no loaded combined record has one', () => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { 'Item Title': 'Bel Canto PRe1' } }],
+      approvalChannel: 'combined',
+    }));
+
+    expect(result.current.allFieldNames).toContain('Key Features (Key, Value)');
+  });
+
+  it('does not add a second key features field when one is already loaded', () => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { 'Key Features JSON': '[]' } }],
+      approvalChannel: 'combined',
+    }));
+
+    expect(result.current.allFieldNames).not.toContain('Key Features (Key, Value)');
+  });
+
   it('includes writable flat-fee fields when Airtable omits blank values from records', () => {
     const { result } = renderHook(() => useListingApprovalFieldNames({
       records: [{

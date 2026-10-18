@@ -2,7 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   generateDescription,
+  generateKeyFeatures,
+  generateTitle,
+  parseKeyFeaturesOutput,
   sanitizeDescriptionOutput,
+  sanitizeTitleOutput,
 } from '../../../../../../aws/src/providers/ai/client.js';
 
 test('sanitizeDescriptionOutput strips markup and exclamation points', () => {
@@ -66,5 +70,87 @@ test('generateDescription uses Anthropic when ANTHROPIC_API_KEY is set', async (
     global.fetch = originalFetch;
     if (saved.a === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved.a;
     if (saved.o === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = saved.o;
+  }
+});
+
+test('sanitizeTitleOutput keeps one clean line and caps at 80 characters', () => {
+  assert.equal(sanitizeTitleOutput('Title: "McIntosh MC275 Tube Amplifier!"\nextra line'), 'McIntosh MC275 Tube Amplifier');
+  const long = sanitizeTitleOutput('McIntosh MC275 Vacuum Tube Stereo Power Amplifier Pre-Owned Serviced Original Cage Included');
+  assert.ok(long.length <= 80);
+  assert.doesNotMatch(long, /\s$/);
+});
+
+test('generateTitle uses the title prompt and returns a clean title', async () => {
+  const originalFetch = global.fetch;
+  const saved = { a: process.env.ANTHROPIC_API_KEY };
+  process.env.ANTHROPIC_API_KEY = 'sk-ant-test';
+
+  let system = '';
+  global.fetch = async (_input, init) => {
+    system = JSON.parse(String(init?.body)).system;
+    return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Leben CS300 Integrated Amplifier Pre-Owned' }] }), { status: 200 });
+  };
+
+  try {
+    const result = await generateTitle({ Brand: 'Leben', Model: 'CS300' });
+    assert.equal(result, 'Leben CS300 Integrated Amplifier Pre-Owned');
+    assert.match(system, /80 characters maximum/);
+  } finally {
+    global.fetch = originalFetch;
+    if (saved.a === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved.a;
+  }
+});
+
+test('parseKeyFeaturesOutput cleans, dedupes and drops excluded or invalid rows', () => {
+  const raw = 'Here you go:\n[{"feature":"Service History","value":"Serviced in 2024!"},{"feature":"Make","value":"Leben"},{"feature":"service history","value":"dup"},{"feature":"Inputs"},{"feature":"Tubes","value":"  4 x EL84 "}]';
+  assert.deepEqual(parseKeyFeaturesOutput(raw, ['Make']), [
+    { feature: 'Service History', value: 'Serviced in 2024.' },
+    { feature: 'Tubes', value: '4 x EL84' },
+  ]);
+  assert.deepEqual(parseKeyFeaturesOutput('no json here'), []);
+});
+
+test('parseKeyFeaturesOutput drops equivalents of automatically mapped rows', () => {
+  const raw = JSON.stringify([
+    { feature: 'Included', value: 'Original box' },
+    { feature: 'Weight', value: '15 lbs' },
+    { feature: 'Dimensions', value: '20x18x10' },
+    { feature: 'Conductor Geometry', value: 'Multi-gauge network design [CHECK]' },
+  ]);
+  assert.deepEqual(parseKeyFeaturesOutput(raw), [
+    { feature: 'Conductor Geometry', value: 'Multi-gauge network design [CHECK]' },
+  ]);
+});
+
+test('parseKeyFeaturesOutput ignores prose and citation brackets around the JSON', () => {
+  const raw = 'I will search [1] for specs.```json\n[{"feature":"Made In","value":"USA"}]\n```';
+  assert.deepEqual(parseKeyFeaturesOutput(raw), [{ feature: 'Made In', value: 'USA' }]);
+});
+
+test('parseKeyFeaturesOutput strips web search citation tags', () => {
+  const raw = '[{"feature":"Made In","value":"<cite index=\\"4-1\\">USA</cite>"}]';
+  assert.deepEqual(parseKeyFeaturesOutput(raw), [{ feature: 'Made In', value: 'USA' }]);
+});
+
+test('generateKeyFeatures sends the features prompt and returns parsed rows', async () => {
+  const originalFetch = global.fetch;
+  const saved = process.env.ANTHROPIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = 'sk-ant-test';
+
+  let sent: { system: string; messages: Array<{ content: string }> } | undefined;
+  global.fetch = async (_input, init) => {
+    sent = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify({ content: [{ type: 'text', text: '[{"feature":"Tubes","value":"4 x EL84"}]' }] }), { status: 200 });
+  };
+
+  try {
+    const result = await generateKeyFeatures({ Notes: 'Four EL84 tubes' }, ['Inputs']);
+    assert.deepEqual(result, [{ feature: 'Tubes', value: '4 x EL84' }]);
+    assert.match(sent?.system ?? '', /Other Key Features/);
+    assert.match(sent?.messages[0].content ?? '', /Notes: Four EL84 tubes/);
+    assert.match(sent?.messages[0].content ?? '', /do not repeat\): Inputs/);
+  } finally {
+    global.fetch = originalFetch;
+    if (saved === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved;
   }
 });

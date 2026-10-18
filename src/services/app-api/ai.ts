@@ -36,7 +36,55 @@ export async function generateListingDescription(
       fields,
       existingDescription,
     });
+    if (typeof result.description !== 'string' || !result.description.trim()) {
+      throw new Error('The AI service returned no description.');
+    }
     return result.description;
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
+export async function generateListingTitle(
+  fields: Record<string, string>,
+  existingTitle = '',
+): Promise<string> {
+  try {
+    const result = await postJson<{ title: string }>('/api/ai/generate-description', {
+      kind: 'title',
+      fields,
+      existingDescription: existingTitle,
+    });
+    if (typeof result.title !== 'string' || !result.title.trim()) {
+      throw new Error('The AI service returned no title. Restart the API so it has the latest version.');
+    }
+    return result.title;
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
+export interface GeneratedKeyFeatureRow {
+  feature: string;
+  value: string;
+}
+
+export async function generateListingKeyFeatures(
+  fields: Record<string, string>,
+  existingFeatureNames: string[] = [],
+  excludedFeatureNames: string[] = [],
+): Promise<GeneratedKeyFeatureRow[]> {
+  try {
+    const result = await postJson<{ features: GeneratedKeyFeatureRow[] }>('/api/ai/generate-description', {
+      kind: 'features',
+      fields,
+      existingFeatureNames,
+      excludedFeatureNames,
+    });
+    if (!Array.isArray(result.features)) {
+      throw new Error('The AI service returned no features. Restart the API so it has the latest version.');
+    }
+    return result.features;
   } catch (error) {
     throw toAiError(error);
   }

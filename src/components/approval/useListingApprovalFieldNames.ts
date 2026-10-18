@@ -107,6 +107,14 @@ export function useListingApprovalFieldNames({
         SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
       );
       if (preferredKeyFeaturesField) names.add(preferredKeyFeaturesField);
+
+      // Airtable omits empty fields, so keep the editor available when no loaded record has key features yet.
+      if (approvalChannel === 'combined' && !existingNames.some((name) => {
+        const normalized = name.trim().toLowerCase();
+        return !normalized.includes('ebay') && (normalized.includes('key feature') || normalized === 'features' || normalized === 'features json');
+      })) {
+        names.add('Key Features (Key, Value)');
+      }
     }
 
     if (approvalChannel === 'ebay' || approvalChannel === 'combined') {

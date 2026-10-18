@@ -23,6 +23,7 @@ interface KeyFeaturesEditorProps {
   headerAction?: ReactNode;
   componentTypeValue?: string;
   hiddenFeatureNames?: string[];
+  onGenerateFeatures?: (existingFeatureNames: string[]) => Promise<KeyFeatureRow[]>;
 }
 
 type KeyFeaturePresetId =
@@ -148,6 +149,19 @@ function isAutoIncludedFeature(value: string): boolean {
   return AUTO_INCLUDED_FEATURE_NAMES.has(normalizeFeatureKey(value));
 }
 
+const AUTO_MAPPED_GENERATED_WORDS = new Set([
+  'make', 'brand', 'model', 'serial', 'condition', 'cosmetic', 'include', 'includes', 'included', 'including',
+  'box', 'manual', 'remote', 'voltage', 'weight', 'dimension', 'dimensions', 'audiogon', 'sku', 'tested', 'testing',
+]);
+
+function isAutoMappedGeneratedFeature(feature: string, value: string): boolean {
+  const key = normalizeFeatureKey(feature);
+  return key.split(' ').some((word) => AUTO_MAPPED_GENERATED_WORDS.has(word))
+    || key.includes('power cable')
+    || key.includes('component type')
+    || /^(yes|no|true|false|n\/a)$/i.test(value.trim());
+}
+
 function stripAutoIncludedRows(rows: ReadonlyArray<KeyFeatureRow>): KeyFeatureRow[] {
   return rows.filter((row) => !isAutoIncludedFeature(row.feature));
 }
@@ -268,6 +282,7 @@ export function KeyFeaturesEditor({
   headerAction,
   componentTypeValue,
   hiddenFeatureNames = [],
+  onGenerateFeatures,
 }: KeyFeaturesEditorProps) {
   const hiddenFeatureNamesKey = hiddenFeatureNames
     .map((value) => normalizeFeatureKey(value))
@@ -282,6 +297,8 @@ export function KeyFeaturesEditor({
   const [hiddenRows, setHiddenRows] = useState<KeyFeatureRow[]>(initialRows.hiddenRows);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [selectedPresetId, setSelectedPresetId] = useState<KeyFeaturePresetId | ''>(componentTypeValue ? inferPresetIdFromComponentType(componentTypeValue) : '');
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState('');
   const lastCommittedValueRef = useRef(keyFeaturesValue);
   const availablePresets = useMemo(
     () => KEY_FEATURE_PRESETS.map((preset) => ({
@@ -348,6 +365,36 @@ export function KeyFeaturesEditor({
     commitRows(nextRows);
   }
 
+  async function generateFeatures() {
+    if (!onGenerateFeatures) return;
+
+    setGenerating(true);
+    setGenerateError('');
+    try {
+      const existingNames = [...hiddenRows, ...rows].map((row) => row.feature).filter((name) => name.trim());
+      const generated = await onGenerateFeatures(existingNames);
+      const existingKeys = new Set(existingNames.map(normalizeFeatureKey));
+      const additions = generated.filter((row) => {
+        const key = normalizeFeatureKey(row.feature);
+        if (!key || existingKeys.has(key) || isAutoIncludedFeature(row.feature) || isAutoMappedGeneratedFeature(row.feature, row.value)) return false;
+        existingKeys.add(key);
+        return true;
+      });
+
+      if (additions.length === 0) {
+        setGenerateError('No new features found in the listing details. Add more notes and try again.');
+        return;
+      }
+
+      const keptRows = rows.filter((row) => row.feature.trim() || row.value.trim());
+      commitRows([...keptRows, ...additions]);
+    } catch (error) {
+      setGenerateError(error instanceof Error ? error.message : 'Could not generate features.');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   function removeRow(index: number) {
     const next = rows.filter((_, rowIndex) => rowIndex !== index);
     commitRows(next.length > 0 ? next : [{ feature: '', value: '' }]);
@@ -385,7 +432,19 @@ export function KeyFeaturesEditor({
             {filledRowCount} rows
           </span>
         </span>
-        {headerAction ? <span onClick={(event) => event.stopPropagation()}>{headerAction}</span> : null}
+        <span className="inline-flex items-center gap-2" onClick={(event) => event.stopPropagation()}>
+          {onGenerateFeatures ? (
+            <button
+              type="button"
+              className="rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => { void generateFeatures(); }}
+              disabled={disabled || generating}
+            >
+              {generating ? 'Generating…' : 'Generate with AI'}
+            </button>
+          ) : null}
+          {headerAction}
+        </span>
       </summary>
       <div className={`${detailDisclosureBodyClass} flex flex-col gap-2`}>
         {helperText ? (
@@ -393,6 +452,7 @@ export function KeyFeaturesEditor({
             {helperText}
           </p>
         ) : null}
+        {generateError ? <p role="alert" className="m-0 text-xs text-rose-400">{generateError}</p> : null}
         {helperNotice ? (
           <div className="rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100">
             {helperNotice}

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { KeyFeaturesEditor } from '@/components/approval/KeyFeaturesEditor';
@@ -26,6 +26,48 @@ describe('KeyFeaturesEditor', () => {
       'Key Features',
       'Power Output,\nInputs,\nPhono Stage,',
     );
+  });
+
+  it('appends AI-generated features without duplicating existing or auto-mapped rows', async () => {
+    const setFormValue = vi.fn();
+    const onGenerateFeatures = vi.fn().mockResolvedValue([
+      { feature: 'Service History', value: 'Serviced in 2024' },
+      { feature: 'inputs', value: 'Duplicate of existing' },
+      { feature: 'Make', value: 'Auto-mapped' },
+    ]);
+
+    render(
+      <KeyFeaturesEditor
+        keyFeaturesFieldName="Key Features"
+        keyFeaturesValue={'Inputs,4 line level'}
+        setFormValue={setFormValue}
+        onGenerateFeatures={onGenerateFeatures}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate with AI' }));
+
+    await waitFor(() => expect(setFormValue).toHaveBeenCalled());
+    expect(onGenerateFeatures).toHaveBeenCalledWith(['Inputs']);
+    expect(setFormValue).toHaveBeenCalledWith(
+      'Key Features',
+      'Inputs,4 line level\nService History,Serviced in 2024',
+    );
+  });
+
+  it('shows an error when AI finds nothing new', async () => {
+    render(
+      <KeyFeaturesEditor
+        keyFeaturesFieldName="Key Features"
+        keyFeaturesValue=""
+        setFormValue={vi.fn()}
+        onGenerateFeatures={vi.fn().mockResolvedValue([])}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate with AI' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/No new features/);
   });
 
   it('renders an emphasized helper notice when provided', () => {

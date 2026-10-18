@@ -1,6 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { getOptionalSecret } from '../../shared/secrets.js';
-import { DESCRIPTION_SYSTEM_PROMPT } from './brandVoice.js';
+import { DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
 
 const SYSTEM_PROMPT = `You are an expert authenticator and cataloguer of high-end audiophile / home theater equipment for Resolution AV, a luxury used HiFi dealership in New York City.
 
@@ -147,7 +147,12 @@ const MAX_FIELD_VALUE_LENGTH = 1500;
 
 const ANTHROPIC_DEFAULT_MODEL = 'claude-sonnet-4-5';
 
-async function requestAnthropicText(apiKey: string, system: string, userContent: string): Promise<string> {
+async function requestAnthropicText(
+  apiKey: string,
+  system: string,
+  userContent: string,
+  options: { webSearch?: boolean } = {},
+): Promise<string> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -157,10 +162,11 @@ async function requestAnthropicText(apiKey: string, system: string, userContent:
     },
     body: JSON.stringify({
       model: getOptionalSecret('ANTHROPIC_MODEL') ?? ANTHROPIC_DEFAULT_MODEL,
-      max_tokens: 900,
+      max_tokens: options.webSearch ? 1800 : 900,
       temperature: 0.5,
       system,
       messages: [{ role: 'user', content: userContent }],
+      ...(options.webSearch ? { tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }] } : {}),
     }),
   });
 
@@ -262,4 +268,157 @@ export async function generateDescription(
   }
 
   return text;
+}
+
+const MAX_TITLE_LENGTH = 80;
+
+export function sanitizeTitleOutput(raw: string): string {
+  const singleLine = raw
+    .replace(/^```[a-z]*\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .replace(/<[^>]+>/g, '')
+    .split('\n')
+    .map((line) => line.trim())
+    .find((line) => line.length > 0) ?? '';
+
+  const cleaned = singleLine
+    .replace(/^(title|listing title)\s*:\s*/i, '')
+    .replace(/["“”*#`~|]/g, '')
+    .replace(/!/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (cleaned.length <= MAX_TITLE_LENGTH) {
+    return cleaned;
+  }
+
+  const cut = cleaned.slice(0, MAX_TITLE_LENGTH + 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut.slice(0, MAX_TITLE_LENGTH)).replace(/[\s,;:-]+$/, '');
+}
+
+export async function generateTitle(
+  fields: Record<string, string>,
+  existingTitle = '',
+): Promise<string> {
+  const details = Object.entries(fields)
+    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    .slice(0, MAX_DESCRIPTION_FIELDS)
+    .map(([name, value]) => `${name}: ${value.trim().slice(0, 300)}`)
+    .join('\n');
+
+  const userContent = [
+    'Listing details (the only facts you may use):',
+    details,
+    existingTitle.trim()
+      ? `\nExisting title (improve it, keeping only facts also supported above):\n${existingTitle.trim().slice(0, 300)}`
+      : '',
+  ].join('\n');
+
+  const anthropicKey = getOptionalSecret('ANTHROPIC_API_KEY');
+  const raw = anthropicKey
+    ? await requestAnthropicText(anthropicKey, TITLE_SYSTEM_PROMPT, userContent)
+    : await requestOpenAiCompatibleText(TITLE_SYSTEM_PROMPT, userContent);
+  const text = sanitizeTitleOutput(raw);
+
+  if (!text) {
+    throw new HttpError(502, 'AI returned an empty title', {
+      service: 'ai',
+      code: 'AI_INVALID_RESPONSE',
+      retryable: true,
+    });
+  }
+
+  return text;
+}
+
+export interface GeneratedKeyFeature {
+  feature: string;
+  value: string;
+}
+
+const MAX_KEY_FEATURES = 8;
+
+// Rows the listing record already supplies automatically. Matched by word so variants such as
+// "Includes Original Box" or "Product Weight" are caught too.
+const AUTO_MAPPED_FEATURE_WORDS = new Set([
+  'make', 'brand', 'model', 'serial', 'condition', 'cosmetic', 'include', 'includes', 'included', 'including',
+  'box', 'manual', 'remote', 'voltage', 'weight', 'dimension', 'dimensions', 'audiogon', 'sku', 'tested', 'testing',
+]);
+
+function isAutoMappedFeature(normalizedName: string, value: string): boolean {
+  const words = normalizedName.split(' ');
+  return words.some((word) => AUTO_MAPPED_FEATURE_WORDS.has(word))
+    || normalizedName.includes('power cable')
+    || normalizedName.includes('component type')
+    || /^(yes|no|true|false|n\/a)$/i.test(value.trim());
+}
+
+export function parseKeyFeaturesOutput(raw: string, excludedFeatureNames: string[] = []): GeneratedKeyFeature[] {
+  const fenced = raw.match(/```(?:json)?\s*(\[[\s\S]*?\])\s*```/);
+  const jsonText = fenced?.[1] ?? raw.match(/\[\s*\{[\s\S]*\}\s*\]|\[\s*\]/)?.[0];
+  if (!jsonText) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  const normalize = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const seen = new Set(excludedFeatureNames.map(normalize));
+  const result: GeneratedKeyFeature[] = [];
+
+  for (const item of parsed) {
+    if (!item || typeof item !== 'object') continue;
+    const { feature, value } = item as { feature?: unknown; value?: unknown };
+    if (typeof feature !== 'string' || typeof value !== 'string') continue;
+
+    const stripCites = (text: string) => text.replace(/<\/?cite[^>]*>/gi, '');
+    const cleanFeature = stripCites(feature).replace(/[<>"*#`|]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+    const cleanValue = stripCites(value).replace(/[<>*#`|]/g, '').replace(/!/g, '.').replace(/\s+/g, ' ').trim().slice(0, 140);
+    const key = normalize(cleanFeature);
+    if (!key || !cleanValue || seen.has(key) || isAutoMappedFeature(key, cleanValue)) continue;
+
+    seen.add(key);
+    result.push({ feature: cleanFeature, value: cleanValue });
+    if (result.length >= MAX_KEY_FEATURES) break;
+  }
+
+  return result;
+}
+
+export async function generateKeyFeatures(
+  fields: Record<string, string>,
+  existingFeatureNames: string[] = [],
+  excludedFeatureNames: string[] = [],
+): Promise<GeneratedKeyFeature[]> {
+  const details = Object.entries(fields)
+    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    .slice(0, MAX_DESCRIPTION_FIELDS)
+    .map(([name, value]) => `${name}: ${value.trim().slice(0, MAX_FIELD_VALUE_LENGTH)}`)
+    .join('\n');
+
+  const userContent = [
+    'Listing details (the only facts you may use):',
+    details,
+    existingFeatureNames.length > 0
+      ? `\nFeatures already in the list (do not repeat): ${existingFeatureNames.join(', ')}`
+      : '',
+  ].join('\n');
+
+  const anthropicKey = getOptionalSecret('ANTHROPIC_API_KEY');
+  const webSearch = getOptionalSecret('ANTHROPIC_WEB_SEARCH') !== 'false';
+  const raw = anthropicKey
+    ? await requestAnthropicText(
+      anthropicKey,
+      webSearch ? KEY_FEATURES_SYSTEM_PROMPT + KEY_FEATURES_WEB_SEARCH_ADDENDUM : KEY_FEATURES_SYSTEM_PROMPT,
+      userContent,
+      { webSearch },
+    )
+    : await requestOpenAiCompatibleText(KEY_FEATURES_SYSTEM_PROMPT, userContent);
+
+  return parseKeyFeaturesOutput(raw, [...existingFeatureNames, ...excludedFeatureNames]);
 }

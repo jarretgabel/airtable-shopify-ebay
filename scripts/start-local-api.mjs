@@ -204,6 +204,7 @@ function setAwsEnv() {
   process.env.OPENAI_API_KEY = getOptionalEnv(mergedEnv, 'VITE_OPENAI_API_KEY');
   process.env.ANTHROPIC_API_KEY = getOptionalEnv(mergedEnv, 'ANTHROPIC_API_KEY');
   process.env.ANTHROPIC_MODEL = getOptionalEnv(mergedEnv, 'ANTHROPIC_MODEL');
+  process.env.ANTHROPIC_WEB_SEARCH = getOptionalEnv(mergedEnv, 'ANTHROPIC_WEB_SEARCH');
   process.env.OPENAI_MODEL = getOptionalEnv(mergedEnv, 'VITE_OPENAI_MODEL');
   process.env.GITHUB_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GITHUB_TOKEN');
   process.env.AI_PROVIDER = getOptionalEnv(mergedEnv, 'VITE_AI_PROVIDER');
