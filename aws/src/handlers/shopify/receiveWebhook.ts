@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import type { ShopifyWebhookSubscriptionKey, ShopifyWebhookTopic } from '../../providers/shopify/client.js';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
+import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { closeEbayListingWhenSoldOnShopify, retainShopifyProductWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
@@ -749,6 +750,11 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
             retryable: true,
           });
         }
+      }
+
+      // Sale side effects finished; advance the workflow like the manual Mark Sold button does.
+      if (normalizedEvent.topic === 'ORDERS_PAID') {
+        Object.assign(updateFields, buildSoldReadyFields(currentRecord.fields, normalizedEvent.occurredAt || new Date().toISOString()));
       }
 
       // Apply the update

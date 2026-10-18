@@ -1,5 +1,6 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
+import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { retainShopifyProductWhenSoldOnEbay } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getOptionalQueryParam, getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
@@ -390,6 +391,11 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
             retryable: true,
           });
         }
+      }
+
+      // Sale side effects finished; advance the workflow like the manual Mark Sold button does.
+      if (shouldTriggerCrossChannelClose(normalizedEvent)) {
+        Object.assign(updateFields, buildSoldReadyFields(currentRecord.fields, normalizedEvent.occurredAt || new Date().toISOString()));
       }
 
       const updatedRecord = await updateRecord('used-gear-workflow', recordId, updateFields, { typecast: true });

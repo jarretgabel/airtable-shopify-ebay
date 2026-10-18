@@ -272,6 +272,7 @@ Use this matrix to populate AWS runtime config.
 | `JOTFORM_API_KEY` | `VITE_JOTFORM_API_KEY` | Yes | Required for JotForm routes |
 | `GITHUB_TOKEN` | `VITE_GITHUB_TOKEN` | Optional | Use if AI route should use GitHub Models |
 | `OPENAI_API_KEY` | `VITE_OPENAI_API_KEY` | Optional | Use if AI route should use OpenAI |
+| `ANTHROPIC_API_KEY` | `ANTHROPIC_API_KEY` | Optional | Used first by the description generator when set; optional `ANTHROPIC_MODEL` overrides the default model |
 | `GOOGLE_GMAIL_ACCESS_TOKEN` | `VITE_GOOGLE_GMAIL_ACCESS_TOKEN` | Optional | Only if Gmail Lambda route is enabled |
 | `GOOGLE_GMAIL_FROM_EMAIL` | `VITE_GOOGLE_GMAIL_FROM_EMAIL` | Optional | Sender identity |
 

@@ -47,6 +47,7 @@ Defined in [aws/template.yaml](/Users/user/Sites/airtable-shopify-ebay/aws/templ
   - `/api/jotform/forms/{formId}/submissions`
 - AI route
   - `/api/ai/identify-equipment`
+  - `/api/ai/generate-description`
 - Gmail route
   - `/api/gmail/send`
 - Auth routes

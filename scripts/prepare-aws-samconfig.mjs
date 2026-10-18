@@ -72,6 +72,7 @@ const replacements = [
   ['JotformWebhookSecret', getOptionalEnv('JOTFORM_WEBHOOK_SECRET')],
   ['GithubToken', getOptionalEnv('VITE_GITHUB_TOKEN')],
   ['OpenAiApiKey', getOptionalEnv('VITE_OPENAI_API_KEY')],
+  ['AnthropicApiKey', getOptionalEnv('ANTHROPIC_API_KEY')],
   ['GoogleGmailAccessToken', getOptionalEnv('VITE_GOOGLE_GMAIL_ACCESS_TOKEN')],
   ['GoogleDriveClientId', getOptionalEnv('VITE_GOOGLE_DRIVE_CLIENT_ID')],
   ['GoogleDriveClientSecret', getOptionalEnv('VITE_GOOGLE_DRIVE_CLIENT_SECRET')],

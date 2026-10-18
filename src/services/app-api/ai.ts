@@ -27,6 +27,21 @@ export async function identifyEquipment(
   }
 }
 
+export async function generateListingDescription(
+  fields: Record<string, string>,
+  existingDescription = '',
+): Promise<string> {
+  try {
+    const result = await postJson<{ description: string }>('/api/ai/generate-description', {
+      fields,
+      existingDescription,
+    });
+    return result.description;
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
 export function getAIProvider(): AIProviderStatus {
   const providerHint = getLambdaAiProviderHint();
   if (providerHint !== 'none') {

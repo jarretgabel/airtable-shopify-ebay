@@ -77,6 +77,7 @@ const ROUTES = [
   ['DELETE', '/api/airtable/configured-records/{source}/{recordId}', 'handlers/airtable/deleteConfiguredRecord.js', 'handler'],
   ['POST', '/api/airtable/configured-attachments/{source}/{recordId}/{fieldId}', 'handlers/airtable/uploadConfiguredAttachment.js', 'handler'],
   ['POST', '/api/ai/identify-equipment', 'handlers/ai/identifyEquipment.js', 'handler'],
+  ['POST', '/api/ai/generate-description', 'handlers/ai/generateDescription.js', 'handler'],
   ['POST', '/api/gmail/send', 'handlers/gmail/send.js', 'handler'],
   ['POST', '/api/analytics/events', 'handlers/analytics/postEvent.js', 'handler'],
   ['GET', '/api/hifishark/model/{slug}', 'handlers/hifishark/getModel.js', 'handler'],
@@ -201,6 +202,8 @@ function setAwsEnv() {
     || 'local-dev-auth-secret';
 
   process.env.OPENAI_API_KEY = getOptionalEnv(mergedEnv, 'VITE_OPENAI_API_KEY');
+  process.env.ANTHROPIC_API_KEY = getOptionalEnv(mergedEnv, 'ANTHROPIC_API_KEY');
+  process.env.ANTHROPIC_MODEL = getOptionalEnv(mergedEnv, 'ANTHROPIC_MODEL');
   process.env.OPENAI_MODEL = getOptionalEnv(mergedEnv, 'VITE_OPENAI_MODEL');
   process.env.GITHUB_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GITHUB_TOKEN');
   process.env.AI_PROVIDER = getOptionalEnv(mergedEnv, 'VITE_AI_PROVIDER');

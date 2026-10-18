@@ -79,6 +79,10 @@ const payload = {
     ...(getOptionalEnv('VITE_GITHUB_TOKEN') ? { GITHUB_TOKEN: getOptionalEnv('VITE_GITHUB_TOKEN') } : {}),
     ...(getOptionalEnv('VITE_OPENAI_API_KEY') ? { OPENAI_API_KEY: getOptionalEnv('VITE_OPENAI_API_KEY') } : {}),
   },
+  AiGenerateDescriptionFunction: {
+    ...(getOptionalEnv('ANTHROPIC_API_KEY') ? { ANTHROPIC_API_KEY: getOptionalEnv('ANTHROPIC_API_KEY') } : {}),
+    ...(getOptionalEnv('ANTHROPIC_MODEL') ? { ANTHROPIC_MODEL: getOptionalEnv('ANTHROPIC_MODEL') } : {}),
+  },
   GmailSendFunction: {
     ...(getOptionalEnv('VITE_GOOGLE_GMAIL_ACCESS_TOKEN') ? { GOOGLE_GMAIL_ACCESS_TOKEN: getOptionalEnv('VITE_GOOGLE_GMAIL_ACCESS_TOKEN') } : {}),
     ...(getOptionalEnv('VITE_GOOGLE_GMAIL_FROM_EMAIL') ? { GOOGLE_GMAIL_FROM_EMAIL: getOptionalEnv('VITE_GOOGLE_GMAIL_FROM_EMAIL') } : {}),

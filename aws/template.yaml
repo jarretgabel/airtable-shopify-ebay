@@ -124,6 +124,10 @@ Parameters:
     Type: String
     NoEcho: true
     Default: ''
+  AnthropicApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
   GoogleGmailAccessToken:
     Type: String
     NoEcho: true
@@ -177,6 +181,7 @@ Parameters:
 Conditions:
   HasGithubToken: !Not [!Equals [!Ref GithubToken, '']]
   HasOpenAiApiKey: !Not [!Equals [!Ref OpenAiApiKey, '']]
+  HasAnthropicApiKey: !Not [!Equals [!Ref AnthropicApiKey, '']]
   HasGoogleGmailAccessToken: !Not [!Equals [!Ref GoogleGmailAccessToken, '']]
   HasGoogleDriveClientId: !Not [!Equals [!Ref GoogleDriveClientId, '']]
   HasGoogleDriveClientSecret: !Not [!Equals [!Ref GoogleDriveClientSecret, '']]
@@ -240,6 +245,10 @@ Globals:
         OPENAI_API_KEY: !If
           - HasOpenAiApiKey
           - !Ref OpenAiApiKey
+          - ''
+        ANTHROPIC_API_KEY: !If
+          - HasAnthropicApiKey
+          - !Ref AnthropicApiKey
           - ''
         GOOGLE_GMAIL_ACCESS_TOKEN: !If
           - HasGoogleGmailAccessToken
@@ -1032,6 +1041,22 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/ai/identify-equipment
+
+  AiGenerateDescriptionFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ai/generateDescription.handler
+      Timeout: 30
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/ai/generate-description
 
   GmailSendFunction:
     Type: AWS::Serverless::Function

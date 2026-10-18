@@ -9,7 +9,7 @@ vi.mock('@/services/app-api/flags', async () => ({
   getLambdaAiProviderHint: getLambdaAiProviderHintMock,
 }));
 
-import { getAIProvider, identifyEquipment } from '@/services/app-api/ai';
+import { generateListingDescription, getAIProvider, identifyEquipment } from '@/services/app-api/ai';
 
 describe('app-api ai', () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -49,6 +49,23 @@ describe('app-api ai', () => {
       body: JSON.stringify({ base64: 'encoded', mimeType: 'image/jpeg' }),
     });
     expect(result).toEqual({ brand: 'Naim', model: 'NAP 250 DR' });
+  });
+
+  it('posts listing fields to the description endpoint', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ description: 'Warm and musical.' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await generateListingDescription({ Brand: 'McIntosh' }, 'old');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/ai/generate-description', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ fields: { Brand: 'McIntosh' }, existingDescription: 'old' }),
+    }));
+    expect(result).toBe('Warm and musical.');
   });
 
   it('uses the public provider hint when configured', () => {

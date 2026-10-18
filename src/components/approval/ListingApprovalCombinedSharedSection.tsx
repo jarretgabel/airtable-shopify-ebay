@@ -1,4 +1,4 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import {
   isGenericImageAltField,
@@ -12,6 +12,7 @@ import { resolveListingApprovalTestingSectionFields } from '@/components/approva
 import { tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
 import { isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
+import { generateListingDescription } from '@/services/app-api/ai';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const KeyFeaturesEditor = lazy(async () => ({
@@ -104,6 +105,37 @@ export function ListingApprovalCombinedSharedSection({
   sharedTestingSourceFieldValues,
   sharedDrawerRequiredStatus,
 }: ListingApprovalCombinedSharedSectionProps) {
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [descriptionError, setDescriptionError] = useState('');
+
+  const handleGenerateDescription = async () => {
+    const existingDescription = formValues[combinedDescriptionFieldName] ?? '';
+    if (existingDescription.trim() && !window.confirm('Replace the current description with an AI-generated one?')) {
+      return;
+    }
+
+    const listingFields = Object.fromEntries(
+      Object.entries(formValues).filter(([name, value]) => (
+        name !== combinedDescriptionFieldName
+        && typeof value === 'string'
+        && value.trim().length > 0
+        && value.length <= 1500
+        && !/json|html|image|photo|url|^id$|record/i.test(name)
+      )),
+    );
+
+    setGeneratingDescription(true);
+    setDescriptionError('');
+    try {
+      const description = await generateListingDescription(listingFields, existingDescription);
+      setFormValue(combinedDescriptionFieldName, description);
+    } catch (error) {
+      setDescriptionError(error instanceof Error ? error.message : 'Could not generate a description.');
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
   const sharedTestingFields = resolveListingApprovalTestingSectionFields(
     Array.from(new Set([
       ...Object.keys(originalFieldValues),
@@ -192,13 +224,22 @@ export function ListingApprovalCombinedSharedSection({
         )}
 
         {combinedDescriptionFieldName && (
-          <label className="flex flex-col gap-2">
-            <span className={`mb-1 flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] ${descriptionIsMissing ? 'text-[var(--required-label-ink)]' : 'text-[var(--muted)]'}`}>
-              <span>Description</span>
+          <div className="flex flex-col gap-2">
+            <div className={`mb-1 flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] ${descriptionIsMissing ? 'text-[var(--required-label-ink)]' : 'text-[var(--muted)]'}`}>
+              <label htmlFor="combined-description-field">Description</label>
               {descriptionIsShopifyRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">Shopify Required</span>}
               {descriptionIsEbayRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">eBay Required</span>}
-            </span>
+              <button
+                type="button"
+                className="ml-auto rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => { void handleGenerateDescription(); }}
+                disabled={saving || generatingDescription}
+              >
+                {generatingDescription ? 'Generating…' : 'Generate with AI'}
+              </button>
+            </div>
             <textarea
+              id="combined-description-field"
               className={`${tabFormControlMultilineClass} min-h-[120px] bg-[var(--panel)] disabled:cursor-not-allowed disabled:opacity-70 ${descriptionIsMissing ? 'border-rose-400/45 bg-rose-500/5 focus:border-rose-300' : ''}`}
               value={formValues[combinedDescriptionFieldName] ?? ''}
               onChange={(event) => setFormValue(combinedDescriptionFieldName, event.target.value)}
@@ -206,7 +247,8 @@ export function ListingApprovalCombinedSharedSection({
               aria-invalid={descriptionIsMissing}
               disabled={saving}
             />
-          </label>
+            {descriptionError && <span role="alert" className="text-xs text-rose-400">{descriptionError}</span>}
+          </div>
         )}
 
         {imageSupportFieldNames.length > 0 && (
