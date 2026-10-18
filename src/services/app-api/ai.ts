@@ -64,6 +64,27 @@ export async function generateListingTitle(
   }
 }
 
+export async function generateListingSeoText(
+  kind: 'seoTitle' | 'seoDescription',
+  fields: Record<string, string>,
+  existing = '',
+): Promise<string> {
+  try {
+    const result = await postJson<{ seoTitle?: string; seoDescription?: string }>('/api/ai/generate-description', {
+      kind,
+      fields,
+      existingDescription: existing,
+    });
+    const text = kind === 'seoTitle' ? result.seoTitle : result.seoDescription;
+    if (typeof text !== 'string' || !text.trim()) {
+      throw new Error('The AI service returned no text. Restart the API so it has the latest version.');
+    }
+    return text;
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
 export interface GeneratedKeyFeatureRow {
   feature: string;
   value: string;

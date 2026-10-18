@@ -6,6 +6,7 @@ import {
   generateTitle,
   parseKeyFeaturesOutput,
   sanitizeDescriptionOutput,
+  sanitizeSingleLineOutput,
   sanitizeTitleOutput,
 } from '../../../../../../aws/src/providers/ai/client.js';
 
@@ -153,4 +154,11 @@ test('generateKeyFeatures sends the features prompt and returns parsed rows', as
     global.fetch = originalFetch;
     if (saved === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved;
   }
+});
+
+test('sanitizeSingleLineOutput strips labels and quotes and trims to a word boundary', () => {
+  assert.equal(sanitizeSingleLineOutput('SEO Title: "Leben CS300 Tube Integrated Amplifier!"', 60), 'Leben CS300 Tube Integrated Amplifier.');
+  const long = sanitizeSingleLineOutput('Leben CS300 Tube Integrated Amplifier Pre-Owned Serviced Hi-Fi Brooklyn', 60);
+  assert.ok(long.length <= 60);
+  assert.ok(!long.endsWith(' '));
 });

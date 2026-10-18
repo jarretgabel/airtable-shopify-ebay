@@ -3,12 +3,12 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { generateDescription, generateKeyFeatures, generateTitle } from '../../providers/ai/client.js';
+import { generateDescription, generateKeyFeatures, generateSeoDescription, generateSeoTitle, generateTitle } from '../../providers/ai/client.js';
 
 interface GenerateDescriptionBody {
   fields?: Record<string, unknown>;
   existingDescription?: string;
-  kind?: 'description' | 'title' | 'features';
+  kind?: 'description' | 'title' | 'features' | 'seoTitle' | 'seoDescription';
   existingFeatureNames?: unknown;
   excludedFeatureNames?: unknown;
 }
@@ -57,6 +57,18 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       const title = await generateTitle(fields, existing);
       logInfo('Generated listing title via AI', { fieldCount: Object.keys(fields).length });
       return jsonOk({ title }, { origin });
+    }
+
+    if (body.kind === 'seoTitle') {
+      const seoTitle = await generateSeoTitle(fields, existing);
+      logInfo('Generated listing SEO title via AI', { fieldCount: Object.keys(fields).length });
+      return jsonOk({ seoTitle }, { origin });
+    }
+
+    if (body.kind === 'seoDescription') {
+      const seoDescription = await generateSeoDescription(fields, existing);
+      logInfo('Generated listing SEO description via AI', { fieldCount: Object.keys(fields).length });
+      return jsonOk({ seoDescription }, { origin });
     }
 
     const description = await generateDescription(fields, existing);

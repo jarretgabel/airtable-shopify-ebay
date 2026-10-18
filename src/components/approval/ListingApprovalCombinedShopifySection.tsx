@@ -1,5 +1,6 @@
 import { Suspense, lazy, useMemo } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
+import { ShopifySeoFieldsEditor, SHOPIFY_SEO_DESCRIPTION_FIELD_NAME, SHOPIFY_SEO_TITLE_FIELD_NAME } from '@/components/approval/ShopifySeoFieldsEditor';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
@@ -23,6 +24,7 @@ import { buildShopifyDraftProductFromApprovalFields } from '@/services/shopifyDr
 const ShopifyApprovalPayloadDetails = lazy(async () => ({
   default: (await import('@/components/approval/ListingApprovalRecordPayloadPanels')).ShopifyApprovalPayloadDetails,
 }));
+const SHOPIFY_SEO_FIELD_NAMES = new Set([SHOPIFY_SEO_TITLE_FIELD_NAME, SHOPIFY_SEO_DESCRIPTION_FIELD_NAME].map((name) => name.toLowerCase()));
 const SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD = 'Shopify Condition Metafield Value';
 
 function ShopifyPayloadFallback() {
@@ -70,6 +72,7 @@ export function ListingApprovalCombinedShopifySection({
   const standardShopifyFieldNames = combinedShopifyOnlyFieldNames.filter((fieldName) => {
     if (isShopifyAdvancedOptionField(fieldName)) return false;
     if (isShopifyBodyDescriptionField(fieldName)) return false;
+    if (SHOPIFY_SEO_FIELD_NAMES.has(fieldName.trim().toLowerCase())) return false;
     return true;
   });
   const advancedShopifyFieldNames = Array.from(new Set([
@@ -142,7 +145,8 @@ export function ListingApprovalCombinedShopifySection({
         {advancedShopifyFieldNames.length > 0 && (
           <details className={`mt-4 ${detailDisclosureClass}`}>
             <summary className={detailDisclosureSummaryClass}>Advanced Shopify Fields</summary>
-            <div className={detailDisclosureBodyClass}>
+            <div className={`${detailDisclosureBodyClass} space-y-4`}>
+              <ShopifySeoFieldsEditor formValues={formValues} setFormValue={setFormValue} saving={saving} />
               <ApprovalFormFields
                 recordId={selectedRecord.id}
                 approvalChannel="shopify"

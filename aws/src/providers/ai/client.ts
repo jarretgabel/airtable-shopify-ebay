@@ -1,6 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { getOptionalSecret } from '../../shared/secrets.js';
-import { DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
+import { DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, SEO_DESCRIPTION_SYSTEM_PROMPT, SEO_TITLE_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
 
 const SYSTEM_PROMPT = `You are an expert authenticator and cataloguer of high-end audiophile / home theater equipment for Resolution AV, a luxury used HiFi dealership in New York City.
 
@@ -330,6 +330,76 @@ export async function generateTitle(
   }
 
   return text;
+}
+
+const MAX_SEO_TITLE_LENGTH = 60;
+const MAX_SEO_DESCRIPTION_LENGTH = 160;
+
+export function sanitizeSingleLineOutput(raw: string, maxLength: number): string {
+  const cleaned = (raw
+    .replace(/^```[a-z]*\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .replace(/<[^>]+>/g, '')
+    .split('\n')
+    .map((line) => line.trim())
+    .find((line) => line.length > 0) ?? '')
+    .replace(/^(seo title|seo description|meta title|meta description|title|description)\s*:\s*/i, '')
+    .replace(/["“”*#`~]/g, '')
+    .replace(/!/g, '.')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (cleaned.length <= maxLength) return cleaned;
+
+  const cut = cleaned.slice(0, maxLength + 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > maxLength / 2 ? cut.slice(0, lastSpace) : cut.slice(0, maxLength)).replace(/[\s,;:|-]+$/, '');
+}
+
+async function generateSeoText(
+  systemPrompt: string,
+  maxLength: number,
+  label: string,
+  fields: Record<string, string>,
+  existing: string,
+): Promise<string> {
+  const details = Object.entries(fields)
+    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    .slice(0, MAX_DESCRIPTION_FIELDS)
+    .map(([name, value]) => `${name}: ${value.trim().slice(0, 600)}`)
+    .join('\n');
+
+  const userContent = [
+    'Listing details (the only facts you may use):',
+    details,
+    existing.trim()
+      ? `\nExisting ${label} (improve it, keeping only facts also supported above):\n${existing.trim().slice(0, 400)}`
+      : '',
+  ].join('\n');
+
+  const anthropicKey = getOptionalSecret('ANTHROPIC_API_KEY');
+  const raw = anthropicKey
+    ? await requestAnthropicText(anthropicKey, systemPrompt, userContent)
+    : await requestOpenAiCompatibleText(systemPrompt, userContent);
+  const text = sanitizeSingleLineOutput(raw, maxLength);
+
+  if (!text) {
+    throw new HttpError(502, `AI returned an empty ${label}`, {
+      service: 'ai',
+      code: 'AI_INVALID_RESPONSE',
+      retryable: true,
+    });
+  }
+
+  return text;
+}
+
+export function generateSeoTitle(fields: Record<string, string>, existing = ''): Promise<string> {
+  return generateSeoText(SEO_TITLE_SYSTEM_PROMPT, MAX_SEO_TITLE_LENGTH, 'SEO title', fields, existing);
+}
+
+export function generateSeoDescription(fields: Record<string, string>, existing = ''): Promise<string> {
+  return generateSeoText(SEO_DESCRIPTION_SYSTEM_PROMPT, MAX_SEO_DESCRIPTION_LENGTH, 'SEO description', fields, existing);
 }
 
 export interface GeneratedKeyFeature {
