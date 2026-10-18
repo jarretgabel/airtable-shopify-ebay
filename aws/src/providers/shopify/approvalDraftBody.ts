@@ -227,6 +227,7 @@ const SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS: ShopifyBodyDynamicTokenSpec[] = [
       'Key Features',
       'Features JSON',
       'Features',
+      'Key Features (Key, Value)',
       'shopify_body_key_features_json',
       'shopify_rest_body_key_features_json',
       'shopify_body_key_features',
@@ -267,7 +268,7 @@ export function resolveShopifyBodyHtml(fields: ApprovalFieldMap): string {
   if (!template) return '';
   const bodyDescriptionCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_description')?.candidates ?? [];
   const bodyKeyFeaturesCandidates = SHOPIFY_BODY_DYNAMIC_TOKEN_SPECS.find((spec) => spec.token === 'body_key_features')?.candidates ?? [];
-  const rawKeyFeatures = getFieldPreservingStructuredValues(fields, ['Shopify Body Key Features JSON', 'Shopify REST Body Key Features JSON', 'Shopify Body Key Features', 'Shopify REST Body Key Features', 'Key Features JSON', 'Key Features', 'Features JSON', 'Features', 'shopify_body_key_features_json', 'shopify_rest_body_key_features_json', 'shopify_body_key_features', 'shopify_rest_body_key_features']);
+  const rawKeyFeatures = getFieldPreservingStructuredValues(fields, ['Shopify Body Key Features JSON', 'Shopify REST Body Key Features JSON', 'Shopify Body Key Features', 'Shopify REST Body Key Features', 'Key Features JSON', 'Key Features', 'Features JSON', 'Features', 'Key Features (Key, Value)', 'shopify_body_key_features_json', 'shopify_rest_body_key_features_json', 'shopify_body_key_features', 'shopify_rest_body_key_features']);
   const audiogonRating = getField(fields, ['Audiogon Rating']);
   const cosmeticNotes = getField(fields, ['Cosmetic Notes', 'Testing Cosmetic Notes', 'Internal Cosmetic Notes', 'Customer Cosmetic Notes']);
   const ratingValue = parseAudiogonRating(audiogonRating);

@@ -139,3 +139,15 @@ test('Shopify productSet omits seo when the SEO fields are empty', () => {
   );
   assert.equal(request.input.seo, undefined);
 });
+
+test('Shopify body renders key features saved in the shared Key Features (Key, Value) field with automatic mappings', () => {
+  const product = buildShopifyDraftProductFromApprovalFields({
+    'Shopify REST Title': 'Key Features Product',
+    Description: 'A warm tube amp.',
+    'Serial Number': 'SN123',
+    'Key Features (Key, Value)': JSON.stringify([{ feature: 'Tube Complement', value: '4x EL34' }]),
+  });
+
+  assert.match(product.body_html ?? '', /Tube Complement<\/th><td>4x EL34/);
+  assert.match(product.body_html ?? '', /Serial Number<\/th><td>SN123/);
+});

@@ -413,7 +413,7 @@ const MAX_KEY_FEATURES = 8;
 // "Includes Original Box" or "Product Weight" are caught too.
 const AUTO_MAPPED_FEATURE_WORDS = new Set([
   'make', 'brand', 'model', 'serial', 'condition', 'cosmetic', 'include', 'includes', 'included', 'including',
-  'box', 'manual', 'remote', 'voltage', 'weight', 'dimension', 'dimensions', 'audiogon', 'sku', 'tested', 'testing',
+  'box', 'packaging', 'package', 'packing', 'carton', 'accessories', 'manual', 'remote', 'voltage', 'weight', 'dimension', 'dimensions', 'audiogon', 'sku', 'tested', 'testing',
 ]);
 
 function isAutoMappedFeature(normalizedName: string, value: string): boolean {
@@ -421,7 +421,8 @@ function isAutoMappedFeature(normalizedName: string, value: string): boolean {
   return words.some((word) => AUTO_MAPPED_FEATURE_WORDS.has(word))
     || normalizedName.includes('power cable')
     || normalizedName.includes('component type')
-    || /^(yes|no|true|false|n\/a)$/i.test(value.trim());
+    || /^(yes|no|true|false|n\/a)$/i.test(value.trim())
+    || /^(included|includes|comes with)\b/i.test(value.trim());
 }
 
 export function parseKeyFeaturesOutput(raw: string, excludedFeatureNames: string[] = []): GeneratedKeyFeature[] {

@@ -162,3 +162,12 @@ test('sanitizeSingleLineOutput strips labels and quotes and trims to a word boun
   assert.ok(long.length <= 60);
   assert.ok(!long.endsWith(' '));
 });
+
+test('parseKeyFeaturesOutput drops packaging and "included" rows already covered by automatic mappings', () => {
+  const raw = JSON.stringify([
+    { feature: 'Original Packaging', value: 'Included with cables' },
+    { feature: 'Accessories', value: 'Remote and manual' },
+    { feature: 'Conductor', value: 'Silver-plated copper' },
+  ]);
+  assert.deepEqual(parseKeyFeaturesOutput(raw), [{ feature: 'Conductor', value: 'Silver-plated copper' }]);
+});

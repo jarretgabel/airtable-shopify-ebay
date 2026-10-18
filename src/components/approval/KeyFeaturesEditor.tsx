@@ -151,7 +151,7 @@ function isAutoIncludedFeature(value: string): boolean {
 
 const AUTO_MAPPED_GENERATED_WORDS = new Set([
   'make', 'brand', 'model', 'serial', 'condition', 'cosmetic', 'include', 'includes', 'included', 'including',
-  'box', 'manual', 'remote', 'voltage', 'weight', 'dimension', 'dimensions', 'audiogon', 'sku', 'tested', 'testing',
+  'box', 'packaging', 'package', 'packing', 'carton', 'accessories', 'manual', 'remote', 'voltage', 'weight', 'dimension', 'dimensions', 'audiogon', 'sku', 'tested', 'testing',
 ]);
 
 function isAutoMappedGeneratedFeature(feature: string, value: string): boolean {
@@ -159,7 +159,8 @@ function isAutoMappedGeneratedFeature(feature: string, value: string): boolean {
   return key.split(' ').some((word) => AUTO_MAPPED_GENERATED_WORDS.has(word))
     || key.includes('power cable')
     || key.includes('component type')
-    || /^(yes|no|true|false|n\/a)$/i.test(value.trim());
+    || /^(yes|no|true|false|n\/a)$/i.test(value.trim())
+    || /^(included|includes|comes with)\b/i.test(value.trim());
 }
 
 function stripAutoIncludedRows(rows: ReadonlyArray<KeyFeatureRow>): KeyFeatureRow[] {

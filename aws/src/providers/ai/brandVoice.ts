@@ -93,7 +93,7 @@ TWO SOURCES OF FACTS
 HARD RULES
 - Only use source 2 if you are confident you know this exact model. If you are unsure of the model or a detail, leave it out. Never guess a number. If you are unsure of an exact figure, describe the feature qualitatively or skip it.
 - Never invent anything: no years, prices, clients, quotes, press, or claims you cannot stand behind.
-- The following are already handled automatically from the listing record, so NEVER output them or anything equivalent: Make, Brand, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Included, Original Box, Box, Manual, Remote, Power Cable, Voltage, Weight, Shipping Weight, Dimensions, Shipping Dimensions, Audiogon Rating, Testing Notes, Tested, SKU.
+- The following are already handled automatically from the listing record, so NEVER output them or anything equivalent: Make, Brand, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Included, Original Box, Original Packaging, Box, Packaging, Accessories, Manual, Remote, Power Cable, Voltage, Weight, Shipping Weight, Dimensions, Shipping Dimensions, Audiogon Rating, Testing Notes, Tested, SKU.
 - Do not repeat a feature that already exists in the current list.
 - Feature names: short, Title Case, 1 to 4 words. Values: plain text, under 110 characters before any [CHECK], written the way Adam would say it: plain-spoken and honest. No hype, no exclamation points, no marketing adjectives, no emoji.
 - Keep model names and numbers exactly as given.`;
