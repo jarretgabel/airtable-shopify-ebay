@@ -117,3 +117,25 @@ test('Used items are tagged Pre-Owned Hifi after their own tags, once, and other
   assert.equal(tagsFor({ Condition: 'For parts or not working' }), undefined);
   assert.equal(tagsFor({}), undefined);
 });
+
+test('Shopify SEO fields reach productSet as seo, not as global metafields', () => {
+  const product = buildShopifyDraftProductFromApprovalFields({
+    'Shopify REST Title': 'SEO Product',
+    'Shopify Extra SEO Title': 'Leben CS300 Tube Integrated Amplifier',
+    'Shopify Extra SEO Description': 'Pre-owned Leben CS300 tube integrated amplifier, tested and ready to hear in Brooklyn.',
+  });
+  const request = buildShopifyUnifiedProductSetRequest(product);
+
+  assert.deepEqual(request.input.seo, {
+    title: 'Leben CS300 Tube Integrated Amplifier',
+    description: 'Pre-owned Leben CS300 tube integrated amplifier, tested and ready to hear in Brooklyn.',
+  });
+  assert.equal(request.input.metafields?.some((metafield) => metafield.namespace === 'global'), false);
+});
+
+test('Shopify productSet omits seo when the SEO fields are empty', () => {
+  const request = buildShopifyUnifiedProductSetRequest(
+    buildShopifyDraftProductFromApprovalFields({ 'Shopify REST Title': 'No SEO Product' }),
+  );
+  assert.equal(request.input.seo, undefined);
+});

@@ -254,6 +254,7 @@ export interface ShopifyUnifiedProductSetInput {
   tags?: string[];
   templateSuffix?: string;
   category?: string;
+  seo?: { title?: string; description?: string };
   collectionsToJoin?: string[];
   files?: ShopifyUnifiedProductSetFileInput[];
   metafields?: ShopifyProductRecord['metafields'];

@@ -93,6 +93,7 @@ export interface ShopifyUnifiedProductSetInput {
   tags?: string[];
   templateSuffix?: string;
   category?: string;
+  seo?: { title?: string; description?: string };
   collectionsToJoin?: string[];
   files?: ShopifyUnifiedProductSetFileInput[];
   metafields?: ShopifyMetafield[];
@@ -364,6 +365,29 @@ export function normalizeShopifyProductForUpsert(product: ShopifyProduct): Shopi
   };
 }
 
+// Shopify's productSet takes SEO values through `seo`, not the global.title_tag / description_tag metafields.
+function splitSeoFromMetafields(metafields: ShopifyProduct['metafields']): {
+  metafields: ShopifyProduct['metafields'];
+  seo?: { title?: string; description?: string };
+} {
+  let title: string | undefined;
+  let description: string | undefined;
+  const rest = (metafields ?? []).filter((metafield) => {
+    if (metafield?.namespace?.trim().toLowerCase() !== 'global') return true;
+    const key = metafield.key?.trim().toLowerCase();
+    if (key === 'title_tag') {
+      title = metafield.value?.trim() || undefined;
+      return false;
+    }
+    if (key === 'description_tag') {
+      description = metafield.value?.trim() || undefined;
+      return false;
+    }
+    return true;
+  });
+  return { metafields: rest, seo: title || description ? { title, description } : undefined };
+}
+
 export function buildShopifyUnifiedProductSetRequest(
   product: ShopifyProduct,
   options?: {
@@ -374,6 +398,7 @@ export function buildShopifyUnifiedProductSetRequest(
 ): ShopifyUnifiedProductSetRequest {
   const normalizedProduct = normalizeShopifyProductForUpsert(product);
   const normalizedCategoryId = options?.categoryId?.trim();
+  const { metafields: unifiedMetafields, seo } = splitSeoFromMetafields(normalizedProduct.metafields);
   const isExistingProductUpdate = Boolean(options?.existingProductId);
   const effectiveProductOptions = ensureProductOptionsForVariants(normalizedProduct.options, normalizedProduct.variants);
   const effectiveUnifiedOptions = buildUnifiedProductOptions(effectiveProductOptions);
@@ -392,7 +417,8 @@ export function buildShopifyUnifiedProductSetRequest(
       tags: splitShopifyTags(normalizedProduct.tags),
       templateSuffix: normalizedProduct.template_suffix?.trim() || undefined,
       category: normalizedCategoryId || undefined,
-      metafields: buildUnifiedMetafields(normalizedProduct.metafields),
+      seo,
+      metafields: buildUnifiedMetafields(unifiedMetafields),
       files: unifiedFiles,
       productOptions: effectiveUnifiedOptions,
       variants: unifiedVariants,
