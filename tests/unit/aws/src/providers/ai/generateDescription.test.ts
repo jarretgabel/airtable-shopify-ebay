@@ -8,6 +8,7 @@ import {
   sanitizeDescriptionOutput,
   sanitizeSingleLineOutput,
   sanitizeTitleOutput,
+  trimToSentence,
 } from '../../../../../../aws/src/providers/ai/client.js';
 
 test('sanitizeDescriptionOutput strips markup and exclamation points', () => {
@@ -170,4 +171,10 @@ test('parseKeyFeaturesOutput drops packaging and "included" rows already covered
     { feature: 'Conductor', value: 'Silver-plated copper' },
   ]);
   assert.deepEqual(parseKeyFeaturesOutput(raw), [{ feature: 'Conductor', value: 'Silver-plated copper' }]);
+});
+
+test('trimToSentence ends on a full sentence when the text is too long', () => {
+  const text = 'Pre-owned MIT MI-330 interconnect cables, tested and in the original box. Hear them in our Brooklyn listening room before you decide.';
+  assert.equal(trimToSentence(text, 100), 'Pre-owned MIT MI-330 interconnect cables, tested and in the original box.');
+  assert.equal(trimToSentence('Short text.', 160), 'Short text.');
 });

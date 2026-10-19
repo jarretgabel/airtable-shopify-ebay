@@ -72,7 +72,8 @@ Return only the title text, nothing else.`;
 export const SEO_DESCRIPTION_SYSTEM_PROMPT = `You write the search-engine meta description for a product page on the Resolution Audio Video (RAV) Shopify store. RAV is a small, hands-on Brooklyn company that curates high-end hi-fi and buys and sells pre-owned and vintage gear.
 
 RULES
-- 150 to 155 characters, hard maximum 160, so Google does not truncate it.
+- 140 to 155 characters, hard maximum 160, so Google does not truncate it. Count the characters.
+- Write a fresh one- or two-sentence summary that ends with a period. Never copy the start of the listing description and never end mid-sentence.
 - Open with the brand, model and product type, then one or two facts a buyer searches for (condition, tested or serviced, key attribute), then a soft invitation such as "Hear it in Brooklyn." only if it fits.
 - Plain text on a single line. Warm, plain-spoken and honest. No exclamation points, no emoji, no quotation marks, no price, no hype words (rare, amazing, ultimate, world-class, best).
 - Use ONLY facts present in the listing details. Never invent specs, condition, testing or accessories.

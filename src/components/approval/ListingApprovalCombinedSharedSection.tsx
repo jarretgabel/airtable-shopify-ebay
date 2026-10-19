@@ -7,12 +7,13 @@ import {
 } from '@/components/approval/approvalFormFieldsImageHelpers';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
+import { SHOPIFY_SEO_DESCRIPTION_FIELD_NAME, SHOPIFY_SEO_TITLE_FIELD_NAME } from '@/components/approval/ShopifySeoFieldsEditor';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import { resolveListingApprovalTestingSectionFields } from '@/components/approval/listingApprovalTestingSection';
 import { tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
 import { isMissingRequiredFieldValue } from '@/components/approval/requiredFieldStatus';
 import { CONDITION_FIELD } from '@/stores/approvalStore';
-import { generateListingDescription, generateListingKeyFeatures, generateListingTitle } from '@/services/app-api/ai';
+import { generateListingDescription, generateListingKeyFeatures, generateListingSeoText, generateListingTitle } from '@/services/app-api/ai';
 import type { ListingApprovalCombinedSharedSectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 
 const KeyFeaturesEditor = lazy(async () => ({
@@ -114,12 +115,29 @@ export function ListingApprovalCombinedSharedSection({
   const collectListingFields = (excludedFieldName: string) => Object.fromEntries(
     Object.entries(formValues).filter(([name, value]) => (
       name !== excludedFieldName
+      && name !== SHOPIFY_SEO_TITLE_FIELD_NAME
+      && name !== SHOPIFY_SEO_DESCRIPTION_FIELD_NAME
       && typeof value === 'string'
       && value.trim().length > 0
       && value.length <= 1500
       && !/json|html|image|photo|url|^id$|record/i.test(name)
     )),
   );
+
+  // Fills only SEO fields that are still empty, so hand-edited SEO text is never overwritten.
+  const fillEmptySeoFields = async (kinds: Array<'seoTitle' | 'seoDescription'>, overrides: Record<string, string>): Promise<string> => {
+    for (const kind of kinds) {
+      const fieldName = kind === 'seoTitle' ? SHOPIFY_SEO_TITLE_FIELD_NAME : SHOPIFY_SEO_DESCRIPTION_FIELD_NAME;
+      if ((formValues[fieldName] ?? '').trim()) continue;
+      try {
+        const text = await generateListingSeoText(kind, { ...collectListingFields(fieldName), ...overrides });
+        setFormValue(fieldName, text);
+      } catch (error) {
+        return `The text was generated, but SEO text could not be: ${error instanceof Error ? error.message : 'unknown error'}`;
+      }
+    }
+    return '';
+  };
 
   const handleGenerateDescription = async () => {
     const existingDescription = formValues[combinedDescriptionFieldName] ?? '';
@@ -132,6 +150,7 @@ export function ListingApprovalCombinedSharedSection({
     try {
       const description = await generateListingDescription(collectListingFields(combinedDescriptionFieldName), existingDescription);
       setFormValue(combinedDescriptionFieldName, description);
+      setDescriptionError(await fillEmptySeoFields(['seoDescription'], { [combinedDescriptionFieldName]: description }));
     } catch (error) {
       setDescriptionError(error instanceof Error ? error.message : 'Could not generate a description.');
     } finally {
@@ -150,6 +169,7 @@ export function ListingApprovalCombinedSharedSection({
     try {
       const title = await generateListingTitle(collectListingFields(titleFieldName), existingTitle);
       setFormValue(titleFieldName, title);
+      setTitleError(await fillEmptySeoFields(['seoTitle'], { [titleFieldName]: title }));
     } catch (error) {
       setTitleError(error instanceof Error ? error.message : 'Could not generate a title.');
     } finally {

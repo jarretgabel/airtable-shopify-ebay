@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
+import { tabFormControlBaseClass, tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
 import { generateListingSeoText } from '@/services/app-api/ai';
 
 export const SHOPIFY_SEO_TITLE_FIELD_NAME = 'Shopify Extra SEO Title';
@@ -81,7 +81,7 @@ export function ShopifySeoFieldsEditor({ formValues, setFormValue, saving }: Sho
               <input
                 id={inputId}
                 type="text"
-                className={`${tabFormControlMultilineClass} bg-[var(--panel)] disabled:cursor-not-allowed disabled:opacity-70`}
+                className={`${tabFormControlBaseClass} bg-[var(--panel)] disabled:cursor-not-allowed disabled:opacity-70`}
                 value={value}
                 onChange={(event) => setFormValue(fieldName, event.target.value)}
                 disabled={saving}

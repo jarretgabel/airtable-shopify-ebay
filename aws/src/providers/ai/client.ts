@@ -378,10 +378,21 @@ async function generateSeoText(
   ].join('\n');
 
   const anthropicKey = getOptionalSecret('ANTHROPIC_API_KEY');
-  const raw = anthropicKey
-    ? await requestAnthropicText(anthropicKey, systemPrompt, userContent)
-    : await requestOpenAiCompatibleText(systemPrompt, userContent);
-  const text = sanitizeSingleLineOutput(raw, maxLength);
+  const request = (content: string) => (anthropicKey
+    ? requestAnthropicText(anthropicKey, systemPrompt, content)
+    : requestOpenAiCompatibleText(systemPrompt, content));
+
+  let text = sanitizeSingleLineOutput(await request(userContent), Number.MAX_SAFE_INTEGER);
+  if (text.length > maxLength) {
+    // Ask for a rewrite instead of cutting the text off mid-sentence.
+    const retried = sanitizeSingleLineOutput(await request([
+      userContent,
+      `\nYour previous ${label} was ${text.length} characters, which is too long:\n${text}`,
+      `\nRewrite it as a complete, shorter ${label} of at most ${maxLength} characters. Do not cut it off.`,
+    ].join('\n')), Number.MAX_SAFE_INTEGER);
+    text = retried || text;
+  }
+  text = trimToSentence(text, maxLength);
 
   if (!text) {
     throw new HttpError(502, `AI returned an empty ${label}`, {
@@ -392,6 +403,15 @@ async function generateSeoText(
   }
 
   return text;
+}
+
+// Last resort when a rewrite is still too long: prefer ending on a full sentence, then a word boundary.
+export function trimToSentence(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  const window = text.slice(0, maxLength + 1);
+  const sentenceEnd = Array.from(window.matchAll(/[.?](?=\s|$)/g)).pop()?.index ?? -1;
+  if (sentenceEnd > maxLength / 2) return window.slice(0, sentenceEnd + 1).trim();
+  return sanitizeSingleLineOutput(text, maxLength);
 }
 
 export function generateSeoTitle(fields: Record<string, string>, existing = ''): Promise<string> {
