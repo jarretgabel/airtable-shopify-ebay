@@ -26,7 +26,6 @@ type PublishActionsParams = Pick<UseListingApprovalRecordActionsParams,
   'selectedRecord'
   | 'hasMissingShopifyRequiredFields'
   | 'hasMissingEbayRequiredFields'
-  | 'isShopifyPublishBlockedByAuctionFormat'
   | 'missingShopifyRequiredFieldLabels'
   | 'missingEbayRequiredFieldLabels'
   | 'approvalPublishSource'
@@ -44,6 +43,7 @@ type PublishActionsParams = Pick<UseListingApprovalRecordActionsParams,
   savePendingUpdates?: () => Promise<boolean>;
 };
 
+const EBAY_MAX_FIXED_PRICE = 200000;
 const EBAY_PUBLISH_PROGRESS_NOTICE_ID = 'ebay-publish-progress';
 const EBAY_IMAGE_UPLOAD_CONCURRENCY = 2;
 const EBAY_IMAGE_UPLOAD_ATTEMPTS = 2;
@@ -61,7 +61,6 @@ export function useListingApprovalPublishActions({
   changedFieldNames = [],
   hasMissingShopifyRequiredFields,
   hasMissingEbayRequiredFields,
-  isShopifyPublishBlockedByAuctionFormat,
   missingShopifyRequiredFieldLabels,
   missingEbayRequiredFieldLabels,
   approvalPublishSource,
@@ -472,13 +471,19 @@ export function useListingApprovalPublishActions({
       return;
     }
 
-    if ((target === 'shopify' || target === 'both') && isShopifyPublishBlockedByAuctionFormat) {
-      pushInlineActionNotice(
-        'warning',
-        'Shopify publish blocked',
-        'Listing Format is set to Auction. Set Listing Format to Buy It Now before publishing to Shopify or Publish Both.',
-      );
-      return;
+    if (target === 'ebay' || target === 'both') {
+      // eBay refuses fixed-price (Buy It Now) listings of $200,000 or more, so stop before the request fails.
+      const pricingSummary = buildEbayDraftPayloadBundleFromApprovalFields(mergedDraftSourceFields ?? selectedRecord.fields)
+        .offer.pricingSummary as { price?: { value?: string } } | undefined;
+      const fixedPrice = Number.parseFloat(pricingSummary?.price?.value ?? '');
+      if (Number.isFinite(fixedPrice) && fixedPrice >= EBAY_MAX_FIXED_PRICE) {
+        pushInlineActionNotice(
+          'warning',
+          'eBay price too high',
+          `eBay does not allow a Buy It Now price of $${EBAY_MAX_FIXED_PRICE.toLocaleString('en-US')} or more. The eBay price is $${fixedPrice.toLocaleString('en-US')}. Lower it, or use the Auction format.`,
+        );
+        return;
+      }
     }
 
     const validationNotice = getPublishRequiredFieldValidationNotice(target, {

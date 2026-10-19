@@ -36,7 +36,6 @@ function createParams(): Parameters<typeof useListingApprovalPublishActions>[0] 
     },
     hasMissingShopifyRequiredFields: false,
     hasMissingEbayRequiredFields: false,
-    isShopifyPublishBlockedByAuctionFormat: false,
     missingShopifyRequiredFieldLabels: [],
     missingEbayRequiredFieldLabels: [],
     approvalPublishSource: 'approval-combined',
@@ -102,6 +101,18 @@ describe('publish lifecycle writeback', () => {
     expect(publishMock.mock.calls[0][3].fields['Shipping Dims']).toBe('100lbs (27x24x14)');
     expect(vi.mocked(params.pushInlineActionNotice).mock.calls).toContainEqual([
       'error', 'eBay publish failed', expect.stringMatching(/shipping policy/i), expect.any(Object),
+    ]);
+  });
+
+  it('blocks eBay publish when the fixed price is $200,000 or more', async () => {
+    const params = createParams();
+    params.mergedDraftSourceFields = { 'Ebay Price': 999999, Description: 'Placeholder price' };
+    const { result } = renderHook(() => useListingApprovalPublishActions(params));
+    await act(async () => result.current.runCombinedPush('ebay'));
+
+    expect(publishMock).not.toHaveBeenCalled();
+    expect(vi.mocked(params.pushInlineActionNotice).mock.calls).toContainEqual([
+      'warning', 'eBay price too high', expect.stringMatching(/\$200,000.*\$999,999/),
     ]);
   });
 

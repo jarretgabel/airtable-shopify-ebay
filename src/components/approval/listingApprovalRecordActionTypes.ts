@@ -61,7 +61,6 @@ export interface UseListingApprovalRecordActionsParams {
   canUpdateApprovedShopifyListing: boolean;
   hasMissingShopifyRequiredFields: boolean;
   hasMissingEbayRequiredFields: boolean;
-  isShopifyPublishBlockedByAuctionFormat: boolean;
   missingShopifyRequiredFieldLabels: string[];
   missingEbayRequiredFieldLabels: string[];
   changedFieldNames: string[];

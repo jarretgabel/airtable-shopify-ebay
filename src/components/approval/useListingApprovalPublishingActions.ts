@@ -24,7 +24,6 @@ type PublishingActionsParams = Omit<Pick<UseListingApprovalRecordActionsParams,
   | 'changedFieldNames'
   | 'hasMissingShopifyRequiredFields'
   | 'hasMissingEbayRequiredFields'
-  | 'isShopifyPublishBlockedByAuctionFormat'
   | 'missingShopifyRequiredFieldLabels'
   | 'missingEbayRequiredFieldLabels'
   | 'approvalPublishSource'
@@ -61,7 +60,6 @@ export function useListingApprovalPublishingActions({
   changedFieldNames = [],
   hasMissingShopifyRequiredFields,
   hasMissingEbayRequiredFields,
-  isShopifyPublishBlockedByAuctionFormat,
   missingShopifyRequiredFieldLabels,
   missingEbayRequiredFieldLabels,
   approvalPublishSource,
@@ -79,7 +77,6 @@ export function useListingApprovalPublishingActions({
     ...(savePendingUpdates ? { savePendingUpdates } : {}),
     hasMissingShopifyRequiredFields,
     hasMissingEbayRequiredFields,
-    isShopifyPublishBlockedByAuctionFormat,
     missingShopifyRequiredFieldLabels,
     missingEbayRequiredFieldLabels,
     approvalPublishSource,

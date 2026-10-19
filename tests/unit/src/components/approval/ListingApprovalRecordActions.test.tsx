@@ -19,7 +19,6 @@ const baseProps = {
   pushShopifyDisabled: false,
   pushEbayDisabled: false,
   pushBothDisabled: false,
-  isShopifyPublishBlockedByAuctionFormat: false,
   shopifyAdminListingUrl: null,
   shopifyServiceListingUrl: null,
   ebayAdminListingUrl: null,
@@ -176,22 +175,6 @@ describe('ListingApprovalRecordActions', () => {
     expect(screen.getByRole('button', { name: 'Update Shopify' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Update eBay' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Update Both' })).toBeInTheDocument();
-  });
-
-  it('shows buy-it-now guidance when auction format blocks Shopify-related publish actions', () => {
-    render(
-      <ListingApprovalRecordActions
-        {...baseProps}
-        workflowStatus="Approved for Publish"
-        isShopifyPublishBlockedByAuctionFormat
-        pushShopifyDisabled
-        pushBothDisabled
-      />,
-    );
-
-    const buyItNowButtons = screen.getAllByRole('button', { name: 'Set Buy It Now Format' });
-    expect(buyItNowButtons).toHaveLength(2);
-    expect(buyItNowButtons.every((button) => button.hasAttribute('disabled'))).toBe(true);
   });
 
   it('renders marketplace admin and listing links when URLs are provided', () => {

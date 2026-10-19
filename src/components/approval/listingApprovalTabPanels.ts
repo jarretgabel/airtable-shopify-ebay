@@ -199,7 +199,6 @@ interface BuildListingApprovalTabPanelsParams {
   pushShopifyDisabled: boolean;
   pushEbayDisabled: boolean;
   pushBothDisabled: boolean;
-  isShopifyPublishBlockedByAuctionFormat: boolean;
   onResetData: () => void;
   onSaveUpdates: () => void;
   onPrimaryAction: () => void;
@@ -311,7 +310,6 @@ export function buildListingApprovalTabPanels({
   pushShopifyDisabled,
   pushEbayDisabled,
   pushBothDisabled,
-  isShopifyPublishBlockedByAuctionFormat,
   onResetData,
   onSaveUpdates,
   onPrimaryAction,
@@ -472,7 +470,6 @@ export function buildListingApprovalTabPanels({
       pushShopifyDisabled,
       pushEbayDisabled,
       pushBothDisabled,
-      isShopifyPublishBlockedByAuctionFormat,
       shopifyAdminListingUrl: resolvedShopifyAdminListingUrl,
       shopifyServiceListingUrl: resolvedShopifyServiceListingUrl,
       ebayAdminListingUrl: resolvedEbayAdminListingUrl,

@@ -606,7 +606,9 @@ export interface GeneratedKeyFeature {
   value: string;
 }
 
-const MAX_KEY_FEATURES = 8;
+const MAX_KEY_FEATURES = 10;
+// eBay rejects item specifics longer than this, so generated values must fit without being cut off.
+export const KEY_FEATURE_VALUE_MAX_LENGTH = 65;
 
 // Rows the listing record already supplies automatically. Matched by word so variants such as
 // "Includes Original Box" or "Product Weight" are caught too.
@@ -648,8 +650,9 @@ export function parseKeyFeaturesOutput(raw: string, excludedFeatureNames: string
 
     const stripCites = (text: string) => text.replace(/<\/?cite[^>]*>/gi, '');
     const cleanFeature = stripCites(feature).replace(/[<>"*#`|]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
-    const cleanValue = stripCites(value).replace(/[<>*#`|]/g, '').replace(/!/g, '.').replace(/\s+/g, ' ').trim().slice(0, 140);
+    const cleanValue = stripCites(value).replace(/[<>*#`|]/g, '').replace(/!/g, '.').replace(/\s+/g, ' ').trim();
     const key = normalize(cleanFeature);
+    if (cleanValue.length > KEY_FEATURE_VALUE_MAX_LENGTH) continue;
     if (!key || !cleanValue || seen.has(key) || isAutoMappedFeature(key, cleanValue)) continue;
 
     seen.add(key);

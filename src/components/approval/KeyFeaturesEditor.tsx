@@ -44,6 +44,11 @@ interface KeyFeaturePreset {
   rows: ReadonlyArray<KeyFeatureRow>;
 }
 
+// eBay rejects item specifics longer than this.
+export const KEY_FEATURE_VALUE_MAX_LENGTH = 65;
+// AI generation fills the list up to this many rows. Rows added by hand are not limited.
+export const KEY_FEATURE_AI_MAX_ROWS = 10;
+
 const inputClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
 const iconButtonClass = 'flex h-7 w-7 items-center justify-center rounded-md border border-[var(--line)] text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-45';
@@ -375,6 +380,13 @@ export function KeyFeaturesEditor({
     setGenerating(true);
     setGenerateError('');
     try {
+      const filledRowCount = rows.filter((row) => row.feature.trim() || row.value.trim()).length;
+      const remainingSlots = KEY_FEATURE_AI_MAX_ROWS - filledRowCount;
+      if (remainingSlots <= 0) {
+        setGenerateError(`Already at ${KEY_FEATURE_AI_MAX_ROWS} features. Remove one to generate more, or add more by hand.`);
+        return;
+      }
+
       const existingNames = [...hiddenRows, ...rows].map((row) => row.feature).filter((name) => name.trim());
       const generated = await onGenerateFeatures(existingNames);
       const existingKeys = new Set(existingNames.map(normalizeFeatureKey));
@@ -383,7 +395,7 @@ export function KeyFeaturesEditor({
         if (!key || existingKeys.has(key) || isAutoIncludedFeature(row.feature) || isAutoMappedGeneratedFeature(row.feature, row.value)) return false;
         existingKeys.add(key);
         return true;
-      });
+      }).slice(0, remainingSlots);
 
       if (additions.length === 0) {
         setGenerateError('No new features found in the listing details. Add more notes and try again.');
@@ -553,9 +565,11 @@ export function KeyFeaturesEditor({
               ) : null}
             </div>
             <input
-              className={`${inputClass} ${overrideAutoMappedRow ? 'border-amber-400/70 focus:border-amber-300 focus:ring-amber-300/30' : ''}`}
+              className={`${inputClass} ${overrideAutoMappedRow ? 'border-amber-400/70 focus:border-amber-300 focus:ring-amber-300/30' : ''} ${row.value.length > KEY_FEATURE_VALUE_MAX_LENGTH ? 'border-rose-400/70' : ''}`}
               value={row.value}
               onChange={(event) => updateRow(index, { value: event.target.value })}
+              maxLength={KEY_FEATURE_VALUE_MAX_LENGTH}
+              title={`${row.value.length}/${KEY_FEATURE_VALUE_MAX_LENGTH} characters`}
               placeholder="Value (e.g. Serviced in 2024)"
               disabled={disabled}
               aria-label={`Key value ${index + 1}`}

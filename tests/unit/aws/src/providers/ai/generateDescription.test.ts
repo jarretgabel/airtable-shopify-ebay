@@ -233,3 +233,12 @@ test('sanitizeDescriptionOutput drops spec-style lines but keeps prose that has 
     'The MI-330 sounds open and quick. One thing to know: it is a used pair.\n\nWant to hear it? Come listen in Brooklyn.',
   );
 });
+
+test('parseKeyFeaturesOutput drops values longer than the eBay limit instead of cutting them off', () => {
+  const raw = JSON.stringify([
+    { feature: 'Vari-Lay Geometry', value: 'Multiple conductor gauges and lengths wound so frequency components arrive simultaneously' },
+    { feature: 'Conductor', value: 'Silver-plated copper' },
+    { feature: 'Exactly At Limit', value: 'x'.repeat(65) },
+  ]);
+  assert.deepEqual(parseKeyFeaturesOutput(raw).map((row) => row.feature), ['Conductor', 'Exactly At Limit']);
+});

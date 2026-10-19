@@ -21,7 +21,6 @@ interface ListingApprovalRecordActionsProps {
   pushShopifyDisabled: boolean;
   pushEbayDisabled: boolean;
   pushBothDisabled: boolean;
-  isShopifyPublishBlockedByAuctionFormat: boolean;
   shopifyAdminListingUrl: string | null;
   shopifyServiceListingUrl: string | null;
   ebayAdminListingUrl: string | null;
@@ -51,7 +50,6 @@ export function ListingApprovalRecordActions({
   pushShopifyDisabled,
   pushEbayDisabled,
   pushBothDisabled,
-  isShopifyPublishBlockedByAuctionFormat,
   shopifyAdminListingUrl,
   shopifyServiceListingUrl,
   ebayAdminListingUrl,
@@ -130,9 +128,7 @@ export function ListingApprovalRecordActions({
               ? saving
                 ? 'Saving before Shopify publish...'
                 : (hasExistingShopifyForActionLabel ? 'Updating Shopify...' : 'Publishing Shopify...')
-              : isShopifyPublishBlockedByAuctionFormat
-                  ? 'Set Buy It Now Format'
-                  : pushShopifyDisabled
+              : pushShopifyDisabled
                   ? 'Complete Shopify Fields'
                   : shopifyActionLabel}
           </SecondaryActionButton>
@@ -156,9 +152,7 @@ export function ListingApprovalRecordActions({
               ? saving
                 ? 'Saving before publish...'
                 : (hasExistingShopifyForActionLabel || hasExistingEbayForActionLabel ? 'Updating / Publishing...' : 'Publishing Both...')
-              : isShopifyPublishBlockedByAuctionFormat
-                  ? 'Set Buy It Now Format'
-                  : pushBothDisabled
+              : pushBothDisabled
                   ? 'Complete Required Fields'
                   : bothActionLabel}
           </AccentActionButton>

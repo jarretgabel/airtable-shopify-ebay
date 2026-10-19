@@ -30,7 +30,6 @@ interface BuildListingApprovalSelectedRecordStatusPropsParams {
   pushShopifyDisabled: boolean;
   pushEbayDisabled: boolean;
   pushBothDisabled: boolean;
-  isShopifyPublishBlockedByAuctionFormat: boolean;
   shopifyAdminListingUrl: string | null;
   shopifyServiceListingUrl: string | null;
   ebayAdminListingUrl: string | null;
@@ -66,7 +65,6 @@ export function buildListingApprovalSelectedRecordStatusProps({
   pushShopifyDisabled,
   pushEbayDisabled,
   pushBothDisabled,
-  isShopifyPublishBlockedByAuctionFormat,
   shopifyAdminListingUrl,
   shopifyServiceListingUrl,
   ebayAdminListingUrl,
@@ -109,7 +107,6 @@ export function buildListingApprovalSelectedRecordStatusProps({
       pushShopifyDisabled,
       pushEbayDisabled,
       pushBothDisabled,
-      isShopifyPublishBlockedByAuctionFormat,
       shopifyAdminListingUrl,
       shopifyServiceListingUrl,
       ebayAdminListingUrl,

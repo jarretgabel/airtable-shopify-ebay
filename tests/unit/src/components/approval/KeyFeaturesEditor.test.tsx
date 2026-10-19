@@ -69,6 +69,64 @@ describe('KeyFeaturesEditor', () => {
     expect(onGenerateFeatures).toHaveBeenCalledTimes(1);
   });
 
+  it('caps key feature values at the eBay item specific limit', () => {
+    render(
+      <KeyFeaturesEditor
+        keyFeaturesFieldName="Key Features"
+        keyFeaturesValue={'Inputs,4 line level'}
+        setFormValue={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Key value 1')).toHaveAttribute('maxLength', '65');
+  });
+
+  it('fills AI features only up to 10 rows total, while manual rows stay unlimited', async () => {
+    const setFormValue = vi.fn();
+    const existing = Array.from({ length: 8 }, (_, index) => `Feature ${index + 1},Value ${index + 1}`).join('\n');
+    const onGenerateFeatures = vi.fn().mockResolvedValue(
+      Array.from({ length: 5 }, (_, index) => ({ feature: `Generated ${index + 1}`, value: `Generated value ${index + 1}` })),
+    );
+
+    render(
+      <KeyFeaturesEditor
+        keyFeaturesFieldName="Key Features"
+        keyFeaturesValue={existing}
+        setFormValue={setFormValue}
+        onGenerateFeatures={onGenerateFeatures}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate with AI' }));
+
+    await waitFor(() => expect(setFormValue).toHaveBeenCalled());
+    const saved = String(setFormValue.mock.calls[setFormValue.mock.calls.length - 1][1]).split('\n');
+    expect(saved).toHaveLength(10);
+    expect(saved.slice(-2)).toEqual(['Generated 1,Generated value 1', 'Generated 2,Generated value 2']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add feature' }));
+    expect(screen.getAllByLabelText(/^Key value /)).toHaveLength(11);
+  });
+
+  it('does not call AI when the list already has 10 features', async () => {
+    const onGenerateFeatures = vi.fn();
+    const existing = Array.from({ length: 10 }, (_, index) => `Feature ${index + 1},Value ${index + 1}`).join('\n');
+
+    render(
+      <KeyFeaturesEditor
+        keyFeaturesFieldName="Key Features"
+        keyFeaturesValue={existing}
+        setFormValue={vi.fn()}
+        onGenerateFeatures={onGenerateFeatures}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Generate with AI' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Already at 10 features/);
+    expect(onGenerateFeatures).not.toHaveBeenCalled();
+  });
+
   it('shows an error when AI finds nothing new', async () => {
     render(
       <KeyFeaturesEditor

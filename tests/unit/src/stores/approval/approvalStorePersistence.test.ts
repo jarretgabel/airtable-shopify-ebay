@@ -544,6 +544,37 @@ describe('approvalStorePersistence', () => {
     expect(loadRecordsMock).toHaveBeenCalledWith('base/table', 'Approval', true);
   });
 
+  it('saves a typed eBay price to the real Ebay Price column when Airtable omits the empty field', async () => {
+    const realColumns = new Set(['Item Title', 'Ebay Price', 'Shopify Price', 'Ebay Listing Format']);
+    const state = buildStoreState({
+      formValues: { 'Buy It Now Price': '1200', 'Ebay Listing Format': 'AUCTION' },
+      fieldKinds: { 'Buy It Now Price': 'text', 'Ebay Listing Format': 'text' },
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    const saved: Array<Record<string, unknown>> = [];
+
+    updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
+      if (Object.keys(payload).some((name) => !realColumns.has(name))) {
+        throw createAirtable422Error('Unknown field name');
+      }
+      saved.push(payload);
+    });
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ 'Item Title': 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Item Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(saved.some((payload) => payload['Ebay Price'] === 1200)).toBe(true);
+  });
+
   it('retries Ebay Price alias saves against eBay offer price fields after a 422 response', async () => {
     const setMock = vi.fn();
     const loadRecordsMock = vi.fn(async () => {});

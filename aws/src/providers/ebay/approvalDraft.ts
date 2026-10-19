@@ -223,7 +223,25 @@ function inferConnectivityValue(explicitConnectivity: string, title: string, typ
   return '';
 }
 
+// eBay rejects aspect values over 65 characters and the publish fails outright, so leave those out.
+// Values still carrying the AI "[CHECK]" review marker have not been verified yet, so they are left out too.
+const EBAY_ASPECT_VALUE_MAX_LENGTH = 65;
+
+function sanitizeEbayAspects(aspects: Record<string, string[]> | undefined): Record<string, string[]> | undefined {
+  if (!aspects) return undefined;
+  const cleaned: Record<string, string[]> = {};
+  Object.entries(aspects).forEach(([name, values]) => {
+    const kept = values.filter((value) => value.length <= EBAY_ASPECT_VALUE_MAX_LENGTH && !/\[CHECK\]/i.test(value));
+    if (kept.length > 0) cleaned[name] = kept;
+  });
+  return Object.keys(cleaned).length === 0 ? undefined : cleaned;
+}
+
 function buildEbayProductAspects(rawExplicitAspects: unknown, brand: string, model: string, mpn: string, type: string, connectivity: string, rawKeyFeatures: string): Record<string, string[]> | undefined {
+  return sanitizeEbayAspects(buildEbayProductAspectsUnchecked(rawExplicitAspects, brand, model, mpn, type, connectivity, rawKeyFeatures));
+}
+
+function buildEbayProductAspectsUnchecked(rawExplicitAspects: unknown, brand: string, model: string, mpn: string, type: string, connectivity: string, rawKeyFeatures: string): Record<string, string[]> | undefined {
   const explicitAspects = parseEbayAspects(rawExplicitAspects);
   if (explicitAspects) {
     const merged = { ...explicitAspects };

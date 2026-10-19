@@ -121,7 +121,7 @@ export const KEY_FEATURES_SYSTEM_PROMPT = `You write the "Other Key Features" li
 Return a JSON array of objects, each {"feature": "...", "value": "..."}. Return only the JSON array, with no markdown and no commentary.
 
 GOAL
-- The real product features and specs a buyer cares about for this exact make and model: design and construction, technology, key specifications, connections, finish, and notable characteristics. Aim for 5 to 8 items.
+- The real product features and specs a buyer cares about for this exact make and model: design and construction, technology, key specifications, connections, finish, and notable characteristics. Aim for 5 to 10 items, never more than 10.
 
 TWO SOURCES OF FACTS
 1. The listing details provided. Facts stated there need no marking.
@@ -132,7 +132,7 @@ HARD RULES
 - Never invent anything: no years, prices, clients, quotes, press, or claims you cannot stand behind.
 - The following are already handled automatically from the listing record, so NEVER output them or anything equivalent: Make, Brand, Model, Serial Number, Condition, Component Type, Cosmetic Notes, Includes, Included, Original Box, Original Packaging, Box, Packaging, Accessories, Manual, Remote, Power Cable, Voltage, Weight, Shipping Weight, Dimensions, Shipping Dimensions, Audiogon Rating, Testing Notes, Tested, SKU.
 - Do not repeat a feature that already exists in the current list.
-- Feature names: short, Title Case, 1 to 4 words. Values: plain text, under 110 characters before any [CHECK], written the way Adam would say it: plain-spoken and honest. No hype, no exclamation points, no marketing adjectives, no emoji.
+- Feature names: short, Title Case, 1 to 4 words. Values: plain text, 65 characters or fewer INCLUDING any " [CHECK]" (a hard limit, because eBay rejects longer item specifics, so count the characters). If a feature cannot be said in 65 characters, leave that feature out instead of shortening it into something vague. Write each value the way Adam would say it: plain-spoken and honest. No hype, no exclamation points, no marketing adjectives, no emoji.
 - Keep model names and numbers exactly as given.`;
 
 export const KEY_FEATURES_WEB_SEARCH_ADDENDUM = `

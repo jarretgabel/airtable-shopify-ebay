@@ -158,3 +158,22 @@ test('extracts weight and dimensions from combined shipping details', () => {
     weight: { value: 22, unit: 'POUND' },
   });
 });
+test('eBay product aspects leave out values over 65 characters and unverified [CHECK] values', () => {
+  const longValue = 'Multiple conductor gauges and lengths wound so frequency components arrive simultaneously';
+  const bundle = buildEbayDraftPayloadBundleFromApprovalFields({
+    SKU: '1',
+    Make: 'MIT',
+    Model: 'MI-330',
+    'Key Features (Key, Value)': JSON.stringify([
+      { feature: 'Vari-Lay Geometry', value: longValue },
+      { feature: 'Terminations', value: 'RCA [CHECK]' },
+      { feature: 'Length', value: '1 meter' },
+    ]),
+  });
+
+  const aspects = bundle.inventoryItem.product?.aspects as Record<string, string[]>;
+  assert.deepEqual(aspects.Length, ['1 meter']);
+  assert.equal(aspects['Vari-Lay Geometry'], undefined);
+  assert.equal(aspects.Terminations, undefined);
+  assert.deepEqual(aspects.Brand, ['MIT']);
+});
