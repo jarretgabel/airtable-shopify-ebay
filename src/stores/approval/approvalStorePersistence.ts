@@ -427,6 +427,10 @@ function getKnownMissingWritableFieldName(fieldName: string): string | null {
     'shopify collection ids': 'Shopify Collections',
     'shopify collections': 'Shopify Collections',
     'shopify graphql collection ids': 'Shopify Collections',
+    'shopify type': 'Shopify Type',
+    'key features (key, value)': 'Key Features (Key, Value)',
+    'shopify extra seo title': 'Shopify Extra SEO Title',
+    'shopify extra seo description': 'Shopify Extra SEO Description',
     'shopify taxonomy attributes json': 'Shopify Taxonomy Attributes JSON',
     'shopify taxonomy attributes': 'Shopify Taxonomy Attributes JSON',
     'shopify_taxonomy_attributes_json': 'Shopify Taxonomy Attributes JSON',
@@ -513,6 +517,10 @@ function isAllowedMissingWritableFieldName(fieldName: string): boolean {
     || normalized === 'shopify graphql collection ids'
     || normalized === 'shopify collection ids'
     || normalized === 'shopify collections'
+    || normalized === 'shopify type'
+    || normalized === 'key features (key, value)'
+    || normalized === 'shopify extra seo title'
+    || normalized === 'shopify extra seo description'
     || normalized === 'shopify taxonomy attributes json'
     || normalized === 'shopify taxonomy attributes'
     || normalized === 'shopify_taxonomy_attributes_json'

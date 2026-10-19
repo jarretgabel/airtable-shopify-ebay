@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveTaxonomyCategory, searchTaxonomyCategories } from '@/services/app-api/shopify';
 import type { ShopifyTaxonomyCategoryMatch } from '@/services/shopify';
 import { trimShopifyProductType } from '@/services/shopifyTaxonomy';
+import { suggestShopifyCategory } from '@/services/categorySuggestions';
+import { collectAiListingFields } from '@/components/approval/aiListingFields';
+import { useRegisterCategorySuggester } from '@/components/approval/aiCategorySuggesterRegistry';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -67,6 +70,7 @@ interface ShopifyTaxonomyTypeSelectProps {
   value: string;
   disabled: boolean;
   onChange: (value: string) => void;
+  formValues?: Record<string, string>;
 }
 
 export function ShopifyTaxonomyTypeSelect({
@@ -76,6 +80,7 @@ export function ShopifyTaxonomyTypeSelect({
   value,
   disabled,
   onChange,
+  formValues,
 }: ShopifyTaxonomyTypeSelectProps) {
   const [query, setQuery] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
@@ -84,6 +89,7 @@ export function ShopifyTaxonomyTypeSelect({
   const [options, setOptions] = useState<ShopifyTaxonomyCategoryMatch[]>([]);
   const [isCommittingSelection, setIsCommittingSelection] = useState(false);
   const [knownCategoriesById, setKnownCategoriesById] = useState<Map<string, ShopifyTaxonomyCategoryMatch>>(new Map());
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -212,6 +218,34 @@ export function ShopifyTaxonomyTypeSelect({
     setError('');
   };
 
+  const suggestCategory = async (fields: Record<string, string>, onlyIfEmpty: boolean) => {
+    if (onlyIfEmpty && value.trim()) return;
+
+    setIsSuggesting(true);
+    setError('');
+    try {
+      const suggestion = await suggestShopifyCategory(fields);
+      if (!suggestion) {
+        setError('AI could not find a matching Shopify category. Search for one manually.');
+        return;
+      }
+      commitSelection(suggestion.label);
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const handleSuggestClick = async () => {
+    try {
+      await suggestCategory(collectAiListingFields(formValues ?? {}, [fieldName]), false);
+    } catch (suggestError) {
+      setError(suggestError instanceof Error ? suggestError.message : 'Could not suggest a category.');
+    }
+  };
+
+  // "Generate all with AI" only fills the category when it is still empty.
+  useRegisterCategorySuggester('shopify-category', (fields) => suggestCategory(fields, true));
+
   const commitTypedQueryIfNeeded = async () => {
     const normalizedQuery = normalizeCategoryPath(query);
     const normalizedValue = normalizeCategoryPath(value);
@@ -257,6 +291,16 @@ export function ShopifyTaxonomyTypeSelect({
       <span className={`${labelClassName} flex items-center gap-2`}>
         <span>{label}</span>
         {required && <span className={requiredBadgeClass}>Required</span>}
+        {formValues && (
+          <button
+            type="button"
+            className="ml-auto rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => { void handleSuggestClick(); }}
+            disabled={disabled || isSuggesting}
+          >
+            {isSuggesting ? 'Suggesting…' : 'Suggest with AI'}
+          </button>
+        )}
       </span>
       <div className="flex items-center gap-2">
         <input
@@ -316,6 +360,8 @@ export function ShopifyTaxonomyTypeSelect({
           ▼
         </button>
       </div>
+
+      {!isOpen && error && <p role="alert" className="m-0 text-xs text-rose-300">{error}</p>}
 
       {categoryPathSegments.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">

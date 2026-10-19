@@ -1,9 +1,12 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { EbayCategoriesOptionsMenu } from '@/components/approval/EbayCategoriesOptionsMenu';
 import {
   normalizeSelectionValue,
   useEbayCategoriesSelect,
 } from '@/components/approval/useEbayCategoriesSelect';
+import { collectAiListingFields } from '@/components/approval/aiListingFields';
+import { useRegisterCategorySuggester } from '@/components/approval/aiCategorySuggesterRegistry';
+import { suggestEbayCategory } from '@/services/categorySuggestions';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -20,6 +23,7 @@ interface EbayCategoriesSelectProps {
   labelsById?: Record<string, string>;
   onChange: (value: string[], labelsById?: Record<string, string>) => void;
   helperWarning?: ReactNode;
+  formValues?: Record<string, string>;
 }
 
 export function EbayCategoriesSelect({
@@ -32,8 +36,11 @@ export function EbayCategoriesSelect({
   labelsById = {},
   onChange,
   helperWarning,
+  formValues,
 }: EbayCategoriesSelectProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState('');
   const {
     browseStack,
     categoryMap,
@@ -64,6 +71,36 @@ export function EbayCategoriesSelect({
     disabled,
     onChange,
   });
+  const suggestCategory = async (fields: Record<string, string>, onlyIfEmpty: boolean) => {
+    if (onlyIfEmpty && value.length > 0) return;
+
+    setIsSuggesting(true);
+    setSuggestError('');
+    try {
+      const suggestion = await suggestEbayCategory(fields, marketplaceId);
+      if (!suggestion) {
+        setSuggestError('AI could not find a matching eBay category. Browse or search for one manually.');
+        return;
+      }
+      // Replace only the primary category; a secondary category incurs extra fees, so it stays as chosen.
+      const nextIds = [suggestion.id, ...value.filter((item) => item !== suggestion.id).slice(0, 1)];
+      onChange(nextIds, { [suggestion.id]: suggestion.label.split(' > ').pop() ?? suggestion.label });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const handleSuggestClick = async () => {
+    try {
+      await suggestCategory(collectAiListingFields(formValues ?? {}, [fieldName]), false);
+    } catch (error) {
+      setSuggestError(error instanceof Error ? error.message : 'Could not suggest a category.');
+    }
+  };
+
+  // "Generate all with AI" only fills the category when none is selected yet.
+  useRegisterCategorySuggester('ebay-category', (fields) => suggestCategory(fields, true));
+
   const missingRequiredSelection = required && value.length === 0;
   const inputClassName = missingRequiredSelection
     ? `${inputBaseClass} border-rose-400/45 bg-rose-500/5 focus:border-rose-300`
@@ -103,7 +140,18 @@ export function EbayCategoriesSelect({
       <span className={`${labelClass} flex items-center gap-2 ${missingRequiredSelection ? 'text-[var(--required-label-ink)]' : ''}`}>
         <span>{label}</span>
         {required && <span className={requiredBadgeClass}>eBay Required</span>}
+        {formValues && (
+          <button
+            type="button"
+            className="ml-auto rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => { void handleSuggestClick(); }}
+            disabled={disabled || isSuggesting}
+          >
+            {isSuggesting ? 'Suggesting…' : 'Suggest with AI'}
+          </button>
+        )}
       </span>
+      {suggestError && <span role="alert" className="text-xs text-rose-400">{suggestError}</span>}
 
       <div className={`rounded-xl border p-3 ${missingRequiredSelection ? 'border-rose-400/45 bg-rose-500/5' : 'border-[var(--line)] bg-[var(--panel)]'}`}>
         <p className="m-0 mb-2 text-xs text-[var(--muted)]">

@@ -1,6 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { getOptionalSecret } from '../../shared/secrets.js';
-import { DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, SEO_DESCRIPTION_SYSTEM_PROMPT, SEO_TITLE_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
+import { CATEGORY_PICK_SYSTEM_PROMPT, CATEGORY_QUERIES_SYSTEM_PROMPT, DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, SEO_DESCRIPTION_SYSTEM_PROMPT, SEO_TITLE_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
 
 const SYSTEM_PROMPT = `You are an expert authenticator and cataloguer of high-end audiophile / home theater equipment for Resolution AV, a luxury used HiFi dealership in New York City.
 
@@ -420,6 +420,87 @@ export function generateSeoTitle(fields: Record<string, string>, existing = ''):
 
 export function generateSeoDescription(fields: Record<string, string>, existing = ''): Promise<string> {
   return generateSeoText(SEO_DESCRIPTION_SYSTEM_PROMPT, MAX_SEO_DESCRIPTION_LENGTH, 'SEO description', fields, existing);
+}
+
+export interface CategoryCandidate {
+  id: string;
+  label: string;
+}
+
+function formatListingDetails(fields: Record<string, string>, maxValueLength = 300): string {
+  return Object.entries(fields)
+    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    .slice(0, MAX_DESCRIPTION_FIELDS)
+    .map(([name, value]) => `${name}: ${value.trim().slice(0, maxValueLength)}`)
+    .join('\n');
+}
+
+async function requestAiText(systemPrompt: string, userContent: string): Promise<string> {
+  const anthropicKey = getOptionalSecret('ANTHROPIC_API_KEY');
+  return anthropicKey
+    ? requestAnthropicText(anthropicKey, systemPrompt, userContent)
+    : requestOpenAiCompatibleText(systemPrompt, userContent);
+}
+
+export function parseCategoryQueriesOutput(raw: string): string[] {
+  const jsonText = raw.match(/\[[\s\S]*\]/)?.[0];
+  if (!jsonText) return [];
+  try {
+    const parsed = JSON.parse(jsonText) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return Array.from(new Set(
+      parsed
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.replace(/\s+/g, ' ').trim().slice(0, 80))
+        .filter(Boolean),
+    )).slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
+export async function generateCategoryQueries(target: 'shopify' | 'ebay', fields: Record<string, string>): Promise<string[]> {
+  const raw = await requestAiText(
+    CATEGORY_QUERIES_SYSTEM_PROMPT,
+    `Marketplace: ${target === 'ebay' ? 'eBay' : 'Shopify product taxonomy'}\nListing details:\n${formatListingDetails(fields)}`,
+  );
+  return parseCategoryQueriesOutput(raw);
+}
+
+export function parseCategoryPickOutput(raw: string, candidates: CategoryCandidate[]): string | null {
+  const jsonText = raw.match(/\{[\s\S]*\}/)?.[0];
+  if (!jsonText) return null;
+  try {
+    const id = (JSON.parse(jsonText) as { id?: unknown }).id;
+    const normalized = typeof id === 'string' || typeof id === 'number' ? String(id).trim() : '';
+    // Models often drop the "gid://shopify/TaxonomyCategory/" prefix, so also match on the trailing id segment.
+    const match = candidates.find((candidate) => candidate.id === normalized)
+      ?? candidates.find((candidate) => normalized.length > 0 && candidate.id.endsWith(`/${normalized}`));
+    return match?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function pickCategory(
+  target: 'shopify' | 'ebay',
+  fields: Record<string, string>,
+  candidates: CategoryCandidate[],
+): Promise<string | null> {
+  const limited = candidates.slice(0, 30);
+  if (limited.length === 0) return null;
+
+  const raw = await requestAiText(
+    CATEGORY_PICK_SYSTEM_PROMPT,
+    [
+      `Marketplace: ${target === 'ebay' ? 'eBay' : 'Shopify product taxonomy'}`,
+      'Listing details:',
+      formatListingDetails(fields),
+      '\nCandidates (id: category path):',
+      ...limited.map((candidate) => `${candidate.id}: ${candidate.label}`),
+    ].join('\n'),
+  );
+  return parseCategoryPickOutput(raw, limited);
 }
 
 export interface GeneratedKeyFeature {

@@ -3,12 +3,14 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { generateDescription, generateKeyFeatures, generateSeoDescription, generateSeoTitle, generateTitle } from '../../providers/ai/client.js';
+import { generateCategoryQueries, pickCategory, generateDescription, generateKeyFeatures, generateSeoDescription, generateSeoTitle, generateTitle } from '../../providers/ai/client.js';
 
 interface GenerateDescriptionBody {
   fields?: Record<string, unknown>;
   existingDescription?: string;
-  kind?: 'description' | 'title' | 'features' | 'seoTitle' | 'seoDescription';
+  kind?: 'description' | 'title' | 'features' | 'seoTitle' | 'seoDescription' | 'categoryQueries' | 'categoryPick';
+  target?: unknown;
+  candidates?: unknown;
   existingFeatureNames?: unknown;
   excludedFeatureNames?: unknown;
 }
@@ -57,6 +59,26 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       const title = await generateTitle(fields, existing);
       logInfo('Generated listing title via AI', { fieldCount: Object.keys(fields).length });
       return jsonOk({ title }, { origin });
+    }
+
+    if (body.kind === 'categoryQueries' || body.kind === 'categoryPick') {
+      const target = body.target === 'ebay' ? 'ebay' : 'shopify';
+      if (body.kind === 'categoryQueries') {
+        const queries = await generateCategoryQueries(target, fields);
+        logInfo('Generated category search phrases via AI', { target, count: queries.length });
+        return jsonOk({ queries }, { origin });
+      }
+
+      const candidates = (Array.isArray(body.candidates) ? body.candidates : [])
+        .filter((item): item is { id: string; label: string } => (
+          typeof item === 'object' && item !== null
+          && typeof (item as { id?: unknown }).id === 'string'
+          && typeof (item as { label?: unknown }).label === 'string'
+        ))
+        .slice(0, 30);
+      const id = await pickCategory(target, fields, candidates);
+      logInfo('Picked category via AI', { target, candidateCount: candidates.length, picked: Boolean(id) });
+      return jsonOk({ id }, { origin });
     }
 
     if (body.kind === 'seoTitle') {

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useRef, useState } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import {
   isGenericImageAltField,
@@ -8,6 +8,8 @@ import {
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { SHOPIFY_SEO_DESCRIPTION_FIELD_NAME, SHOPIFY_SEO_TITLE_FIELD_NAME } from '@/components/approval/ShopifySeoFieldsEditor';
+import { collectAiListingFields } from '@/components/approval/aiListingFields';
+import { runCategorySuggesters } from '@/components/approval/aiCategorySuggesterRegistry';
 import { DrawerStatusIcon } from '@/components/approval/listingApprovalRequiredFieldHelpers';
 import { resolveListingApprovalTestingSectionFields } from '@/components/approval/listingApprovalTestingSection';
 import { tabFormControlMultilineClass } from '@/components/tabs/uiClasses';
@@ -109,6 +111,11 @@ export function ListingApprovalCombinedSharedSection({
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [descriptionError, setDescriptionError] = useState('');
 
+  const [generatingAll, setGeneratingAll] = useState(false);
+  const [generateAllError, setGenerateAllError] = useState('');
+  const [featuresTrigger, setFeaturesTrigger] = useState(0);
+  const featureOverridesRef = useRef<Record<string, string>>({});
+
   const [generatingTitle, setGeneratingTitle] = useState(false);
   const [titleError, setTitleError] = useState('');
 
@@ -124,11 +131,11 @@ export function ListingApprovalCombinedSharedSection({
     )),
   );
 
-  // Fills only SEO fields that are still empty, so hand-edited SEO text is never overwritten.
-  const fillEmptySeoFields = async (kinds: Array<'seoTitle' | 'seoDescription'>, overrides: Record<string, string>): Promise<string> => {
+  // Unless replaceExisting is set, only empty SEO fields are filled so hand-edited SEO text is never overwritten.
+  const fillSeoFields = async (kinds: Array<'seoTitle' | 'seoDescription'>, overrides: Record<string, string>, replaceExisting = false): Promise<string> => {
     for (const kind of kinds) {
       const fieldName = kind === 'seoTitle' ? SHOPIFY_SEO_TITLE_FIELD_NAME : SHOPIFY_SEO_DESCRIPTION_FIELD_NAME;
-      if ((formValues[fieldName] ?? '').trim()) continue;
+      if (!replaceExisting && (formValues[fieldName] ?? '').trim()) continue;
       try {
         const text = await generateListingSeoText(kind, { ...collectListingFields(fieldName), ...overrides });
         setFormValue(fieldName, text);
@@ -150,11 +157,53 @@ export function ListingApprovalCombinedSharedSection({
     try {
       const description = await generateListingDescription(collectListingFields(combinedDescriptionFieldName), existingDescription);
       setFormValue(combinedDescriptionFieldName, description);
-      setDescriptionError(await fillEmptySeoFields(['seoDescription'], { [combinedDescriptionFieldName]: description }));
+      setDescriptionError(await fillSeoFields(['seoDescription'], { [combinedDescriptionFieldName]: description }));
     } catch (error) {
       setDescriptionError(error instanceof Error ? error.message : 'Could not generate a description.');
     } finally {
       setGeneratingDescription(false);
+    }
+  };
+
+  const handleGenerateAll = async () => {
+    const existingFieldNames = [titleFieldName, combinedDescriptionFieldName, SHOPIFY_SEO_TITLE_FIELD_NAME, SHOPIFY_SEO_DESCRIPTION_FIELD_NAME]
+      .filter(Boolean);
+    if (
+      existingFieldNames.some((fieldName) => (formValues[fieldName] ?? '').trim())
+      && !window.confirm('Replace the current title, description and SEO text with AI-generated ones? Key features are only added to, and categories are only filled when empty.')
+    ) {
+      return;
+    }
+
+    setGeneratingAll(true);
+    setGenerateAllError('');
+    const generated: Record<string, string> = {};
+    try {
+      if (titleFieldName) {
+        generated[titleFieldName] = await generateListingTitle(collectListingFields(titleFieldName), formValues[titleFieldName] ?? '');
+        setFormValue(titleFieldName, generated[titleFieldName]);
+      }
+      if (combinedDescriptionFieldName) {
+        generated[combinedDescriptionFieldName] = await generateListingDescription(
+          { ...collectListingFields(combinedDescriptionFieldName), ...generated },
+          formValues[combinedDescriptionFieldName] ?? '',
+        );
+        setFormValue(combinedDescriptionFieldName, generated[combinedDescriptionFieldName]);
+      }
+      if (combinedSharedKeyFeaturesFieldName) {
+        featureOverridesRef.current = generated;
+        setFeaturesTrigger((count) => count + 1);
+      }
+      const [seoError, categoryError] = await Promise.all([
+        fillSeoFields(['seoTitle', 'seoDescription'], generated, true),
+        runCategorySuggesters({ ...collectAiListingFields(formValues), ...generated }),
+      ]);
+      if (seoError || categoryError) setGenerateAllError(seoError || categoryError);
+    } catch (error) {
+      setGenerateAllError(error instanceof Error ? error.message : 'Could not generate the listing text.');
+    } finally {
+      featureOverridesRef.current = {};
+      setGeneratingAll(false);
     }
   };
 
@@ -169,7 +218,7 @@ export function ListingApprovalCombinedSharedSection({
     try {
       const title = await generateListingTitle(collectListingFields(titleFieldName), existingTitle);
       setFormValue(titleFieldName, title);
-      setTitleError(await fillEmptySeoFields(['seoTitle'], { [titleFieldName]: title }));
+      setTitleError(await fillSeoFields(['seoTitle'], { [titleFieldName]: title }));
     } catch (error) {
       setTitleError(error instanceof Error ? error.message : 'Could not generate a title.');
     } finally {
@@ -236,8 +285,23 @@ export function ListingApprovalCombinedSharedSection({
       <div className="space-y-4">
         <AppSectionTitle
           title="Shared Fields"
-          actions={sharedDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={sharedDrawerRequiredStatus.allFilled} /> : null}
+          actions={(
+            <>
+              {(titleFieldName || combinedDescriptionFieldName) && (
+                <button
+                  type="button"
+                  className="rounded-md border border-[var(--accent)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold text-[var(--ink)] hover:bg-[var(--accent)]/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => { void handleGenerateAll(); }}
+                  disabled={saving || generatingAll || generatingTitle || generatingDescription}
+                >
+                  {generatingAll ? 'Generating everything…' : 'Generate all with AI'}
+                </button>
+              )}
+              {sharedDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={sharedDrawerRequiredStatus.allFilled} /> : null}
+            </>
+          )}
         />
+        {generateAllError && <p role="alert" className="m-0 -mt-2 text-xs text-rose-400">{generateAllError}</p>}
 
         {titleFieldName && (
           <ApprovalFormFields
@@ -270,7 +334,7 @@ export function ListingApprovalCombinedSharedSection({
               type="button"
               className="rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => { void handleGenerateTitle(); }}
-              disabled={saving || generatingTitle}
+              disabled={saving || generatingTitle || generatingAll}
             >
               {generatingTitle ? 'Generating…' : 'Generate title with AI'}
             </button>
@@ -289,7 +353,7 @@ export function ListingApprovalCombinedSharedSection({
                 type="button"
                 className="ml-auto rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={() => { void handleGenerateDescription(); }}
-                disabled={saving || generatingDescription}
+                disabled={saving || generatingDescription || generatingAll}
               >
                 {generatingDescription ? 'Generating…' : 'Generate with AI'}
               </button>
@@ -341,8 +405,9 @@ export function ListingApprovalCombinedSharedSection({
               disabled={saving}
               componentTypeValue={componentTypeValue}
               hiddenFeatureNames={COMBINED_HIDDEN_KEY_FEATURE_NAMES}
+              generateTrigger={featuresTrigger}
               onGenerateFeatures={(existingFeatureNames) => generateListingKeyFeatures(
-                collectListingFields(combinedSharedKeyFeaturesFieldName),
+                { ...collectListingFields(combinedSharedKeyFeaturesFieldName), ...featureOverridesRef.current },
                 existingFeatureNames,
                 COMBINED_HIDDEN_KEY_FEATURE_NAMES,
               )}

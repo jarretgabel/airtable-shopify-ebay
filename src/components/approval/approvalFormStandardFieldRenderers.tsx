@@ -319,6 +319,7 @@ export function renderApprovalFormSpecialField({
         value={value}
         onChange={(nextValue) => setFormValue(fieldName, nextValue)}
         disabled={inputDisabled}
+        formValues={formValues}
       />
     );
   }

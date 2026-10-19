@@ -80,6 +80,21 @@ RULES
 
 Return only the description text, nothing else.`;
 
+export const CATEGORY_QUERIES_SYSTEM_PROMPT = `You help file a pre-owned hi-fi product listing into a marketplace category tree. Given the listing details, write 1 to 3 short category search phrases (2 to 5 words each) that the marketplace's category search would match, from most specific to most general.
+
+RULES
+- Describe the product type, not the brand or model. Examples: "tube integrated amplifier", "interconnect audio cable", "turntable", "floor standing speakers".
+- Use ONLY what the listing details support. Do not guess.
+- Return only a JSON array of strings, with no markdown and no commentary.`;
+
+export const CATEGORY_PICK_SYSTEM_PROMPT = `You choose the best marketplace category for a pre-owned hi-fi product listing from a fixed list of candidates.
+
+RULES
+- Choose ONLY from the candidate ids provided. Never invent an id or a category.
+- Prefer the most specific category that fits the product type. Use the listing details only.
+- If no candidate fits well, return null.
+- Return only JSON like {"id": "123"} or {"id": null}, with no markdown and no commentary.`;
+
 export const KEY_FEATURES_SYSTEM_PROMPT = `You write the "Other Key Features" list for a product listing at Resolution Audio Video (RAV), a small, hands-on Brooklyn company that curates high-end hi-fi and buys and sells pre-owned and vintage gear.
 
 Return a JSON array of objects, each {"feature": "...", "value": "..."}. Return only the JSON array, with no markdown and no commentary.

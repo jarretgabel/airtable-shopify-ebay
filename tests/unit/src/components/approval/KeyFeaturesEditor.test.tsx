@@ -55,6 +55,20 @@ describe('KeyFeaturesEditor', () => {
     );
   });
 
+  it('generates features when the generate trigger changes', async () => {
+    const setFormValue = vi.fn();
+    const onGenerateFeatures = vi.fn().mockResolvedValue([{ feature: 'Service History', value: 'Serviced in 2024' }]);
+    const props = { keyFeaturesFieldName: 'Key Features', keyFeaturesValue: '', setFormValue, onGenerateFeatures };
+
+    const { rerender } = render(<KeyFeaturesEditor {...props} generateTrigger={0} />);
+    expect(onGenerateFeatures).not.toHaveBeenCalled();
+
+    rerender(<KeyFeaturesEditor {...props} generateTrigger={1} />);
+
+    await waitFor(() => expect(setFormValue).toHaveBeenCalledWith('Key Features', 'Service History,Serviced in 2024'));
+    expect(onGenerateFeatures).toHaveBeenCalledTimes(1);
+  });
+
   it('shows an error when AI finds nothing new', async () => {
     render(
       <KeyFeaturesEditor

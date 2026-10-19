@@ -4,6 +4,8 @@ import {
   generateDescription,
   generateKeyFeatures,
   generateTitle,
+  parseCategoryPickOutput,
+  parseCategoryQueriesOutput,
   parseKeyFeaturesOutput,
   sanitizeDescriptionOutput,
   sanitizeSingleLineOutput,
@@ -177,4 +179,24 @@ test('trimToSentence ends on a full sentence when the text is too long', () => {
   const text = 'Pre-owned MIT MI-330 interconnect cables, tested and in the original box. Hear them in our Brooklyn listening room before you decide.';
   assert.equal(trimToSentence(text, 100), 'Pre-owned MIT MI-330 interconnect cables, tested and in the original box.');
   assert.equal(trimToSentence('Short text.', 160), 'Short text.');
+});
+
+test('parseCategoryQueriesOutput keeps up to three short unique phrases', () => {
+  assert.deepEqual(
+    parseCategoryQueriesOutput('```json\n["tube integrated amplifier", "tube integrated amplifier", "amplifier", "audio", "extra"]\n```'),
+    ['tube integrated amplifier', 'amplifier', 'audio'],
+  );
+  assert.deepEqual(parseCategoryQueriesOutput('no json here'), []);
+});
+
+test('parseCategoryPickOutput only accepts ids from the candidate list', () => {
+  const candidates = [{ id: '123', label: 'Amplifiers' }, { id: '456', label: 'Cables' }];
+  assert.equal(parseCategoryPickOutput('{"id": "456"}', candidates), '456');
+  assert.equal(parseCategoryPickOutput('{"id": 123}', candidates), '123');
+  assert.equal(parseCategoryPickOutput('{"id": "999"}', candidates), null);
+  assert.equal(
+    parseCategoryPickOutput('{"id": "el-7-7-1"}', [{ id: 'gid://shopify/TaxonomyCategory/el-7-7-1', label: 'Cables' }]),
+    'gid://shopify/TaxonomyCategory/el-7-7-1',
+  );
+  assert.equal(parseCategoryPickOutput('{"id": null}', candidates), null);
 });

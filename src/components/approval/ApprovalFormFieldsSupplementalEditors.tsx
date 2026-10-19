@@ -741,6 +741,7 @@ export function ApprovalFormFieldsSupplementalEditors({
               }
             }}
             disabled={saving}
+            formValues={formValues}
             helperWarning={hasSecondaryEbayCategory ? (
               <span className="text-xs font-semibold text-rose-300">
                 Adding a second category incurrs extra fees

@@ -85,6 +85,50 @@ export async function generateListingSeoText(
   }
 }
 
+export type CategoryTarget = 'shopify' | 'ebay';
+
+export interface CategoryCandidate {
+  id: string;
+  label: string;
+}
+
+export async function generateListingCategoryQueries(
+  target: CategoryTarget,
+  fields: Record<string, string>,
+): Promise<string[]> {
+  try {
+    const result = await postJson<{ queries?: string[] }>('/api/ai/generate-description', {
+      kind: 'categoryQueries',
+      target,
+      fields,
+    });
+    if (!Array.isArray(result.queries)) {
+      throw new Error('The AI service returned no category search. Restart the API so it has the latest version.');
+    }
+    return result.queries.filter((query) => typeof query === 'string' && query.trim());
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
+export async function pickListingCategory(
+  target: CategoryTarget,
+  fields: Record<string, string>,
+  candidates: CategoryCandidate[],
+): Promise<string | null> {
+  try {
+    const result = await postJson<{ id?: string | null }>('/api/ai/generate-description', {
+      kind: 'categoryPick',
+      target,
+      fields,
+      candidates,
+    });
+    return typeof result.id === 'string' && result.id.trim() ? result.id : null;
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
 export interface GeneratedKeyFeatureRow {
   feature: string;
   value: string;

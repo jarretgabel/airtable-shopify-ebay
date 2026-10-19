@@ -24,6 +24,8 @@ interface KeyFeaturesEditorProps {
   componentTypeValue?: string;
   hiddenFeatureNames?: string[];
   onGenerateFeatures?: (existingFeatureNames: string[]) => Promise<KeyFeatureRow[]>;
+  // Incrementing this value runs the same generation as the Generate with AI button.
+  generateTrigger?: number;
 }
 
 type KeyFeaturePresetId =
@@ -284,6 +286,7 @@ export function KeyFeaturesEditor({
   componentTypeValue,
   hiddenFeatureNames = [],
   onGenerateFeatures,
+  generateTrigger = 0,
 }: KeyFeaturesEditorProps) {
   const hiddenFeatureNamesKey = hiddenFeatureNames
     .map((value) => normalizeFeatureKey(value))
@@ -395,6 +398,14 @@ export function KeyFeaturesEditor({
       setGenerating(false);
     }
   }
+
+  const lastGenerateTriggerRef = useRef(generateTrigger);
+  useEffect(() => {
+    if (generateTrigger === lastGenerateTriggerRef.current) return;
+    lastGenerateTriggerRef.current = generateTrigger;
+    void generateFeatures();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generateTrigger]);
 
   function removeRow(index: number) {
     const next = rows.filter((_, rowIndex) => rowIndex !== index);

@@ -317,6 +317,41 @@ describe('approvalStorePersistence', () => {
     );
   });
 
+  it('saves Shopify type, key features and SEO text when Airtable omits the empty fields from records', async () => {
+    const values = {
+      'Shopify Type': 'Electronics > Electronics Accessories > Cables > Audio & Video Cables',
+      'Key Features (Key, Value)': 'Conductor,Silver-plated copper',
+      'Shopify Extra SEO Title': 'MIT MI-330 Proline Shotgun Interconnect',
+      'Shopify Extra SEO Description': 'Pre-owned MIT MI-330 interconnect cables, tested and ready to hear in Brooklyn.',
+    };
+    const state = buildStoreState({
+      formValues: values,
+      fieldKinds: Object.fromEntries(Object.keys(values).map((name) => [name, 'text'])),
+    });
+    const saveRecord = createSaveRecordAction(vi.fn(), vi.fn(() => state));
+    updateRecordFromResolvedSourceMock.mockResolvedValue(undefined);
+
+    const succeeded = await saveRecord(
+      false,
+      buildRecord({ Title: 'Listing title' }),
+      'base/table',
+      'Approval',
+      ['Title'],
+      'Approved',
+      () => undefined,
+      'full',
+    );
+
+    expect(succeeded).toBe(true);
+    expect(updateRecordFromResolvedSourceMock).toHaveBeenCalledWith(
+      'base/table',
+      'Approval',
+      'rec-approval-save-1',
+      values,
+      undefined,
+    );
+  });
+
   it('does not clear collections from an untouched synthetic alias during an unrelated save', async () => {
     const state = buildStoreState({
       formValues: {
@@ -1006,6 +1041,8 @@ describe('approvalStorePersistence', () => {
     updateRecordFromResolvedSourceMock.mockImplementation(async (_tableRef: string, _tableName: string | undefined, _recordId: string, payload: Record<string, unknown>) => {
       const fieldName = Object.keys(payload)[0] ?? '';
       const normalized = fieldName.toLowerCase();
+      // Shopify Type is not a real column in this source, so any payload containing it is rejected.
+      if ('Shopify Type' in payload) throw createAirtable422Error('Unknown field name');
       if (normalized.includes('price')) return;
       if (fieldName === 'Type') return;
       if (normalized.includes('format')) return;
