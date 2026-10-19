@@ -2,18 +2,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const generateListingCategoryQueries = vi.fn();
 const pickListingCategory = vi.fn();
+const pickListingCollections = vi.fn();
+const getCollections = vi.fn();
 const searchEbayCategorySuggestions = vi.fn();
 const searchTaxonomyCategories = vi.fn();
 
-vi.mock('@/services/app-api/ai', () => ({ generateListingCategoryQueries, pickListingCategory }));
+vi.mock('@/services/app-api/ai', () => ({ generateListingCategoryQueries, pickListingCategory, pickListingCollections }));
 vi.mock('@/services/app-api/ebay', () => ({ searchEbayCategorySuggestions }));
-vi.mock('@/services/app-api/shopify', () => ({ searchTaxonomyCategories }));
+vi.mock('@/services/app-api/shopify', () => ({ searchTaxonomyCategories, getCollections }));
 
-const { suggestEbayCategory, suggestShopifyCategory } = await import('@/services/categorySuggestions');
+const { suggestEbayCategory, suggestShopifyCategory, suggestShopifyCollections } = await import('@/services/categorySuggestions');
+const { resetShopifyCollectionsCacheForTests } = await import('@/components/approval/shopifyCollectionsCache');
 
 describe('categorySuggestions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    resetShopifyCollectionsCacheForTests();
   });
 
   it('searches Shopify taxonomy with the AI phrases and returns the picked category', async () => {
@@ -70,5 +74,22 @@ describe('categorySuggestions', () => {
 
     await expect(suggestShopifyCategory({ Make: 'Leben' })).rejects.toThrow('Shopify unavailable');
     expect(pickListingCategory).not.toHaveBeenCalled();
+  });
+
+  it('offers only manual collections to the AI and returns the picked ones', async () => {
+    getCollections.mockResolvedValue([
+      { id: 'gid://shopify/Collection/1', title: 'Amplifiers', handle: 'amps' },
+      { id: 'gid://shopify/Collection/2', title: 'Under $500', handle: 'under-500', isSmartCollection: true },
+      { id: 'gid://shopify/Collection/3', title: 'Cables', handle: 'cables' },
+    ]);
+    pickListingCollections.mockResolvedValue(['gid://shopify/Collection/3']);
+
+    const result = await suggestShopifyCollections({ Make: 'MIT' });
+
+    expect(pickListingCollections).toHaveBeenCalledWith({ Make: 'MIT' }, [
+      { id: 'gid://shopify/Collection/1', label: 'Amplifiers' },
+      { id: 'gid://shopify/Collection/3', label: 'Cables' },
+    ]);
+    expect(result).toEqual([{ id: 'gid://shopify/Collection/3', label: 'Cables' }]);
   });
 });

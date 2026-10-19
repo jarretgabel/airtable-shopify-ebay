@@ -6,7 +6,9 @@ import {
   generateTitle,
   parseCategoryPickOutput,
   parseCategoryQueriesOutput,
+  parseCollectionsPickOutput,
   parseKeyFeaturesOutput,
+  parseTagsPickOutput,
   sanitizeDescriptionOutput,
   sanitizeSingleLineOutput,
   sanitizeTitleOutput,
@@ -15,7 +17,7 @@ import {
 
 test('sanitizeDescriptionOutput strips markup and exclamation points', () => {
   const result = sanitizeDescriptionOutput('```\n## Title\n<p>**McIntosh** MC275 sounds warm!</p>\n\n\n\n* Power: 75W\n```');
-  assert.equal(result, 'Title\nMcIntosh MC275 sounds warm.\n\nPower: 75W');
+  assert.equal(result, 'Title\nMcIntosh MC275 sounds warm.');
 });
 
 test('generateDescription sends brand prompt and listing facts, returns clean text', async () => {
@@ -199,4 +201,35 @@ test('parseCategoryPickOutput only accepts ids from the candidate list', () => {
     'gid://shopify/TaxonomyCategory/el-7-7-1',
   );
   assert.equal(parseCategoryPickOutput('{"id": null}', candidates), null);
+});
+
+test('parseCollectionsPickOutput keeps up to three known collections and tolerates shortened ids', () => {
+  const candidates = ['1', '2', '3', '4'].map((n) => ({ id: `gid://shopify/Collection/${n}`, label: `Collection ${n}` }));
+  assert.deepEqual(
+    parseCollectionsPickOutput('{"ids": ["1", "gid://shopify/Collection/2", "999", 3, "4"]}', candidates),
+    ['gid://shopify/Collection/1', 'gid://shopify/Collection/2', 'gid://shopify/Collection/3'],
+  );
+  assert.deepEqual(parseCollectionsPickOutput('{"ids": []}', candidates), []);
+  assert.deepEqual(parseCollectionsPickOutput('nope', candidates), []);
+});
+
+test('parseTagsPickOutput separates existing tags from brand-new ones', () => {
+  const vocabulary = ['Cables', 'Pre-Owned Hifi', 'Speaker Cables'];
+  assert.deepEqual(
+    parseTagsPickOutput(
+      '```json\n{"tags": ["cables", "pre-owned hifi", "cables"], "newTags": ["Interconnects", "speaker cables", "bad, tag", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]}\n```',
+      vocabulary,
+    ),
+    { tags: ['Cables', 'Pre-Owned Hifi', 'Speaker Cables'], newTags: ['Interconnects'] },
+  );
+  assert.deepEqual(parseTagsPickOutput('{"tags": []}', vocabulary), { tags: [], newTags: [] });
+  assert.deepEqual(parseTagsPickOutput('nope', vocabulary), { tags: [], newTags: [] });
+});
+
+test('sanitizeDescriptionOutput drops spec-style lines but keeps prose that has a colon mid-sentence', () => {
+  const raw = 'The MI-330 sounds open and quick. One thing to know: it is a used pair.\n\nConductor: Silver-plated copper\nLength: 6 ft\n\nWant to hear it? Come listen in Brooklyn.';
+  assert.equal(
+    sanitizeDescriptionOutput(raw),
+    'The MI-330 sounds open and quick. One thing to know: it is a used pair.\n\nWant to hear it? Come listen in Brooklyn.',
+  );
 });

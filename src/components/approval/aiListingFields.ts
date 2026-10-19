@@ -12,7 +12,7 @@ export function collectAiListingFields(
       && typeof value === 'string'
       && value.trim().length > 0
       && value.length <= 1500
-      && !/json|html|image|photo|url|^id$|record|categor|^(shopify |product )?type$/i.test(name)
+      && !/json|html|image|photo|url|^id$|record|categor|collection|^(shopify |product )?type$/i.test(name)
     )),
   );
 }

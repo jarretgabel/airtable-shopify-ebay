@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
 import { dedupeShopifyTags } from '@/services/shopifyTags';
+import { suggestShopifyTags } from '@/services/categorySuggestions';
+import { collectAiListingFields } from '@/components/approval/aiListingFields';
+import { useRegisterCategorySuggester } from '@/components/approval/aiCategorySuggesterRegistry';
 
 export interface ShopifyTagsEditorProps {
   label?: string;
@@ -7,6 +10,7 @@ export interface ShopifyTagsEditorProps {
   onChange: (tags: string[]) => void;
   disabled?: boolean;
   maxTags?: number;
+  formValues?: Record<string, string>;
 }
 
 const labelClass = 'mb-1 block text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]';
@@ -23,9 +27,14 @@ export function ShopifyTagsEditor({
   onChange,
   disabled = false,
   maxTags,
+  formValues,
 }: ShopifyTagsEditorProps) {
   const normalizedTags = useMemo(() => dedupeShopifyTags(tags), [tags]);
   const [pendingTag, setPendingTag] = useState('');
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState('');
+  // Lowercased AI-invented tags that no store product uses yet, kept visibly marked for review.
+  const [newSuggestedTags, setNewSuggestedTags] = useState<Set<string>>(new Set());
   const isAtLimit = typeof maxTags === 'number' && normalizedTags.length >= maxTags;
 
   function commitPendingTag() {
@@ -46,19 +55,76 @@ export function ShopifyTagsEditor({
     setPendingTag('');
   }
 
+  // Suggested tags are added to the current ones, never replacing them.
+  async function suggestTags(fields: Record<string, string>) {
+    setIsSuggesting(true);
+    setSuggestError('');
+    try {
+      const suggestions = await suggestShopifyTags(fields);
+      const existing = new Set(normalizedTags.map((tag) => tag.toLowerCase()));
+      const additions = dedupeShopifyTags([...suggestions.tags, ...suggestions.newTags])
+        .filter((tag) => !existing.has(tag.toLowerCase()));
+      if (additions.length === 0) {
+        setSuggestError(suggestions.tags.length + suggestions.newTags.length === 0
+          ? 'No matching tags found for this listing.'
+          : 'The suggested tags are already added.');
+        return;
+      }
+
+      const limit = typeof maxTags === 'number' ? Math.max(0, maxTags - normalizedTags.length) : additions.length;
+      const added = additions.slice(0, limit);
+      onChange([...normalizedTags, ...added]);
+
+      const newOnes = new Set(suggestions.newTags.map((tag) => tag.toLowerCase()));
+      const addedNew = added.filter((tag) => newOnes.has(tag.toLowerCase()));
+      if (addedNew.length > 0) {
+        setNewSuggestedTags((current) => new Set([...current, ...addedNew.map((tag) => tag.toLowerCase())]));
+        setSuggestError(`Added ${addedNew.length} new tag${addedNew.length === 1 ? '' : 's'} no product uses yet (marked). Remove any you don't want.`);
+      }
+    } finally {
+      setIsSuggesting(false);
+    }
+  }
+
+  async function handleSuggestClick() {
+    try {
+      await suggestTags(collectAiListingFields(formValues ?? {}));
+    } catch (error) {
+      setSuggestError(error instanceof Error ? error.message : 'Could not suggest tags.');
+    }
+  }
+
+  useRegisterCategorySuggester('shopify-tags', formValues ? (fields) => suggestTags(fields) : null);
+
   function removeTag(tagToRemove: string) {
     onChange(normalizedTags.filter((tag) => tag !== tagToRemove));
   }
 
   return (
     <div className="col-span-1 flex flex-col gap-2 md:col-span-2">
-      <span className={labelClass}>{label}</span>
+      <span className={`${labelClass} flex items-center gap-2`}>
+        <span>{label}</span>
+        {formValues && (
+          <button
+            type="button"
+            className="ml-auto rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => { void handleSuggestClick(); }}
+            disabled={disabled || isSuggesting || isAtLimit}
+          >
+            {isSuggesting ? 'Suggesting…' : 'Suggest with AI'}
+          </button>
+        )}
+      </span>
+      {suggestError && <span role="alert" className={`text-xs ${suggestError.startsWith('Added') ? 'text-amber-300' : 'text-rose-400'}`}>{suggestError}</span>}
       <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-3">
         <div className="flex flex-wrap items-center gap-2">
           {normalizedTags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex max-w-full items-center gap-1 rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-sm text-sky-100"
+              title={newSuggestedTags.has(tag.toLowerCase()) ? 'New tag suggested by AI. No product uses it yet.' : undefined}
+              className={`inline-flex max-w-full items-center gap-1 rounded-full border px-3 py-1 text-sm ${newSuggestedTags.has(tag.toLowerCase())
+                ? 'border-dashed border-amber-400/60 bg-amber-500/10 text-amber-100'
+                : 'border-sky-400/30 bg-sky-500/10 text-sky-100'}`}
             >
               <span className="truncate">{tag}</span>
               <button

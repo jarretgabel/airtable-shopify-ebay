@@ -1,6 +1,8 @@
-import { generateListingCategoryQueries, pickListingCategory, type CategoryCandidate } from '@/services/app-api/ai';
+import { generateListingCategoryQueries, pickListingCategory, pickListingCollections, pickListingTags, type ListingTagSuggestions, type CategoryCandidate } from '@/services/app-api/ai';
 import { searchEbayCategorySuggestions } from '@/services/app-api/ebay';
-import { searchTaxonomyCategories } from '@/services/app-api/shopify';
+import { collectRuleTagVocabulary } from '@/services/shopifyCollectionRules';
+import { getCollections, searchTaxonomyCategories } from '@/services/app-api/shopify';
+import { getCachedShopifyCollections, setCachedShopifyCollections } from '@/components/approval/shopifyCollectionsCache';
 
 export interface SuggestedCategory {
   id: string;
@@ -51,4 +53,32 @@ export function suggestEbayCategory(fields: Record<string, string>, marketplaceI
   return suggestCategory('ebay', fields, async (query) => (
     (await searchEbayCategorySuggestions(query, marketplaceId)).map((match) => ({ id: match.id, label: match.path }))
   ));
+}
+
+// Smart collections are rule-based, so products can't be added to them directly.
+export async function loadShopifyCollections() {
+  let collections = getCachedShopifyCollections();
+  if (!collections) {
+    collections = await getCollections(250);
+    setCachedShopifyCollections(collections);
+  }
+  return collections;
+}
+
+export async function suggestShopifyCollections(fields: Record<string, string>): Promise<SuggestedCategory[]> {
+  const collections = await loadShopifyCollections();
+
+  const manual = collections.filter((collection) => !collection.isSmartCollection);
+  const pickedIds = await pickListingCollections(fields, manual.map((collection) => ({ id: collection.id, label: collection.title })));
+  return pickedIds
+    .map((id) => manual.find((collection) => collection.id === id))
+    .filter((collection): collection is NonNullable<typeof collection> => Boolean(collection))
+    .map((collection) => ({ id: collection.id, label: collection.title }));
+}
+
+// Suggests tags the smart collection rules look for, tags already used on store products (added server-side),
+// and a few brand-new tags, which the caller should mark for review.
+export async function suggestShopifyTags(fields: Record<string, string>): Promise<ListingTagSuggestions> {
+  const vocabulary = collectRuleTagVocabulary(await loadShopifyCollections());
+  return pickListingTags(fields, vocabulary);
 }

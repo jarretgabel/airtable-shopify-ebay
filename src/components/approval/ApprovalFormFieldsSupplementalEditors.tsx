@@ -697,6 +697,7 @@ export function ApprovalFormFieldsSupplementalEditors({
           onChange={setShopifyTagValues}
           disabled={saving}
           maxTags={shopifyTagMaxTags}
+          formValues={formValues}
         />
       )}
 
@@ -709,6 +710,7 @@ export function ApprovalFormFieldsSupplementalEditors({
             labelsById={effectiveCollectionEditorLabelsById}
             onChange={setShopifyCollectionIds}
             disabled={saving}
+            formValues={formValues}
           />
         </Suspense>
       )}

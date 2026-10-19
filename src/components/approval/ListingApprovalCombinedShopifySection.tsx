@@ -1,6 +1,7 @@
 import { Suspense, lazy, useMemo } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { ShopifySeoFieldsEditor, SHOPIFY_SEO_DESCRIPTION_FIELD_NAME, SHOPIFY_SEO_TITLE_FIELD_NAME } from '@/components/approval/ShopifySeoFieldsEditor';
+import { ShopifySmartCollectionsPreview } from '@/components/approval/ShopifySmartCollectionsPreview';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
@@ -99,6 +100,10 @@ export function ListingApprovalCombinedShopifySection({
       }];
     });
   }, [formValues, selectedRecord.fields]);
+  const smartCollectionPreviewFields = useMemo(
+    () => ({ ...selectedRecord.fields, ...formValues }),
+    [formValues, selectedRecord.fields],
+  );
   const showDeveloperPayloadPanels = useAuthStore((state) => {
     const currentUser = state.users.find((user) => user.id === state.currentUserId);
     return currentUser ? isDeveloperRole(currentUser.role) : false;
@@ -141,6 +146,10 @@ export function ListingApprovalCombinedShopifySection({
             onEbayTemplateIdChange={setSelectedEbayTemplateId}
           />
         )}
+
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ShopifySmartCollectionsPreview fields={smartCollectionPreviewFields} />
+        </div>
 
         {advancedShopifyFieldNames.length > 0 && (
           <details className={`mt-4 ${detailDisclosureClass}`}>

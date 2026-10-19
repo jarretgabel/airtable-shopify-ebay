@@ -7,6 +7,9 @@ import {
   setCachedShopifyCollectionSearch,
   setCachedShopifyCollections,
 } from './shopifyCollectionsCache';
+import { collectAiListingFields } from './aiListingFields';
+import { useRegisterCategorySuggester } from './aiCategorySuggesterRegistry';
+import { suggestShopifyCollections } from '@/services/categorySuggestions';
 
 const inputBaseClass =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-blue-400/30 disabled:cursor-not-allowed disabled:opacity-70';
@@ -19,6 +22,12 @@ interface ShopifyCollectionsSelectProps {
   labelsById?: Record<string, string>;
   disabled: boolean;
   onChange: (value: string[], labelsById?: Record<string, string>) => void;
+  formValues?: Record<string, string>;
+}
+
+// Smart collections are filled by Shopify's rules, so products can't be added to them directly.
+function isManualCollection(collection: ShopifyCollectionMatch): boolean {
+  return !collection.isSmartCollection;
 }
 
 function collectionShortId(collectionId: string): string {
@@ -44,6 +53,7 @@ export function ShopifyCollectionsSelect({
   labelsById = {},
   disabled,
   onChange,
+  formValues,
 }: ShopifyCollectionsSelectProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -53,6 +63,8 @@ export function ShopifyCollectionsSelect({
   const [knownCollectionsById, setKnownCollectionsById] = useState<Record<string, ShopifyCollectionMatch>>({});
   const [draggingCollectionId, setDraggingCollectionId] = useState<string | null>(null);
   const [dragOverCollectionId, setDragOverCollectionId] = useState<string | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState('');
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -66,7 +78,7 @@ export function ShopifyCollectionsSelect({
 
     const cachedMatches = getCachedShopifyCollectionSearch(query);
     if (cachedMatches) {
-      setOptions(cachedMatches);
+      setOptions(cachedMatches.filter(isManualCollection));
       setKnownCollectionsById((current) => {
         const next = { ...current };
         cachedMatches.forEach((match) => {
@@ -89,7 +101,7 @@ export function ShopifyCollectionsSelect({
           const matches = await searchCollections(query.trim());
           if (!cancelled) {
             setCachedShopifyCollectionSearch(query, matches);
-            setOptions(matches);
+            setOptions(matches.filter(isManualCollection));
             setKnownCollectionsById((current) => {
               const next = { ...current };
               matches.forEach((match) => {
@@ -199,6 +211,37 @@ export function ShopifyCollectionsSelect({
     onChange(nextIds, buildLabelMap(nextIds));
   };
 
+  const suggestCollections = async (fields: Record<string, string>, onlyIfEmpty: boolean) => {
+    if (onlyIfEmpty && value.length > 0) return;
+
+    setIsSuggesting(true);
+    setSuggestError('');
+    try {
+      const suggestions = await suggestShopifyCollections(fields);
+      if (suggestions.length === 0) {
+        setSuggestError('No manual collection clearly fits. Smart collections such as Cables fill automatically from tags and product type.');
+        return;
+      }
+      onChange(
+        suggestions.map((suggestion) => suggestion.id),
+        Object.fromEntries(suggestions.map((suggestion) => [suggestion.id, suggestion.label])),
+      );
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const handleSuggestClick = async () => {
+    try {
+      await suggestCollections(collectAiListingFields(formValues ?? {}, [fieldName]), false);
+    } catch (error) {
+      setSuggestError(error instanceof Error ? error.message : 'Could not suggest collections.');
+    }
+  };
+
+  // "Generate all with AI" only fills collections when none are selected yet.
+  useRegisterCategorySuggester('shopify-collections', (fields) => suggestCollections(fields, true));
+
   const reorderSelections = (sourceId: string, targetId: string) => {
     const nextIds = reorderById(value, sourceId, targetId);
     if (nextIds === value) return;
@@ -207,7 +250,20 @@ export function ShopifyCollectionsSelect({
 
   return (
     <div className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
-      <span className={labelClass}>{label}</span>
+      <span className={`${labelClass} flex items-center gap-2`}>
+        <span>{label}</span>
+        {formValues && (
+          <button
+            type="button"
+            className="ml-auto rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={() => { void handleSuggestClick(); }}
+            disabled={disabled || isSuggesting}
+          >
+            {isSuggesting ? 'Suggesting…' : 'Suggest with AI'}
+          </button>
+        )}
+      </span>
+      {suggestError && <span role="alert" className="text-xs text-rose-400">{suggestError}</span>}
 
       <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
         <p className="m-0 mb-2 text-xs text-[var(--muted)]">

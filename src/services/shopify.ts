@@ -26,6 +26,15 @@ export interface ShopifyCollectionMatch {
   title: string;
   handle: string;
   isSmartCollection?: boolean;
+  // Smart collection membership rules, which Shopify applies automatically when a product is saved.
+  appliedDisjunctively?: boolean;
+  rules?: ShopifyCollectionRule[];
+}
+
+export interface ShopifyCollectionRule {
+  column: string;
+  relation: string;
+  condition: string;
 }
 
 type ShopifyGraphQlProductStatus = 'ACTIVE' | 'ARCHIVED' | 'DRAFT';

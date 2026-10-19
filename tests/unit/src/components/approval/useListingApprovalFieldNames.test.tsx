@@ -32,6 +32,24 @@ describe('useListingApprovalFieldNames', () => {
     expect(result.current.allFieldNames).toContain('Key Features (Key, Value)');
   });
 
+  it('keeps the Shopify tags editor available when no loaded record has tags', () => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { 'Item Title': 'Bel Canto PRe1' } }],
+      approvalChannel: 'combined',
+    }));
+
+    expect(result.current.allFieldNames).toContain('Shopify Tags');
+  });
+
+  it('does not add a second tags field when one is already loaded', () => {
+    const { result } = renderHook(() => useListingApprovalFieldNames({
+      records: [{ fields: { 'Shopify REST Tags': 'Cables' } }],
+      approvalChannel: 'combined',
+    }));
+
+    expect(result.current.allFieldNames).not.toContain('Shopify Tags');
+  });
+
   it('does not add a second key features field when one is already loaded', () => {
     const { result } = renderHook(() => useListingApprovalFieldNames({
       records: [{ fields: { 'Key Features JSON': '[]' } }],

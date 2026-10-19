@@ -129,6 +129,50 @@ export async function pickListingCategory(
   }
 }
 
+export async function pickListingCollections(
+  fields: Record<string, string>,
+  candidates: CategoryCandidate[],
+): Promise<string[]> {
+  try {
+    const result = await postJson<{ ids?: string[] }>('/api/ai/generate-description', {
+      kind: 'collectionsPick',
+      fields,
+      candidates,
+    });
+    if (!Array.isArray(result.ids)) {
+      throw new Error('The AI service returned no collections. Restart the API so it has the latest version.');
+    }
+    return result.ids.filter((id) => typeof id === 'string' && id.trim());
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
+export interface ListingTagSuggestions {
+  tags: string[];
+  newTags: string[];
+}
+
+export async function pickListingTags(
+  fields: Record<string, string>,
+  vocabulary: string[],
+): Promise<ListingTagSuggestions> {
+  try {
+    const result = await postJson<{ tags?: string[]; newTags?: string[] }>('/api/ai/generate-description', {
+      kind: 'tagsPick',
+      fields,
+      vocabulary,
+    });
+    if (!Array.isArray(result.tags)) {
+      throw new Error('The AI service returned no tags. Restart the API so it has the latest version.');
+    }
+    const clean = (tags: unknown) => (Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0) : []);
+    return { tags: clean(result.tags), newTags: clean(result.newTags) };
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
 export interface GeneratedKeyFeatureRow {
   feature: string;
   value: string;

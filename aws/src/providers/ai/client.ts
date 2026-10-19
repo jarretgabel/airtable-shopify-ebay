@@ -1,6 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { getOptionalSecret } from '../../shared/secrets.js';
-import { CATEGORY_PICK_SYSTEM_PROMPT, CATEGORY_QUERIES_SYSTEM_PROMPT, DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, SEO_DESCRIPTION_SYSTEM_PROMPT, SEO_TITLE_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
+import { CATEGORY_PICK_SYSTEM_PROMPT, COLLECTIONS_PICK_SYSTEM_PROMPT, TAGS_PICK_SYSTEM_PROMPT, CATEGORY_QUERIES_SYSTEM_PROMPT, DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, SEO_DESCRIPTION_SYSTEM_PROMPT, SEO_TITLE_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
 
 const SYSTEM_PROMPT = `You are an expert authenticator and cataloguer of high-end audiophile / home theater equipment for Resolution AV, a luxury used HiFi dealership in New York City.
 
@@ -230,6 +230,8 @@ export function sanitizeDescriptionOutput(raw: string): string {
     .replace(/^\s{0,3}#{1,6}\s+/gm, '')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/^[ \t]*[*•][ \t]+/gm, '')
+    // Key features live in their own section, so drop any "Label: value" spec lines the model adds.
+    .replace(/^[ \t]*[A-Za-z][A-Za-z0-9 /&()'-]{0,38}:[ \t]+\S.*$/gm, '')
     .replace(/!/g, '.')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -467,16 +469,112 @@ export async function generateCategoryQueries(target: 'shopify' | 'ebay', fields
   return parseCategoryQueriesOutput(raw);
 }
 
+// Models often drop the "gid://shopify/..." prefix, so also match on the trailing id segment.
+function matchCandidateId(id: string, candidates: CategoryCandidate[]): string | null {
+  const match = candidates.find((candidate) => candidate.id === id)
+    ?? candidates.find((candidate) => id.length > 0 && candidate.id.endsWith(`/${id}`));
+  return match?.id ?? null;
+}
+
+export function parseCollectionsPickOutput(raw: string, candidates: CategoryCandidate[]): string[] {
+  const jsonText = raw.match(/\{[\s\S]*\}/)?.[0];
+  if (!jsonText) return [];
+  try {
+    const ids = (JSON.parse(jsonText) as { ids?: unknown }).ids;
+    if (!Array.isArray(ids)) return [];
+    const matched = ids
+      .map((id) => (typeof id === 'string' || typeof id === 'number' ? matchCandidateId(String(id).trim(), candidates) : null))
+      .filter((id): id is string => id !== null);
+    return Array.from(new Set(matched)).slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
+export async function pickCollections(fields: Record<string, string>, candidates: CategoryCandidate[]): Promise<string[]> {
+  const limited = candidates.slice(0, 150);
+  if (limited.length === 0) return [];
+
+  const raw = await requestAiText(
+    COLLECTIONS_PICK_SYSTEM_PROMPT,
+    [
+      'Listing details:',
+      formatListingDetails(fields),
+      '\nCollections (id: title):',
+      ...limited.map((candidate) => `${candidate.id}: ${candidate.label}`),
+    ].join('\n'),
+  );
+  return parseCollectionsPickOutput(raw, limited);
+}
+
+export interface TagSuggestions {
+  tags: string[];
+  newTags: string[];
+}
+
+export function parseTagsPickOutput(raw: string, vocabulary: string[]): TagSuggestions {
+  const empty: TagSuggestions = { tags: [], newTags: [] };
+  const jsonText = raw.match(/\{[\s\S]*\}/)?.[0];
+  if (!jsonText) return empty;
+  try {
+    const parsed = JSON.parse(jsonText) as { tags?: unknown; newTags?: unknown };
+    const byLower = new Map(vocabulary.map((tag) => [tag.toLowerCase(), tag]));
+    const toStrings = (value: unknown) => (Array.isArray(value)
+      ? value.filter((tag): tag is string => typeof tag === 'string').map((tag) => tag.trim()).filter(Boolean)
+      : []);
+
+    const existing = new Set<string>();
+    const newTags = new Map<string, string>();
+    // The model sometimes puts an existing tag in the wrong list, so sort both by the vocabulary.
+    [...toStrings(parsed.tags), ...toStrings(parsed.newTags)].forEach((tag) => {
+      const known = byLower.get(tag.toLowerCase());
+      if (known) {
+        existing.add(known);
+        return;
+      }
+      if (tag.length <= 30 && !/[,\n]/.test(tag)) newTags.set(tag.toLowerCase(), tag);
+    });
+
+    return {
+      tags: Array.from(existing).slice(0, 8),
+      newTags: Array.from(newTags.values()).slice(0, 3),
+    };
+  } catch {
+    return empty;
+  }
+}
+
+export async function pickTags(
+  fields: Record<string, string>,
+  collectionTags: string[],
+  storeTags: string[] = [],
+): Promise<TagSuggestions> {
+  const collectionSet = new Set(collectionTags.map((tag) => tag.toLowerCase()));
+  const otherStoreTags = storeTags.filter((tag) => !collectionSet.has(tag.toLowerCase())).slice(0, 600);
+  const limitedCollectionTags = collectionTags.slice(0, 400);
+  if (limitedCollectionTags.length === 0 && otherStoreTags.length === 0) return { tags: [], newTags: [] };
+
+  const raw = await requestAiText(
+    TAGS_PICK_SYSTEM_PROMPT,
+    [
+      'Listing details:',
+      formatListingDetails(fields),
+      '\nCOLLECTION TAGS:',
+      ...limitedCollectionTags,
+      '\nSTORE TAGS:',
+      ...otherStoreTags,
+    ].join('\n'),
+  );
+  return parseTagsPickOutput(raw, [...limitedCollectionTags, ...otherStoreTags]);
+}
+
 export function parseCategoryPickOutput(raw: string, candidates: CategoryCandidate[]): string | null {
   const jsonText = raw.match(/\{[\s\S]*\}/)?.[0];
   if (!jsonText) return null;
   try {
     const id = (JSON.parse(jsonText) as { id?: unknown }).id;
     const normalized = typeof id === 'string' || typeof id === 'number' ? String(id).trim() : '';
-    // Models often drop the "gid://shopify/TaxonomyCategory/" prefix, so also match on the trailing id segment.
-    const match = candidates.find((candidate) => candidate.id === normalized)
-      ?? candidates.find((candidate) => normalized.length > 0 && candidate.id.endsWith(`/${normalized}`));
-    return match?.id ?? null;
+    return matchCandidateId(normalized, candidates);
   } catch {
     return null;
   }

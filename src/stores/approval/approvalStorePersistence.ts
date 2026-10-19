@@ -427,6 +427,7 @@ function getKnownMissingWritableFieldName(fieldName: string): string | null {
     'shopify collection ids': 'Shopify Collections',
     'shopify collections': 'Shopify Collections',
     'shopify graphql collection ids': 'Shopify Collections',
+    'shopify tags': 'Shopify Tags',
     'shopify type': 'Shopify Type',
     'key features (key, value)': 'Key Features (Key, Value)',
     'shopify extra seo title': 'Shopify Extra SEO Title',

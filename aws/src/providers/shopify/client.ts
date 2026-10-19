@@ -175,6 +175,15 @@ export interface ShopifyCollectionMatch {
   title: string;
   handle: string;
   isSmartCollection?: boolean;
+  // Smart collection membership rules, which Shopify applies automatically when a product is saved.
+  appliedDisjunctively?: boolean;
+  rules?: ShopifyCollectionRule[];
+}
+
+export interface ShopifyCollectionRule {
+  column: string;
+  relation: string;
+  condition: string;
 }
 
 export interface ShopifyUnifiedProductResult {
@@ -1437,10 +1446,42 @@ export async function upsertExistingProductWithCollectionsInSingleMutation(
   };
 }
 
+const PRODUCT_TAGS_CACHE_TTL_MS = 10 * 60 * 1000;
+let productTagsCache: { loadedAt: number; tags: string[] } | null = null;
+
+// Every tag already used on the store's products, so suggestions can reuse the store's own spelling.
+export async function getProductTags(maxTags = 1000): Promise<string[]> {
+  if (productTagsCache && Date.now() - productTagsCache.loadedAt < PRODUCT_TAGS_CACHE_TTL_MS) {
+    return productTagsCache.tags;
+  }
+
+  const tags: string[] = [];
+  let after: string | null = null;
+  while (tags.length < maxTags) {
+    const data: {
+      productTags: { edges: Array<{ node: string }>; pageInfo: { hasNextPage: boolean; endCursor: string | null } };
+    } = await graphQlRequest(
+      `query GetProductTags($first: Int!, $after: String) {
+        productTags(first: $first, after: $after) {
+          edges { node }
+          pageInfo { hasNextPage endCursor }
+        }
+      }`,
+      { first: 250, after },
+    );
+    tags.push(...data.productTags.edges.map((edge) => edge.node));
+    if (!data.productTags.pageInfo.hasNextPage) break;
+    after = data.productTags.pageInfo.endCursor;
+  }
+
+  productTagsCache = { loadedAt: Date.now(), tags };
+  return tags;
+}
+
 export async function getCollections(first = 250): Promise<ShopifyCollectionMatch[]> {
   const data = await graphQlRequest<{
     collections: {
-      edges: Array<{ node: ShopifyCollectionMatch & { ruleSet?: { appliedDisjunctively: boolean } | null } }>;
+      edges: Array<{ node: ShopifyCollectionMatch & { ruleSet?: { appliedDisjunctively: boolean; rules: ShopifyCollectionRule[] } | null } }>;
     };
   }>(
     `query GetCollections($first: Int!) {
@@ -1450,7 +1491,7 @@ export async function getCollections(first = 250): Promise<ShopifyCollectionMatc
             id
             title
             handle
-            ruleSet { appliedDisjunctively }
+            ruleSet { appliedDisjunctively rules { column relation condition } }
           }
         }
       }
@@ -1463,6 +1504,7 @@ export async function getCollections(first = 250): Promise<ShopifyCollectionMatc
     title: node.title,
     handle: node.handle,
     isSmartCollection: Boolean(node.ruleSet),
+    ...(node.ruleSet ? { appliedDisjunctively: node.ruleSet.appliedDisjunctively, rules: node.ruleSet.rules } : {}),
   }));
 }
 
@@ -1474,7 +1516,7 @@ export async function searchCollections(search: string, first = 250): Promise<Sh
 
   const data = await graphQlRequest<{
     collections: {
-      edges: Array<{ node: ShopifyCollectionMatch & { ruleSet?: { appliedDisjunctively: boolean } | null } }>;
+      edges: Array<{ node: ShopifyCollectionMatch & { ruleSet?: { appliedDisjunctively: boolean; rules: ShopifyCollectionRule[] } | null } }>;
     };
   }>(
     `query SearchCollections($query: String!, $first: Int!) {
@@ -1484,7 +1526,7 @@ export async function searchCollections(search: string, first = 250): Promise<Sh
             id
             title
             handle
-            ruleSet { appliedDisjunctively }
+            ruleSet { appliedDisjunctively rules { column relation condition } }
           }
         }
       }
@@ -1500,6 +1542,7 @@ export async function searchCollections(search: string, first = 250): Promise<Sh
     title: node.title,
     handle: node.handle,
     isSmartCollection: Boolean(node.ruleSet),
+    ...(node.ruleSet ? { appliedDisjunctively: node.ruleSet.appliedDisjunctively, rules: node.ruleSet.rules } : {}),
   }));
 }
 

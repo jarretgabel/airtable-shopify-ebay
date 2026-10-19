@@ -19,6 +19,8 @@ import {
 import {
   findEbayBodyHtmlFieldName,
   findEbayPriceFieldName,
+  isShopifyCompoundTagsField,
+  isShopifySingleTagField,
 } from '@/components/approval/listingApprovalFieldHelpers';
 import {
   CONDITION_FIELD_CANDIDATES,
@@ -95,6 +97,11 @@ export function useListingApprovalFieldNames({
       if (preferredVendorField) names.add(preferredVendorField);
 
       names.add('Collections');
+
+      // Airtable omits empty fields, so keep the tags editor available when no loaded record has tags yet.
+      if (!existingNames.some((name) => isShopifyCompoundTagsField(name) || isShopifySingleTagField(name))) {
+        names.add('Shopify Tags');
+      }
 
       const preferredDescriptionField = existingNames.find((name) =>
         SHOPIFY_BODY_DESCRIPTION_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
