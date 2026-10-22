@@ -42,3 +42,6 @@ tmp/
 downloads/
 
 aws/.local-api-build
+
+# Local Airtable snapshots (contain real customer data)
+backups/
