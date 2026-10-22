@@ -29,6 +29,12 @@ Parameters:
   AirtableShopifyVendorsTableName:
     Type: String
     Default: tblF0B5TUhy20hJCv
+  AirtableWorkflowImageRolesTableRef:
+    Type: String
+    Default: ''
+  AirtableWorkflowImageRolesTableName:
+    Type: String
+    Default: ''
   AirtableCombinedListingsTableRef:
     Type: String
   AirtableCombinedListingsTableName:
@@ -181,6 +187,19 @@ Parameters:
       - 'true'
       - 'false'
 
+  EnablePostgres:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+  PostgresVpcId:
+    Type: String
+    Default: ''
+  PostgresSubnetIds:
+    Type: CommaDelimitedList
+    Default: ''
+
 Conditions:
   HasGithubToken: !Not [!Equals [!Ref GithubToken, '']]
   HasOpenAiApiKey: !Not [!Equals [!Ref OpenAiApiKey, '']]
@@ -191,6 +210,7 @@ Conditions:
   HasGoogleDriveRefreshToken: !Not [!Equals [!Ref GoogleDriveRefreshToken, '']]
   HasAlarmTopicArn: !Not [!Equals [!Ref AlarmTopicArn, '']]
   CreateCloudWatchAlarms: !Equals [!Ref EnableCloudWatchAlarms, 'true']
+  CreatePostgres: !Equals [!Ref EnablePostgres, 'true']
 
 Globals:
   Function:
@@ -213,6 +233,8 @@ Globals:
         AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME: !Ref AirtableShopifyApprovalTableName
         AIRTABLE_SHOPIFY_VENDORS_TABLE_REF: !Ref AirtableShopifyVendorsTableRef
         AIRTABLE_SHOPIFY_VENDORS_TABLE_NAME: !Ref AirtableShopifyVendorsTableName
+        AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_REF: !Ref AirtableWorkflowImageRolesTableRef
+        AIRTABLE_WORKFLOW_IMAGE_ROLES_TABLE_NAME: !Ref AirtableWorkflowImageRolesTableName
         AIRTABLE_COMBINED_LISTINGS_TABLE_REF: !Ref AirtableCombinedListingsTableRef
         AIRTABLE_COMBINED_LISTINGS_TABLE_NAME: !Ref AirtableCombinedListingsTableName
         SHOPIFY_STORE_DOMAIN: !Ref ShopifyStoreDomain
@@ -1355,6 +1377,81 @@ Resources:
       TreatMissingData: notBreaching
       AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
 
+  PostgresSecret:
+    Type: AWS::SecretsManager::Secret
+    Condition: CreatePostgres
+    Properties:
+      Description: Master credentials for the pg-test RDS Postgres instance.
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "pgadmin"}'
+        GenerateStringKey: password
+        PasswordLength: 40
+        ExcludePunctuation: true
+
+  PostgresSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: CreatePostgres
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W1030
+    Properties:
+      GroupDescription: Postgres access for pg-test. Lambdas run outside the VPC and have no fixed IP, so access is open on 5432 and protected by forced TLS and a generated password.
+      VpcId: !Ref PostgresVpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+          Description: Postgres over TLS
+
+  PostgresSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Condition: CreatePostgres
+    Properties:
+      DBSubnetGroupDescription: Subnets for the pg-test Postgres instance.
+      SubnetIds: !Ref PostgresSubnetIds
+
+  PostgresParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Condition: CreatePostgres
+    Properties:
+      Description: Require TLS for all Postgres connections.
+      Family: postgres17
+      Parameters:
+        rds.force_ssl: '1'
+
+  PostgresInstance:
+    Type: AWS::RDS::DBInstance
+    Condition: CreatePostgres
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceClass: db.t4g.micro
+      Engine: postgres
+      EngineVersion: '17.6'
+      AllocatedStorage: 20
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: false
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 7
+      DeletionProtection: true
+      DBName: appdb
+      MasterUsername: !Sub '{{resolve:secretsmanager:${PostgresSecret}:SecretString:username}}'
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${PostgresSecret}:SecretString:password}}'
+      DBSubnetGroupName: !Ref PostgresSubnetGroup
+      DBParameterGroupName: !Ref PostgresParameterGroup
+      VPCSecurityGroups:
+        - !Ref PostgresSecurityGroup
+
 Outputs:
   AppApiUrl:
     Value: !Sub https://${AppHttpApi}.execute-api.${AWS::Region}.amazonaws.com
+  PostgresEndpoint:
+    Condition: CreatePostgres
+    Value: !GetAtt PostgresInstance.Endpoint.Address
+  PostgresSecretArn:
+    Condition: CreatePostgres
+    Value: !Ref PostgresSecret
