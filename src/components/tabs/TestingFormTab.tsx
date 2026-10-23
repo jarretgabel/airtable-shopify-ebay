@@ -222,7 +222,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
     setSubmitError(null);
     setSubmitSuccess(null);
 
-    const validationError = validateForm(formValues);
+    const validationError = submitIntent === 'complete' ? validateForm(formValues) : null;
     if (validationError) {
       setSubmitError(validationError);
       return;
@@ -465,7 +465,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
           />
         </WorkflowFormSnapshotSection>
 
-        <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
+        <form noValidate className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
           <AppSectionTitle title="Testing Details" titleClassName="text-lg" />
           <div className="grid gap-5 lg:grid-cols-2">
             {editableFields.map((field) => (

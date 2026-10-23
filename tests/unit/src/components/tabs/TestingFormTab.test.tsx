@@ -380,12 +380,29 @@ describe('TestingFormTab', () => {
     expect(statusNotice?.nextElementSibling).toContainElement(screen.getByRole('button', { name: 'Save Testing' }));
   });
 
-  it('blocks saving when required Service Time is blank', async () => {
+  it('allows saving incremental work when required fields are blank', async () => {
     render(<TestingFormTab recordId="rec-testing" />);
 
     await screen.findByRole('heading', { name: 'SKU-500' });
     fireEvent.change(screen.getByLabelText(/Service Time/), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Testing' }));
+
+    await waitFor(() => {
+      expect(submitTestingFormMock).toHaveBeenCalledWith(
+        expect.objectContaining({ serviceTimeMinutes: '' }),
+        'rec-testing',
+        expect.objectContaining({ completeWorkflowStage: false }),
+      );
+    });
+  });
+
+  it('blocks Testing Complete when required Service Time is blank', async () => {
+    render(<TestingFormTab recordId="rec-testing" />);
+
+    await screen.findByRole('heading', { name: 'SKU-500' });
+    fireEvent.change(screen.getByLabelText(/Service Time/), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Testing Complete' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete testing' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Service Time is required.');
     expect(submitTestingFormMock).not.toHaveBeenCalled();
