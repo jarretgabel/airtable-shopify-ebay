@@ -607,7 +607,7 @@ async function main() {
       };
 
       response.writeHead(statusCode, headers);
-      response.end(lambdaResponse.body || '');
+      response.end(lambdaResponse.isBase64Encoded ? Buffer.from(lambdaResponse.body || '', 'base64') : (lambdaResponse.body || ''));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unexpected local API server error';
       const origin = getResponseOrigin(request);

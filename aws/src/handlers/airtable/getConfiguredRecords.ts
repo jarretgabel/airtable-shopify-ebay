@@ -204,7 +204,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         searchFields,
       });
     logInfo('Fetched Airtable configured records', { source, count: records.length });
-    return jsonOk(records, { origin });
+    return jsonOk(records, { origin, acceptEncoding: event.headers['accept-encoding'] ?? event.headers['Accept-Encoding'] ?? '' });
   } catch (error) {
     logError('Failed to fetch Airtable configured records', error, {
       source: event.queryStringParameters?.source || '',

@@ -1,10 +1,15 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { gzipSync } from 'node:zlib';
 import { HttpError } from './errors.js';
 
 interface JsonResponseOptions {
   origin?: string;
   cookies?: string[];
+  /** Request Accept-Encoding. When it allows gzip, large bodies are compressed to stay under Lambda's 6 MB response limit. */
+  acceptEncoding?: string;
 }
+
+const GZIP_MIN_BYTES = 256 * 1024;
 
 const DEFAULT_ALLOWED_ORIGINS = ['http://127.0.0.1:3000', 'http://localhost:3000'];
 
@@ -54,12 +59,24 @@ interface IntegerParamOptions {
 }
 
 export function jsonOk(body: unknown, options: JsonResponseOptions = {}): APIGatewayProxyResultV2 {
-  return {
-    statusCode: 200,
-    headers: buildJsonHeaders(options.origin),
-    ...(options.cookies ? { cookies: options.cookies } : {}),
-    body: JSON.stringify(body),
-  };
+  const serialized = JSON.stringify(body);
+  const headers = buildJsonHeaders(options.origin);
+  const cookies = options.cookies ? { cookies: options.cookies } : {};
+
+  if (options.acceptEncoding !== undefined) {
+    headers.vary = headers.vary ? `${headers.vary}, accept-encoding` : 'accept-encoding';
+    if (/\bgzip\b/i.test(options.acceptEncoding) && Buffer.byteLength(serialized) >= GZIP_MIN_BYTES) {
+      return {
+        statusCode: 200,
+        headers: { ...headers, 'content-encoding': 'gzip' },
+        ...cookies,
+        isBase64Encoded: true,
+        body: gzipSync(serialized).toString('base64'),
+      };
+    }
+  }
+
+  return { statusCode: 200, headers, ...cookies, body: serialized };
 }
 
 export function jsonError(statusCode: number, body: unknown, options: JsonResponseOptions = {}): APIGatewayProxyResultV2 {
