@@ -402,18 +402,21 @@ Status: signed off 2026-10-22. Deployed to `pg-test`.
 
 ### Phase 7: Per-table cutover
 
-Status: signed off 2026-10-23 for the safe tables (`shopify-vendors`, `user-guide`). Reverse sync deferred (only needed once writes move to Postgres). `workflow-image-roles`, `users` and the listing tables remain follow-ups.
+Status: closed 2026-10-23. Cut over: `shopify-vendors`, `user-guide`. Reverse sync deferred (only needed once writes move to Postgres). Follow-ups, each blocked as noted below: `users`, `workflow-image-roles`, listing tables.
 
-- [ ] Switch reads to Postgres for one table; keep Airtable writes in place.
+- [x] Switch reads to Postgres for one table; keep Airtable writes in place.
   - Code and tests done 2026-10-22: new backend value `postgres-read` (`aws/src/store/postgresReadListingStore.ts`). Reads (`getRecords`, `getRecord`, `getRecordsSummary`) come from Postgres. Writes and attachments still go Airtable-first and are mirrored to Postgres (the `dual` write path), and field metadata stays on Airtable. If a Postgres read fails for any reason (unsupported formula, missing row, database down), it falls back to Airtable and logs `postgres_read_fallback` plus metric `PostgresReadFallback`. `postgres` stays 501 until writes move. 3 new tests; `aws` suite passes (29 passed, 1 skipped). Deployed to `pg-test` 2026-10-22 (62 resources modified, none replaced; `DataBackendOverrides=shopify-vendors=postgres-read`). A logged-in vendor list read through the deployed API returned 646 vendors with no `postgres_read_fallback` entries and no shadow-read lines (so the Postgres path served it).
 - [x] Confirm rollback is a single flag change and test it.
   - Tested 2026-10-22 on `pg-test`: changing only `DataBackendOverrides` from `shopify-vendors=postgres-read` to `shopify-vendors=dual` and deploying (62 functions and API modified, none replaced) returned `UPDATE_COMPLETE`, and the deployed reads Lambda's `DATA_BACKEND_OVERRIDES` reads `shopify-vendors=dual`. Rollback to Airtable-only reads is the same change with `airtable`. Redeploy takes a few minutes. `pg-test` was then put back on `postgres-read` for vendors (2026-10-22, same change-set process).
-- [ ] Consider reverse sync until confident.
-- [ ] Repeat per table.
+- [x] Consider reverse sync until confident. Deferred: Airtable stays the write source, so the mirror never diverges from it.
+- [x] Repeat per table (safe tables done; the rest are named follow-ups below).
   - `user-guide` done on `pg-test` 2026-10-23: `dual` first (4 shadow reads, 65 of 65 records, zero differences; Postgres about 21 ms warm vs Airtable 0.5 to 1.8 s), then `postgres-read` (three reads after cutover returned 65 records, no fallbacks, no shadow lines). Current `pg-test` setting: `shopify-vendors=postgres-read,user-guide=postgres-read`.
   - `workflow-image-roles` parked: its `Attachments` field stores Airtable file URLs that expire, so Postgres reads would serve stale links. Needs a refresh-on-read or durable storage (Phase 9 question) first.
   - 6 MB response limit (investigated 2026-10-23): the Listings table is about 14.6 MB of JSON in the test base (3,471 records). `Workflow Image Metadata JSON` is 7.9 MB and `Images` 3.7 MB of that (about 80%). The failing reads return every field with no row cap (`ready-for-publishing`, `used-gear-workflow`). The test base is a copy of production, so staging and production probably hit the same limit (not verified). Fix 1 (deployed to `pg-test` and verified 2026-10-23: the Listings page loads through API Gateway): `getConfiguredRecords` gzips responses of 256 KB or more when the client sends `Accept-Encoding: gzip` (`aws/src/shared/http.ts`; the local API server decodes base64 bodies). Roughly 14.6 MB becomes about 1.5 MB. Fix 2 for later: drop the heavy fields from list reads and fetch them on the detail view.
-  - Not yet done: `users` (login source, only three exact-match formulas supported), and the large listing tables (blocked by the 6 MB Lambda response limit).
+  - Follow-ups (not part of Phase 7 sign-off):
+    - `users`: login source. Postgres supports only the three auth exact-match formulas, so shadow-read in `dual` first and check logins before `postgres-read`.
+    - `workflow-image-roles`: needs refresh-on-read or durable attachment storage (Phase 9).
+    - Listing tables: need general `filterByFormula` support in the Postgres store and Fix 2 (drop heavy fields from list reads).
 
 ### Phase 8: Normalized layer and CRM foundations
 
