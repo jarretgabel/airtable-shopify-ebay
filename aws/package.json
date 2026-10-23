@@ -25,7 +25,8 @@
     "test": "npx tsc -p tsconfig.json && node --test $(find dist -name '*.test.js' -print)",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:migrate": "tsc -p tsconfig.json && node dist/db/migrate-cli.js",
-    "db:backfill": "tsc -p tsconfig.json && node dist/db/backfill-cli.js"
+    "db:backfill": "tsc -p tsconfig.json && node dist/db/backfill-cli.js",
+    "db:normalize": "tsc -p tsconfig.json && node dist/db/normalize-cli.js"
   },
   "dependencies": {
     "cheerio": "^1.1.2",
