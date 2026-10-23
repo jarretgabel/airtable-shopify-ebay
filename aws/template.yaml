@@ -32,6 +32,18 @@ Parameters:
   AirtableWorkflowImageRolesTableRef:
     Type: String
     Default: ''
+  DataBackend:
+    Type: String
+    Default: airtable
+    AllowedValues:
+      - airtable
+      - dual
+      - postgres-read
+      - postgres
+  DataBackendOverrides:
+    Type: String
+    Default: ''
+    Description: Per-source backend overrides as source=backend pairs, comma separated.
   AirtableWorkflowImageRolesTableName:
     Type: String
     Default: ''
@@ -223,6 +235,12 @@ Globals:
       Variables:
         AIRTABLE_API_KEY: !Ref AirtableApiKey
         AIRTABLE_BASE_ID: !Ref AirtableBaseId
+        DATA_BACKEND: !Ref DataBackend
+        DATA_BACKEND_OVERRIDES: !Ref DataBackendOverrides
+        DATABASE_URL: !If
+          - CreatePostgres
+          - !Sub 'postgres://pgadmin:{{resolve:secretsmanager:${PostgresSecret}:SecretString:password}}@${PostgresInstance.Endpoint.Address}:5432/appdb'
+          - ''
         ALLOWED_AIRTABLE_TABLE_NAME: !Ref AllowedAirtableTableName
         ALLOWED_AIRTABLE_VIEW_ID: !Ref AllowedAirtableViewId
         AIRTABLE_USERS_TABLE_REF: !Ref AirtableUsersTableRef

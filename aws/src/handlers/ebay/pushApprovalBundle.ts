@@ -5,7 +5,7 @@ import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shar
 import { logError, logInfo } from '../../shared/logging.js';
 import { pushApprovalBundleToEbay, type EbayPublishSetup } from '../../providers/ebay/client.js';
 import { buildEbayDraftPayloadBundleFromApprovalFields } from '../../providers/ebay/approvalDraft.js';
-import { getConfiguredRecord, type AirtableConfiguredRecordsSource } from '../../providers/airtable/sources.js';
+import { getConfiguredRecord, type AirtableConfiguredRecordsSource } from '../../store/index.js';
 
 interface PushApprovalBundleBody {
   bundle?: {

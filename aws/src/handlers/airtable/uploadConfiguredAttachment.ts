@@ -3,7 +3,7 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody, requirePathParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { uploadConfiguredAttachment, type AirtableConfiguredAttachmentSource } from '../../providers/airtable/sources.js';
+import { uploadConfiguredAttachment, type AirtableConfiguredAttachmentSource } from '../../store/index.js';
 import {
   archiveWorkflowImagesToGoogleDrive,
   type WorkflowImageArchiveResult,

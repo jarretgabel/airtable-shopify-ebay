@@ -1,4 +1,4 @@
-import { updateConfiguredRecord } from '../providers/airtable/sources.js';
+import { updateConfiguredRecord } from '../store/index.js';
 import { logError, logInfo } from '../shared/logging.js';
 import { getOptionalSecret, requireSecret } from '../shared/secrets.js';
 import { retainSoldShopifyProduct, type SoldRetentionOutcome } from './soldRetention.js';

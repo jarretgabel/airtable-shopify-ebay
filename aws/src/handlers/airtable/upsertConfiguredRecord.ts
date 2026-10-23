@@ -8,7 +8,7 @@ import {
   createConfiguredRecord,
   updateConfiguredRecord,
   type AirtableConfiguredWriteSource,
-} from '../../providers/airtable/sources.js';
+} from '../../store/index.js';
 import { inspectConfiguredWorkflowImageMetadata, validateConfiguredWorkflowImageMetadata } from '../../providers/airtable/workflowImageMetadataValidation.js';
 
 interface AirtableWriteBody {

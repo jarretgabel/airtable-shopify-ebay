@@ -8,7 +8,7 @@ import {
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { getConfiguredRecord } from '../../providers/airtable/sources.js';
+import { getConfiguredRecord } from '../../store/index.js';
 import {
   closeEbayListingWhenSoldOnShopify,
   closeShopifyProductWhenSoldOnEbay,

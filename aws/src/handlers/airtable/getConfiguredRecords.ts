@@ -8,7 +8,7 @@ import {
   getConfiguredRecordsSummary,
   type AirtableConfiguredRecordsSubset,
   type AirtableConfiguredRecordsSource,
-} from '../../providers/airtable/sources.js';
+} from '../../store/index.js';
 import { getOrLoadConfiguredRecordsCache } from '../../providers/airtable/configuredRecordsCache.js';
 
 const DEFAULT_APPROVAL_QUEUE_FIELDS = [

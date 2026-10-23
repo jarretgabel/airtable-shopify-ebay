@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import type { ShopifyWebhookSubscriptionKey, ShopifyWebhookTopic } from '../../providers/shopify/client.js';
-import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
+import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
 import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { closeEbayListingWhenSoldOnShopify, retainShopifyProductWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';

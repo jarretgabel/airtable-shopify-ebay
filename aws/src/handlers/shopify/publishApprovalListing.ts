@@ -4,7 +4,7 @@ import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import { publishApprovalListingToShopify } from '../../providers/shopify/approvalPublish.js';
-import type { AirtableConfiguredRecordsSource } from '../../providers/airtable/sources.js';
+import type { AirtableConfiguredRecordsSource } from '../../store/index.js';
 
 interface PublishApprovalListingBody {
   source?: AirtableConfiguredRecordsSource;

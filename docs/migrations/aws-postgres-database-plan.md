@@ -307,6 +307,8 @@ Code: `aws/src/providers/airtable/sources.ts`, `handlers/airtable/getConfiguredR
 
 ### Phase 1: AWS foundation (no app changes)
 
+Status: complete, signed off 2026-10-21. **Deferred follow-up:** create an AWS Budgets alert at about 80% of the $25/month budget (Billing console). The pg-test RDS instance has been billing since 2026-10-21.
+
 - [x] Create the `pg-test` stage (samconfig entry and stack) pointing at the staging Airtable base; leave `prod` and `staging` on Airtable.
   - Done: `pg-test` template block added to `aws/samconfig.toml.example` (stack `airtable-shopify-ebay-pg-test`, `us-east-1`).
   - Test base verified (snapshot of `appKOs3hF99ZGBKK3`): same 9 tables, record counts, field IDs, table IDs and view IDs as production. Only the base ID differs, so `pg-test` needs the base ID overridden wherever a reference embeds it.
@@ -323,48 +325,89 @@ Code: `aws/src/providers/airtable/sources.ts`, `handlers/airtable/getConfiguredR
   - Done: `aws/deploy/sam-deployer-policy.example.json` now has four statements for RDS management (scoped to `airtable-shopify-ebay-*`), RDS describe, Secrets Manager and EC2 security group and subnet access.
   - Done: policy applied in IAM. Verified read-only that `resolutionavnyc` can now call `rds:DescribeDBEngineVersions` and `ec2:DescribeVpcs`.
   - Verified: Postgres 17.5 to 17.11 are available in `us-east-1`, so `17.6` is valid. The account has a default VPC, `vpc-07b7e525a1e7e83a5`, with public subnets in six AZs. Suggested `pg-test` values: `PostgresVpcId=vpc-07b7e525a1e7e83a5`, `PostgresSubnetIds=subnet-052666462438dbf5b,subnet-0fcb2c534d16c8fdc` (us-east-1a and 1b).
-- [ ] Verify connectivity from a throwaway Lambda and from a local script.
-- [ ] Decide on the local dev database (Docker Postgres or the dev instance).
+- [x] Verify connectivity from a throwaway Lambda and from a local script.
+  - Local script: done 2026-10-21. Connected to `appdb` over TLS (PostgreSQL 17.6, `ssl=on`), and a plaintext connection was refused. Password read from Secrets Manager at run time, never printed or stored.
+  - Lambda: not tested with a throwaway function. Lambdas run outside the VPC and reach the same public endpoint, so the network path is the same. Still to do in Phase 3: bundle `pg` and grant the Lambda role `secretsmanager:GetSecretValue` on the secret. Confirm it with the first real Lambda that connects.
+- [x] Decide on the local dev database (Docker Postgres or the dev instance).
+  - Decision: local Docker Postgres 17 (same major as RDS, no cost, no shared state). Docker is not installed on this machine yet, so the compose file is added in Phase 2 alongside the migration tool. `pg-test` RDS is only for deployed-stack testing.
 
 ### Phase 2: Schema and migrations
 
-- [ ] Choose a migration tool or plain SQL-files runner.
-- [ ] Create the `records` mirror table and the hot-field indexes.
-- [ ] Create a field-metadata table or equivalent to replace `getTableMetadata`.
-- [ ] Apply migrations in dev and verify idempotency.
+Status: complete, signed off 2026-10-21.
+
+- [x] Choose a migration tool or plain SQL-files runner.
+  - Decision: plain numbered SQL files in `aws/db/migrations/` plus a small runner (`aws/src/db/migrator.ts`, `npm run db:migrate` with `DATABASE_URL`). Records applied versions and checksums in `schema_migrations`, takes an advisory lock, runs each file in a transaction, and refuses to run if an applied file was edited. Only new dependency: `pg`.
+- [x] Create the `records` mirror table and the hot-field indexes.
+  - `0001_records_mirror.sql`: `records(base_id, table_id, record_id)` primary key (physical table, not source), `fields jsonb`, `airtable_created_at`, `synced_at`, soft-delete `deleted_at`. Hot-field indexes on `Workflow Status` and lower-cased `Email`. Text search (`SEARCH` formulas) is not indexed yet; decide in Phase 4 when the Postgres read path exists.
+- [x] Create a field-metadata table or equivalent to replace `getTableMetadata`.
+  - `0002_airtable_fields.sql`: `airtable_fields(base_id, table_id, field_id, name, type, options jsonb)`, same shape as `getTableMetadata`. Populated by the backfill in Phase 4.
+- [x] Apply migrations in dev and verify idempotency.
+  - Verified 2026-10-21 on a scratch database on the `pg-test` RDS instance (Docker is not installed): first run applied 0001 and 0002, second run applied none. Scratch database dropped. Applied to the real `appdb` on `pg-test` on 2026-10-21 (0001, 0002); re-run applied none. Unit tests for the runner pass (`npm test`).
 
 ### Phase 3: Code seam (Airtable behavior unchanged)
 
-- [ ] Extract the `ListingStore` interface from the current Airtable client operations.
-- [ ] Wrap the existing Airtable implementation behind it.
-- [ ] Add the `DATA_BACKEND` flag (`airtable` | `dual` | `postgres`), default `airtable`, settable per source.
-- [ ] Add shared contract tests that any implementation must pass.
-- [ ] Confirm existing tests and local `/api` validation still pass.
+Status: complete, signed off 2026-10-21.
+
+- [x] Extract the `ListingStore` interface from the current Airtable client operations.
+  - `aws/src/store/listingStore.ts`: 8 methods (`getRecords`, `getRecordsSummary`, `getRecord`, `createRecord`, `updateRecord`, `deleteRecord`, `getFieldMetadata`, `uploadAttachment`), mirroring the existing `*Configured*` functions. Source-level policy (which sources may delete or upload) stays in the handlers.
+- [x] Wrap the existing Airtable implementation behind it.
+  - `airtableListingStore` delegates to the unchanged `providers/airtable/sources.ts`. `store/index.ts` re-exports the same function names, so the 12 callers (handlers and `crossChannelClose`) changed only their import path.
+- [x] Add the `DATA_BACKEND` flag (`airtable` | `dual` | `postgres`), default `airtable`, settable per source.
+  - `DATA_BACKEND` (default `airtable`) plus `DATA_BACKEND_OVERRIDES` (`source=backend,source=backend`) for per-source settings. Template parameters `DataBackend` and `DataBackendOverrides` default to `airtable` / empty. `dual` and `postgres` return HTTP 501 `DATA_BACKEND_NOT_IMPLEMENTED` until Phase 4/6, and invalid values return 500, so a typo never silently falls back.
+- [x] Add shared contract tests that any implementation must pass.
+  - `store/listingStore.contract.ts` (`runListingStoreContract`) covers create/get, update merge, delete, `maxRecords` and field projection, summary, field metadata and the attachment allow-list. The Airtable store runs it against an in-memory fake of the Airtable client. Filter and search semantics are not in the contract yet because they need the Postgres implementation to compare against (Phase 4).
+- [x] Confirm existing tests and local `/api` validation still pass.
+  - `aws` typecheck and `npm test` pass (17 tests). The full root AWS suite (`tests/unit/aws`, 438 tests) passes before and after the change. `npm run local:api:check` is OK. Note: `npm run test:aws` only runs 5 tests because its unquoted `**` glob is not recursive in `sh`; run `node --import tsx --import ./tests/unit/aws/network-guard.ts --test $(find tests/unit/aws -name '*.test.ts')` for the full suite.
 
 ### Phase 4: Postgres implementation and backfill
 
-- [ ] Implement the Postgres `ListingStore` (list, get, create, update, delete, subsets, search).
-- [ ] Run the contract tests against Postgres.
-- [ ] Write an idempotent Airtable-to-Postgres backfill script with row-count reporting.
-- [ ] Backfill dev data and diff counts and fields.
+Status: complete, signed off 2026-10-21.
+
+- [x] Implement the Postgres `ListingStore` (list, get, create, update, delete, subsets, search).
+  - `aws/src/store/postgresListingStore.ts` (`createPostgresListingStore`), not yet wired into `getListingStore` (that is Phase 5/6, so behavior is unchanged). Reads the `records` mirror keyed by physical base and table, resolved through the new `resolveConfiguredSourceTable` in `sources.ts`. Subsets share their status lists with the Airtable code (`resolveSubsetStatuses`).
+  - Differences from Airtable to keep in mind: no `filterByFormula` beyond the three auth equality shapes (`{F} = "x"`, `LOWER({F}) = "x"`), anything else is HTTP 400; search is a case-insensitive substring over the requested fields on the raw JSON value (arrays and objects are matched as JSON text, no index yet); results are ordered by creation time then id, not Airtable view order; delete is a soft delete; writing `null` removes a field; created ids are `rec` plus 14 random characters; attachment upload returns HTTP 501 until a storage decision is made.
+- [x] Run the contract tests against Postgres.
+  - `postgresListingStore.test.ts` runs the shared contract plus subset, search, auth-formula, null-clear and soft-delete cases. It needs `POSTGRES_TEST_URL` (a scratch Postgres) and is skipped otherwise. 11 of 11 passed on a scratch database on `pg-test` (dropped afterward). The contract has a new `attachments: 'not-implemented'` mode for backends that cannot store attachments yet.
+- [x] Write an idempotent Airtable-to-Postgres backfill script with row-count reporting.
+  - `aws/src/db/backfill.ts` and `backfill-cli.ts` (`npm run db:backfill -- --base appKOs3hF99ZGBKK3 [--tables ...] [--apply]`). Default is a dry run (Airtable GET only, counts only). `--apply` upserts `records` and `airtable_fields` in one transaction per table, soft-deletes rows missing from a full read, and reports Airtable vs Postgres counts. Refuses the production base without `--allow-production-read`. Verified 2026-10-21: dry run on the test base matched the Phase 0 counts; `--apply` on a scratch database on `pg-test` loaded 4,252 records and 294 fields with counts matching Airtable per table, and a second run was idempotent (0 inserted, all updated). Scratch database dropped.
+- [x] Backfill dev data and diff counts and fields.
+  - 2026-10-21: backfilled the test base (`appKOs3hF99ZGBKK3`) into `appdb` on `pg-test`: 4,252 records across 7 tables. Counts match Airtable per table, and a deep comparison of every record's fields found 0 differences.
 
 ### Phase 5: Shadow write
 
-- [ ] Enable `dual` for the first table.
-- [ ] Mirror writes to Postgres after Airtable succeeds; log and meter mirror failures without failing requests.
-- [ ] Run the write-validation workflow in `aws-lambda-write-validation.md`.
-- [ ] Review failure logs and fix gaps.
+Status: signed off 2026-10-22.
+
+- [x] Enable `dual` for the first table.
+  - 2026-10-21: `pg-test` stack updated (`UPDATE_COMPLETE`, 61 functions and the API modified, none replaced) with `DataBackend=airtable` and `DataBackendOverrides=shopify-vendors=dual`. `pg-test` points only at the Airtable test base. The shopify-vendors reference there was checked to use the test base, not production.
+- [x] Mirror writes to Postgres after Airtable succeeds; log and meter mirror failures without failing requests.
+  - Code written and tested locally, not deployed. `store/dualListingStore.ts` reads from Airtable only; create, update, delete and attachment upload write to Airtable first, then mirror Airtable's returned record into `records` through `store/postgresMirror.ts` (same ids and fields). A mirror failure is logged as `postgres_mirror_failed` plus a CloudWatch EMF metric `AirtableShopifyEbay/DataBackend` `PostgresMirrorFailure` (dimensions Source, Operation), and never fails the request. An Airtable failure skips the mirror. `getListingStore` returns it for `dual`; `postgres` is still 501.
+  - `template.yaml` Globals now sets `DATABASE_URL` (only when `EnablePostgres` is true, otherwise empty) from the Secrets Manager password and RDS endpoint. Note this puts the DB password in the Lambda environment configuration, the same way the Airtable and Shopify secrets are passed today. `db/pool.ts` uses 3 s connect and 5 s query timeouts so a slow database cannot stall a request.
+  - Tests: 5 unit tests with fakes, plus a gated Postgres mirror test. All 34 `aws` tests pass against a scratch database; the root suite still passes 438.
+- [x] Run the write-validation workflow in `aws-lambda-write-validation.md`.
+  - The documented probe targets the local API and does not cover `shopify-vendors`, and deployed routes need a logged-in session. Instead I ran the same store code locally against the Airtable test base and the `pg-test` database (`DATA_BACKEND_OVERRIDES=shopify-vendors=dual`): create, update and delete of one temporary `PG-DUAL-PROBE-*` Vendors row. After each step the Postgres row matched Airtable's record exactly, and delete removed it from Airtable and soft-deleted it in Postgres. The temporary Airtable row is gone (Vendors is back to 646); one soft-deleted row remains in `appdb` and is reconciled by the next backfill. Still to do: exercise `dual` through the deployed API with a real login (for example editing a vendor in the deployed `pg-test` UI).
+- [x] Review failure logs and fix gaps.
+  - Done 2026-10-22. A vendor created through the deployed `pg-test` API (approval form Vendor field) landed in Airtable and was mirrored to `records` within about a second. No `postgres_mirror_failed` entries in the create function logs. The test vendor was then deleted from the Airtable test base and soft-deleted in Postgres.
+  - Found while testing: against the full-size test base, `used-gear-workflow` (no row cap) and `approval-combined` reads return HTTP 500 because the Lambda response exceeds the 6 MB limit. These are Airtable-only reads, unrelated to `dual`. Not yet checked whether staging or production hit the same limit. Look at this separately before any read cutover.
 
 ### Phase 6: Shadow read
 
-- [ ] Read from both backends, serve Airtable, and log mismatches.
-- [ ] Fix drift until diffs are zero for an agreed period.
-- [ ] Measure latency of both paths.
+Status: signed off 2026-10-22. Deployed to `pg-test`.
+
+- [x] Read from both backends, serve Airtable, and log mismatches.
+  - Code done 2026-10-22 (`aws/src/store/shadowRead.ts`, `dualListingStore.ts`, wired in `index.ts`). In `dual` mode, `getRecords` and `getRecord` return Airtable's answer, then read Postgres (3 s timeout, awaited because Lambda freezes unfinished work) and compare by record id, ignoring order and null fields. Capped reads (`maxRecords`) compare only the count and shared rows. Logs `postgres_shadow_read` (field names only, never values) plus EMF metrics `ShadowReadMismatch`, `ShadowReadError`, `AirtableReadMs`, `PostgresReadMs` by Source and Operation. Outcomes: match, mismatch, unsupported (formula Postgres can't run), timeout, error. 4 new tests; `aws` suite passes. Deployed to `pg-test` 2026-10-22 (13 resources modified, none replaced). First real reads through the deployed API (`shopify-vendors`, `getRecords`): both matched exactly, 646 vs 646 records, zero field differences. Latency: Airtable about 1.16 to 1.19 s, Postgres about 0.28 to 0.31 s (includes a cold connection).
+- [x] Fix drift until diffs are zero for an agreed period.
+  - Agreed period (2026-10-22): short, a few manual checks on the test stack only. Revisit with a longer window when staging or prod runs `dual`. Local read-only checks against the test base and `pg-test` Postgres (vendors): full list 646/646, three single-record reads, `maxRecords=10`, a search (95/95) and a field-projected read all matched with zero field differences.
+- [x] Measure latency of both paths.
+  - Deployed Lambda, vendors full list: Airtable about 1.2 s vs Postgres about 0.3 s. Local single-record reads: about 140 ms vs 63 ms. Metrics `AirtableReadMs` and `PostgresReadMs` are emitted per read for later comparison. Shadow reads add the Postgres time to each dual read, so they should be removed or sampled once Phase 7 starts.
 
 ### Phase 7: Per-table cutover
 
+Status: in progress. First table: `shopify-vendors` (chosen 2026-10-22).
+
 - [ ] Switch reads to Postgres for one table; keep Airtable writes in place.
-- [ ] Confirm rollback is a single flag change and test it.
+  - Code and tests done 2026-10-22: new backend value `postgres-read` (`aws/src/store/postgresReadListingStore.ts`). Reads (`getRecords`, `getRecord`, `getRecordsSummary`) come from Postgres. Writes and attachments still go Airtable-first and are mirrored to Postgres (the `dual` write path), and field metadata stays on Airtable. If a Postgres read fails for any reason (unsupported formula, missing row, database down), it falls back to Airtable and logs `postgres_read_fallback` plus metric `PostgresReadFallback`. `postgres` stays 501 until writes move. 3 new tests; `aws` suite passes (29 passed, 1 skipped). Deployed to `pg-test` 2026-10-22 (62 resources modified, none replaced; `DataBackendOverrides=shopify-vendors=postgres-read`). A logged-in vendor list read through the deployed API returned 646 vendors with no `postgres_read_fallback` entries and no shadow-read lines (so the Postgres path served it).
+- [x] Confirm rollback is a single flag change and test it.
+  - Tested 2026-10-22 on `pg-test`: changing only `DataBackendOverrides` from `shopify-vendors=postgres-read` to `shopify-vendors=dual` and deploying (62 functions and API modified, none replaced) returned `UPDATE_COMPLETE`, and the deployed reads Lambda's `DATA_BACKEND_OVERRIDES` reads `shopify-vendors=dual`. Rollback to Airtable-only reads is the same change with `airtable`. Redeploy takes a few minutes. `pg-test` was then put back on `postgres-read` for vendors (2026-10-22, same change-set process).
 - [ ] Consider reverse sync until confident.
 - [ ] Repeat per table.
 

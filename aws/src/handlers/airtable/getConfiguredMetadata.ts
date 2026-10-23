@@ -3,7 +3,7 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireQueryParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { getConfiguredFieldMetadata, type AirtableConfiguredMetadataSource } from '../../providers/airtable/sources.js';
+import { getConfiguredFieldMetadata, type AirtableConfiguredMetadataSource } from '../../store/index.js';
 
 function validateSource(value: string): AirtableConfiguredMetadataSource {
   if (value === 'inventory-directory' || value === 'used-gear-workflow') {

@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { getConfiguredRecords, updateConfiguredRecord } from '../../providers/airtable/sources.js';
+import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
 import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { retainShopifyProductWhenSoldOnEbay } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';

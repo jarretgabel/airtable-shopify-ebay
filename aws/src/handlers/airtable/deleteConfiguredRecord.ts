@@ -3,7 +3,7 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requirePathParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { deleteConfiguredRecord, type AirtableConfiguredWriteSource } from '../../providers/airtable/sources.js';
+import { deleteConfiguredRecord, type AirtableConfiguredWriteSource } from '../../store/index.js';
 
 function validateWriteSource(value: string): AirtableConfiguredWriteSource {
   if (

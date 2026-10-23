@@ -70,49 +70,59 @@ export function clearAirtableSourceCaches(): void {
   searchFieldMetadataCache.clear();
 }
 
+const READY_FOR_PUBLISHING_STATUSES = ['Approved for Publish'];
+const LISTINGS_PAGE_STATUSES = [
+  'Awaiting Pre-Listing Review',
+  'Approved for Publish',
+  'Listed, Shopify',
+  'Listed, eBay',
+  'Stale Listing, Shopify',
+  'Stale Listing, eBay',
+];
+
+function subsetNotAllowed(subset: AirtableConfiguredRecordsSubset): HttpError {
+  const allowedSource = subset === 'post-publish' ? 'used-gear-workflow' : 'approval-combined';
+  return new HttpError(400, `${subset} subset is only supported for ${allowedSource}.`, {
+    service: 'airtable',
+    code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
+    retryable: false,
+  });
+}
+
+/** Workflow Status values a subset selects, or undefined when no subset is requested. Shared by every storage backend. */
+export function resolveSubsetStatuses(
+  source: AirtableConfiguredRecordsSource,
+  subset: AirtableConfiguredRecordsSubset | undefined,
+): string[] | undefined {
+  if (!subset) return undefined;
+
+  if (subset === 'post-publish') {
+    if (source !== 'used-gear-workflow') throw subsetNotAllowed(subset);
+    return [...USED_GEAR_POST_PUBLISH_STATUSES];
+  }
+
+  if (subset === 'ready-for-publishing') {
+    if (source !== 'approval-combined') throw subsetNotAllowed(subset);
+    return [...READY_FOR_PUBLISHING_STATUSES];
+  }
+
+  if (subset === 'listings-page') {
+    if (source !== 'approval-combined') throw subsetNotAllowed(subset);
+    return [...LISTINGS_PAGE_STATUSES];
+  }
+
+  return undefined;
+}
+
 function resolveSubsetFilterByFormula(
   source: AirtableConfiguredRecordsSource,
   subset: AirtableConfiguredRecordsSubset | undefined,
 ): string | undefined {
-  if (!subset) return undefined;
+  const statuses = resolveSubsetStatuses(source, subset);
+  if (!statuses) return undefined;
 
-  if (subset === 'post-publish') {
-    if (source !== 'used-gear-workflow') {
-      throw new HttpError(400, 'post-publish subset is only supported for used-gear-workflow.', {
-        service: 'airtable',
-        code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
-        retryable: false,
-      });
-    }
-
-    return `OR(${USED_GEAR_POST_PUBLISH_STATUSES.map((status) => `{Workflow Status}='${status}'`).join(', ')})`;
-  }
-
-  if (subset === 'ready-for-publishing') {
-    if (source !== 'approval-combined') {
-      throw new HttpError(400, 'ready-for-publishing subset is only supported for approval-combined.', {
-        service: 'airtable',
-        code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
-        retryable: false,
-      });
-    }
-
-    return "{Workflow Status}='Approved for Publish'";
-  }
-
-  if (subset === 'listings-page') {
-    if (source !== 'approval-combined') {
-      throw new HttpError(400, 'listings-page subset is only supported for approval-combined.', {
-        service: 'airtable',
-        code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
-        retryable: false,
-      });
-    }
-
-    return "OR({Workflow Status}='Awaiting Pre-Listing Review', {Workflow Status}='Approved for Publish', {Workflow Status}='Listed, Shopify', {Workflow Status}='Listed, eBay', {Workflow Status}='Stale Listing, Shopify', {Workflow Status}='Stale Listing, eBay')";
-  }
-
-  return undefined;
+  const clauses = statuses.map((status) => `{Workflow Status}='${status}'`);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
 }
 
 function mergeFilterByFormula(
@@ -629,7 +639,13 @@ function getWriteSourceDefinition(source: AirtableConfiguredWriteSource): { refe
   return getSourceDefinition(source);
 }
 
-function getMetadataSourceDefinition(source: AirtableConfiguredMetadataSource): { baseId: string; tableId: string } {
+/** Physical base and table behind a source. Several sources share one table, so storage keys on this, not on the source. */
+export function resolveConfiguredSourceTable(source: AirtableConfiguredRecordsSource): { baseId: string; tableId: string } {
+  const { baseId, tableId } = getMetadataSourceDefinition(source);
+  return { baseId, tableId: tableId.startsWith('tbl') ? tableId : `tbl${tableId}` };
+}
+
+function getMetadataSourceDefinition(source: AirtableConfiguredRecordsSource): { baseId: string; tableId: string } {
 
   const definition = getSourceDefinition(source);
 
@@ -742,7 +758,13 @@ export async function getConfiguredRecords(
 export async function getConfiguredRecordsSummary(
   source: AirtableConfiguredRecordsSource,
 ): Promise<AirtableConfiguredRecordsSummary> {
-  const records = await getConfiguredRecords(source);
+  return summarizeConfiguredRecords(source, await getConfiguredRecords(source));
+}
+
+export function summarizeConfiguredRecords(
+  source: AirtableConfiguredRecordsSource,
+  records: AirtableRecord[],
+): AirtableConfiguredRecordsSummary {
   const approved = records.reduce((count, record) => {
     const approvedValue = getApprovedFieldValue(record, source);
     return count + (isApprovedValue(approvedValue) ? 1 : 0);

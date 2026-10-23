@@ -4,7 +4,7 @@ import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requirePathParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { getConfiguredRecord, type AirtableConfiguredRecordsSource } from '../../providers/airtable/sources.js';
+import { getConfiguredRecord, type AirtableConfiguredRecordsSource } from '../../store/index.js';
 import { downloadGoogleDriveFile, extractGoogleDriveFileId } from '../../providers/googleDrive/client.js';
 import { parseWorkflowImageMetadata } from '../../shared/workflowImages.js';
 
