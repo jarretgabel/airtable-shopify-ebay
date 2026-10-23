@@ -106,6 +106,14 @@ if (!url) {
     assert.equal(wildcard.length, 0);
   }));
 
+  test('postgres: requested fields are projected in SQL and unrequested heavy fields are not returned', () => withStore(async (store, seed) => {
+    await seed([{ id: 'recA', fields: { Title: 'A', 'Workflow Status': 'Ready', 'Workflow Image Metadata JSON': 'x'.repeat(1000) } }]);
+    const [slim] = await store.getRecords('approval-combined', { fields: ['Title', 'Missing'], maxRecords: 10 });
+    assert.deepEqual(slim.fields, { Title: 'A' });
+    const [full] = await store.getRecords('approval-combined');
+    assert.equal(Object.keys(full.fields).length, 3);
+  }));
+
   test('postgres: equality formulas used by auth lookups, and others are rejected', () => withStore(async (store, seed) => {
     await seed([
       { id: 'u1', fields: { Email: 'Jane@Example.com', 'User Id': 'abc' } },

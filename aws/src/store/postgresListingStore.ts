@@ -119,14 +119,20 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
     }
 
     const limit = read.maxRecords ?? (read.subset === 'listings-page' ? LISTINGS_PAGE_MAX_RECORDS : undefined);
-    let sql = `SELECT record_id, fields, airtable_created_at, synced_at FROM records WHERE ${where.join(' AND ')}
+    // Projected in SQL so heavy fields (image metadata JSON) are never read or sent when a caller asks for specific fields.
+    const projection = read.fields ?? (read.subset === 'post-publish' ? [...USED_GEAR_POST_PUBLISH_FIELDS] : undefined);
+    let fieldsColumn = 'fields';
+    if (projection && projection.length > 0) {
+      params.push(projection);
+      fieldsColumn = `(SELECT coalesce(jsonb_object_agg(e.key, e.value), '{}'::jsonb) FROM jsonb_each(fields) AS e WHERE e.key = ANY($${params.length}::text[])) AS fields`;
+    }
+    let sql = `SELECT record_id, ${fieldsColumn}, airtable_created_at, synced_at FROM records WHERE ${where.join(' AND ')}
       ORDER BY airtable_created_at NULLS LAST, record_id`;
     if (limit && Number.isFinite(limit) && limit > 0) {
       params.push(Math.trunc(limit));
       sql += ` LIMIT $${params.length}`;
     }
 
-    const projection = read.fields ?? (read.subset === 'post-publish' ? [...USED_GEAR_POST_PUBLISH_FIELDS] : undefined);
     const result = await pool.query<RecordRow>(sql, params);
     return result.rows.map((row) => toListingRecord(row, projection));
   }
