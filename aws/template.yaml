@@ -1147,6 +1147,21 @@ Resources:
             Method: POST
             Path: /api/analytics/events
 
+  DashboardSellersSummaryFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/dashboard/getSellersSummary.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/dashboard/sellers-summary
+
   AuthLoginFunction:
     Type: AWS::Serverless::Function
     Metadata:

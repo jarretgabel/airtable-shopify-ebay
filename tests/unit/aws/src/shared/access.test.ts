@@ -103,3 +103,8 @@ test('utility routes keep their specific page requirements', () => {
   assert.equal(hiFiSharkRequirement.adminOnly, undefined);
   assert.deepEqual(hiFiSharkRequirement.anyPage, ['market']);
 });
+
+test('dashboard sellers summary is admin-only (contains personal data)', () => {
+  const requirement = resolveRouteAccessRequirement(createEvent({ rawPath: '/api/dashboard/sellers-summary' }));
+  assert.equal(requirement.adminOnly, true);
+});

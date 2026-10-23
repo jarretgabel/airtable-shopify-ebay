@@ -116,6 +116,11 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
     return { anyPage: ['market'] };
   }
 
+  // Seller contact details are personal data: full-access roles only.
+  if (path.startsWith('/api/dashboard/')) {
+    return { adminOnly: true };
+  }
+
   if (path.startsWith('/api/analytics/')) {
     return {};
   }

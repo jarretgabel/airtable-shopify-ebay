@@ -19,6 +19,7 @@ const WATCH_TARGETS = [
 ];
 
 const ROUTES = [
+  ['GET', '/api/dashboard/sellers-summary', 'handlers/dashboard/getSellersSummary.js', 'handler'],
   ['POST', '/api/auth/login', 'handlers/auth/login.js', 'handler'],
   ['GET', '/api/auth/session', 'handlers/auth/resolveSession.js', 'handler'],
   ['POST', '/api/auth/password-reset/request', 'handlers/auth/requestPasswordReset.js', 'handler'],

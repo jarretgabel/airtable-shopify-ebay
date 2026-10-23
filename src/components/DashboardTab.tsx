@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { canAccessCommerceDashboard, canAccessWorkflowDashboard, isDeveloperRole } from '@/auth/roleAccess';
+import { canAccessCommerceDashboard, canAccessWorkflowDashboard, hasFullAccessRole, isDeveloperRole } from '@/auth/roleAccess';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
 import { getDashboardDegradedSources, hasDashboardPartialData } from '@/components/dashboard/dashboardSourceHealth';
+import { DashboardSellersSection } from '@/components/dashboard/DashboardSellersSection';
 import { DashboardActionsSection } from '@/components/dashboard/DashboardActionsSection';
 import { DashboardPartialDataNotice, DashboardSectionPanel } from '@/components/dashboard/dashboardPrimitives';
 import {
@@ -115,6 +116,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
         />
       ) : null}
+      {hasFullAccessRole(workflow.currentUserRole) ? <DashboardSellersSection showWarnings={isDeveloper} /> : null}
     </AppPageLayout>
   );
 }
