@@ -409,3 +409,9 @@ test('ensureSampleAuthUsers resyncs sample accounts with stale passwords', async
   assert.equal(updateCalls[0]?.recordId, 'rec-tester');
   assert.equal(updateCalls[0]?.fields['Email'], 'tester@example.com');
 });
+test('auth user lookups use the store seam so DATA_BACKEND_OVERRIDES can apply to users', async () => {
+  const store = await import('../../../../../../aws/src/store/index.js');
+  assert.equal(authUserDependencies.getConfiguredRecords, store.getConfiguredRecords);
+  assert.equal(authUserDependencies.createConfiguredRecord, store.createConfiguredRecord);
+  assert.equal(authUserDependencies.updateConfiguredRecord, store.updateConfiguredRecord);
+});

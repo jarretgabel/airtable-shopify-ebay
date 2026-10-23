@@ -1,6 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { APP_PAGES, isAppPage, normalizeAllowedPages, type AppPage, type UserRole } from '../../shared/appPages.js';
-import { createConfiguredRecord, getConfiguredRecords, updateConfiguredRecord } from '../airtable/sources.js';
+import { createConfiguredRecord, getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
 import { parseStoredPasswordField, serializePasswordField, verifyStoredPassword, type StoredPasswordState } from './passwords.js';
 
 const USER_FIELD_KEYS = {
@@ -337,7 +337,7 @@ export async function updateAuthUserEmail(user: AuthUserRecord, nextEmail: strin
     });
   }
 
-  await updateConfiguredRecord('users', user.airtableRecordId, {
+  await authUserDependencies.updateConfiguredRecord('users', user.airtableRecordId, {
     [USER_FIELD_KEYS.email[0]]: normalizedEmail,
   }, { typecast: true });
 
