@@ -51,6 +51,8 @@ function getPostgresReadStore(): ListingStore {
     }),
     fallback: airtableListingStore,
     writer: getDualStore(),
+    // Near-static sources only. Users stay short so a disabled account or changed password takes effect quickly on other instances.
+    cacheTtlMs: { 'shopify-vendors': 60_000, 'user-guide': 60_000, users: 15_000 },
   });
   return postgresReadStore;
 }

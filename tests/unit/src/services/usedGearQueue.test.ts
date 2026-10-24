@@ -897,6 +897,27 @@ describe('usedGearQueue', () => {
     expect(context.record.fields.Images).toEqual([
       { id: 'att-photo', url: 'https://example.com/current-photo.jpg', filename: 'photo.jpg' },
     ]);
+
+    // Sibling rows skip the heavy image metadata; the selected record is fetched in full.
+    const listedFields = (mockGetConfiguredRecords.mock.calls[0]?.[1] as { fields?: string[] } | undefined)?.fields ?? [];
+    expect(listedFields.length).toBeGreaterThan(0);
+    expect(listedFields).not.toContain('Workflow Image Metadata JSON');
+    expect(mockGetConfiguredRecord).toHaveBeenCalledWith('used-gear-workflow', 'rec1');
+  });
+
+  it('skips the heavy image metadata field when scanning all workflow rows', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([]);
+
+    await loadParkingLotArrivalQueue();
+    await loadWorkflowProgressQueue();
+    await expect(loadUsedGearOperationalRecordBySku('SKU-1')).rejects.toThrow();
+
+    expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(3);
+    for (const call of mockGetConfiguredRecords.mock.calls) {
+      const fields = (call[1] as { fields?: string[] } | undefined)?.fields ?? [];
+      expect(fields.length).toBeGreaterThan(0);
+      expect(fields).not.toContain('Workflow Image Metadata JSON');
+    }
   });
 
   it('marks all rows in a pending-review group unqualified', async () => {

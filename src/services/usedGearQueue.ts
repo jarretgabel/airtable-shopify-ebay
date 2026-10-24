@@ -94,7 +94,7 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Customer Functional Notes',
   'Customer Inclusion Notes',
   // Images (all stages — intake, testing, photos)
-  'Workflow Image Metadata JSON',
+  'Workflow Image Metadata JSON', // keep in sync with WORKFLOW_IMAGE_METADATA_FIELD
   // Testing
   'Testing Notes',
   'Testing Time',
@@ -135,6 +135,9 @@ const USED_GEAR_WORKFLOW_RECORD_FIELDS = [
   'Shopify Price',
   'Ebay Price',
 ] as const;
+
+// About half of the Listings payload; only needed for the selected record, not for sibling rows.
+const WORKFLOW_IMAGE_METADATA_FIELD = 'Workflow Image Metadata JSON';
 
 const USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELDS = [
   'Shipment Follow-Through Notes',
@@ -481,9 +484,11 @@ function mergeConfiguredRecordFields(
   });
 }
 
-async function loadUsedGearOperationalRecords(options?: { includeOptionalReadFields?: boolean }): Promise<AirtableRecord[]> {
+async function loadUsedGearOperationalRecords(options?: { includeOptionalReadFields?: boolean; excludeImageMetadata?: boolean }): Promise<AirtableRecord[]> {
   const requiredRecords = await getConfiguredRecords('used-gear-workflow', {
-    fields: [...USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS],
+    fields: options?.excludeImageMetadata
+      ? USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS.filter((fieldName) => fieldName !== WORKFLOW_IMAGE_METADATA_FIELD)
+      : [...USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS],
   });
 
   if (!options?.includeOptionalReadFields) {
@@ -685,7 +690,7 @@ export async function loadUsedGearOperationalRecordBySku(sku: string): Promise<A
   }
 
   const records = await getConfiguredRecords('used-gear-workflow', {
-    fields: [...USED_GEAR_WORKFLOW_RECORD_FIELDS],
+    fields: USED_GEAR_WORKFLOW_RECORD_FIELDS.filter((fieldName) => fieldName !== WORKFLOW_IMAGE_METADATA_FIELD),
   });
 
   const record = records
@@ -725,7 +730,7 @@ export async function loadTrashGroup(groupId: string): Promise<UsedGearWorkflowG
 }
 
 export async function loadParkingLotArrivalQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearOperationalRecords();
+  const records = await loadUsedGearOperationalRecords({ excludeImageMetadata: true });
 
   return records
     .map(withWorkflow)
@@ -796,7 +801,7 @@ export async function savePendingReviewRecordReview(
 }
 
 export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearOperationalRecords();
+  const records = await loadUsedGearOperationalRecords({ excludeImageMetadata: true });
 
   return records
     .map(withWorkflow)
@@ -877,7 +882,7 @@ export async function loadUsedGearOperationalRecord(recordId: string): Promise<A
 }
 
 export async function loadUsedGearOperationalRecordContext(recordId: string): Promise<UsedGearOperationalRecordContext> {
-  const records = (await loadUsedGearOperationalRecords({ includeOptionalReadFields: true })).map(withWorkflow);
+  const records = (await loadUsedGearOperationalRecords({ includeOptionalReadFields: true, excludeImageMetadata: true })).map(withWorkflow);
   const queueRecord = records.find((candidate) => candidate.id === recordId);
   if (!queueRecord) {
     throw new Error('Unable to load the selected used-gear operational record.');
