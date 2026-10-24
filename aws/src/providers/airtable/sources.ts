@@ -12,6 +12,7 @@ import {
 } from './client.js';
 import { parseAirtableReferenceCandidates } from './reference.js';
 import { invalidateConfiguredRecordsCache } from './configuredRecordsCache.js';
+import { USED_GEAR_ARRIVAL_STAGE_STATUS_VALUES, USED_GEAR_PROGRESS_STATUS_VALUES } from '../../shared/contracts/usedGearWorkflowSubsets.js';
 import { USED_GEAR_POST_PUBLISH_FIELDS, USED_GEAR_POST_PUBLISH_STATUSES } from '../../shared/contracts/usedGearPostPublish.js';
 
 export const airtableSourceDependencies = {
@@ -37,7 +38,7 @@ export type AirtableConfiguredRecordsSource =
 export type AirtableConfiguredWriteSource = AirtableConfiguredRecordsSource;
 export type AirtableConfiguredMetadataSource = 'inventory-directory' | 'used-gear-workflow';
 export type AirtableConfiguredAttachmentSource = 'inventory-directory' | 'used-gear-workflow';
-export type AirtableConfiguredRecordsSubset = 'ready-for-publishing' | 'listings-page' | 'post-publish';
+export type AirtableConfiguredRecordsSubset = 'ready-for-publishing' | 'listings-page' | 'post-publish' | 'workflow-progress' | 'parking-lot-arrival';
 
 interface AirtableConfiguredReadOptions {
   fields?: string[];
@@ -81,7 +82,7 @@ const LISTINGS_PAGE_STATUSES = [
 ];
 
 function subsetNotAllowed(subset: AirtableConfiguredRecordsSubset): HttpError {
-  const allowedSource = subset === 'post-publish' ? 'used-gear-workflow' : 'approval-combined';
+  const allowedSource = subset === 'post-publish' || subset === 'workflow-progress' || subset === 'parking-lot-arrival' ? 'used-gear-workflow' : 'approval-combined';
   return new HttpError(400, `${subset} subset is only supported for ${allowedSource}.`, {
     service: 'airtable',
     code: 'AIRTABLE_SUBSET_NOT_ALLOWED',
@@ -99,6 +100,16 @@ export function resolveSubsetStatuses(
   if (subset === 'post-publish') {
     if (source !== 'used-gear-workflow') throw subsetNotAllowed(subset);
     return [...USED_GEAR_POST_PUBLISH_STATUSES];
+  }
+
+  if (subset === 'workflow-progress') {
+    if (source !== 'used-gear-workflow') throw subsetNotAllowed(subset);
+    return [...USED_GEAR_PROGRESS_STATUS_VALUES];
+  }
+
+  if (subset === 'parking-lot-arrival') {
+    if (source !== 'used-gear-workflow') throw subsetNotAllowed(subset);
+    return [...USED_GEAR_ARRIVAL_STAGE_STATUS_VALUES];
   }
 
   if (subset === 'ready-for-publishing') {

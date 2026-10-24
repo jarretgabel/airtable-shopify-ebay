@@ -28,7 +28,7 @@ test('invalid backend values fail loudly instead of silently using airtable', ()
   assert.throws(() => resolveDataBackend('users', { DATA_BACKEND: 'mongo' }), (error: unknown) => error instanceof HttpError && error.code === 'DATA_BACKEND_INVALID');
 });
 
-test('getListingStore returns the airtable store by default and refuses unimplemented backends', () => {
+test('getListingStore returns the airtable store by default and a distinct store per backend', () => {
   const saved = { backend: process.env.DATA_BACKEND, overrides: process.env.DATA_BACKEND_OVERRIDES };
   try {
     delete process.env.DATA_BACKEND;
@@ -36,7 +36,9 @@ test('getListingStore returns the airtable store by default and refuses unimplem
     assert.equal(getListingStore('users'), airtableListingStore);
 
     process.env.DATA_BACKEND_OVERRIDES = 'users=postgres';
-    assert.throws(() => getListingStore('users'), (error: unknown) => error instanceof HttpError && error.statusCode === 501);
+    const first = getListingStore('users');
+    assert.notEqual(first, airtableListingStore);
+    assert.equal(getListingStore('users'), first);
     assert.equal(getListingStore('user-guide'), airtableListingStore);
 
     process.env.DATA_BACKEND_OVERRIDES = 'shopify-vendors=dual';

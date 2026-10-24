@@ -1282,6 +1282,36 @@ Resources:
             Method: POST
             Path: /api/auth/logout
 
+  OutboxWorkerFunction:
+    Type: AWS::Serverless::Function
+    Condition: CreatePostgres
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/outbox/processOutbox.handler
+      Timeout: 60
+      Events:
+        Every1Minute:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+
+  OutboxDeadAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreateCloudWatchAlarms
+    Properties:
+      AlarmDescription: A Postgres-first write could not be sent to Airtable and needs a person.
+      Namespace: AirtableShopifyEbay/DataBackend
+      MetricName: OutboxDead
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+
   ApprovalNormalizeErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: CreateCloudWatchAlarms

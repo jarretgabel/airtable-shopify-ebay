@@ -913,6 +913,11 @@ describe('usedGearQueue', () => {
     await expect(loadUsedGearOperationalRecordBySku('SKU-1')).rejects.toThrow();
 
     expect(mockGetConfiguredRecords).toHaveBeenCalledTimes(3);
+    expect(mockGetConfiguredRecords.mock.calls.map((call) => (call[1] as { subset?: string }).subset)).toEqual([
+      'parking-lot-arrival',
+      'workflow-progress',
+      undefined,
+    ]);
     for (const call of mockGetConfiguredRecords.mock.calls) {
       const fields = (call[1] as { fields?: string[] } | undefined)?.fields ?? [];
       expect(fields.length).toBeGreaterThan(0);

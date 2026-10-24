@@ -96,6 +96,21 @@ if (!url) {
     );
   }));
 
+  test('postgres: workflow-progress and parking-lot-arrival subsets select used-gear statuses only', () => withStore(async (store, seed) => {
+    await seed([
+      { id: 'a', fields: { 'Workflow Status': 'Accepted - Awaiting Arrival' } },
+      { id: 'b', fields: { 'Workflow Status': 'Testing In Progress' } },
+      { id: 'c', fields: { 'Workflow Status': 'Pending Review' } },
+      { id: 'd', fields: { 'Workflow Status': 'Shipped' } },
+    ]);
+    assert.deepEqual((await store.getRecords('used-gear-workflow', { subset: 'workflow-progress' })).map((r) => r.id).sort(), ['a', 'b']);
+    assert.deepEqual((await store.getRecords('used-gear-workflow', { subset: 'parking-lot-arrival' })).map((r) => r.id), ['a']);
+    await assert.rejects(
+      store.getRecords('approval-combined', { subset: 'workflow-progress' }),
+      (error: unknown) => error instanceof HttpError && error.statusCode === 400,
+    );
+  }));
+
   test('postgres: search is a case-insensitive substring match across the requested fields', () => withStore(async (store, seed) => {
     await seed(listings);
     const hits = await store.getRecords('approval-combined', { searchQuery: ' MCINTOSH ', searchFields: ['Title', 'Notes'] });

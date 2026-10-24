@@ -484,8 +484,9 @@ function mergeConfiguredRecordFields(
   });
 }
 
-async function loadUsedGearOperationalRecords(options?: { includeOptionalReadFields?: boolean; excludeImageMetadata?: boolean }): Promise<AirtableRecord[]> {
+async function loadUsedGearOperationalRecords(options?: { includeOptionalReadFields?: boolean; excludeImageMetadata?: boolean; subset?: 'workflow-progress' | 'parking-lot-arrival' }): Promise<AirtableRecord[]> {
   const requiredRecords = await getConfiguredRecords('used-gear-workflow', {
+    subset: options?.subset,
     fields: options?.excludeImageMetadata
       ? USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS.filter((fieldName) => fieldName !== WORKFLOW_IMAGE_METADATA_FIELD)
       : [...USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS],
@@ -730,7 +731,7 @@ export async function loadTrashGroup(groupId: string): Promise<UsedGearWorkflowG
 }
 
 export async function loadParkingLotArrivalQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearOperationalRecords({ excludeImageMetadata: true });
+  const records = await loadUsedGearOperationalRecords({ excludeImageMetadata: true, subset: 'parking-lot-arrival' });
 
   return records
     .map(withWorkflow)
@@ -801,7 +802,7 @@ export async function savePendingReviewRecordReview(
 }
 
 export async function loadWorkflowProgressQueue(): Promise<AirtableRecord[]> {
-  const records = await loadUsedGearOperationalRecords({ excludeImageMetadata: true });
+  const records = await loadUsedGearOperationalRecords({ excludeImageMetadata: true, subset: 'workflow-progress' });
 
   return records
     .map(withWorkflow)

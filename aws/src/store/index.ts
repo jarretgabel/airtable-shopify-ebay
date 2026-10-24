@@ -4,6 +4,7 @@ import { resolveConfiguredSourceTable } from '../providers/airtable/sources.js';
 import { airtableListingStore } from './airtableListingStore.js';
 import { createDualListingStore } from './dualListingStore.js';
 import { createPostgresListingStore } from './postgresListingStore.js';
+import { createPostgresFirstListingStore } from './postgresFirstListingStore.js';
 import { createPostgresReadListingStore } from './postgresReadListingStore.js';
 import { createPostgresMirror } from './postgresMirror.js';
 import { resolveDataBackend } from './backend.js';
@@ -30,6 +31,10 @@ export type { ListingStore } from './listingStore.js';
 
 let dualStore: ListingStore | undefined;
 let postgresReadStore: ListingStore | undefined;
+let postgresFirstStore: ListingStore | undefined;
+
+// Near-static sources only. Users stay short so a disabled account or changed password takes effect quickly on other instances.
+const READ_CACHE_TTL_MS = { 'shopify-vendors': 60_000, 'user-guide': 60_000, users: 15_000 } as const;
 
 function getDualStore(): ListingStore {
   dualStore ??= createDualListingStore({
@@ -51,10 +56,31 @@ function getPostgresReadStore(): ListingStore {
     }),
     fallback: airtableListingStore,
     writer: getDualStore(),
-    // Near-static sources only. Users stay short so a disabled account or changed password takes effect quickly on other instances.
-    cacheTtlMs: { 'shopify-vendors': 60_000, 'user-guide': 60_000, users: 15_000 },
+    cacheTtlMs: READ_CACHE_TTL_MS,
   });
   return postgresReadStore;
+}
+
+/** Postgres is authoritative: no Airtable fallback (Airtable may lag the outbox), updates commit to Postgres and the outbox. */
+function getPostgresFirstStore(): ListingStore {
+  if (postgresFirstStore) return postgresFirstStore;
+  const lazyPool = {
+    query: ((...args: unknown[]) => (getPostgresPool().query as (...a: unknown[]) => unknown)(...args)) as never,
+    connect: (() => getPostgresPool().connect()) as never,
+  };
+  const postgres = createPostgresListingStore({ pool: lazyPool });
+  postgresFirstStore = createPostgresReadListingStore({
+    reader: postgres,
+    fallback: postgres,
+    writer: createPostgresFirstListingStore({
+      pool: lazyPool,
+      resolveTable: resolveConfiguredSourceTable,
+      airtableWriter: getDualStore(),
+      reader: postgres,
+    }),
+    cacheTtlMs: READ_CACHE_TTL_MS,
+  });
+  return postgresFirstStore;
 }
 
 export function getListingStore(source: ListingSource): ListingStore {
@@ -68,6 +94,10 @@ export function getListingStore(source: ListingSource): ListingStore {
 
   if (backend === 'postgres-read') {
     return getPostgresReadStore();
+  }
+
+  if (backend === 'postgres') {
+    return getPostgresFirstStore();
   }
 
   throw new HttpError(501, `Data backend "${backend}" is not implemented yet for source ${source}.`, {

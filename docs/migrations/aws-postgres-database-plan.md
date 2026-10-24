@@ -489,3 +489,44 @@ Status: closed 2026-10-23. Cut over: `shopify-vendors`, `user-guide`. Reverse sy
 - 2026-10-23: `used-gear-workflow=postgres-read` check: Listings and Testing browsed, a Testing save for SKU 10792 succeeded and reached the mirror (`synced_at` 19:44 UTC, about a minute before the check); zero `postgres_read_fallback` in the configured-records, metadata and auth Lambdas. Cutover looks healthy. Separate UI change (not migration): Save Testing no longer enforces required fields; only Testing Complete does (`TestingFormTab.tsx`, uncommitted). Helpers stopped.
 
 **2026-10-24 — In-Lambda read cache (code done, deploy pending approval).** `postgres-read` now caches successful Postgres reads per Lambda instance: `shopify-vendors` 60 s, `user-guide` 60 s, `users` 15 s (kept short so a disabled account or password change reaches other instances quickly). Any write through the store clears that source's cache in the instance that handled it; other warm instances expire by TTL. Fallback (Airtable) results are never cached. Tests: 3 new in `postgresReadListingStore.test.ts`.
+
+**2026-10-24 — Server-side status filtering (item 2) and indexes (item 3).** New `used-gear-workflow` subsets `workflow-progress` (5 statuses) and `parking-lot-arrival` (3 statuses), defined once in `aws/src/shared/contracts/usedGearWorkflowSubsets.ts` and used by Airtable (formula), Postgres (SQL) and the frontend loaders, so the progress queue and parking-lot pages no longer pull all 3,471 listings. The frontend status filter stays as a safety net. Needs a backend deploy before the frontend works (an old backend rejects the new subset with 400). Indexes: `records_workflow_status_idx` and `records_email_idx` already exist from migration 0001, so no new migration is needed. Tests: 1 new Postgres store test, 1 changed frontend test.
+
+### Design: Postgres-first writes (Phase 9 "retire Airtable writes"), design only, nothing built
+
+**Goal:** saves return as soon as Postgres commits (~tens of ms instead of 1-4 s). Airtable is updated in the background and remains a mirror until it is retired.
+
+**Scope decision:** updates first. Creates stay Airtable-first, because Airtable issues the `rec…` id and the app, mirror and sheets all key on it. Creates are rare compared with updates. Deletes stay Airtable-first. Revisit creates only if Airtable is fully retired (then Postgres issues ids).
+
+**Mechanics**
+1. New backend value `postgres` (today 501): `updateRecord` merges the changed fields into the mirror row and inserts a row into a new `write_outbox` table **in one transaction**. `null` clears a field, as in the current store.
+2. `write_outbox(id, base_id, table_id, record_id, fields jsonb, typecast, status [pending|sent|failed|dead], attempts, next_attempt_at, last_error, created_at)`. Per-record ordering is preserved: a record's writes are sent oldest first, and a later write waits for an earlier one.
+3. Worker Lambda: invoked right after commit (async) and by a 1-minute schedule as a sweeper. It sends the Airtable PATCH, then upserts Airtable's returned record into the mirror **only if no newer outbox row exists for that record** (so formula and rollup fields refresh without clobbering newer edits). Retries use exponential backoff; after N attempts the row is `dead` and raises a CloudWatch alarm. Airtable's limit of 5 req/s per base is respected by capping worker concurrency.
+4. Reads for a `postgres` source come from Postgres only, with **no Airtable fallback**, because Airtable may be behind the outbox.
+5. Rollback to `dual`: drain the outbox first (must be empty), then switch the override. No data is lost because Airtable has received every write.
+
+**Risks to resolve before building**
+- **Validation parity (biggest).** Airtable rejects unknown fields and invalid select values synchronously, and the frontend has retry logic for unknown field names. Postgres would accept anything, so errors would surface later and silently. Mitigation: validate each write against cached Airtable field metadata (names, types, select options) before commit and return the same 4xx shape. Typecast behaviour (string to number, new select options) must be matched or rejected.
+- **Computed fields.** Formula, rollup and lookup fields are computed by Airtable, so they are stale in Postgres until the background write returns. Check which fields the UI reads right after saving.
+- **Direct Airtable edits.** Any edit made in Airtable while a write is queued can be overwritten. Confirmed "app only" for the test base; unverified for production (Phase 10).
+- **Attachments and linked fields** are not written this way (attachments stay Airtable-first and Drive-based).
+- **Visibility.** Need an outbox depth and age metric plus a "dead" alarm, and a reconcile job that compares Postgres with Airtable once the outbox is empty.
+
+**Rollout order (each step: tests, approved change set, one-source `postgres` override, watch the outbox):**
+1. `user-guide` (65 rows, rare plain-text edits).
+2. `shopify-vendors` (646 rows, simple fields).
+3. `users` (auth writes: password hashes and sessions; do only after 1-2 are quiet).
+4. `used-gear-workflow` last (formula fields, images, attachments, highest traffic).
+
+**Build steps:** migration for `write_outbox` → validator → `postgresFirstListingStore` (update path) → worker Lambda + schedule + alarm (template change) → reconcile CLI → tests (including crash between commit and send, duplicate delivery, ordering, 429 backoff) → deploy to `pg-test`, source by source.
+
+- [ ] Phase 9b: build and roll out Postgres-first updates.
+  - [x] Design approved (updates only, `user-guide` first).
+  - [x] Code built and tested: migration `0005_write_outbox.sql`, `postgresFirstListingStore.ts` (backend `postgres`), `outboxWorker.ts` + `handlers/outbox/processOutbox.ts`, template `OutboxWorkerFunction` (every minute, `CreatePostgres` only) and `OutboxDeadAlarm`. 69 aws tests pass, including outbox ordering, backoff, dead-row blocking and unknown-field drop.
+  - [ ] Apply migration 0005 to the `pg-test` RDS.
+  - 2026-10-24: migration 0005 applied to `pg-test` (adds `write_outbox` only). Worker deploy attempt **rolled back cleanly** (`UPDATE_ROLLBACK_COMPLETE`, no resources left behind): the deployer user `resolutionavnyc` lacks EventBridge permissions for the 1-minute schedule rule (`events:DescribeRule` denied). Needs `events:PutRule, DescribeRule, DeleteRule, PutTargets, RemoveTargets, ListTargetsByRule, TagResource, UntagResource` on `arn:aws:events:us-east-1:981750770208:rule/airtable-shopify-ebay-pg-*` added to the second policy `airtable-shopify-ebay-postgres-deploy`.
+  - [x] 2026-10-24: permission added, worker deployed; runs every minute with depth 0.
+  - [x] (superseded) Deploy the worker (change set) with `user-guide` still `postgres-read`; confirm the worker runs and reports depth 0.
+  - [~] 2026-10-24: `user-guide=postgres` deployed. Awaiting a real edit to verify: do a real edit, confirm it reaches Airtable within about a minute and the outbox drains.
+  - [ ] Watch for a few days (dead rows, depth, drift), then `shopify-vendors`, `users`, `used-gear-workflow`.
+  - Known limits: Airtable is updated up to about 1 minute after a save (1-minute schedule, no immediate trigger); select-option and type validation is not replicated (Airtable's typecast result arrives later); creates, deletes and attachments are still Airtable-first.
