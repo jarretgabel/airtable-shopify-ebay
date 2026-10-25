@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Parameters:
+  MediaPublicBaseUrl:
+    Type: String
+    Default: ''
+    Description: Public base URL of the API (https://host), used for stored image URLs. Empty stores /api/media/... paths.
   AirtableApiKey:
     Type: String
     NoEcho: true
@@ -236,6 +240,8 @@ Globals:
         AIRTABLE_API_KEY: !Ref AirtableApiKey
         AIRTABLE_BASE_ID: !Ref AirtableBaseId
         DATA_BACKEND: !Ref DataBackend
+        MEDIA_BUCKET: !If [CreatePostgres, !Ref MediaBucket, '']
+        MEDIA_PUBLIC_BASE_URL: !Ref MediaPublicBaseUrl
         DATA_BACKEND_OVERRIDES: !Ref DataBackendOverrides
         DATABASE_URL: !If
           - CreatePostgres
@@ -1062,6 +1068,12 @@ Resources:
       CodeUri: .
       Handler: src/handlers/airtable/uploadConfiguredAttachment.handler
       Timeout: 30
+      Policies:
+        - !If
+          - CreatePostgres
+          - S3CrudPolicy:
+              BucketName: !Ref MediaBucket
+          - !Ref AWS::NoValue
       Events:
         ApiEvent:
           Type: HttpApi
@@ -1069,6 +1081,43 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: POST
             Path: /api/airtable/configured-attachments/{source}/{recordId}/{fieldId}
+
+  MediaGetFunction:
+    Type: AWS::Serverless::Function
+    Condition: CreatePostgres
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/media/getMedia.handler
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref MediaBucket
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/media/{key+}
+
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreatePostgres
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   AiIdentifyEquipmentFunction:
     Type: AWS::Serverless::Function

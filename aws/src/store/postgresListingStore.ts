@@ -43,7 +43,7 @@ function notFound(): HttpError {
   return pgError(404, 'POSTGRES_RECORD_NOT_FOUND', 'Record not found');
 }
 
-function newRecordId(): string {
+export function newRecordId(): string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   const bytes = randomBytes(14);
   return `rec${Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')}`;

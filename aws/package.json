@@ -26,9 +26,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:migrate": "tsc -p tsconfig.json && node dist/db/migrate-cli.js",
     "db:backfill": "tsc -p tsconfig.json && node dist/db/backfill-cli.js",
+    "db:copy-attachments": "tsc -p tsconfig.json && node dist/db/copy-attachments-cli.js",
     "db:normalize": "tsc -p tsconfig.json && node dist/db/normalize-cli.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1156.0",
+    "@aws-sdk/s3-request-presigner": "^3.1156.0",
     "cheerio": "^1.1.2",
     "pg": "^8.23.1"
   },

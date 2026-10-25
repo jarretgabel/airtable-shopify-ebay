@@ -530,3 +530,143 @@ Status: closed 2026-10-23. Cut over: `shopify-vendors`, `user-guide`. Reverse sy
   - [~] 2026-10-24: `user-guide=postgres` deployed. Awaiting a real edit to verify: do a real edit, confirm it reaches Airtable within about a minute and the outbox drains.
   - [ ] Watch for a few days (dead rows, depth, drift), then `shopify-vendors`, `users`, `used-gear-workflow`.
   - Known limits: Airtable is updated up to about 1 minute after a save (1-minute schedule, no immediate trigger); select-option and type validation is not replicated (Airtable's typecast result arrives later); creates, deletes and attachments are still Airtable-first.
+
+**2026-10-24 — More server-side filtering.** Added `used-gear-workflow` subsets `pending-review`, `parking-lot` (pending + 3 arrival statuses) and `trash-review` (`Unqualified`; the Active Trash check stays client-side). `loadPendingReviewQueue`, `loadParkingLotQueue` and `loadTrashQueue` use them. Still full-table reads (already field-projected): workflow hub directory, notification summary and analytics, which need every status; the real fix is server-side aggregation (counts in SQL), not yet done. Needs a backend deploy first.
+
+**2026-10-24 — Server-side aggregation measured, not built.** Read-only check on `pg-test`: the full-table, field-projected reads are small and fast: notification summary 338 KB (131 ms in SQL), analytics 144 KB (106 ms), workflow hub directory 633 KB (143 ms), for 3,471 listings. The list-read Lambda over the last 2 h: 1,179 calls, p50 414 ms, p90 597 ms, max 1.5 s. Moving the counting into SQL would save roughly 0.2-0.3 s per call but duplicates business logic (owner, ages, buckets) in SQL and risks drift, so it is deferred. Revisit if Listings grows by about 10x or these pages become the slowest thing users notice.
+
+### Update: all remaining sources moved to Postgres-first (pg-test)
+- `shopify-vendors`, `users`, `used-gear-workflow`, `approval-ebay`, `approval-shopify`, `approval-combined`, `inventory-directory` set to `postgres` (change set approved; stack `UPDATE_COMPLETE`). `workflow-image-roles` stays on Airtable.
+- Pre-checks: `airtable_fields` metadata loaded for all tables; only computed fields are 2 timestamps on Listings; outbox had 0 dead rows.
+- Open: confirm saves in each area, watch the outbox for dead rows (alarms off on pg-test), and confirm records created outside the app (Jotform ingest) still reach the mirror.
+- Rollback: set a source to `dual`, deploy, after the outbox is empty.
+
+## Phase 11: Retire Airtable (planned, not started)
+
+Goal: Postgres becomes the system of record; Airtable becomes a read-only archive. Nothing here is done.
+
+### Gaps (as of 2026-10-24, pg-test)
+- [ ] Creates and deletes are still Airtable-first (Jotform ingest, manual intake, deletes). Move to Postgres-first via the outbox; delete is soft in Postgres.
+- [ ] Attachments/images: Postgres returns 501 on upload. Move images to S3 and migrate existing URLs (Airtable attachment URLs expire).
+- [ ] `workflow-image-roles` is still on Airtable.
+- [ ] Verify no Airtable-side writers (automations, interfaces, manual edits) exist in production.
+- [ ] Replace Airtable's select-option/type validation with app-side validation.
+- [ ] Query support: `filterByFormula` handles only a few equality shapes, search is substring, aggregate views read full lists.
+- [ ] Operations: enable dead-outbox alarms, confirm backups/PITR and test a restore.
+- [ ] Phase 10 rollout of Postgres-first writes to staging and production.
+- [ ] Validate the mapper against production data.
+
+### Order
+1. Creates and deletes Postgres-first (same outbox).
+2. Images to S3.
+3. Staging then production with Postgres-first writes, outbox still syncing to Airtable.
+4. After a clean outbox and no direct Airtable edits for several weeks, stop the sync and make Airtable read-only.
+
+### Test notes
+- 2026-10-24: Save Testing on pg-test (SKU 10792) wrote to Postgres, outbox row sent in ~3 s, 0 attempts. Login, vendor edits, password change and record creation not yet tested.
+
+### Phase 11a design: Postgres-first creates and deletes (draft, awaiting approval)
+Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a local `rec…` ID, but the Airtable copy will get a different one.
+
+**Creates**
+- Insert the row with a local ID and enqueue an outbox `create` row (new `op` column; `record_id` = local ID) in one transaction. Return the local ID to the caller.
+- Worker sends the create to Airtable, then stores the Airtable ID in `airtable_record_id` on the mirror row (new column on `records`, nullable).
+- Later updates and deletes for that record wait behind the create (existing per-record ordering), then are sent to Airtable using `airtable_record_id`.
+- The app only ever sees the local ID, so URLs and links never change. Rows that exist today have `airtable_record_id = record_id`.
+- Linked-record fields that point at a not-yet-synced local ID must be translated at send time; any link to a record whose create is still pending blocks the row until it is sent.
+- Idempotency: a retry after a timeout could double-create in Airtable. Mitigation: store a `Source Key` (local ID) in a hidden Airtable text field if one can be added; otherwise check by that field before retrying. Needs your decision.
+
+**Deletes**
+- Soft-delete in Postgres and enqueue a `delete` row; worker deletes in Airtable by `airtable_record_id`.
+
+**Out of scope here:** attachments/images (Phase 11b, S3), `workflow-image-roles`.
+
+**Rollout:** same as updates: code + migration, `pg-test` only, one source first (`user-guide`, low volume), outbox alarm checks, then others.
+**Rollback:** set the source to `dual` after the outbox is empty; rows keep a valid Airtable ID.
+
+**Decision (2026-10-24):** Airtable will be removed, so no schema changes to Airtable. No `Source Key` field. Creates retry only on a clear error response; an ambiguous failure (timeout or network error after the request was sent) marks the row dead for manual review instead of retrying, so Airtable never gets a duplicate. Risk accepted: a rare manual check of the dead row.
+
+### Phase 11a status (2026-10-24): code built, NOT applied or deployed
+- [x] Migration `0006_outbox_creates_deletes.sql` written (adds `write_outbox.op`, `records.airtable_record_id`). Not applied to any RDS.
+- [x] `postgresFirstListingStore`: create (local id + outbox row) and delete (soft + outbox row) in one transaction.
+- [x] `outboxWorker`: create/delete ops, id mapping, link rewriting (waits without using an attempt while a linked create is unsent), 404 on delete = done, creates retried only on 429 (everything else goes dead).
+- [x] `backfill.ts` no longer re-inserts or soft-deletes locally created records. Do not re-run the backfill once Postgres-first is live; it would still overwrite fields with unsent updates.
+- [x] Tests: aws suite 72 pass (4 new: create then update by Airtable id, ambiguous vs rate-limited create, delete, link rewriting).
+- [ ] Apply 0006 to pg-test RDS (approval needed), deploy worker with a change set, try a create/delete on `user-guide`.
+- Known limits: `uploadAttachment` on a record whose create is not yet sent would fail at Airtable; links returned by Airtable on a refresh carry Airtable ids, not local ids; the dual-mode mirror upsert does not know about `airtable_record_id`.
+
+### Phase 11a on pg-test (2026-10-24)
+- [x] Migration 0006 applied (approved). Worker/store deployed via approved change set (`UPDATE_COMPLETE`).
+- [x] `shopify-vendors`: API create returned a local id at once; worker sent it (0 attempts, Airtable issued its own id); API delete soft-deleted in Postgres and the worker's delete to Airtable succeeded. No dead rows.
+- [x] `user-guide`: create sent OK and mapped to an Airtable id; the test row was cleaned up with a delete outbox row (the API does not expose delete for `user-guide`).
+- Still untested: link rewriting against real Airtable, Jotform ingest creating through Postgres-first, a `used-gear-workflow` create/delete from the UI.
+
+### Phase 11b discovery: images (2026-10-24, read-only)
+- Jotform intake images are already archived to Google Drive (`archiveIntakeImagesForRecord`); only metadata JSON is stored on the record. No Airtable attachment involved.
+- Airtable attachments are written by two frontend flows: `manualIntakeForm.ts` and `photosForm.ts` (both via `uploadConfiguredAttachment`). Postgres returns 501 for this, and the outbox cannot carry file bytes.
+- No S3 bucket exists in `aws/template.yaml` yet.
+- Open decision: where new uploads should live (S3 vs keep Google Drive as the single image store) and whether existing Airtable attachments are migrated.
+
+### Phase 11b design: images to S3 (draft, awaiting approval)
+**Decision (2026-10-24):** S3 for new uploads; existing Airtable attachments copied into it.
+- **Bucket:** new private S3 bucket in the stack (`CreatePostgres` condition), versioned, block public access, keys `{table}/{record}/{field}/{uuid}-{filename}`. Retain on stack delete.
+- **Upload:** `uploadAttachment` in the Postgres-first store writes the file to S3, then appends an Airtable-attachment-shaped object `{id, url, filename, type, size}` to the field in Postgres. Reads and the frontend keep the same shape. No Airtable write for the file (the outbox sends no attachments; Airtable's copy lags and is dropped at retirement).
+- **URLs:** stable, non-expiring URLs are needed (Airtable's expire). Serve through the app's existing CloudFront origin via a new read-only `/media/*` path backed by the bucket (decision needed vs presigned URLs, which expire).
+- **Existing attachments:** one-off script copies every Airtable attachment (47 image-role rows + Listings attachment fields) into S3 and rewrites the field URLs in Postgres. Run before Airtable retirement, read-only against Airtable. Dry run first with counts and total size.
+- **Rollback:** URLs in Postgres only change after a verified copy; keep the Airtable URLs in a `previous_url` key until retirement.
+- **Needs from you:** approval to add the bucket + CloudFront path (infra change set), and an estimate/permission to scan attachment sizes.
+
+### Phase 11b size scan (2026-10-24, read-only, from the pg-test mirror)
+- Only one attachment field has data: Listings `Images` — 628 records, 3,760 files, about 1.9 GB. `workflow-image-roles` holds no attachments (metadata only).
+- S3 storage for this is about $0.05/month; copy time is minutes. Production counts may differ (test-base mirror); rerun the scan against production before the copy.
+
+### Phase 11b status (2026-10-24): code built, NOT applied or deployed
+- [x] `providers/media/mediaStore.ts` (S3 put, presigned URL, stable `/api/media/...` URL, key validation); deps `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner` added (dynamically imported).
+- [x] Postgres-first `uploadAttachment`: file to S3, attachment object (with `s3Key`) appended in Postgres, no Airtable write. Falls back to the old Airtable-first path when `MEDIA_BUCKET` is unset, so deploying before the bucket exists changes nothing.
+- [x] Outbox refresh keeps S3-backed attachments instead of Airtable's copy.
+- [x] `GET /api/media/{key+}` handler: public 302 to a 5-minute presigned URL (public on purpose; Shopify/eBay fetch image URLs; key holds a random id).
+- [x] Template: `MediaBucket` (private, versioned, encrypted, Retain), `MediaGetFunction`, S3 policy on the upload function, env `MEDIA_BUCKET`, parameter `MediaPublicBaseUrl` (set to the API's https URL at deploy; empty stores relative paths).
+- [x] `npm run db:copy-attachments -- --base --table --field [--apply]`: dry run by default, reads Airtable with GET only, copies each file to S3, repoints Postgres (keeps `airtableUrl`, drops expiring thumbnails), idempotent.
+- [x] Tests: aws suite 75 pass (3 new).
+- [ ] Deploy bucket + routes via change set (approval), set `MediaPublicBaseUrl`, test an upload, run the copy dry run then `--apply` on pg-test.
+- Known limits: thumbnails are dropped so the UI loads full images; if the app later sends the full `Images` array in an update, the outbox would ask Airtable to fetch our media URLs (works, but could go dead if it fails).
+
+### Phase 11b deployed to pg-test (2026-10-24)
+- Needed extra deployer permissions (S3 bucket management, `iam:GetRolePolicy`/`PutRolePolicy`/`DeleteRolePolicy`); two earlier change sets rolled back cleanly. Third succeeded: `UPDATE_COMPLETE`, `MediaPublicBaseUrl` set to the API URL.
+- Verified: upload to `used-gear-workflow` SKU 10792 (record `recXFnIs8j4fO2bHd`) stored a 1x1 PNG (`test-upload-11b.png`) in S3 and in Postgres only (no outbox row, so not in Airtable); `/api/media/...` returns 302 to a presigned URL that serves the image (200, image/png); a bad key returns 404.
+- [ ] Copy dry run, then `--apply`, against the test base (needs approval).
+
+### Phase 11b copy on pg-test (2026-10-24)
+- [x] `db:copy-attachments --apply` on the test base Listings `Images`: 3,760 files, about 1.9 GB, 628 records copied to S3 and repointed in Postgres (about 2 h). Airtable untouched.
+- [ ] Production: re-run the dry run with `--allow-production-read`, then apply at cutover; re-copy after any new Airtable uploads.
+- Copy check: 1,883 `image/jpeg`/png (all `--processed` files) and 1,877 `text/html`. The HTML ones are every `--original` file; Airtable itself already reports them as `text/html` with the same size (a Google sign-in page saved as .jpg), so the copy is faithful and the defect is in the source data. The UI should use the `--processed` images; the `--original` entries are not usable images.
+- UI check (pg-test, record `rec01re31QCrAiKr0`): the API returns the S3-backed `--processed` images and they load in the browser as real 1200x900 images. The listing and photography pages themselves show Google Drive thumbnails for this record, and the photography page errors on `pg-test` with "Missing Google Drive refresh-token configuration" (Drive is not configured on that stack; unrelated to this change).
+
+### Phase 11c: `workflow-image-roles` on Postgres (pg-test, 2026-10-24)
+- [x] `DataBackendOverrides` now `workflow-image-roles=postgres` (all 9 sources are Postgres on pg-test); change set modified 64 Lambdas only, `UPDATE_COMPLETE`.
+- [x] Verified: `GET /api/airtable/configured-records?source=workflow-image-roles` returns all 47 roles from Postgres (200).
+- Not tested: a write to this source (roles are config-style data, rarely edited).
+- [x] `used-gear-workflow` create and delete via the API on pg-test: create returned a local id at once, outbox row 7 sent and mapped to Airtable `recFqN0e28IjFgLar`; delete outbox row 8 sent, and a read-only GET against the test base afterwards no longer finds the record (Airtable returns 403 "model not found" for deleted records). No leftovers.
+- [ ] Still untested: Jotform ingest, login-stamp write for `users`, link rewriting against real Airtable.
+- [x] `users` write paths reviewed (code only, no writes): there is no login stamp; the app writes only on password change, email change and user create, all through `updateConfiguredRecord` / `createConfiguredRecord` (Postgres-first). The `users` table has no `MustChangePassword` field, so the code's fallback (retry with password only) was already the normal path on Airtable; Postgres-first drops the unknown field with a warning and writes the password, same result (the flag is also encoded inside the Password value).
+- [x] Jotform ingest write pattern (create then immediate update of the new record, as `workflowIngest.ts` does) tested through the API on pg-test: both calls returned 200 at once, outbox rows 9 (create) and 10 (update) sent, and a read-only GET showed the Airtable record with both the create fields and the updated `Item Title`. Test record deleted (outbox row 11) and confirmed gone. The real webhook (Jotform API fetch, Drive archive) was not run; it needs a real submission and Drive config, which `pg-test` lacks.
+- [x] Link rewriting: not applicable today. `airtable_fields` (pg-test, all 9 sources' tables) has no `multipleRecordLinks` fields, so no source links to another record and nothing needs rewriting. The code and unit test stay in case a link field is added; re-check the production base's metadata before cutover.
+
+### Phase 11d: alarms and backups (pg-test, 2026-10-24)
+- [x] RDS: 7-day automated backups, point-in-time restore live (latest restorable time minutes old), storage encrypted, deletion protection on, final snapshot on delete. Single-AZ (no failover); acceptable for test, decide for production.
+- [x] `OutboxDeadAlarm` already exists in the template; the worker publishes `OutboxDead` (and depth) metrics every minute. It is not created on pg-test because `EnableCloudWatchAlarms` is off.
+- [ ] Enable alarms on pg-test: needs an SNS topic with an email subscription (`AlarmTopicArn`) and deployer permissions for `cloudwatch:PutMetricAlarm/DeleteAlarms/DescribeAlarms` and SNS create/subscribe. Without the topic, alarms would fire silently.
+- [ ] Restore drill: restore a point-in-time copy to a temporary instance and confirm it opens (needs RDS restore permissions; costs a few cents).
+
+### Phase 11d decision and production rollout additions (2026-10-24)
+- Alarms on pg-test: SKIPPED by decision; handled at production rollout.
+- [ ] Alarms: create an SNS topic with an email subscription, set `AlarmTopicArn` and `EnableCloudWatchAlarms=true`; the deployer needs CloudWatch and SNS permissions. Confirm `OutboxDeadAlarm` fires by inserting a test dead row on staging.
+- [ ] Restore drill: point-in-time restore to a temporary instance, confirm it opens, delete it.
+- [ ] Decide Multi-AZ for the production RDS instance (test is single-AZ).
+- [ ] Media: set `MediaPublicBaseUrl` to the production API URL; re-run the copy dry run against the production base (`--allow-production-read`), then `--apply` at cutover; re-copy after any later Airtable uploads. The `--original` files are HTML pages in the source data; decide whether to skip them.
+- [ ] Re-check production base metadata for link fields and Airtable-side writers (automations, scripts, integrations) before cutover.
+- [ ] Deployer permissions needed in test (replicate on the production deployer): S3 bucket and object access, `iam:GetRolePolicy/PutRolePolicy/DeleteRolePolicy`.
+- [ ] Never re-run the backfill once Postgres-first writes are live.
+
+### Status (2026-10-24)
+- Production rollout (Phase 10) and the production checklist above are DEFERRED by decision; no production changes are planned soon. `pg-test` is the only stack on Postgres-first.

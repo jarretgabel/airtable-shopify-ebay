@@ -105,6 +105,8 @@ if (!url) {
     ]);
     assert.deepEqual((await store.getRecords('used-gear-workflow', { subset: 'workflow-progress' })).map((r) => r.id).sort(), ['a', 'b']);
     assert.deepEqual((await store.getRecords('used-gear-workflow', { subset: 'parking-lot-arrival' })).map((r) => r.id), ['a']);
+    assert.deepEqual((await store.getRecords('used-gear-workflow', { subset: 'pending-review' })).map((r) => r.id), ['c']);
+    assert.deepEqual((await store.getRecords('used-gear-workflow', { subset: 'parking-lot' })).map((r) => r.id).sort(), ['a', 'c']);
     await assert.rejects(
       store.getRecords('approval-combined', { subset: 'workflow-progress' }),
       (error: unknown) => error instanceof HttpError && error.statusCode === 400,

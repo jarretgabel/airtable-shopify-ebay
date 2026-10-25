@@ -52,6 +52,9 @@ export async function backfillTable(
         `INSERT INTO records (base_id, table_id, record_id, fields, airtable_created_at, synced_at, deleted_at)
          SELECT $1, $2, x.record_id, x.fields, x.created::timestamptz, now(), NULL
          FROM jsonb_to_recordset($3::jsonb) AS x(record_id text, fields jsonb, created text)
+         WHERE NOT EXISTS (
+           SELECT 1 FROM records r
+           WHERE r.base_id = $1 AND r.table_id = $2 AND r.airtable_record_id = x.record_id)
          ON CONFLICT (base_id, table_id, record_id) DO UPDATE
            SET fields = EXCLUDED.fields,
                airtable_created_at = EXCLUDED.airtable_created_at,
@@ -80,7 +83,12 @@ export async function backfillTable(
 
     const deleted = await client.query(
       `UPDATE records SET deleted_at = now()
-       WHERE base_id = $1 AND table_id = $2 AND deleted_at IS NULL AND synced_at < $3`,
+       WHERE base_id = $1 AND table_id = $2 AND deleted_at IS NULL AND synced_at < $3
+         AND airtable_record_id IS NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM write_outbox o
+           WHERE o.base_id = records.base_id AND o.table_id = records.table_id
+             AND o.record_id = records.record_id AND o.op = 'create' AND o.status <> 'sent')`,
       [baseId, tableId, runStartedAt],
     );
 

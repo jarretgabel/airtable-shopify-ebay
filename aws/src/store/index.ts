@@ -1,3 +1,4 @@
+import { getMediaStoreFromEnv } from '../providers/media/mediaStore.js';
 import { HttpError } from '../shared/errors.js';
 import { getPostgresPool } from '../db/pool.js';
 import { resolveConfiguredSourceTable } from '../providers/airtable/sources.js';
@@ -77,6 +78,7 @@ function getPostgresFirstStore(): ListingStore {
       resolveTable: resolveConfiguredSourceTable,
       airtableWriter: getDualStore(),
       reader: postgres,
+      media: getMediaStoreFromEnv(),
     }),
     cacheTtlMs: READ_CACHE_TTL_MS,
   });

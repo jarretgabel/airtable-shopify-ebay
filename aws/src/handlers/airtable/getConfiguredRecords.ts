@@ -106,6 +106,9 @@ function validateSubset(value: string | undefined): AirtableConfiguredRecordsSub
   if (value === 'post-publish') return value;
   if (value === 'workflow-progress') return value;
   if (value === 'parking-lot-arrival') return value;
+  if (value === 'pending-review') return value;
+  if (value === 'parking-lot') return value;
+  if (value === 'trash-review') return value;
 
   throw new HttpError(400, 'Unsupported Airtable configured subset', {
     service: 'airtable',

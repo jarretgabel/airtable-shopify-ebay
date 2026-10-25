@@ -24,6 +24,7 @@ import {
   loadUsedGearOperationalRecordContext,
   loadWorkflowProgressQueue,
   loadPendingReviewQueue,
+  loadParkingLotQueue,
   loadPendingReviewGroup,
   markWorkflowRelisted,
   markWorkflowListingStale,
@@ -923,6 +924,20 @@ describe('usedGearQueue', () => {
       expect(fields.length).toBeGreaterThan(0);
       expect(fields).not.toContain('Workflow Image Metadata JSON');
     }
+  });
+
+  it('asks the server for only the statuses each queue needs', async () => {
+    mockGetConfiguredRecords.mockResolvedValue([]);
+
+    await loadPendingReviewQueue();
+    await loadParkingLotQueue();
+    await loadTrashQueue();
+
+    expect(mockGetConfiguredRecords.mock.calls.map((call) => (call[1] as { subset?: string }).subset)).toEqual([
+      'pending-review',
+      'parking-lot',
+      'trash-review',
+    ]);
   });
 
   it('marks all rows in a pending-review group unqualified', async () => {

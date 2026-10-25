@@ -639,6 +639,7 @@ function groupKeyForRecord(record: AirtableRecord): { key: string; label: string
 
 export async function loadPendingReviewQueue(): Promise<AirtableRecord[]> {
   const records = await getConfiguredRecords('used-gear-workflow', {
+    subset: 'pending-review',
     fields: [...USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS],
   });
 
@@ -657,6 +658,7 @@ export function isParkingLotStatus(status: string | null | undefined): boolean {
 
 export async function loadParkingLotQueue(): Promise<AirtableRecord[]> {
   const records = await getConfiguredRecords('used-gear-workflow', {
+    subset: 'parking-lot',
     fields: [...USED_GEAR_PENDING_REVIEW_QUEUE_FIELDS],
   });
 
@@ -707,6 +709,7 @@ export async function loadUsedGearOperationalRecordBySku(sku: string): Promise<A
 
 export async function loadTrashQueue(): Promise<AirtableRecord[]> {
   const records = await getConfiguredRecords('used-gear-workflow', {
+    subset: 'trash-review',
     fields: [...USED_GEAR_TRASH_QUEUE_FIELDS],
   });
 
