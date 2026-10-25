@@ -143,6 +143,9 @@ if (!url) {
     const filtered = await store.getRecordsPage!('approval-combined', { filters: { Status: 'Ready' }, sort: { field: 'Title', direction: 'asc' }, maxRecords: 2 });
     assert.deepEqual(filtered.records.map((r) => r.fields.Title), ['A', 'B']);
     assert.equal(filtered.total, 3);
+    const projected = await store.getRecordsPage!('approval-combined', { fields: ['Title'], sort: { field: 'Price', direction: 'asc' }, maxRecords: 1 });
+    assert.equal(projected.total, 4);
+    assert.deepEqual(projected.records[0].fields, { Title: 'B' });
     const either = await store.getRecordsPage!('approval-combined', { filters: { Status: ['Draft', 'Ready'] } });
     assert.equal(either.total, 4);
   }));

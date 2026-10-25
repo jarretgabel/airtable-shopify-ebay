@@ -139,6 +139,7 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
       where.push(`(${termClauses.join(' AND ')})`);
     }
 
+    const whereParamCount = params.length;
     const limit = read.maxRecords ?? (read.subset === 'listings-page' ? LISTINGS_PAGE_MAX_RECORDS : undefined);
     // Projected in SQL so heavy fields (image metadata JSON) are never read or sent when a caller asks for specific fields.
     const projection = read.fields ?? (read.subset === 'post-publish' ? [...USED_GEAR_POST_PUBLISH_FIELDS] : undefined);
@@ -150,7 +151,7 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
     const whereSql = where.join(' AND ');
     let total: number | undefined;
     if (withTotal) {
-      const counted = await pool.query<{ total: string }>(`SELECT count(*) AS total FROM records WHERE ${whereSql}`, params);
+      const counted = await pool.query<{ total: string }>(`SELECT count(*) AS total FROM records WHERE ${whereSql}`, params.slice(0, whereParamCount));
       total = Number(counted.rows[0]?.total ?? 0);
     }
 
