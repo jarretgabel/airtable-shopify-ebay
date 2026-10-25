@@ -755,7 +755,7 @@ Findings: reads are already cached per source in the store (invalidated on write
 - [x] **A. ETag revalidation (built, deployed to pg-test 2026-10-24; logged-in 304 check still pending).** `jsonOk({ etag })` adds a content-hash ETag and `cache-control: private, no-cache`, and answers 304 on `If-None-Match` (auth still runs first). The list handler uses it; the frontend list reads use `cache: 'no-cache'`. The stale handler cache now fronts the Airtable backend only. Saves bandwidth, not query time.
 - [x] B1. API side built (2026-10-24, tested against pg-test, not yet deployed): list reads accept `offset`, `sort=Field` / `sort=-Field`, `filters={"Field":"v"|["v",...]}`, with `maxRecords` as the page size. The total is returned in the `x-total-count` header; the body stays an array, so existing callers are unchanged. Postgres-backed sources only (400 otherwise). Sorting is on the raw JSON value (numbers numerically, text case-sensitive).
 - [ ] B2. Frontend: pass these params from the list views, largest first (not started).
-- [ ] C. SQL aggregates for dashboard and queue counts (extend the existing `summary=queue`).
+- [x] C. (built, tested against pg-test, not yet deployed) `summary=queue` is now a single SQL count (same approval rule as `isApprovedValue`, with a parity test) instead of loading the whole table. Other dashboard aggregates still load rows; revisit if they show up as slow.
 - [ ] D. Indexes for the filters in use, chosen from `EXPLAIN` on pg-test.
 - [ ] E. Slim list payloads: audit screens that request every field; switch image reads to `workflow_images` (behavior change, test carefully).
 - [ ] F. Smaller: cache field metadata in the Lambda (read on every write for validation), cross-source search, audit trail from outbox history.

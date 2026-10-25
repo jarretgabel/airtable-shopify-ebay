@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { applyMigrations, loadMigrations } from '../db/migrator.js';
 import { HttpError } from '../shared/errors.js';
+import { summarizeConfiguredRecords } from '../providers/airtable/sources.js';
 import { createPostgresListingStore } from './postgresListingStore.js';
 import { createPostgresMirror } from './postgresMirror.js';
 import { runListingStoreContract } from './listingStore.contract.js';
@@ -144,6 +145,17 @@ if (!url) {
     assert.equal(filtered.total, 3);
     const either = await store.getRecordsPage!('approval-combined', { filters: { Status: ['Draft', 'Ready'] } });
     assert.equal(either.total, 4);
+  }));
+
+  test('postgres: SQL summary matches the in-memory approval rule', () => withStore(async (store, seed) => {
+    const fieldSets: Array<Record<string, unknown>> = [
+      { Approved: true }, { Approved: false }, { Approved: 'Yes' }, { Approved: ' APPROVED ' }, { Approved: 1 }, { Approved: 2 },
+      { 'Shopify Approved': true }, { 'eBay Approved': true }, { Approved: false, 'eBay Approved': true }, { Title: 'none' }, { Approved: 'no' },
+    ];
+    await seed(fieldSets.map((fields, index) => ({ id: `rec${index}`, fields })));
+    const expected = summarizeConfiguredRecords('approval-combined', await store.getRecords('approval-combined'));
+    assert.deepEqual(await store.getRecordsSummary('approval-combined'), expected);
+    assert.ok(expected.approved > 0 && expected.pending > 0);
   }));
 
   test('postgres: requested fields are projected in SQL and unrequested heavy fields are not returned', () => withStore(async (store, seed) => {

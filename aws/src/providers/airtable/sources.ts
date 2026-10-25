@@ -544,7 +544,7 @@ export interface AirtableConfiguredRecordsSummary {
   pending: number;
 }
 
-function getApprovedFieldCandidates(source: AirtableConfiguredRecordsSource): string[] {
+export function getApprovedFieldCandidates(source: AirtableConfiguredRecordsSource): string[] {
   if (source === 'approval-shopify') {
     return ['Shopify Approved', 'Approved'];
   }

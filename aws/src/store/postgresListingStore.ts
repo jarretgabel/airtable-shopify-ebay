@@ -4,7 +4,7 @@ import { HttpError } from '../shared/errors.js';
 import {
   resolveConfiguredSourceTable,
   resolveSubsetStatuses,
-  summarizeConfiguredRecords,
+  getApprovedFieldCandidates,
 } from '../providers/airtable/sources.js';
 import { USED_GEAR_POST_PUBLISH_FIELDS } from '../shared/contracts/usedGearPostPublish.js';
 import type {
@@ -190,7 +190,21 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
     getRecord,
 
     async getRecordsSummary(source) {
-      return summarizeConfiguredRecords(source, await getRecords(source));
+      const { baseId, tableId } = resolveTable(source);
+      // Same rule as isApprovedValue in sources.ts, evaluated in SQL so the table is never loaded.
+      const candidates = getApprovedFieldCandidates(source);
+      const keys = candidates.map((_, index) => `fields -> $${index + 3}`).join(', ');
+      const result = await pool.query<{ total: string; approved: string }>(
+        `WITH v AS (SELECT coalesce(${keys}) AS value FROM records WHERE base_id = $1 AND table_id = $2 AND deleted_at IS NULL)
+         SELECT count(*) AS total,
+           count(*) FILTER (WHERE value = 'true'::jsonb OR value = '1'::jsonb
+             OR (jsonb_typeof(value) = 'string' AND lower(btrim(value #>> '{}')) IN ('true', '1', 'yes', 'approved'))) AS approved
+         FROM v`,
+        [baseId, tableId, ...candidates],
+      );
+      const total = Number(result.rows[0]?.total ?? 0);
+      const approved = Number(result.rows[0]?.approved ?? 0);
+      return { total, approved, pending: Math.max(0, total - approved) };
     },
 
     async createRecord(source, fields) {
