@@ -17,6 +17,11 @@ import type { ListingRecord, ListingStore } from './listingStore.js';
 const url = process.env.POSTGRES_TEST_URL;
 const migrationsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../db/migrations');
 
+test('a paused outbox sends nothing and does not touch the database', async () => {
+  const pool = { connect: async () => { throw new Error('must not connect'); } } as unknown as pg.Pool;
+  assert.deepEqual(await runOutbox({ pool, airtable: {} as ListingStore, paused: true }), { sent: 0, retried: 0, dead: 0 });
+});
+
 test('backoff grows and is capped', () => {
   assert.deepEqual([1, 2, 3, 20].map(backoffSeconds), [10, 20, 40, 3600]);
 });
@@ -50,6 +55,7 @@ if (!url) {
     return {
       pool, store, baseId, calls, reader,
       async cleanup() {
+        await pool.query('DELETE FROM workflow_images WHERE base_id = $1', [baseId]);
         await pool.query('DELETE FROM write_outbox WHERE base_id = $1', [baseId]);
         await pool.query('DELETE FROM records WHERE base_id = $1', [baseId]);
         await pool.query('DELETE FROM airtable_fields WHERE base_id = $1', [baseId]);
@@ -79,6 +85,53 @@ if (!url) {
       await assert.rejects(h.store.updateRecord('user-guide', 'missing', { Title: 'x' }), (e) => e instanceof HttpError && e.statusCode === 404);
       await assert.rejects(h.store.updateRecord('user-guide', 'rec1', { Nope: 1 }), (e) => e instanceof HttpError && e.statusCode === 422);
       assert.equal((await h.pool.query('SELECT 1 FROM write_outbox WHERE base_id = $1', [h.baseId])).rowCount, 1);
+    } finally {
+      await h.cleanup();
+    }
+  });
+
+  test('postgres-first: saving workflow image metadata also fills workflow_images, and an update replaces the rows', async () => {
+    const h = await harness();
+    try {
+      await h.pool.query(`INSERT INTO airtable_fields (base_id, table_id, field_id, name, type) VALUES ($1,'tblTEST','f3','Workflow Image Metadata JSON','multilineText')`, [h.baseId]);
+      const entry = (url: string, sortOrder: number) => ({ url, filename: 'a.jpg', alt: '', sortOrder, sourceStage: 'photos', includedInListing: true });
+      await h.store.updateRecord('user-guide', 'rec1', { 'Workflow Image Metadata JSON': JSON.stringify([entry('u1', 0), entry('u2', 1)]) });
+      assert.equal((await h.pool.query('SELECT 1 FROM workflow_images WHERE base_id = $1', [h.baseId])).rowCount, 2);
+      await h.store.updateRecord('user-guide', 'rec1', { 'Workflow Image Metadata JSON': JSON.stringify([entry('u2', 0)]) });
+      const rows = await h.pool.query('SELECT url FROM workflow_images WHERE base_id = $1', [h.baseId]);
+      assert.deepEqual(rows.rows, [{ url: 'u2' }]);
+    } finally {
+      await h.cleanup();
+    }
+  });
+
+  test('postgres-first: invalid select and number values are rejected up front and nothing is queued', async () => {
+    const h = await harness();
+    try {
+      await h.pool.query(`INSERT INTO airtable_fields (base_id, table_id, field_id, name, type, options) VALUES ($1,'tblTEST','f4','Grade','singleSelect','{"choices":[{"name":"A"}]}'::jsonb)`, [h.baseId]);
+      await assert.rejects(h.store.updateRecord('user-guide', 'rec1', { Grade: 'Z' }), (e) => e instanceof HttpError && e.statusCode === 422);
+      await assert.rejects(h.store.createRecord('user-guide', { Title: 't', Grade: 'Z' }), (e) => e instanceof HttpError && e.statusCode === 422);
+      assert.equal((await h.pool.query('SELECT 1 FROM write_outbox WHERE base_id = $1', [h.baseId])).rowCount, 0);
+      await h.store.updateRecord('user-guide', 'rec1', { Grade: 'A' });
+      await h.store.updateRecord('user-guide', 'rec1', { Grade: 'New option' }, { typecast: true });
+    } finally {
+      await h.cleanup();
+    }
+  });
+
+  test('postgres-first: a SKU may repeat only within one pickup group', async () => {
+    const h = await harness();
+    try {
+      await h.pool.query(`INSERT INTO airtable_fields (base_id, table_id, field_id, name, type) VALUES ($1,'tblTEST','f5','SKU','singleLineText'),($1,'tblTEST','f6','Pick Up ID','singleLineText')`, [h.baseId]);
+      await h.store.updateRecord('user-guide', 'rec1', { SKU: '100', 'Pick Up ID': 'P1' });
+      const sibling = await h.store.createRecord('user-guide', { Title: 'b', SKU: '100', 'Pick Up ID': 'P1' });
+      const conflict = (e: unknown) => e instanceof HttpError && e.statusCode === 422;
+      await assert.rejects(h.store.createRecord('user-guide', { Title: 'c', SKU: '100', 'Pick Up ID': 'P2' }), conflict);
+      await assert.rejects(h.store.createRecord('user-guide', { Title: 'c', SKU: '100' }), conflict);
+      await assert.rejects(h.store.updateRecord('user-guide', sibling.id, { 'Pick Up ID': 'P2' }), conflict);
+      await h.store.createRecord('user-guide', { Title: 'd', SKU: '101' });
+      await assert.rejects(h.store.createRecord('user-guide', { Title: 'e', SKU: '101' }), conflict);
+      await h.store.updateRecord('user-guide', sibling.id, { Title: 'renamed' });
     } finally {
       await h.cleanup();
     }
@@ -228,6 +281,8 @@ if (!url) {
     return {
       objects,
       put: async (key, body) => { objects.set(key, body); },
+      header: async (key) => objects.get(key)?.subarray(0, 64) ?? null,
+      signedPutUrl: async (key) => `https://put.example/${key}`,
       signedUrl: async (key) => `https://signed.example/${key}`,
       publicUrl: (key) => `/api/media/${key}`,
     };

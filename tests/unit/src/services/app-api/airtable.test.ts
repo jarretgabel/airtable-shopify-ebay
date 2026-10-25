@@ -17,6 +17,10 @@ import {
   uploadConfiguredAttachment,
 } from '@/services/app-api/airtable';
 
+function jsonResponse(body: unknown): Response {
+  return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+}
+
 describe('app-api airtable', () => {
   const fetchMock = vi.fn<typeof fetch>();
 
@@ -569,7 +573,8 @@ describe('app-api airtable', () => {
   });
 
   it('supports archive-only workflow uploads and returns archive metadata', async () => {
-    fetchMock.mockResolvedValue(
+    fetchMock.mockResolvedValueOnce(jsonResponse({ enabled: false }));
+    fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({
         uploaded: false,
         archived: true,
@@ -602,7 +607,7 @@ describe('app-api airtable', () => {
       },
     });
 
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [, init] = fetchMock.mock.calls[1] as [string, RequestInit];
     expect(JSON.parse(init.body as string)).toMatchObject({
       filename: 'testing-processed.jpg',
       contentType: 'image/jpeg',
@@ -632,5 +637,33 @@ describe('app-api airtable', () => {
         },
       },
     });
+  });
+  it('uploads archive-only workflow images straight to S3 when the server enables it', async () => {
+    const archive = { folderId: 'used-gear-workflow/rec123', original: { id: 'k-o', filename: 'o', url: 'u-o' }, processed: { id: 'k-p', filename: 'p', url: 'u-p' } };
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({
+        enabled: true,
+        uploads: [
+          { variant: 'processed', key: 'k-p', uploadUrl: 'https://s3.test/p', contentType: 'image/jpeg' },
+          { variant: 'original', key: 'k-o', uploadUrl: 'https://s3.test/o', contentType: 'image/jpeg' },
+        ],
+      }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(jsonResponse({ uploaded: false, archived: true, archive }));
+
+    const result = await uploadConfiguredAttachment('used-gear-workflow', 'rec123', 'fld1', new File(['p'], 'p.jpg', { type: 'image/jpeg' }), {
+      archiveOnly: true,
+      driveArchive: { stage: 'photos', originalFile: new File(['o'], 'o.jpg', { type: 'image/jpeg' }) },
+    });
+
+    expect(result).toMatchObject({ archived: true, archive });
+    expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
+      expect.stringContaining('/direct-upload/presign'),
+      'https://s3.test/p',
+      'https://s3.test/o',
+      expect.stringContaining('/direct-upload/finalize'),
+    ]);
+    expect(JSON.parse((fetchMock.mock.calls[3] as [string, RequestInit])[1].body as string)).toMatchObject({ processedKey: 'k-p', originalKey: 'k-o' });
   });
 });

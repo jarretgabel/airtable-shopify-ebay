@@ -46,9 +46,21 @@ interface WorkflowImageAttachmentRecord {
   filename: string;
 }
 
+function isHostedWorkflowImageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, 'https://media.invalid');
+    return parsed.pathname.startsWith('/api/media/used-gear-workflow/')
+      && (parsed.protocol === 'https:' || parsed.protocol === 'http:');
+  } catch {
+    return false;
+  }
+}
+
+/** True for archived workflow images: Google Drive links and files hosted under `/api/media/used-gear-workflow/`. */
 export function isGoogleDriveImageUrl(url: string): boolean {
   const trimmed = url.trim();
   if (!trimmed) return false;
+  if (isHostedWorkflowImageUrl(trimmed)) return true;
 
   try {
     const parsed = new URL(trimmed);

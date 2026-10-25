@@ -1,6 +1,6 @@
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { HttpError } from '../../shared/errors.js';
-import { downloadGoogleDriveFileHeader, extractGoogleDriveFileId } from '../googleDrive/client.js';
+import { downloadWorkflowImageHeader, getWorkflowImageId } from '../media/workflowImageArchive.js';
 import { getConfiguredRecord, updateConfiguredRecord } from './sources.js';
 
 interface WorkflowImageMetadataRecord {
@@ -21,7 +21,7 @@ export interface WorkflowImageMetadataInspectionResult {
 interface WorkflowImageMetadataValidationDependencies {
   getRecord?: typeof getConfiguredRecord;
   updateRecord?: typeof updateConfiguredRecord;
-  downloadFileHeader?: typeof downloadGoogleDriveFileHeader;
+  downloadFileHeader?: typeof downloadWorkflowImageHeader;
 }
 
 function normalizeFieldName(value: string): string {
@@ -136,12 +136,12 @@ function getWorkflowAttachmentUrls(fields: Record<string, unknown>): string[] {
 
 export async function validateWorkflowImageMetadataRecords(
   records: WorkflowImageMetadataRecord[],
-  downloadFileHeader: typeof downloadGoogleDriveFileHeader = downloadGoogleDriveFileHeader,
+  downloadFileHeader: typeof downloadWorkflowImageHeader = downloadWorkflowImageHeader,
   additionalImageUrls: string[] = [],
 ): Promise<WorkflowImageMetadataValidationResult> {
   const metadataUrls = records.map(getMetadataUrl);
   const allUrls = [...metadataUrls, ...additionalImageUrls.map((url) => url.trim()).filter(Boolean)];
-  const fileIds = Array.from(new Set(allUrls.map(extractGoogleDriveFileId).filter(Boolean)));
+  const fileIds = Array.from(new Set(allUrls.map(getWorkflowImageId).filter(Boolean)));
   const validityByFileId = new Map<string, boolean>();
 
   for (let offset = 0; offset < fileIds.length; offset += 4) {
@@ -154,11 +154,11 @@ export async function validateWorkflowImageMetadataRecords(
   }
 
   const validRecords = records.filter((record, index) => {
-    const fileId = extractGoogleDriveFileId(metadataUrls[index] ?? '');
+    const fileId = getWorkflowImageId(metadataUrls[index] ?? '');
     return Boolean(fileId && validityByFileId.get(fileId));
   });
   const validImageUrls = Array.from(new Set(allUrls.filter((url) => {
-    const fileId = extractGoogleDriveFileId(url);
+    const fileId = getWorkflowImageId(url);
     return Boolean(fileId && validityByFileId.get(fileId));
   })));
 
@@ -174,7 +174,7 @@ async function readWorkflowImageInspection(
   dependencies: WorkflowImageMetadataValidationDependencies,
 ) {
   const getRecord = dependencies.getRecord ?? getConfiguredRecord;
-  const downloadFileHeader = dependencies.downloadFileHeader ?? downloadGoogleDriveFileHeader;
+  const downloadFileHeader = dependencies.downloadFileHeader ?? downloadWorkflowImageHeader;
   const record = await getRecord('approval-combined', recordId);
   const metadataFieldName = findMetadataFieldName(record.fields);
   if (!metadataFieldName) {

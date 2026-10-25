@@ -9,6 +9,8 @@ const MAX_BACKOFF_SECONDS = 3600;
 const MIN_SEND_GAP_MS = 250;
 
 export interface OutboxWorkerOptions {
+  /** Kill switch: nothing is sent to Airtable and rows stay queued, so sending can resume later. */
+  paused?: boolean;
   pool: Pick<Pool, 'connect' | 'query'>;
   /** Sends one write to Airtable (the plain Airtable store, never the Postgres-first one). */
   airtable: Pick<ListingStore, 'createRecord' | 'updateRecord' | 'deleteRecord'>;
@@ -203,6 +205,7 @@ export async function runOutbox(options: OutboxWorkerOptions): Promise<OutboxRun
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const deadline = now() + (options.budgetMs ?? 45_000);
   const result: OutboxRunResult = { sent: 0, retried: 0, dead: 0 };
+  if (options.paused) return result;
 
   while (now() < deadline) {
     const client = await options.pool.connect();

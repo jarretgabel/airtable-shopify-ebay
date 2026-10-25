@@ -2,7 +2,9 @@ import { randomBytes } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { HttpError } from '../shared/errors.js';
 import { logError } from '../shared/logging.js';
+import { validateFieldValues, type FieldMeta } from './fieldValidation.js';
 import { newRecordId, type PostgresTable } from './postgresListingStore.js';
+import { findWorkflowImageMetadataPatch, syncWorkflowImages } from '../db/workflowImages.js';
 import type { MediaStore } from '../providers/media/mediaStore.js';
 import type { ListingRecord, ListingSource, ListingStore } from './listingStore.js';
 
@@ -47,11 +49,11 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
     baseId: string,
     tableId: string,
     fields: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<{ writable: Record<string, unknown>; meta: Map<string, FieldMeta> }> {
     // Airtable silently drops unknown fields in this app (see the unknown-field fallback), so do the same,
     // but fail closed when there is no field metadata to check against.
-    const known = await pool.query<{ name: string }>(
-      'SELECT name FROM airtable_fields WHERE base_id = $1 AND table_id = $2',
+    const known = await pool.query<{ name: string; type: string; options: FieldMeta['options'] }>(
+      'SELECT name, type, options FROM airtable_fields WHERE base_id = $1 AND table_id = $2',
       [baseId, tableId],
     );
     if (known.rows.length === 0) {
@@ -68,7 +70,45 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
     if (Object.keys(writable).length === 0) {
       throw httpError(422, 'POSTGRES_NO_KNOWN_FIELDS', 'None of the submitted fields exist on this table.');
     }
-    return writable;
+    return { writable, meta: new Map(known.rows.map((row) => [row.name, { type: row.type, options: row.options }])) };
+  }
+
+  // A SKU may repeat only inside one pickup group, so another record with the same SKU must share this record's Pick Up ID.
+  async function assertSkuAllowed(
+    client: PoolClient,
+    baseId: string,
+    tableId: string,
+    recordId: string,
+    patch: Record<string, unknown>,
+    current: Record<string, unknown>,
+  ): Promise<void> {
+    if (!('SKU' in patch) && !('Pick Up ID' in patch)) return;
+    const textOf = (value: unknown): string => {
+      const raw = value && typeof value === 'object' ? (value as { text?: unknown }).text : value;
+      return typeof raw === 'string' || typeof raw === 'number' ? String(raw).trim() : '';
+    };
+    const sku = textOf('SKU' in patch ? patch.SKU : current.SKU);
+    if (!sku) return;
+    const pickup = textOf('Pick Up ID' in patch ? patch['Pick Up ID'] : current['Pick Up ID']);
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`sku:${baseId}:${tableId}:${sku}`]);
+    const clash = await client.query(
+      `SELECT record_id FROM records
+       WHERE base_id = $1 AND table_id = $2 AND record_id <> $3 AND deleted_at IS NULL
+         AND trim(coalesce(fields -> 'SKU' ->> 'text', fields ->> 'SKU', '')) = $4
+         AND ($5 = '' OR trim(coalesce(fields -> 'Pick Up ID' ->> 'text', fields ->> 'Pick Up ID', '')) <> $5)
+       LIMIT 1`,
+      [baseId, tableId, recordId, sku, pickup],
+    );
+    if (clash.rows[0]) {
+      throw httpError(422, 'POSTGRES_SKU_CONFLICT', `SKU ${sku} is already used by another record outside this pickup group.`);
+    }
+  }
+
+  function assertValid(meta: Map<string, FieldMeta>, patch: Record<string, unknown>, current: Record<string, unknown>, typecast: boolean): void {
+    const issues = validateFieldValues(meta, patch, current, typecast);
+    if (issues.length > 0) {
+      throw httpError(422, 'POSTGRES_FIELD_VALIDATION_FAILED', issues.map((issue) => `${issue.field}: ${issue.message}`).join('; '));
+    }
   }
 
   async function inTransaction<T>(source: ListingSource, recordId: string, work: (client: PoolClient) => Promise<T>): Promise<T> {
@@ -145,9 +185,11 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
     async createRecord(source, fields, writeOptions): Promise<ListingRecord> {
       const { baseId, tableId } = resolveTable(source);
       const recordId = newRecordId();
-      const writable = await writableFields(source, recordId, baseId, tableId, fields);
+      const { writable, meta } = await writableFields(source, recordId, baseId, tableId, fields);
+      assertValid(meta, writable, {}, Boolean(writeOptions?.typecast));
 
       return inTransaction(source, recordId, async (client) => {
+        await assertSkuAllowed(client, baseId, tableId, recordId, writable, {});
         const created = await client.query<RecordRow>(
           `INSERT INTO records (base_id, table_id, record_id, fields, airtable_created_at, synced_at)
            VALUES ($1, $2, $3, $4::jsonb, now(), now())
@@ -159,6 +201,8 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
            VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'create')`,
           [source, baseId, tableId, recordId, JSON.stringify(writable), Boolean(writeOptions?.typecast)],
         );
+        const metadata = findWorkflowImageMetadataPatch(writable);
+        if (metadata) await syncWorkflowImages(client, baseId, recordId, metadata.value);
         const row = created.rows[0];
         return { id: recordId, fields: row.fields, createdTime: (row.airtable_created_at ?? row.synced_at).toISOString() };
       });
@@ -184,7 +228,7 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
     async updateRecord(source, recordId, fields, writeOptions): Promise<ListingRecord> {
       const { baseId, tableId } = resolveTable(source);
 
-      const writable = await writableFields(source, recordId, baseId, tableId, fields);
+      const { writable, meta } = await writableFields(source, recordId, baseId, tableId, fields);
 
       const client = await pool.connect();
       try {
@@ -197,6 +241,8 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
         if (!current.rows[0]) {
           throw httpError(404, 'POSTGRES_RECORD_NOT_FOUND', 'Record not found.');
         }
+        assertValid(meta, writable, current.rows[0].fields, Boolean(writeOptions?.typecast));
+        await assertSkuAllowed(client, baseId, tableId, recordId, writable, current.rows[0].fields);
         const merged = applyFieldPatch(current.rows[0].fields, writable);
         const updated = await client.query<RecordRow>(
           `UPDATE records SET fields = $4::jsonb, synced_at = now()
@@ -209,6 +255,8 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
            VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
           [source, baseId, tableId, recordId, JSON.stringify(writable), Boolean(writeOptions?.typecast)],
         );
+        const metadata = findWorkflowImageMetadataPatch(writable);
+        if (metadata) await syncWorkflowImages(client, baseId, recordId, metadata.value);
         await client.query('COMMIT');
         const row = updated.rows[0];
         return { id: recordId, fields: row.fields, createdTime: (row.airtable_created_at ?? row.synced_at).toISOString() };

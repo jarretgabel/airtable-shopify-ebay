@@ -6,6 +6,16 @@ Parameters:
     Type: String
     Default: ''
     Description: Public base URL of the API (https://host), used for stored image URLs. Empty stores /api/media/... paths.
+  AirtableOutboxSync:
+    Type: String
+    Default: 'on'
+    AllowedValues: ['on', paused]
+    Description: Kill switch for sending Postgres-first writes to Airtable. paused keeps writes queued in the outbox and sends nothing.
+  ImageArchiveBackend:
+    Type: String
+    Default: drive
+    AllowedValues: [drive, s3]
+    Description: Where new workflow images (intake, testing, photos) are archived. s3 needs a media bucket.
   AirtableApiKey:
     Type: String
     NoEcho: true
@@ -242,6 +252,8 @@ Globals:
         DATA_BACKEND: !Ref DataBackend
         MEDIA_BUCKET: !If [CreatePostgres, !Ref MediaBucket, '']
         MEDIA_PUBLIC_BASE_URL: !Ref MediaPublicBaseUrl
+        IMAGE_ARCHIVE_BACKEND: !Ref ImageArchiveBackend
+        AIRTABLE_OUTBOX_SYNC: !Ref AirtableOutboxSync
         DATA_BACKEND_OVERRIDES: !Ref DataBackendOverrides
         DATABASE_URL: !If
           - CreatePostgres
@@ -1082,6 +1094,28 @@ Resources:
             Method: POST
             Path: /api/airtable/configured-attachments/{source}/{recordId}/{fieldId}
 
+  AirtableDirectWorkflowImageUploadFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/airtable/directWorkflowImageUpload.handler
+      Timeout: 15
+      Policies:
+        - !If
+          - CreatePostgres
+          - S3CrudPolicy:
+              BucketName: !Ref MediaBucket
+          - !Ref AWS::NoValue
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/airtable/configured-attachments/{source}/{recordId}/direct-upload/{action}
+
   MediaGetFunction:
     Type: AWS::Serverless::Function
     Condition: CreatePostgres
@@ -1118,6 +1152,12 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [PUT]
+            AllowedOrigins: !Ref AppAllowedOrigins
+            AllowedHeaders: ['*']
+            MaxAge: 3000
 
   AiIdentifyEquipmentFunction:
     Type: AWS::Serverless::Function
@@ -1210,6 +1250,21 @@ Resources:
             ApiId: !Ref AppHttpApi
             Method: GET
             Path: /api/dashboard/sellers-summary
+
+  DashboardSellerHistoryFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/dashboard/getSellerHistory.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/dashboard/seller-history
 
   AuthLoginFunction:
     Type: AWS::Serverless::Function

@@ -5,10 +5,10 @@ import { getRequestOrigin, jsonError, jsonOk, requireJsonBody, requirePathParam 
 import { logError, logInfo } from '../../shared/logging.js';
 import { uploadConfiguredAttachment, type AirtableConfiguredAttachmentSource } from '../../store/index.js';
 import {
-  archiveWorkflowImagesToGoogleDrive,
   type WorkflowImageArchiveResult,
   type WorkflowImageArchiveStage,
 } from '../../providers/googleDrive/client.js';
+import { archiveWorkflowImages } from '../../providers/media/workflowImageArchive.js';
 
 interface AttachmentBody {
   filename?: string;
@@ -117,7 +117,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
     let archiveResult: WorkflowImageArchiveResult | null = null;
     if (driveArchive) {
-      archiveResult = await archiveWorkflowImagesToGoogleDrive(driveArchive);
+      archiveResult = await archiveWorkflowImages(driveArchive);
     }
 
     if (body.archiveOnly) {

@@ -4,7 +4,7 @@ import {
   getConfiguredRecords,
   updateConfiguredRecord,
 } from '../airtable/sources.js';
-import { archiveWorkflowImagesToGoogleDrive } from '../googleDrive/client.js';
+import { archiveWorkflowImages } from '../media/workflowImageArchive.js';
 import { getSubmission, type JotFormSubmission } from './client.js';
 import { mapJotFormSubmissionToWorkflowItems } from './workflowIngestMapper.js';
 import { buildUsedGearItemTitle } from '../../shared/contracts/usedGearItemTitle.js';
@@ -185,7 +185,7 @@ export async function archiveIntakeImagesForRecord(recordId: string, imageUrls: 
   for (const [index, imageUrl] of imageUrls.entries()) {
     try {
       const original = await fetchRemoteFileAsArchivePayload(imageUrl, `intake-${index + 1}.jpg`);
-      const archiveResult = await archiveWorkflowImagesToGoogleDrive({
+      const archiveResult = await archiveWorkflowImages({
         folderKey: recordId,
         stage: 'intake',
         original,

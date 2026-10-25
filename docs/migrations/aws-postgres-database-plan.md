@@ -550,7 +550,7 @@ Goal: Postgres becomes the system of record; Airtable becomes a read-only archiv
 - [ ] Attachments/images: Postgres returns 501 on upload. Move images to S3 and migrate existing URLs (Airtable attachment URLs expire).
 - [ ] `workflow-image-roles` is still on Airtable.
 - [ ] Verify no Airtable-side writers (automations, interfaces, manual edits) exist in production.
-- [ ] Replace Airtable's select-option/type validation with app-side validation.
+- [x] Replace Airtable's select-option/type validation with app-side validation (built, not deployed; see the 2026-10-24 validation note at the end).
 - [ ] Query support: `filterByFormula` handles only a few equality shapes, search is substring, aggregate views read full lists.
 - [ ] Operations: enable dead-outbox alarms, confirm backups/PITR and test a restore.
 - [ ] Phase 10 rollout of Postgres-first writes to staging and production.
@@ -670,3 +670,82 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 
 ### Status (2026-10-24)
 - Production rollout (Phase 10) and the production checklist above are DEFERRED by decision; no production changes are planned soon. `pg-test` is the only stack on Postgres-first.
+
+## Phase 12: Images off Google Drive (design, nothing built; pg-test only)
+
+### Findings (read-only)
+- Drive is used by `aws/src/providers/googleDrive/client.ts` (`archiveWorkflowImagesToGoogleDrive`: per-record folder, uploads an `original` and a `processed` file per stage, makes the processed file public). The app stores per-image metadata as a JSON text field `Workflow Image Metadata JSON` on `used-gear-workflow` (url, filename, alt, role, sortOrder, sourceStage, includedInListing, ebayHostedImageCache).
+- Scale on the pg-test mirror: 2,523 listings have metadata; 19,143 image entries, all Drive URLs (intake 5,800, testing 3,773, photos 9,570). Total bytes not yet measured.
+- Consumers of the Drive URLs: listing and photography pages, Shopify and eBay draft builders (`approvalDraftImages.ts`, `approvalDraft.ts`), the Jotform ingest, `workflowBackfill.ts`. The metadata editor, role/alt/sort/include logic is frontend code in `workflowImageMetadata.ts`.
+- Drive refresh-token config is missing on pg-test, so the photography page fails there today.
+
+### Design
+1. **Metadata table** `workflow_images` (record_id, stage, kind original|processed, s3_key, filename, alt, role, custom_role, sort_order, included, ebay_hosted_cache jsonb, created/updated). The JSON text field stays the API contract at first: the store assembles it from the table, so the frontend and Shopify/eBay code do not change.
+2. **Writes go to S3 + Postgres only**: replace `archiveWorkflowImagesToGoogleDrive` with an S3 archive using the same request shape (originals and processed under `{table}/{record}/{stage}/...`), returning `/api/media/...` URLs. Gate behind an env flag (`IMAGE_ARCHIVE_BACKEND=drive|s3`, default drive) so deploying is a no-op.
+3. **Uploads**: add presigned S3 PUT so the browser uploads directly (no base64 through Lambda); keep the current endpoint as fallback.
+4. **Variants**: on upload, generate thumb/medium/large (sharp in a Lambda layer or a separate function), store under `variants/`, serve thumbnails to lists and large to detail pages; CloudFront in front of `/api/media` later.
+5. **Migration script** (dry run first, GET-only against Drive): download each Drive file, put in S3, rewrite metadata URLs, keep the old Drive URL in `legacy_url`. Skip `--original` HTML placeholders (they are not images). Idempotent, same pattern as `copyAttachments.ts`.
+6. **Cutover on pg-test only**: flip the flag, verify listing/photography pages, Shopify and eBay draft image URLs, then run the migration. Drive stays as a read-only backup until retirement.
+
+### Open questions
+- Drive access for the migration: pg-test lacks the Drive refresh token; the script needs read access to the Drive folder (use the existing token secret from the production/local env, read-only).
+- Total Drive bytes (measure first with a read-only scan: 19k files).
+- Do we keep originals? (Recommendation: yes in S3, cheap; serve processed only.)
+- Image processing library choice (sharp layer vs. none initially).
+
+### Checklist
+- [ ] Read-only Drive scan: file count, bytes, broken links.
+- [ ] `workflow_images` migration 0007 and store assembly of the metadata JSON.
+- [ ] S3 archive backend behind the flag, plus tests.
+- [ ] Presigned direct upload.
+- [ ] Variants.
+- [ ] Drive to S3 migration script (dry run, then apply on pg-test).
+
+### Phase 12 status: S3 archive code built (not deployed)
+- [x] `providers/media/workflowImageArchive.ts`: `archiveWorkflowImagesToS3` (same request/result shape as Drive; stable keys `used-gear-workflow/{record}/{stage}/{stage}--{file}`, images validated, re-upload replaces) and `archiveWorkflowImages`, which picks the backend. Wired into `uploadConfiguredAttachment` and the Jotform ingest.
+- [x] Template parameter `ImageArchiveBackend` (default `drive`, so deploying changes nothing) exposed as env `IMAGE_ARCHIVE_BACKEND`.
+- [x] Tests: 2 new; aws suite 48 pass, 5 skipped (Postgres-backed, need the scratch DB), 0 fail.
+- [ ] Still to do: `workflow_images` table, presigned direct upload, variants, Drive-to-S3 migration script. Not covered yet: renaming archived files (`renameWorkflowArchivedFile` is Drive-only) and reads that still pass Drive URLs through `downloadGoogleDriveFile` (Shopify/eBay builders); check both before flipping the flag.
+- Drive-only code that must learn about S3 URLs before the flag is flipped on any stack with real use: `providers/ebay/client.ts` (extracts a Drive file id and downloads it for eBay image upload), `providers/airtable/workflowImageMetadataValidation.ts` (validates each metadata URL by downloading the Drive file header), and `handlers/airtable/getConfiguredRecord.ts` (image proxy by Drive id). Without this, metadata saves containing `/api/media` URLs would fail validation. Renaming has no caller outside `client.ts`.
+- [x] Hosted `/api/media/used-gear-workflow/...` URLs now pass metadata validation (header read from S3 via `MediaStore.header`), and the frontend `isGoogleDriveImageUrl` accepts them. eBay upload already follows the 302 (not run against eBay). Image proxy by Drive id is untouched, since hosted images do not use it.
+- [x] Migration `0007_workflow_images.sql` (one row per metadata entry, keyed by base/record/url, with `s3_key`, `legacy_url`, `extra` for unknown keys) and `db/workflowImages.ts` (`parseWorkflowImageRows`, `assembleWorkflowImageMetadata`, `syncWorkflowImages`, `loadWorkflowImageMetadata`). Round-trip tests pass (2). The SQL has not been applied anywhere: no scratch Postgres is installed, so it is untested until it runs on pg-test (the migrate step needs approval). Not wired into the store yet.
+- [x] Store wiring: create and update that carry the metadata field also replace that record's `workflow_images` rows in the same transaction (reads still come from `records.fields`; the table is a shadow until we switch reads to assembly). Added `npm run db:sync-workflow-images -- --base <id> [--apply]` (mirror-only read, idempotent) to fill existing records. New Postgres-backed test is written but skipped here (no scratch DB). Not deployed: needs a change set (migration 0007 runs on deploy), then the dry run, then `--apply` on pg-test with approval.
+- [x] Deployed to pg-test (`UPDATE_COMPLETE`, no replacements, `ImageArchiveBackend` still `drive`). Migration 0007 applied. `db:sync-workflow-images --apply` on the test base: 2,523 records, 17,847 rows (matches the dry run; about 10 min). The sync now batches one insert per record in a transaction and logs progress every 50 records.
+- [x] Presigned direct upload (built, not deployed). Routes `POST /api/airtable/configured-attachments/{source}/{recordId}/direct-upload/{presign|finalize}` (`handlers/airtable/directWorkflowImageUpload.ts`, logic in `providers/media/workflowImageDirectUpload.ts`): presign validates stage, image type and size (max 40 MB) and returns 5-minute PUT URLs for the same keys the server-side archive uses; finalize checks the objects exist, are real images and sit under the record prefix, then returns the archive result shape. It returns `{enabled:false}` unless `IMAGE_ARCHIVE_BACKEND=s3`, and the frontend (`tryDirectWorkflowImageUpload` in `app-api/airtable.ts`) then falls back to the existing base64 upload, as it does on any failure. Template: new function and route, bucket CORS PUT for `AppAllowedOrigins` (the pg-test origins must include wherever the browser runs). Tests: 2 backend, 1 new and 1 updated frontend. aws suite 53 pass, 0 fail, 5 skipped; web 24 of 24 in the touched file.
+- [x] Deployed to pg-test (`UPDATE_COMPLETE`) with `ImageArchiveBackend=s3`, the direct-upload route, bucket CORS PUT for `AppAllowedOrigins` (now incl. `http://localhost:3100`). The first attempt rolled back safely because the deployer lacked `s3:PutBucketCORS`; the user added it. Verified: the route answers 401 unauthenticated, CORS is on the bucket. Not yet tested with a real logged-in upload from the app. New workflow images on pg-test now go to S3; existing Drive images are untouched.
+- [x] Direct upload verified on pg-test from `http://localhost:3100` (logged in): presign returned 2 PUT URLs, both PUTs gave 200 (bucket CORS works), finalize returned the archive result, the object is `image/png` in S3 and `/api/media/...` answers 302. Test objects left: `used-gear-workflow/recXFnIs8j4fO2bHd/photos/photos--direct-test*.png` (not attached to any record). The UI path (`tryDirectWorkflowImageUpload`) itself was not clicked through.
+
+**2026-10-24 — App-side field validation (built, not deployed).** `store/fieldValidation.ts`, called from the Postgres-first create and update. Uses the stored field metadata: singleSelect and multipleSelects values must be listed options, checkbox must be boolean, number, currency, percent, rating and duration must be numbers, date must be `YYYY-MM-DD`, dateTime must parse. Failures return 422 `POSTGRES_FIELD_VALIDATION_FAILED` naming every field, before anything is written or queued (so the outbox no longer goes dead on a value Airtable would reject). Only values that change are checked (a form that resends old values never fails on old data), and typecast writes are skipped, as Airtable would convert them and create new select options. Read-only check on the pg-test mirror first: all select values and numbers in the 3,471 listings and other tables already conform (no drift), so strict checking is safe. Not covered: email/url format, computed-field writes, select options created via typecast do not appear in the stored options until field metadata is refreshed. Tests: 3 unit; a Postgres-backed test is written but skipped here. aws suite 56 pass, 0 fail, 5 skipped.
+- [x] App-side field validation deployed to pg-test (`UPDATE_COMPLETE`, 62 Lambdas + API modified, nothing added or removed). Not yet exercised with a real bad value from the app.
+
+**2026-10-24 — Outbox kill switch and Airtable comparison (built, kill switch not deployed).**
+- [x] Kill switch: template parameter `AirtableOutboxSync` (`on` | `paused`, default `on`) -> env `AIRTABLE_OUTBOX_SYNC`. `paused` sends nothing to Airtable and never connects to the DB; rows stay queued. Metric log adds `AirtableOutboxPaused`.
+- [x] Read-only `npm run db:compare-airtable -- --base <id>` (Airtable GETs + mirror SELECTs; skips attachment fields and records with unsent outbox rows).
+- [x] Ran on pg-test / test base: 8 tables, 4,663 records in each side, 0 differing, 0 missing.
+- [x] Kill switch deployed to pg-test (`UPDATE_COMPLETE`, default `on`; 65 Lambdas + API + rule modified, nothing added/removed). Not yet toggled to `paused`.
+
+**2026-10-24 — Multi-word search (built, not deployed).** Search already existed as a substring match (`LIKE`) on the requested fields. It now splits the query into up to 8 words; every word must match at least one searched field (so "mcintosh mc275" works across Title/Model/etc.). No migration. The Postgres-backed test for it is skipped locally (needs a scratch DB), so it has not run yet.
+- [x] Multi-word search deployed to pg-test (`UPDATE_COMPLETE`, 22 Lambdas + API modified, nothing added/removed). Not yet exercised from the app.
+
+**2026-10-24 — Seller history per contact (built).** `GET /api/dashboard/seller-history?email=` (auth-gated, read-only): contact (matches primary or alternate email), totals, items (max 200), recent interactions, open follow-ups, open inquiry count. Code: `db/sellerHistory.ts`, handler `dashboard/getSellerHistory.ts`, new `DashboardSellerHistoryFunction`. Unit tests use a fake DB; the SQL has not run against Postgres yet. No frontend yet.
+- [x] Seller history deployed to pg-test (`UPDATE_COMPLETE`: +1 Lambda/role/permission, API route modified). Unauthenticated call returns 401. Read-only SQL check against pg-test with the top seller (case-insensitive email) returned 10 items. Not yet called from the app; no frontend yet.
+
+**2026-10-24 — SKU uniqueness check (read-only, pg-test mirror).** Decision: duplicate *listings* (same make/model/serial) are fine; only the SKU must be unique. 2,354 of 3,471 listing-table records have a SKU (the SKU field is stored as `{"text": "..."}`). 3 SKUs are shared by two different items each: 10650 (Futterman H-3 OTL / Martin Logan Aeon), 11499 (Krell KSA-300S / B&W 800 Diamond II), 12170 (Wilson Watt Puppy 7 / Western Electric 22C). All six were created 2026-06-16. No unique index added yet: these must be fixed in the data first (a unique index would fail to build).
+
+**2026-10-24 — Are SKUs shared within a group? No (read-only check, pg-test mirror).** The app groups records by `Pick Up ID` (`groupKeyForRecord` in `usedGearQueue.ts`), not by SKU. 76 groups with 2+ records (212 items): none has any SKU yet, so SKUs are assigned later, per item. The 6 records that share a SKU have no Pick Up ID, so they are not groups; they are real collisions. A unique index on SKU stays valid. Still to fix: the 3 collisions.
+
+**Decision (2026-10-24): items in a pickup group share one SKU.** So the SKU rule is "a SKU may repeat only within one Pick Up ID". A plain unique index on SKU is wrong. Enforce app-side instead (in the Postgres-first write validation): reject a write that gives a SKU already used by a record with a different (or no) Pick Up ID. Not built yet. The 3 existing collisions (no Pick Up ID) still need fixing.
+
+**2026-10-24 — SKU group rule (built, not deployed).** `assertSkuAllowed` in `postgresFirstListingStore.ts`, run inside the create/update transaction (advisory lock per SKU) whenever a write touches `SKU` or `Pick Up ID`: another record with the same SKU must have the same non-empty Pick Up ID, else 422 `POSTGRES_SKU_CONFLICT`. Applies even with typecast (the app saves SKUs with typecast). Handles SKU stored as a string or `{text}`. Existing collisions are not blocked unless their SKU/Pick Up ID is edited. Postgres-backed test passed against pg-test (self-cleaning test base, no leftovers).
+- [x] SKU group rule deployed to pg-test (`UPDATE_COMPLETE`, 32 Lambdas + API modified, nothing added/removed). Not yet exercised from the app.
+
+**2026-10-24 — Cleanup scoping (read-only, pg-test).** `--original` image objects: 1,877 in the media bucket (all under `used-gear-workflow/`; HTML saved as `.jpg`). Referenced from 628 records' `Images` attachment field and 1,781 records' `Workflow Image Metadata JSON` text (`workflow_images` holds only `processed` rows: 17,847). Removing the references means editing `Images` (queued to the Airtable test base), so nothing was changed yet. Also in the bucket: 2 `photos--direct-test*.png` test objects. SKU 10792 (`recXFnIs8j4fO2bHd`) still has the test Voltage `120V` and PNG `test-upload-11b.png`.
+
+**2026-10-24 — HTML attachment cleanup CLI (built; dry run only).** `npm run db:clean-html-attachments -- --base <id> [--apply --backup file.json]` (`db/cleanHtmlAttachments.ts`). Targets `Images` attachments with content type `text/html`; the metadata JSON is left alone (its Drive entries cannot be judged from the mirror). `--apply` writes a backup file first, updates the mirror, and queues an Airtable update that sends the kept attachments by id only (no re-download). It never touches S3. Dry run on pg-test: 628 records, 1,877 attachments to remove, 0 records left with no images, 0 skipped. Not applied yet.
+
+- [x] **HTML attachment cleanup applied to pg-test / test base (2026-10-24).** Backup of every affected `Images` value: session `files/html-attachments-backup-20261024.json` (not in the repo). 628 records updated, 1,877 attachments removed from the mirror; 628 outbox rows all `sent` (0 dead). Airtable check (read-only GET of all 3,471 listings): 0 `text/html` attachments left, 1,883 attachments remain; compare report still identical (3,471/3,471, attachment fields ignored).
+- [ ] The 1,877 orphaned HTML objects (about 1.7 GB) are still in the media bucket: the deployer user lacks `s3:DeleteObject` (delete attempt got AccessDenied; nothing was deleted). Their keys are in the backup file. Also still there: the 2 `photos--direct-test*.png` objects and the SKU 10792 test PNG/Voltage.
+- [x] (2026-10-24) After `s3:DeleteObject` was added, deleted the 1,877 HTML objects and the 2 `photos--direct-test*.png` objects: 0 errors, bucket 3,763 -> 1,884 objects. Remaining cleanup: SKU 10792 test PNG `test-upload-11b.png` and Voltage `120V` (original Voltage unknown).
+- [x] (2026-10-24) Removed the test PNG from SKU 10792 (Postgres + Airtable verified, S3 object deleted; bucket now 1,883 objects). Voltage `120V` left as is (original unknown). Test-data cleanup is complete.
+
+- [ ] (deferred 2026-10-24, user decision) The 3 SKU collisions (10650, 11499, 12170) are left as is in the test base. Check production for the same collisions before relying on the SKU rule there.

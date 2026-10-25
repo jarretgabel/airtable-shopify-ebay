@@ -446,6 +446,51 @@ export async function getConfiguredFieldMetadata(
   }
 }
 
+// Uploads straight to S3 via presigned URLs. Returns null when the server has direct upload off or anything fails,
+// so the caller falls back to the base64 upload.
+async function tryDirectWorkflowImageUpload(
+  source: AirtableConfiguredAttachmentSource,
+  recordId: string,
+  file: File,
+  archive: AirtableAttachmentUploadDriveArchive,
+): Promise<AirtableAttachmentUploadResult | null> {
+  const base = `/api/airtable/configured-attachments/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}/direct-upload`;
+  const describe = (variant: 'processed' | 'original', item: File) => ({
+    variant,
+    filename: item.name,
+    contentType: item.type || 'application/octet-stream',
+    size: item.size,
+  });
+  try {
+    const presign = await postJson<{
+      enabled: boolean;
+      uploads?: Array<{ variant: 'processed' | 'original'; key: string; uploadUrl: string; contentType: string }>;
+    }>(`${base}/presign`, {
+      stage: archive.stage,
+      files: [describe('processed', file), describe('original', archive.originalFile)],
+    });
+    if (!presign.enabled || !presign.uploads) return null;
+
+    const sources = { processed: file, original: archive.originalFile };
+    for (const upload of presign.uploads) {
+      const response = await fetch(upload.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': upload.contentType },
+        body: sources[upload.variant],
+      });
+      if (!response.ok) return null;
+    }
+
+    return await postJson<AirtableAttachmentUploadResult>(`${base}/finalize`, {
+      stage: archive.stage,
+      processedKey: presign.uploads.find((upload) => upload.variant === 'processed')?.key,
+      originalKey: presign.uploads.find((upload) => upload.variant === 'original')?.key,
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function uploadConfiguredAttachment(
   source: AirtableConfiguredAttachmentSource,
   recordId: string,
@@ -453,6 +498,11 @@ export async function uploadConfiguredAttachment(
   file: File,
   options?: AirtableAttachmentUploadOptions,
 ): Promise<AirtableAttachmentUploadResult> {
+  if (options?.archiveOnly && options.driveArchive) {
+    const direct = await tryDirectWorkflowImageUpload(source, recordId, file, options.driveArchive);
+    if (direct) return direct;
+  }
+
   const base64 = await fileToBase64(file);
   const payload = toAttachmentPayload(file, base64);
 

@@ -109,13 +109,18 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
     const query = read.searchQuery?.trim().toLowerCase() ?? '';
     const searchFields = (read.searchFields ?? []).map((name) => name.trim()).filter(Boolean);
     if (query && searchFields.length > 0) {
-      params.push(`%${escapeLike(query)}%`);
-      const patternIndex = params.length;
-      const clauses = searchFields.map((name) => {
-        params.push(name);
-        return `lower(coalesce(fields ->> $${params.length}, '')) LIKE $${patternIndex}`;
+      // Every word must match at least one searched field, so "mcintosh mc275" finds a record that has them in different fields.
+      const terms = query.split(/\s+/).filter(Boolean).slice(0, 8);
+      const termClauses = terms.map((term) => {
+        params.push(`%${escapeLike(term)}%`);
+        const patternIndex = params.length;
+        const clauses = searchFields.map((name) => {
+          params.push(name);
+          return `lower(coalesce(fields ->> $${params.length}, '')) LIKE $${patternIndex}`;
+        });
+        return `(${clauses.join(' OR ')})`;
       });
-      where.push(`(${clauses.join(' OR ')})`);
+      where.push(`(${termClauses.join(' AND ')})`);
     }
 
     const limit = read.maxRecords ?? (read.subset === 'listings-page' ? LISTINGS_PAGE_MAX_RECORDS : undefined);

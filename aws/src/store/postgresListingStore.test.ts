@@ -121,6 +121,10 @@ if (!url) {
     assert.deepEqual(viaNotes.map((r) => r.id), ['rec1']);
     const wildcard = await store.getRecords('approval-combined', { searchQuery: '%', searchFields: ['Title'] });
     assert.equal(wildcard.length, 0);
+    const multiWord = await store.getRecords('approval-combined', { searchQuery: 'mcintosh tube', searchFields: ['Title', 'Notes'] });
+    assert.deepEqual(multiWord.map((r) => r.id), ['rec1']);
+    const noMatch = await store.getRecords('approval-combined', { searchQuery: 'mcintosh nonexistentword', searchFields: ['Title', 'Notes'] });
+    assert.equal(noMatch.length, 0);
   }));
 
   test('postgres: requested fields are projected in SQL and unrequested heavy fields are not returned', () => withStore(async (store, seed) => {
