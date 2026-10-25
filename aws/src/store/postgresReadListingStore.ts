@@ -1,3 +1,4 @@
+import { HttpError } from '../shared/errors.js';
 import { logError } from '../shared/logging.js';
 import type { ListingSource, ListingStore } from './listingStore.js';
 
@@ -89,6 +90,11 @@ export function createPostgresReadListingStore(options: PostgresReadStoreOptions
 
   return {
     getRecords: (source, opts) => read('getRecords', source, () => reader.getRecords(source, opts), () => fallback.getRecords(source, opts), opts),
+    getRecordsPage: reader.getRecordsPage
+      ? (source, opts) => read('getRecordsPage', source, () => reader.getRecordsPage!(source, opts), async () => {
+        throw new HttpError(503, 'Paged reads need the Postgres backend.', { service: 'postgres', code: 'POSTGRES_PAGE_UNAVAILABLE', retryable: true });
+      }, opts)
+      : undefined,
     getRecord: (source, id) => read('getRecord', source, () => reader.getRecord(source, id), () => fallback.getRecord(source, id), id),
     getRecordsSummary: (source) => read('getRecordsSummary', source, () => reader.getRecordsSummary(source), () => fallback.getRecordsSummary(source)),
     getFieldMetadata: (source) => fallback.getFieldMetadata(source),

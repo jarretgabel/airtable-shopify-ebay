@@ -10,6 +10,8 @@ interface JsonResponseOptions {
   acceptEncoding?: string;
   /** Adds a content-hash ETag and answers 304 when the request's If-None-Match still matches. Always revalidated (no-cache). */
   etag?: { ifNoneMatch?: string };
+  /** Extra response headers; exposed to cross-origin callers. */
+  extraHeaders?: Record<string, string>;
 }
 
 const GZIP_MIN_BYTES = 256 * 1024;
@@ -65,13 +67,17 @@ export function jsonOk(body: unknown, options: JsonResponseOptions = {}): APIGat
   const serialized = JSON.stringify(body);
   const headers = buildJsonHeaders(options.origin);
   const cookies = options.cookies ? { cookies: options.cookies } : {};
+  if (options.extraHeaders) {
+    Object.assign(headers, options.extraHeaders);
+    if (options.origin) headers['access-control-expose-headers'] = Object.keys(options.extraHeaders).join(',');
+  }
 
   if (options.etag) {
     const tag = `"${createHash('sha1').update(serialized).digest('base64url')}"`;
     headers.etag = tag;
     headers['cache-control'] = 'private, no-cache';
     if (options.etag.ifNoneMatch?.split(',').some((candidate) => candidate.trim().replace(/^W\//, '') === tag)) {
-      return { statusCode: 304, headers: { ...headers, ...(options.origin ? { 'access-control-expose-headers': 'etag' } : {}) }, ...cookies, body: '' };
+      return { statusCode: 304, headers: { ...headers, ...(options.origin ? { 'access-control-expose-headers': [headers['access-control-expose-headers'], 'etag'].filter(Boolean).join(',') } : {}) }, ...cookies, body: '' };
     }
   }
 

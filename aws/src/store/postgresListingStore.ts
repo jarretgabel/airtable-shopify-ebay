@@ -10,6 +10,7 @@ import { USED_GEAR_POST_PUBLISH_FIELDS } from '../shared/contracts/usedGearPostP
 import type {
   ListingFieldMetadata,
   ListingReadOptions,
+  ListingRecordsPage,
   ListingRecord,
   ListingSource,
   ListingStore,
@@ -88,7 +89,16 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
   const { pool } = options;
   const resolveTable = options.resolveTable ?? ((source: ListingSource) => resolveConfiguredSourceTable(source));
 
+  async function getRecordsPage(source: ListingSource, read: ListingReadOptions = {}): Promise<ListingRecordsPage> {
+    const { rows, total } = await query(source, read, true);
+    return { records: rows, total: total ?? rows.length };
+  }
+
   async function getRecords(source: ListingSource, read: ListingReadOptions = {}): Promise<ListingRecord[]> {
+    return (await query(source, read, false)).rows;
+  }
+
+  async function query(source: ListingSource, read: ListingReadOptions, withTotal: boolean): Promise<{ rows: ListingRecord[]; total?: number }> {
     const { baseId, tableId } = resolveTable(source);
     const params: unknown[] = [baseId, tableId];
     const where = ['base_id = $1', 'table_id = $2', 'deleted_at IS NULL'];
@@ -106,11 +116,17 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
       where.push(`${lower ? `lower(${column})` : column} = $${params.length}`);
     }
 
-    const query = read.searchQuery?.trim().toLowerCase() ?? '';
+    for (const [field, expected] of Object.entries(read.filters ?? {})) {
+      const values = Array.isArray(expected) ? expected : [expected];
+      params.push(field, values);
+      where.push(`(fields ->> $${params.length - 1}) = ANY($${params.length}::text[])`);
+    }
+
+    const searchText = read.searchQuery?.trim().toLowerCase() ?? '';
     const searchFields = (read.searchFields ?? []).map((name) => name.trim()).filter(Boolean);
-    if (query && searchFields.length > 0) {
+    if (searchText && searchFields.length > 0) {
       // Every word must match at least one searched field, so "mcintosh mc275" finds a record that has them in different fields.
-      const terms = query.split(/\s+/).filter(Boolean).slice(0, 8);
+      const terms = searchText.split(/\s+/).filter(Boolean).slice(0, 8);
       const termClauses = terms.map((term) => {
         params.push(`%${escapeLike(term)}%`);
         const patternIndex = params.length;
@@ -131,15 +147,30 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
       params.push(projection);
       fieldsColumn = `(SELECT coalesce(jsonb_object_agg(e.key, e.value), '{}'::jsonb) FROM jsonb_each(fields) AS e WHERE e.key = ANY($${params.length}::text[])) AS fields`;
     }
-    let sql = `SELECT record_id, ${fieldsColumn}, airtable_created_at, synced_at FROM records WHERE ${where.join(' AND ')}
-      ORDER BY airtable_created_at NULLS LAST, record_id`;
+    const whereSql = where.join(' AND ');
+    let total: number | undefined;
+    if (withTotal) {
+      const counted = await pool.query<{ total: string }>(`SELECT count(*) AS total FROM records WHERE ${whereSql}`, params);
+      total = Number(counted.rows[0]?.total ?? 0);
+    }
+
+    let orderBy = 'airtable_created_at NULLS LAST, record_id';
+    if (read.sort?.field) {
+      params.push(read.sort.field);
+      orderBy = `fields -> $${params.length} ${read.sort.direction === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, airtable_created_at NULLS LAST, record_id`;
+    }
+    let sql = `SELECT record_id, ${fieldsColumn}, airtable_created_at, synced_at FROM records WHERE ${whereSql} ORDER BY ${orderBy}`;
     if (limit && Number.isFinite(limit) && limit > 0) {
       params.push(Math.trunc(limit));
       sql += ` LIMIT $${params.length}`;
     }
+    if (read.offset && read.offset > 0) {
+      params.push(Math.trunc(read.offset));
+      sql += ` OFFSET $${params.length}`;
+    }
 
     const result = await pool.query<RecordRow>(sql, params);
-    return result.rows.map((row) => toListingRecord(row, projection));
+    return { rows: result.rows.map((row) => toListingRecord(row, projection)), total };
   }
 
   async function getRecord(source: ListingSource, recordId: string): Promise<ListingRecord> {
@@ -155,6 +186,7 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
 
   return {
     getRecords,
+    getRecordsPage,
     getRecord,
 
     async getRecordsSummary(source) {

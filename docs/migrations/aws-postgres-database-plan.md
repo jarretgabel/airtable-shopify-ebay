@@ -753,7 +753,8 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 ## Post-migration optimizations (roadmap, 2026-10-24)
 Findings: reads are already cached per source in the store (invalidated on write), but the list handler also had a 120 s in-memory cache for `approval-combined` (`ready-for-publishing`, `listings-page`) that Postgres writes never invalidated; `maxRecords` is capped at 1,000; the frontend GETs use `cache: 'no-store'`, so every list read re-downloads the full body.
 - [x] **A. ETag revalidation (built, deployed to pg-test 2026-10-24; logged-in 304 check still pending).** `jsonOk({ etag })` adds a content-hash ETag and `cache-control: private, no-cache`, and answers 304 on `If-None-Match` (auth still runs first). The list handler uses it; the frontend list reads use `cache: 'no-cache'`. The stale handler cache now fronts the Airtable backend only. Saves bandwidth, not query time.
-- [ ] B. Server-side pagination, sort and filters (`limit`/`cursor`, `sort`, field filters, total count), one list at a time, largest first.
+- [x] B1. API side built (2026-10-24, tested against pg-test, not yet deployed): list reads accept `offset`, `sort=Field` / `sort=-Field`, `filters={"Field":"v"|["v",...]}`, with `maxRecords` as the page size. The total is returned in the `x-total-count` header; the body stays an array, so existing callers are unchanged. Postgres-backed sources only (400 otherwise). Sorting is on the raw JSON value (numbers numerically, text case-sensitive).
+- [ ] B2. Frontend: pass these params from the list views, largest first (not started).
 - [ ] C. SQL aggregates for dashboard and queue counts (extend the existing `summary=queue`).
 - [ ] D. Indexes for the filters in use, chosen from `EXPLAIN` on pg-test.
 - [ ] E. Slim list payloads: audit screens that request every field; switch image reads to `workflow_images` (behavior change, test carefully).

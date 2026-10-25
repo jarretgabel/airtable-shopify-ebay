@@ -132,6 +132,7 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
 
   return {
     getRecords: (source, opts) => reader.getRecords(source, opts),
+    getRecordsPage: reader.getRecordsPage ? (source, opts) => reader.getRecordsPage!(source, opts) : undefined,
     getRecordsSummary: (source) => reader.getRecordsSummary(source),
     getRecord: (source, id) => reader.getRecord(source, id),
     getFieldMetadata: (source) => reader.getFieldMetadata(source),

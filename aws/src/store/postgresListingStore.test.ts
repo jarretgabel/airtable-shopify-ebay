@@ -127,6 +127,25 @@ if (!url) {
     assert.equal(noMatch.length, 0);
   }));
 
+  test('postgres: pages, sorts and filters in the database and reports the total', () => withStore(async (store, seed) => {
+    await seed([
+      { id: 'rec1', fields: { Title: 'B', Price: 10, Status: 'Ready' } },
+      { id: 'rec2', fields: { Title: 'A', Price: 200, Status: 'Ready' } },
+      { id: 'rec3', fields: { Title: 'C', Price: 30, Status: 'Draft' } },
+      { id: 'rec4', fields: { Title: 'D', Status: 'Ready' } },
+    ]);
+    const byPrice = await store.getRecordsPage!('approval-combined', { sort: { field: 'Price', direction: 'desc' }, maxRecords: 2 });
+    assert.deepEqual(byPrice.records.map((r) => r.id), ['rec2', 'rec3']);
+    assert.equal(byPrice.total, 4);
+    const next = await store.getRecordsPage!('approval-combined', { sort: { field: 'Price', direction: 'desc' }, maxRecords: 2, offset: 2 });
+    assert.deepEqual(next.records.map((r) => r.id), ['rec1', 'rec4']);
+    const filtered = await store.getRecordsPage!('approval-combined', { filters: { Status: 'Ready' }, sort: { field: 'Title', direction: 'asc' }, maxRecords: 2 });
+    assert.deepEqual(filtered.records.map((r) => r.fields.Title), ['A', 'B']);
+    assert.equal(filtered.total, 3);
+    const either = await store.getRecordsPage!('approval-combined', { filters: { Status: ['Draft', 'Ready'] } });
+    assert.equal(either.total, 4);
+  }));
+
   test('postgres: requested fields are projected in SQL and unrequested heavy fields are not returned', () => withStore(async (store, seed) => {
     await seed([{ id: 'recA', fields: { Title: 'A', 'Workflow Status': 'Ready', 'Workflow Image Metadata JSON': 'x'.repeat(1000) } }]);
     const [slim] = await store.getRecords('approval-combined', { fields: ['Title', 'Missing'], maxRecords: 10 });

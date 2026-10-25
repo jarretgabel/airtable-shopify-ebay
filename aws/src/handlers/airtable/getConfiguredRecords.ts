@@ -6,9 +6,11 @@ import { logError, logInfo } from '../../shared/logging.js';
 import {
   getConfiguredRecords,
   getConfiguredRecordsSummary,
+  getListingStore,
   type AirtableConfiguredRecordsSubset,
   type AirtableConfiguredRecordsSource,
 } from '../../store/index.js';
+import type { ListingReadOptions } from '../../store/listingStore.js';
 import { resolveDataBackend } from '../../store/backend.js';
 import { getOrLoadConfiguredRecordsCache } from '../../providers/airtable/configuredRecordsCache.js';
 
@@ -133,6 +135,46 @@ function validateMaxRecords(value: string | undefined): number | undefined {
   return parsed;
 }
 
+function parseNonNegativeInt(value: string | undefined, name: string): number | undefined {
+  if (!value) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0 || String(parsed) !== value.trim()) {
+    throw new HttpError(400, `${name} must be a non-negative integer.`, { service: 'airtable', code: 'AIRTABLE_PAGING_INVALID', retryable: false });
+  }
+  return parsed;
+}
+
+function parseSort(value: string | undefined): ListingReadOptions['sort'] {
+  if (!value) return undefined;
+  const desc = value.startsWith('-');
+  const field = (desc ? value.slice(1) : value).trim();
+  if (!field || field.length > 120) {
+    throw new HttpError(400, 'sort must be a field name, optionally prefixed with "-" for descending.', { service: 'airtable', code: 'AIRTABLE_SORT_INVALID', retryable: false });
+  }
+  return { field, direction: desc ? 'desc' : 'asc' };
+}
+
+function parseFilters(value: string | undefined): ListingReadOptions['filters'] {
+  if (!value) return undefined;
+  const invalid = () => new HttpError(400, 'filters must be a JSON object of field to string or string array.', { service: 'airtable', code: 'AIRTABLE_FILTERS_INVALID', retryable: false });
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw invalid();
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw invalid();
+  const entries = Object.entries(parsed as Record<string, unknown>);
+  if (entries.length > 10) throw invalid();
+  const filters: Record<string, string | string[]> = {};
+  for (const [field, expected] of entries) {
+    const ok = typeof expected === 'string' || (Array.isArray(expected) && expected.length <= 50 && expected.every((item) => typeof item === 'string'));
+    if (!ok || field.length > 120) throw invalid();
+    filters[field] = expected as string | string[];
+  }
+  return filters;
+}
+
 function validateSearchQuery(value: string | undefined): string | undefined {
   if (!value) return undefined;
 
@@ -185,6 +227,22 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       && resolveDataBackend(source) === 'airtable'
       && (subset === 'ready-for-publishing' || subset === 'listings-page')
       && !searchQuery;
+
+    const offset = parseNonNegativeInt(getOptionalQueryParam(event, 'offset'), 'offset');
+    const sort = parseSort(getOptionalQueryParam(event, 'sort'));
+    const filters = parseFilters(getOptionalQueryParam(event, 'filters'));
+    const acceptEncoding = event.headers['accept-encoding'] ?? event.headers['Accept-Encoding'] ?? '';
+    const ifNoneMatch = event.headers['if-none-match'] ?? event.headers['If-None-Match'];
+
+    if (offset !== undefined || sort || filters) {
+      const store = getListingStore(source);
+      if (!store.getRecordsPage) {
+        throw new HttpError(400, 'offset, sort and filters need the Postgres backend for this source.', { service: 'airtable', code: 'AIRTABLE_PAGING_UNSUPPORTED', retryable: false });
+      }
+      const page = await store.getRecordsPage(source, { fields, subset, maxRecords, searchQuery, searchFields, offset, sort, filters });
+      logInfo('Fetched Airtable configured records page', { source, count: page.records.length, total: page.total });
+      return jsonOk(page.records, { origin, acceptEncoding, etag: { ifNoneMatch }, extraHeaders: { 'x-total-count': String(page.total) } });
+    }
 
     const records = shouldCacheCombinedSubset
       ? await getOrLoadConfiguredRecordsCache(

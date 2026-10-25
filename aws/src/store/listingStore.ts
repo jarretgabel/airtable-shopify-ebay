@@ -24,6 +24,16 @@ export interface ListingReadOptions {
   maxRecords?: number;
   searchQuery?: string;
   searchFields?: string[];
+  /** Postgres backends only. */
+  offset?: number;
+  sort?: { field: string; direction: 'asc' | 'desc' };
+  /** Exact-match filters; an array matches any of its values. */
+  filters?: Record<string, string | string[]>;
+}
+
+export interface ListingRecordsPage {
+  records: ListingRecord[];
+  total: number;
 }
 
 export interface ListingWriteOptions {
@@ -39,6 +49,8 @@ export interface ListingAttachmentPayload {
 /** Every storage backend (Airtable, Postgres, dual-write) implements this. Source-level policy stays in the handlers. */
 export interface ListingStore {
   getRecords(source: ListingSource, options?: ListingReadOptions): Promise<ListingRecord[]>;
+  /** Optional: only the Postgres backends can page, sort and filter in the database. */
+  getRecordsPage?(source: ListingSource, options?: ListingReadOptions): Promise<ListingRecordsPage>;
   getRecordsSummary(source: ListingSource): Promise<ListingRecordsSummary>;
   getRecord(source: ListingSource, recordId: string): Promise<ListingRecord>;
   createRecord(source: ListingWriteSource, fields: Record<string, unknown>, options?: ListingWriteOptions): Promise<ListingRecord>;
