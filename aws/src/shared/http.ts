@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { gzipSync } from 'node:zlib';
 import { HttpError } from './errors.js';
@@ -7,6 +8,8 @@ interface JsonResponseOptions {
   cookies?: string[];
   /** Request Accept-Encoding. When it allows gzip, large bodies are compressed to stay under Lambda's 6 MB response limit. */
   acceptEncoding?: string;
+  /** Adds a content-hash ETag and answers 304 when the request's If-None-Match still matches. Always revalidated (no-cache). */
+  etag?: { ifNoneMatch?: string };
 }
 
 const GZIP_MIN_BYTES = 256 * 1024;
@@ -62,6 +65,15 @@ export function jsonOk(body: unknown, options: JsonResponseOptions = {}): APIGat
   const serialized = JSON.stringify(body);
   const headers = buildJsonHeaders(options.origin);
   const cookies = options.cookies ? { cookies: options.cookies } : {};
+
+  if (options.etag) {
+    const tag = `"${createHash('sha1').update(serialized).digest('base64url')}"`;
+    headers.etag = tag;
+    headers['cache-control'] = 'private, no-cache';
+    if (options.etag.ifNoneMatch?.split(',').some((candidate) => candidate.trim().replace(/^W\//, '') === tag)) {
+      return { statusCode: 304, headers: { ...headers, ...(options.origin ? { 'access-control-expose-headers': 'etag' } : {}) }, ...cookies, body: '' };
+    }
+  }
 
   if (options.acceptEncoding !== undefined) {
     headers.vary = headers.vary ? `${headers.vary}, accept-encoding` : 'accept-encoding';

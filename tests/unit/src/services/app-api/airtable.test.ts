@@ -105,7 +105,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('inventory-directory');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=inventory-directory', {
-      cache: 'no-store',
+      cache: 'no-cache',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -123,7 +123,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('inventory-directory', { fields: ['SKU', 'Status'] });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=inventory-directory&fields=SKU%2CStatus', {
-      cache: 'no-store',
+      cache: 'no-cache',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -141,7 +141,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('approval-combined', { subset: 'ready-for-publishing' });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined&subset=ready-for-publishing', {
-      cache: 'no-store',
+      cache: 'no-cache',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -159,7 +159,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('approval-combined', { subset: 'listings-page' });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined&subset=listings-page', {
-      cache: 'no-store',
+      cache: 'no-cache',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -179,7 +179,7 @@ describe('app-api airtable', () => {
     })).toEqual(records);
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/airtable/configured-records?source=used-gear-workflow&fields=Workflow+Status%2CListed+At&subset=post-publish',
-      { cache: 'no-store', credentials: 'include', headers: { Accept: 'application/json' } },
+      { cache: 'no-cache', credentials: 'include', headers: { Accept: 'application/json' } },
     );
   });
 
@@ -194,7 +194,7 @@ describe('app-api airtable', () => {
     const result = await getConfiguredRecords('approval-combined', { subset: 'listings-page', maxRecords: 150 });
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined&subset=listings-page&maxRecords=150', {
-      cache: 'no-store',
+      cache: 'no-cache',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -429,7 +429,7 @@ describe('app-api airtable', () => {
     const records = await getRecordsFromResolvedSource('appShopify/viwShopify', undefined);
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-shopify', {
-      cache: 'no-store',
+      cache: 'no-cache',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });
@@ -478,7 +478,7 @@ describe('app-api airtable', () => {
     const records = await getRecordsFromResolvedSource('appShared/tblShared/viwShared', 'tblShared');
 
     expect(fetchMock).toHaveBeenCalledWith('/api/airtable/configured-records?source=approval-combined', {
-      cache: 'no-store',
+      cache: 'no-cache',
       credentials: 'include',
       headers: { Accept: 'application/json' },
     });

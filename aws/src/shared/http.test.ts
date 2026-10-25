@@ -28,3 +28,16 @@ test('jsonOk does not compress small bodies or clients without gzip', () => {
   const noGzip = jsonOk(big, { acceptEncoding: 'identity' }) as { isBase64Encoded?: boolean };
   assert.equal(noGzip.isBase64Encoded, undefined);
 });
+
+test('jsonOk with etag adds a stable validator and answers 304 on a match', () => {
+  const first = jsonOk([{ id: 'a' }], { origin: 'http://localhost:3000', etag: {} }) as { headers: Record<string, string>; statusCode: number };
+  assert.equal(first.statusCode, 200);
+  assert.equal(first.headers['cache-control'], 'private, no-cache');
+  const tag = first.headers.etag;
+  assert.match(tag, /^".+"$/);
+  const again = jsonOk([{ id: 'a' }], { etag: { ifNoneMatch: tag } }) as { statusCode: number; body: string };
+  assert.equal(again.statusCode, 304);
+  assert.equal(again.body, '');
+  const changed = jsonOk([{ id: 'b' }], { etag: { ifNoneMatch: tag } }) as { statusCode: number };
+  assert.equal(changed.statusCode, 200);
+});

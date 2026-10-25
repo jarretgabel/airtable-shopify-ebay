@@ -749,3 +749,12 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 - [x] (2026-10-24) Removed the test PNG from SKU 10792 (Postgres + Airtable verified, S3 object deleted; bucket now 1,883 objects). Voltage `120V` left as is (original unknown). Test-data cleanup is complete.
 
 - [ ] (deferred 2026-10-24, user decision) The 3 SKU collisions (10650, 11499, 12170) are left as is in the test base. Check production for the same collisions before relying on the SKU rule there.
+
+## Post-migration optimizations (roadmap, 2026-10-24)
+Findings: reads are already cached per source in the store (invalidated on write), but the list handler also had a 120 s in-memory cache for `approval-combined` (`ready-for-publishing`, `listings-page`) that Postgres writes never invalidated; `maxRecords` is capped at 1,000; the frontend GETs use `cache: 'no-store'`, so every list read re-downloads the full body.
+- [x] **A. ETag revalidation (built, deployed to pg-test 2026-10-24; logged-in 304 check still pending).** `jsonOk({ etag })` adds a content-hash ETag and `cache-control: private, no-cache`, and answers 304 on `If-None-Match` (auth still runs first). The list handler uses it; the frontend list reads use `cache: 'no-cache'`. The stale handler cache now fronts the Airtable backend only. Saves bandwidth, not query time.
+- [ ] B. Server-side pagination, sort and filters (`limit`/`cursor`, `sort`, field filters, total count), one list at a time, largest first.
+- [ ] C. SQL aggregates for dashboard and queue counts (extend the existing `summary=queue`).
+- [ ] D. Indexes for the filters in use, chosen from `EXPLAIN` on pg-test.
+- [ ] E. Slim list payloads: audit screens that request every field; switch image reads to `workflow_images` (behavior change, test carefully).
+- [ ] F. Smaller: cache field metadata in the Lambda (read on every write for validation), cross-source search, audit trail from outbox history.

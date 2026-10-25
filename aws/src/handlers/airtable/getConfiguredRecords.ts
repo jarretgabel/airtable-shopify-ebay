@@ -9,6 +9,7 @@ import {
   type AirtableConfiguredRecordsSubset,
   type AirtableConfiguredRecordsSource,
 } from '../../store/index.js';
+import { resolveDataBackend } from '../../store/backend.js';
 import { getOrLoadConfiguredRecordsCache } from '../../providers/airtable/configuredRecordsCache.js';
 
 const DEFAULT_APPROVAL_QUEUE_FIELDS = [
@@ -179,7 +180,9 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const searchQuery = validateSearchQuery(getOptionalQueryParam(event, 'search'));
     const searchFields = resolveSearchFields(getOptionalQueryParam(event, 'searchFields'));
     const fields = resolveRequestedFields(source, subset, getOptionalQueryParam(event, 'fields'));
+    // This in-memory cache is not invalidated by Postgres writes, so it only fronts Airtable.
     const shouldCacheCombinedSubset = source === 'approval-combined'
+      && resolveDataBackend(source) === 'airtable'
       && (subset === 'ready-for-publishing' || subset === 'listings-page')
       && !searchQuery;
 
@@ -209,7 +212,11 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         searchFields,
       });
     logInfo('Fetched Airtable configured records', { source, count: records.length });
-    return jsonOk(records, { origin, acceptEncoding: event.headers['accept-encoding'] ?? event.headers['Accept-Encoding'] ?? '' });
+    return jsonOk(records, {
+      origin,
+      acceptEncoding: event.headers['accept-encoding'] ?? event.headers['Accept-Encoding'] ?? '',
+      etag: { ifNoneMatch: event.headers['if-none-match'] ?? event.headers['If-None-Match'] },
+    });
   } catch (error) {
     logError('Failed to fetch Airtable configured records', error, {
       source: event.queryStringParameters?.source || '',

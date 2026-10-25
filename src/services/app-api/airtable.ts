@@ -179,6 +179,7 @@ export async function getConfiguredRecords(
       searchFields: options.searchFields?.join(',') || undefined,
     }, {
       timeoutMs: options.timeoutMs ?? CONFIGURED_RECORDS_READ_TIMEOUT_MS,
+      cache: 'no-cache',
     });
   } catch (error) {
     throw toConfiguredSourceError(error, source);

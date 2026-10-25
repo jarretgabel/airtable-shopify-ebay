@@ -26,6 +26,8 @@ const APP_API_REQUEST_TIMEOUT_MS = 12000;
 export interface AppApiRequestOptions {
   timeoutMs?: number;
   signal?: AbortSignal;
+  /** Browser cache mode for GETs. 'no-cache' revalidates with the server's ETag instead of always downloading. */
+  cache?: RequestCache;
 }
 
 let csrfTokenCache: string | null = null;
@@ -267,7 +269,7 @@ export async function getJson<T>(
   options?: AppApiRequestOptions,
 ): Promise<T> {
   return requestJson<T>(path, {
-    cache: 'no-store',
+    cache: options?.cache ?? 'no-store',
     headers: {
       Accept: 'application/json',
     },
