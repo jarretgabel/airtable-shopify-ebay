@@ -762,3 +762,20 @@ Findings: reads are already cached per source in the store (invalidated on write
 - [x] D. Indexes (2026-10-24). `EXPLAIN ANALYZE` on pg-test (3.5k rows): the Workflow Status subset already uses `records_workflow_status_idx`; search is a ~20 ms scan (fine, no trigram index needed); the SKU lookup run on every SKU write was a ~9 ms scan. Migration 0008 adds `records_sku_idx` (applied to pg-test; lookup now ~0.1 ms). Pick Up ID has no index (not queried by the API). Production still needs 0008.
 - [x] E. (audit done, 2026-10-25) Every list caller already passes a `fields` projection (applied in SQL); only the small `users` / `shopify-vendors` lists read all fields. Nothing worth changing; image reads stay on the metadata JSON until the Drive-to-S3 move.
 - [ ] F. Smaller: cache field metadata in the Lambda (read on every write for validation), cross-source search, audit trail from outbox history.
+
+## Phase 13: Drive-to-S3 image copy and schema upgrades (planned 2026-10-25, nothing built)
+Scope check (read-only, pg-test): `workflow_images` has 17,847 rows over 2,523 records, all with `https://drive.google.com/uc?export=view&id=<fileId>` URLs. Drive credentials are in `.env.local` (`VITE_GOOGLE_DRIVE_*`); the scripts run locally, nothing is added to Lambda config.
+
+### 13A. Copy Drive images to S3 (recommended: copy, never move)
+- [ ] 1. Read-only Drive scan: for each distinct file id call `files.get` (id, size, mimeType, trashed). Report count, total bytes, missing/trashed/non-image files, and how many are `--original` HTML placeholders (skip those). No writes.
+- [ ] 2. `db:copy-drive-images` CLI (same pattern as `copyAttachments.ts`): dry run by default; `--apply` downloads each file, PUTs it to S3 under `{table}/{record}/{stage}/...`, sets `workflow_images.s3_key`, keeps the Drive URL in `legacy_url`. Idempotent, resumable, rate limited, never deletes anything in Drive. Back up affected rows to a file first.
+- [ ] 3. Make the Drive-only readers understand S3 URLs BEFORE any URL is rewritten: `providers/ebay/client.ts` (downloads by Drive id), `workflowImageMetadataValidation.ts` (validates by Drive header), `getConfiguredRecord.ts` (image proxy by Drive id), Shopify builders. Tests for each.
+- [ ] 4. Rewrite the URLs: change `workflow_images.url` to the S3 (`/api/media/...`) URL, assemble `Workflow Image Metadata JSON` from the table (the outbox then updates Airtable's JSON field). Do one record first, check the app, then the rest. Rollback: restore `url` from `legacy_url`.
+- [ ] 5. Verify on pg-test: listing, photography and post-publish pages, Shopify and eBay draft image URLs, a before/after count and byte comparison. Drive stays as a read-only backup until retirement.
+
+### 13B. Schema improvements (each its own migration, tested on pg-test first)
+- [ ] 1. Typed/generated columns on `records` for hot fields (Workflow Status, SKU, Pick Up ID, price, email) with proper indexes and numeric sort; the JSON stays the source of truth.
+- [ ] 2. `pickup_groups` table plus SKU uniqueness enforced by the database (replacing the advisory-lock query). Existing collisions (10650, 11499, 12170) must be resolved or excluded first.
+- [ ] 3. `audit_log` table fed from the outbox (who, what, when, before/after), with a read endpoint.
+- [ ] 4. Foreign keys between records, contacts and workflow_images so orphaned rows can't appear.
+- [ ] 5. Archive tables for sold/trashed listings to keep the active table small.
