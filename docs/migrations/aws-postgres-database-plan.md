@@ -774,7 +774,7 @@ Scope check (read-only, pg-test): `workflow_images` has 17,847 rows over 2,523 r
 - [ ] 5. Verify on pg-test: listing, photography and post-publish pages, Shopify and eBay draft image URLs, a before/after count and byte comparison. Drive stays as a read-only backup until retirement.
 
 ### 13B. Schema improvements (each its own migration, tested on pg-test first)
-- [ ] 1. Typed/generated columns on `records` for hot fields (Workflow Status, SKU, Pick Up ID, price, email) with proper indexes and numeric sort; the JSON stays the source of truth.
+- [x] 1. (2026-10-25, pg-test: migration 0009 applied, code deployed, 4,663 rows populated; subset filters now use `workflow_status`; old expression indexes kept for now, drop in 14.11; applying to production is part of 14.9) Typed/generated columns on `records` for hot fields (Workflow Status, SKU, Pick Up ID, price, email) with proper indexes and numeric sort; the JSON stays the source of truth.
 - [ ] 2. `pickup_groups` table plus SKU uniqueness enforced by the database (replacing the advisory-lock query). Existing collisions (10650, 11499, 12170) must be resolved or excluded first.
 - [ ] 3. `audit_log` table fed from the outbox (who, what, when, before/after), with a read endpoint.
 - [ ] 4. Foreign keys between records, contacts and workflow_images so orphaned rows can't appear.
@@ -786,7 +786,7 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - [x] 14.1 (2026-10-25, test base only; re-run on production) Read-only inventory (no code): list every Airtable-generated field (formula, rollup, lookup, count, created/modified time, autonumber) per source, and what in the app reads it. Output: a table in this doc with the Postgres replacement for each.
 - [x] 14.2 (2026-10-25) Record ids: already satisfied. `newRecordId()` ([postgresListingStore.ts](../../aws/src/store/postgresListingStore.ts)) makes a `rec` + 14 alphanumeric id locally (62^14 space, primary key on base/table/record). Create never waits on Airtable. When the outbox sends a create, Airtable's own id goes into `records.airtable_record_id`, and later updates/deletes and link translation use that mapping. After cutover the mapping column is simply unused (clean up in 14.11). Nothing to build.
 - [x] 14.3 (2026-10-25) Computed fields: recompute the 14.1 fields in code or SQL on write, with tests against the comparison tool.
-- [ ] 14.4 Phase 13B schema upgrades (typed columns, `pickup_groups` + SKU uniqueness after resolving the 3 collisions, `audit_log`, foreign keys, archive tables), in that order, one migration each.
+- [ ] 14.4 (1 of 5 done: typed columns) Phase 13B schema upgrades (typed columns, `pickup_groups` + SKU uniqueness after resolving the 3 collisions, `audit_log`, foreign keys, archive tables), in that order, one migration each.
 - [ ] 14.5 Legacy inventory table (411 rows, `tblgA8olAJtkRNZvK`): give it its own source so it is writable and no longer a frozen backfill.
 - [ ] 14.6 Phase 13A image work: S3-aware readers (eBay, Shopify, metadata validation, image proxy), HEIC/HEIF conversion, copy CLI, URL rewrite (full copy runs at production cutover).
 - [ ] 14.7 `postgres-only` backend mode: writes skip the outbox, no Airtable key required, Airtable client not loaded. Test on pg-test with the outbox off and the key removed.
@@ -837,3 +837,5 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Not a bug: no `/api/health` route locally.
 - Not run (they write to live Shopify/eBay): publish and takedown. Jotform ingest was tested earlier.
 - Open (deferred): the Shopify page shows 0 products on the test stack even though `/api/shopify/products` returns 250. `buildShopifyTabViewModel` keeps only products whose SKU matches an eligible listing from the legacy inventory table (`VITE_AIRTABLE_TABLE_NAME`). None of its 411 records has a workflow status or SKU, so none qualifies, and the listings load only on the Dashboard and Inventory tabs. This is app logic, not Postgres. Check the live site, then decide whether to source the filter from `used-gear-workflow` (ties into 14.5).
+
+- Note: running the DB-backed tests with `POSTGRES_TEST_URL` pointed at the pg-test database applied new migrations to its `public` schema (0009 landed that way before the explicit `db:migrate`). Use a throwaway database for tests unless you intend to migrate.
