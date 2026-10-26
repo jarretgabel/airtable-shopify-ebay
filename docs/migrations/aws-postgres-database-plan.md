@@ -832,4 +832,6 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - `AIRTABLE_DISABLED=true` tripwire deployed (Airtable calls fail 503 `AIRTABLE_DISABLED`; outbox idle). Undo: `AirtableDisabled=false`, remove `AirtableOutboxSync=paused`, redeploy via change set.
 - Smoke test: all 9 sources list 200; create and update on `user-guide` 200 and queued in `write_outbox`; no `AIRTABLE_DISABLED` errors in the listings Lambda logs; no dead outbox rows. Test records and their outbox rows were removed.
 - Findings: `user-guide` is not in the delete allow-list (expected). `/api/airtable/listings` needs `tableName`, so it returns 400 without it. That is not an Airtable dependency.
-- Still to exercise: the UI flows (approval, publish preview, uploads, Jotform webhook).
+- UI and API pass (Airtable disabled): all 20 routes load with no Airtable errors (workflow hub, listings, jotform, intake, photography, parking lot, trash, shipments, post-publish, ebay, shopify, market, imagelab, guide, account pages). Shopify and eBay previews, search, paging and the upload presign all work. No `AIRTABLE_DISABLED` hits in any Lambda log group.
+- Not Airtable-related on pg-test: Shopify products 401, eBay `EBAY_REFRESH_TOKEN` missing, no `/api/health` route locally.
+- Not run (they write to live Shopify/eBay): publish and takedown. Jotform ingest was tested earlier.
