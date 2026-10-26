@@ -216,6 +216,10 @@ Parameters:
   AlarmTopicArn:
     Type: String
     Default: ''
+  AlarmEmail:
+    Type: String
+    Default: ''
+    Description: When set (with EnableCloudWatchAlarms=true) an SNS topic is created and this address is subscribed. The subscription must be confirmed from the email AWS sends.
   EnableCloudWatchAlarms:
     Type: String
     Default: 'false'
@@ -247,6 +251,8 @@ Conditions:
   HasAlarmTopicArn: !Not [!Equals [!Ref AlarmTopicArn, '']]
   CreateCloudWatchAlarms: !Equals [!Ref EnableCloudWatchAlarms, 'true']
   CreatePostgres: !Equals [!Ref EnablePostgres, 'true']
+  CreateAlarmTopic: !And [!Condition CreateCloudWatchAlarms, !Not [!Equals [!Ref AlarmEmail, '']]]
+  CreatePostgresAlarms: !And [!Condition CreateCloudWatchAlarms, !Condition CreatePostgres]
 
 Globals:
   Function:
@@ -1500,7 +1506,7 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   ApprovalNormalizeErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1518,7 +1524,7 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   ApprovalNormalizeThrottlesAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1536,7 +1542,7 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   ApprovalNormalizeDurationAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1555,7 +1561,7 @@ Resources:
       Threshold: 12000
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   AirtableUpdateErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1573,7 +1579,7 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   AirtableUpdateThrottlesAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1591,7 +1597,7 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   AirtableUpdateDurationAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1610,7 +1616,7 @@ Resources:
       Threshold: 12000
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   AppApiServerErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -1628,7 +1634,87 @@ Resources:
       Threshold: 1
       ComparisonOperator: GreaterThanOrEqualToThreshold
       TreatMissingData: notBreaching
-      AlarmActions: !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
+
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Condition: CreateAlarmTopic
+    Properties:
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlarmEmail
+
+  PostgresLowStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreatePostgresAlarms
+    Properties:
+      AlarmDescription: Postgres free storage below 4 GB (of 20 GB).
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref PostgresInstance
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 4294967296
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
+
+  PostgresHighCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreatePostgresAlarms
+    Properties:
+      AlarmDescription: Postgres CPU above 80% for 15 minutes.
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref PostgresInstance
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
+
+  PostgresHighConnectionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreatePostgresAlarms
+    Properties:
+      AlarmDescription: Postgres connections above 60 (t4g.micro allows about 80).
+      Namespace: AWS/RDS
+      MetricName: DatabaseConnections
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref PostgresInstance
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 60
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
+
+  BackupExportErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CreatePostgresAlarms
+    Properties:
+      AlarmDescription: Nightly Postgres backup export failed.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref BackupExportFunction
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [CreateAlarmTopic, [!Ref AlarmTopic], !If [HasAlarmTopicArn, [!Ref AlarmTopicArn], !Ref AWS::NoValue]]
 
   PostgresSecret:
     Type: AWS::SecretsManager::Secret
