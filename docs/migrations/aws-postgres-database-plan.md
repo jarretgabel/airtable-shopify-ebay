@@ -839,3 +839,10 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Open (deferred): the Shopify page shows 0 products on the test stack even though `/api/shopify/products` returns 250. `buildShopifyTabViewModel` keeps only products whose SKU matches an eligible listing from the legacy inventory table (`VITE_AIRTABLE_TABLE_NAME`). None of its 411 records has a workflow status or SKU, so none qualifies, and the listings load only on the Dashboard and Inventory tabs. This is app logic, not Postgres. Check the live site, then decide whether to source the filter from `used-gear-workflow` (ties into 14.5).
 
 - Note: running the DB-backed tests with `POSTGRES_TEST_URL` pointed at the pg-test database applied new migrations to its `public` schema (0009 landed that way before the explicit `db:migrate`). Use a throwaway database for tests unless you intend to migrate.
+
+
+## Update 2026-10-25: Airtable no longer fed (user decision)
+- Decision: Airtable is being retired, so it does not need to keep receiving writes.
+- Built `AIRTABLE_WRITE_MODE=postgres-only` (SAM `AirtableWriteMode`, default `outbox`): creates/updates/deletes skip `write_outbox`. Nothing deleted; flip back to `outbox` to undo.
+- 14.4 step 3 changed: `audit_log` (migration 0011) is written by the store on every change, independent of the outbox. Read endpoint still to do.
+- Incident (test base only): running the full aws test suite against the pg-test DB let the worker tests mark all pending real outbox rows as `sent` without sending them (incl. the 4 SKU clears), and applied migration 0011 early. Airtable test base therefore missed those changes. Harmless now (Airtable is being retired); rule: run DB tests against a throwaway DB only.

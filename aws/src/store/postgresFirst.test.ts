@@ -57,6 +57,7 @@ if (!url) {
       async cleanup() {
         await pool.query('DELETE FROM workflow_images WHERE base_id = $1', [baseId]);
         await pool.query('DELETE FROM write_outbox WHERE base_id = $1', [baseId]);
+        await pool.query('DELETE FROM audit_log WHERE base_id = $1', [baseId]);
         await pool.query('DELETE FROM records WHERE base_id = $1', [baseId]);
         await pool.query('DELETE FROM airtable_fields WHERE base_id = $1', [baseId]);
         await pool.end();
@@ -115,6 +116,22 @@ if (!url) {
       await h.store.updateRecord('user-guide', 'rec1', { Grade: 'A' });
       await h.store.updateRecord('user-guide', 'rec1', { Grade: 'New option' }, { typecast: true });
     } finally {
+      await h.cleanup();
+    }
+  });
+
+  test('postgres-first: postgres-only mode logs changes but queues nothing for Airtable', async () => {
+    const h = await harness();
+    process.env.AIRTABLE_WRITE_MODE = 'postgres-only';
+    try {
+      const made = await h.store.createRecord('user-guide', { Title: 'x' });
+      await h.store.updateRecord('user-guide', made.id, { Title: 'y' });
+      await h.store.deleteRecord('user-guide', made.id);
+      assert.equal((await h.pool.query('SELECT 1 FROM write_outbox WHERE base_id = $1 AND record_id = $2', [h.baseId, made.id])).rowCount, 0);
+      const log = await h.pool.query('SELECT op FROM audit_log WHERE base_id = $1 AND record_id = $2 ORDER BY id', [h.baseId, made.id]);
+      assert.deepEqual(log.rows.map((r) => r.op), ['create', 'update', 'delete']);
+    } finally {
+      delete process.env.AIRTABLE_WRITE_MODE;
       await h.cleanup();
     }
   });

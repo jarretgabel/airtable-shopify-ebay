@@ -26,6 +26,27 @@ interface RecordRow {
   synced_at: Date;
 }
 
+export function isPostgresOnly(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.AIRTABLE_WRITE_MODE?.trim().toLowerCase() === 'postgres-only';
+}
+
+/** Always logs the change; queues it for Airtable unless Airtable is no longer being fed. */
+async function recordChange(
+  client: PoolClient,
+  c: { source: string; baseId: string; tableId: string; recordId: string; fields: unknown; typecast: boolean; op: 'create' | 'update' | 'delete' },
+): Promise<void> {
+  const fields = JSON.stringify(c.fields);
+  await client.query(
+    `INSERT INTO audit_log (source, base_id, table_id, record_id, op, fields) VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+    [c.source, c.baseId, c.tableId, c.recordId, c.op, fields],
+  );
+  if (isPostgresOnly()) return;
+  await client.query(
+    `INSERT INTO write_outbox (source, base_id, table_id, record_id, fields, typecast, op) VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)`,
+    [c.source, c.baseId, c.tableId, c.recordId, fields, c.typecast, c.op],
+  );
+}
+
 function httpError(status: number, code: string, message: string): HttpError {
   return new HttpError(status, message, { service: 'postgres', code, retryable: false });
 }
@@ -190,11 +211,7 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
            RETURNING fields, airtable_created_at, synced_at`,
           [baseId, tableId, recordId, JSON.stringify(applyFieldPatch({}, stamped.mirror))],
         );
-        await client.query(
-          `INSERT INTO write_outbox (source, base_id, table_id, record_id, fields, typecast, op)
-           VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'create')`,
-          [source, baseId, tableId, recordId, JSON.stringify(stamped.outbox), Boolean(writeOptions?.typecast)],
-        );
+        await recordChange(client, { source, baseId, tableId, recordId, fields: stamped.outbox, typecast: Boolean(writeOptions?.typecast), op: 'create' });
         const metadata = findWorkflowImageMetadataPatch(writable);
         if (metadata) await syncWorkflowImages(client, baseId, recordId, metadata.value);
         const row = created.rows[0];
@@ -211,11 +228,7 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
           [baseId, tableId, recordId],
         );
         if (!deleted.rowCount) throw httpError(404, 'POSTGRES_RECORD_NOT_FOUND', 'Record not found.');
-        await client.query(
-          `INSERT INTO write_outbox (source, base_id, table_id, record_id, fields, typecast, op)
-           VALUES ($1, $2, $3, $4, '{}'::jsonb, false, 'delete')`,
-          [source, baseId, tableId, recordId],
-        );
+        await recordChange(client, { source, baseId, tableId, recordId, fields: {}, typecast: false, op: 'delete' });
       });
     },
 
@@ -246,11 +259,7 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
           [baseId, tableId, recordId, JSON.stringify(merged)],
         );
         if (Object.keys(stamped.outbox).length > 0) {
-          await client.query(
-            `INSERT INTO write_outbox (source, base_id, table_id, record_id, fields, typecast)
-             VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
-            [source, baseId, tableId, recordId, JSON.stringify(stamped.outbox), Boolean(writeOptions?.typecast)],
-          );
+          await recordChange(client, { source, baseId, tableId, recordId, fields: stamped.outbox, typecast: Boolean(writeOptions?.typecast), op: 'update' });
         }
         const metadata = findWorkflowImageMetadataPatch(writable);
         if (metadata) await syncWorkflowImages(client, baseId, recordId, metadata.value);

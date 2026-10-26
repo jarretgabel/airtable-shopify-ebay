@@ -16,6 +16,11 @@ Parameters:
     Default: 'false'
     AllowedValues: ['false', 'true']
     Description: Tripwire. true makes every Airtable API call fail with 503 AIRTABLE_DISABLED and keeps the outbox worker idle; nothing is deleted.
+  AirtableWriteMode:
+    Type: String
+    Default: 'outbox'
+    AllowedValues: ['outbox', 'postgres-only']
+    Description: outbox queues every write for Airtable. postgres-only stops queuing (Postgres is the only system of record); existing queued rows are untouched.
   ImageArchiveBackend:
     Type: String
     Default: drive
@@ -260,6 +265,7 @@ Globals:
         IMAGE_ARCHIVE_BACKEND: !Ref ImageArchiveBackend
         AIRTABLE_OUTBOX_SYNC: !Ref AirtableOutboxSync
         AIRTABLE_DISABLED: !Ref AirtableDisabled
+        AIRTABLE_WRITE_MODE: !Ref AirtableWriteMode
         DATA_BACKEND_OVERRIDES: !Ref DataBackendOverrides
         DATABASE_URL: !If
           - CreatePostgres
