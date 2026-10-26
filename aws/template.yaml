@@ -1031,6 +1031,21 @@ Resources:
             Method: GET
             Path: /api/airtable/configured-records/{source}/{recordId}
 
+  AuditGetRecordHistoryFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/audit/getRecordHistory.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/audit/{source}/{recordId}
+
   AirtableGetConfiguredMetadataFunction:
     Type: AWS::Serverless::Function
     Metadata:

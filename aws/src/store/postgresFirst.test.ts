@@ -1,3 +1,4 @@
+import { readAuditLog } from './auditLog.js';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
@@ -130,6 +131,8 @@ if (!url) {
       assert.equal((await h.pool.query('SELECT 1 FROM write_outbox WHERE base_id = $1 AND record_id = $2', [h.baseId, made.id])).rowCount, 0);
       const log = await h.pool.query('SELECT op FROM audit_log WHERE base_id = $1 AND record_id = $2 ORDER BY id', [h.baseId, made.id]);
       assert.deepEqual(log.rows.map((r) => r.op), ['create', 'update', 'delete']);
+      const history = await readAuditLog(h.pool, h.baseId, 'tblTEST', made.id);
+      assert.deepEqual(history.map((e) => e.op), ['delete', 'update', 'create']);
     } finally {
       delete process.env.AIRTABLE_WRITE_MODE;
       await h.cleanup();
