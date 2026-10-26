@@ -30,6 +30,7 @@
     "db:normalize": "tsc -p tsconfig.json && node dist/db/normalize-cli.js",
     "db:compare-airtable": "tsc -p tsconfig.json && node dist/db/compare-airtable-cli.js",
     "db:clean-html-attachments": "tsc -p tsconfig.json && node dist/db/clean-html-attachments-cli.js",
+    "db:scan-drive-images": "tsc -p tsconfig.json && node dist/db/scan-drive-images-cli.js",
     "db:sync-workflow-images": "tsc -p tsconfig.json && node dist/db/sync-workflow-images-cli.js"
   },
   "dependencies": {
