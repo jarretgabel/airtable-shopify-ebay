@@ -809,3 +809,8 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Gap: Postgres-first writes did not restamp the two timestamps (the app reads them in lifecycle, queue and analytics), and the Shopify/eBay webhooks write `Post-Sale Outcome At` explicitly, which Airtable rejects (an outbox row for that record could dead-letter and block later rows).
 - Fix: `store/computedFields.ts` restamps them in the Postgres row when the watched field changes (an explicit value is kept), and keeps them out of the outbox payload (an outbox row is skipped if nothing else changed). Tests added; DB-backed suite 103 pass, 0 fail.
 - Production: re-run the metadata inventory against `apprsAm2FOohEmL2u` before cutover; its schema may have more computed fields than the test base.
+
+### Airtable-off trial on pg-test (started 2026-10-25)
+- Deployed the restamp fix and set `AirtableOutboxSync=paused` on pg-test (66 Lambdas modified, `UPDATE_COMPLETE`; the setting is in the gitignored samconfig). Writes now stay in Postgres and queue in `write_outbox` as `pending`; nothing reaches Airtable.
+- To end the trial: remove `AirtableOutboxSync=paused` from the samconfig pg-test overrides and deploy via change set; the worker then drains the queue in order. If something looks wrong, nothing is lost: the queue holds every write.
+- [ ] Use the app normally on pg-test (listings, intake, photos, approval, publish, users, user guide) and note anything that breaks without Airtable. Check `write_outbox` pending count afterwards.
