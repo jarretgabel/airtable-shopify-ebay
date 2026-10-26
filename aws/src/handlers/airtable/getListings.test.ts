@@ -1,18 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { storeSourceForTable } from './getListings.js';
+import { servedFromPostgres } from './getListings.js';
 
-test('legacy listings read is served by the store only when a source on that table is off Airtable', () => {
+test('legacy listings read uses Postgres only when a directory source is off Airtable', () => {
   const saved = { ...process.env };
   try {
-    process.env.AIRTABLE_BASE_ID = 'appTEST';
-    process.env.AIRTABLE_TABLE_NAME = 'tblgA8olAJtkRNZvK';
-    process.env.AIRTABLE_COMBINED_LISTINGS_TABLE_NAME = 'tblgA8olAJtkRNZvK';
     process.env.DATA_BACKEND_OVERRIDES = 'inventory-directory=airtable,approval-ebay=airtable';
-    assert.equal(storeSourceForTable('tblgA8olAJtkRNZvK'), undefined);
+    assert.equal(servedFromPostgres(), false);
     process.env.DATA_BACKEND_OVERRIDES = 'inventory-directory=postgres,approval-ebay=airtable';
-    assert.equal(storeSourceForTable('tblgA8olAJtkRNZvK'), 'inventory-directory');
-    assert.equal(storeSourceForTable('tblOther'), undefined);
+    assert.equal(servedFromPostgres(), true);
   } finally {
     process.env = saved;
   }
