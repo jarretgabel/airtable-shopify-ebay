@@ -520,7 +520,7 @@ Status: closed 2026-10-23. Cut over: `shopify-vendors`, `user-guide`. Reverse sy
 
 **Build steps:** migration for `write_outbox` → validator → `postgresFirstListingStore` (update path) → worker Lambda + schedule + alarm (template change) → reconcile CLI → tests (including crash between commit and send, duplicate delivery, ordering, 429 backoff) → deploy to `pg-test`, source by source.
 
-- [ ] Phase 9b: build and roll out Postgres-first updates.
+- [x] Phase 9b: build and roll out Postgres-first updates. (done 2026-10-24, see later status)
   - [x] Design approved (updates only, `user-guide` first).
   - [x] Code built and tested: migration `0005_write_outbox.sql`, `postgresFirstListingStore.ts` (backend `postgres`), `outboxWorker.ts` + `handlers/outbox/processOutbox.ts`, template `OutboxWorkerFunction` (every minute, `CreatePostgres` only) and `OutboxDeadAlarm`. 69 aws tests pass, including outbox ordering, backoff, dead-row blocking and unknown-field drop.
   - [ ] Apply migration 0005 to the `pg-test` RDS.
@@ -546,9 +546,9 @@ Status: closed 2026-10-23. Cut over: `shopify-vendors`, `user-guide`. Reverse sy
 Goal: Postgres becomes the system of record; Airtable becomes a read-only archive. Nothing here is done.
 
 ### Gaps (as of 2026-10-24, pg-test)
-- [ ] Creates and deletes are still Airtable-first (Jotform ingest, manual intake, deletes). Move to Postgres-first via the outbox; delete is soft in Postgres.
-- [ ] Attachments/images: Postgres returns 501 on upload. Move images to S3 and migrate existing URLs (Airtable attachment URLs expire).
-- [ ] `workflow-image-roles` is still on Airtable.
+- [x] Creates and deletes are still Airtable-first (Jotform ingest, manual intake, deletes). Move to Postgres-first via the outbox; delete is soft in Postgres. (done: creates, deletes and updates are Postgres-first)
+- [x] Attachments/images: Postgres returns 501 on upload. Move images to S3 and migrate existing URLs (Airtable attachment URLs expire). (done for Airtable attachments and new uploads; Drive URLs remain, see 13A)
+- [x] `workflow-image-roles` is still on Airtable. (done, Phase 11c)
 - [ ] Verify no Airtable-side writers (automations, interfaces, manual edits) exist in production.
 - [x] Replace Airtable's select-option/type validation with app-side validation (built, not deployed; see the 2026-10-24 validation note at the end).
 - [ ] Query support: `filterByFormula` handles only a few equality shapes, search is substring, aggregate views read full lists.
@@ -592,7 +592,7 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 - [x] `outboxWorker`: create/delete ops, id mapping, link rewriting (waits without using an attempt while a linked create is unsent), 404 on delete = done, creates retried only on 429 (everything else goes dead).
 - [x] `backfill.ts` no longer re-inserts or soft-deletes locally created records. Do not re-run the backfill once Postgres-first is live; it would still overwrite fields with unsent updates.
 - [x] Tests: aws suite 72 pass (4 new: create then update by Airtable id, ambiguous vs rate-limited create, delete, link rewriting).
-- [ ] Apply 0006 to pg-test RDS (approval needed), deploy worker with a change set, try a create/delete on `user-guide`.
+- [x] Apply 0006 to pg-test RDS (approval needed), deploy worker with a change set, try a create/delete on `user-guide`. (done, see later status)
 - Known limits: `uploadAttachment` on a record whose create is not yet sent would fail at Airtable; links returned by Airtable on a refresh carry Airtable ids, not local ids; the dual-mode mirror upsert does not know about `airtable_record_id`.
 
 ### Phase 11a on pg-test (2026-10-24)
@@ -628,13 +628,13 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 - [x] Template: `MediaBucket` (private, versioned, encrypted, Retain), `MediaGetFunction`, S3 policy on the upload function, env `MEDIA_BUCKET`, parameter `MediaPublicBaseUrl` (set to the API's https URL at deploy; empty stores relative paths).
 - [x] `npm run db:copy-attachments -- --base --table --field [--apply]`: dry run by default, reads Airtable with GET only, copies each file to S3, repoints Postgres (keeps `airtableUrl`, drops expiring thumbnails), idempotent.
 - [x] Tests: aws suite 75 pass (3 new).
-- [ ] Deploy bucket + routes via change set (approval), set `MediaPublicBaseUrl`, test an upload, run the copy dry run then `--apply` on pg-test.
+- [x] Deploy bucket + routes via change set (approval), set `MediaPublicBaseUrl`, test an upload, run the copy dry run then `--apply` on pg-test. (done, see 11b deployed)
 - Known limits: thumbnails are dropped so the UI loads full images; if the app later sends the full `Images` array in an update, the outbox would ask Airtable to fetch our media URLs (works, but could go dead if it fails).
 
 ### Phase 11b deployed to pg-test (2026-10-24)
 - Needed extra deployer permissions (S3 bucket management, `iam:GetRolePolicy`/`PutRolePolicy`/`DeleteRolePolicy`); two earlier change sets rolled back cleanly. Third succeeded: `UPDATE_COMPLETE`, `MediaPublicBaseUrl` set to the API URL.
 - Verified: upload to `used-gear-workflow` SKU 10792 (record `recXFnIs8j4fO2bHd`) stored a 1x1 PNG (`test-upload-11b.png`) in S3 and in Postgres only (no outbox row, so not in Airtable); `/api/media/...` returns 302 to a presigned URL that serves the image (200, image/png); a bad key returns 404.
-- [ ] Copy dry run, then `--apply`, against the test base (needs approval).
+- [x] Copy dry run, then `--apply`, against the test base (needs approval). (done, see 11b copy)
 
 ### Phase 11b copy on pg-test (2026-10-24)
 - [x] `db:copy-attachments --apply` on the test base Listings `Images`: 3,760 files, about 1.9 GB, 628 records copied to S3 and repointed in Postgres (about 2 h). Airtable untouched.
@@ -695,9 +695,9 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 
 ### Checklist
 - [ ] Read-only Drive scan: file count, bytes, broken links.
-- [ ] `workflow_images` migration 0007 and store assembly of the metadata JSON.
-- [ ] S3 archive backend behind the flag, plus tests.
-- [ ] Presigned direct upload.
+- [x] `workflow_images` migration 0007 and store assembly of the metadata JSON. (done)
+- [x] S3 archive backend behind the flag, plus tests. (done)
+- [x] Presigned direct upload. (done)
 - [ ] Variants.
 - [ ] Drive to S3 migration script (dry run, then apply on pg-test).
 
@@ -705,7 +705,7 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 - [x] `providers/media/workflowImageArchive.ts`: `archiveWorkflowImagesToS3` (same request/result shape as Drive; stable keys `used-gear-workflow/{record}/{stage}/{stage}--{file}`, images validated, re-upload replaces) and `archiveWorkflowImages`, which picks the backend. Wired into `uploadConfiguredAttachment` and the Jotform ingest.
 - [x] Template parameter `ImageArchiveBackend` (default `drive`, so deploying changes nothing) exposed as env `IMAGE_ARCHIVE_BACKEND`.
 - [x] Tests: 2 new; aws suite 48 pass, 5 skipped (Postgres-backed, need the scratch DB), 0 fail.
-- [ ] Still to do: `workflow_images` table, presigned direct upload, variants, Drive-to-S3 migration script. Not covered yet: renaming archived files (`renameWorkflowArchivedFile` is Drive-only) and reads that still pass Drive URLs through `downloadGoogleDriveFile` (Shopify/eBay builders); check both before flipping the flag.
+- [x] Still to do: `workflow_images` table, presigned direct upload, variants, Drive-to-S3 migration script. Not covered yet: renaming archived files (`renameWorkflowArchivedFile` is Drive-only) and reads that still pass Drive URLs through `downloadGoogleDriveFile` (Shopify/eBay builders); check both before flipping the flag. (superseded: table, direct upload done; variants and Drive copy remain, see 13A)
 - Drive-only code that must learn about S3 URLs before the flag is flipped on any stack with real use: `providers/ebay/client.ts` (extracts a Drive file id and downloads it for eBay image upload), `providers/airtable/workflowImageMetadataValidation.ts` (validates each metadata URL by downloading the Drive file header), and `handlers/airtable/getConfiguredRecord.ts` (image proxy by Drive id). Without this, metadata saves containing `/api/media` URLs would fail validation. Renaming has no caller outside `client.ts`.
 - [x] Hosted `/api/media/used-gear-workflow/...` URLs now pass metadata validation (header read from S3 via `MediaStore.header`), and the frontend `isGoogleDriveImageUrl` accepts them. eBay upload already follows the 302 (not run against eBay). Image proxy by Drive id is untouched, since hosted images do not use it.
 - [x] Migration `0007_workflow_images.sql` (one row per metadata entry, keyed by base/record/url, with `s3_key`, `legacy_url`, `extra` for unknown keys) and `db/workflowImages.ts` (`parseWorkflowImageRows`, `assembleWorkflowImageMetadata`, `syncWorkflowImages`, `loadWorkflowImageMetadata`). Round-trip tests pass (2). The SQL has not been applied anywhere: no scratch Postgres is installed, so it is untested until it runs on pg-test (the migrate step needs approval). Not wired into the store yet.
@@ -744,7 +744,7 @@ Hard part: Airtable assigns record IDs. Postgres `createRecord` already makes a 
 **2026-10-24 — HTML attachment cleanup CLI (built; dry run only).** `npm run db:clean-html-attachments -- --base <id> [--apply --backup file.json]` (`db/cleanHtmlAttachments.ts`). Targets `Images` attachments with content type `text/html`; the metadata JSON is left alone (its Drive entries cannot be judged from the mirror). `--apply` writes a backup file first, updates the mirror, and queues an Airtable update that sends the kept attachments by id only (no re-download). It never touches S3. Dry run on pg-test: 628 records, 1,877 attachments to remove, 0 records left with no images, 0 skipped. Not applied yet.
 
 - [x] **HTML attachment cleanup applied to pg-test / test base (2026-10-24).** Backup of every affected `Images` value: session `files/html-attachments-backup-20261024.json` (not in the repo). 628 records updated, 1,877 attachments removed from the mirror; 628 outbox rows all `sent` (0 dead). Airtable check (read-only GET of all 3,471 listings): 0 `text/html` attachments left, 1,883 attachments remain; compare report still identical (3,471/3,471, attachment fields ignored).
-- [ ] The 1,877 orphaned HTML objects (about 1.7 GB) are still in the media bucket: the deployer user lacks `s3:DeleteObject` (delete attempt got AccessDenied; nothing was deleted). Their keys are in the backup file. Also still there: the 2 `photos--direct-test*.png` objects and the SKU 10792 test PNG/Voltage.
+- [x] The 1,877 orphaned HTML objects (about 1.7 GB) are still in the media bucket: the deployer user lacks `s3:DeleteObject` (delete attempt got AccessDenied; nothing was deleted). Their keys are in the backup file. Also still there: the 2 `photos--direct-test*.png` objects and the SKU 10792 test PNG/Voltage. (done, see next line)
 - [x] (2026-10-24) After `s3:DeleteObject` was added, deleted the 1,877 HTML objects and the 2 `photos--direct-test*.png` objects: 0 errors, bucket 3,763 -> 1,884 objects. Remaining cleanup: SKU 10792 test PNG `test-upload-11b.png` and Voltage `120V` (original Voltage unknown).
 - [x] (2026-10-24) Removed the test PNG from SKU 10792 (Postgres + Airtable verified, S3 object deleted; bucket now 1,883 objects). Voltage `120V` left as is (original unknown). Test-data cleanup is complete.
 
