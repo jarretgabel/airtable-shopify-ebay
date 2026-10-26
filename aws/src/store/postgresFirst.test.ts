@@ -119,19 +119,18 @@ if (!url) {
     }
   });
 
-  test('postgres-first: a SKU may repeat only within one pickup group', async () => {
+  test('postgres-first: every item needs its own SKU, even inside a pickup group', async () => {
     const h = await harness();
     try {
       await h.pool.query(`INSERT INTO airtable_fields (base_id, table_id, field_id, name, type) VALUES ($1,'tblTEST','f5','SKU','singleLineText'),($1,'tblTEST','f6','Pick Up ID','singleLineText')`, [h.baseId]);
       await h.store.updateRecord('user-guide', 'rec1', { SKU: '100', 'Pick Up ID': 'P1' });
-      const sibling = await h.store.createRecord('user-guide', { Title: 'b', SKU: '100', 'Pick Up ID': 'P1' });
       const conflict = (e: unknown) => e instanceof HttpError && e.statusCode === 422;
-      await assert.rejects(h.store.createRecord('user-guide', { Title: 'c', SKU: '100', 'Pick Up ID': 'P2' }), conflict);
-      await assert.rejects(h.store.createRecord('user-guide', { Title: 'c', SKU: '100' }), conflict);
-      await assert.rejects(h.store.updateRecord('user-guide', sibling.id, { 'Pick Up ID': 'P2' }), conflict);
-      await h.store.createRecord('user-guide', { Title: 'd', SKU: '101' });
-      await assert.rejects(h.store.createRecord('user-guide', { Title: 'e', SKU: '101' }), conflict);
-      await h.store.updateRecord('user-guide', sibling.id, { Title: 'renamed' });
+      await assert.rejects(h.store.createRecord('user-guide', { Title: 'b', SKU: '100', 'Pick Up ID': 'P1' }), conflict);
+      await assert.rejects(h.store.createRecord('user-guide', { Title: 'c', SKU: ' 100 ' }), conflict);
+      const other = await h.store.createRecord('user-guide', { Title: 'd', SKU: '101', 'Pick Up ID': 'P1' });
+      await assert.rejects(h.store.updateRecord('user-guide', other.id, { SKU: '100' }), conflict);
+      await h.store.updateRecord('user-guide', other.id, { Title: 'renamed', 'Pick Up ID': 'P2' });
+      await h.store.updateRecord('user-guide', 'rec1', { SKU: '100' });
     } finally {
       await h.cleanup();
     }

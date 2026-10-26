@@ -74,34 +74,25 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
     return { writable, meta: new Map(known.rows.map((row) => [row.name, { type: row.type, options: row.options }])) };
   }
 
-  // A SKU may repeat only inside one pickup group, so another record with the same SKU must share this record's Pick Up ID.
+  // Every item has its own SKU, so no other live record in the table may use the same one (pickup groups do not share SKUs).
   async function assertSkuAllowed(
     client: PoolClient,
     baseId: string,
     tableId: string,
     recordId: string,
     patch: Record<string, unknown>,
-    current: Record<string, unknown>,
   ): Promise<void> {
-    if (!('SKU' in patch) && !('Pick Up ID' in patch)) return;
-    const textOf = (value: unknown): string => {
-      const raw = value && typeof value === 'object' ? (value as { text?: unknown }).text : value;
-      return typeof raw === 'string' || typeof raw === 'number' ? String(raw).trim() : '';
-    };
-    const sku = textOf('SKU' in patch ? patch.SKU : current.SKU);
+    if (!('SKU' in patch)) return;
+    const raw = patch.SKU && typeof patch.SKU === 'object' ? (patch.SKU as { text?: unknown }).text : patch.SKU;
+    const sku = typeof raw === 'string' || typeof raw === 'number' ? String(raw).trim() : '';
     if (!sku) return;
-    const pickup = textOf('Pick Up ID' in patch ? patch['Pick Up ID'] : current['Pick Up ID']);
     await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`sku:${baseId}:${tableId}:${sku}`]);
     const clash = await client.query(
-      `SELECT record_id FROM records
-       WHERE base_id = $1 AND table_id = $2 AND record_id <> $3 AND deleted_at IS NULL
-         AND trim(coalesce(fields -> 'SKU' ->> 'text', fields ->> 'SKU', '')) = $4
-         AND ($5 = '' OR trim(coalesce(fields -> 'Pick Up ID' ->> 'text', fields ->> 'Pick Up ID', '')) <> $5)
-       LIMIT 1`,
-      [baseId, tableId, recordId, sku, pickup],
+      `SELECT record_id FROM records WHERE base_id = $1 AND table_id = $2 AND record_id <> $3 AND deleted_at IS NULL AND sku = $4 LIMIT 1`,
+      [baseId, tableId, recordId, sku],
     );
     if (clash.rows[0]) {
-      throw httpError(422, 'POSTGRES_SKU_CONFLICT', `SKU ${sku} is already used by another record outside this pickup group.`);
+      throw httpError(422, 'POSTGRES_SKU_CONFLICT', `SKU ${sku} is already used by another record.`);
     }
   }
 
@@ -191,7 +182,7 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
       assertValid(meta, writable, {}, Boolean(writeOptions?.typecast));
 
       return inTransaction(source, recordId, async (client) => {
-        await assertSkuAllowed(client, baseId, tableId, recordId, writable, {});
+        await assertSkuAllowed(client, baseId, tableId, recordId, writable);
         const stamped = applyLastModifiedStamps({}, writable);
         const created = await client.query<RecordRow>(
           `INSERT INTO records (base_id, table_id, record_id, fields, airtable_created_at, synced_at)
@@ -245,7 +236,7 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
           throw httpError(404, 'POSTGRES_RECORD_NOT_FOUND', 'Record not found.');
         }
         assertValid(meta, writable, current.rows[0].fields, Boolean(writeOptions?.typecast));
-        await assertSkuAllowed(client, baseId, tableId, recordId, writable, current.rows[0].fields);
+        await assertSkuAllowed(client, baseId, tableId, recordId, writable);
         const stamped = applyLastModifiedStamps(current.rows[0].fields, writable);
         const merged = applyFieldPatch(current.rows[0].fields, stamped.mirror);
         const updated = await client.query<RecordRow>(
