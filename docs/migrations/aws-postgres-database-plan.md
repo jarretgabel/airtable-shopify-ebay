@@ -827,3 +827,9 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - [ ] Production computed-field inventory (only the test base was checked).
 - [ ] Scheduled export, alarms, restore drill.
 - [ ] `postgres-only` mode (14.7): the Airtable key and outbox code are still required.
+
+### Airtable-disabled trial (pg-test)
+- `AIRTABLE_DISABLED=true` tripwire deployed (Airtable calls fail 503 `AIRTABLE_DISABLED`; outbox idle). Undo: `AirtableDisabled=false`, remove `AirtableOutboxSync=paused`, redeploy via change set.
+- Smoke test: all 9 sources list 200; create and update on `user-guide` 200 and queued in `write_outbox`; no `AIRTABLE_DISABLED` errors in the listings Lambda logs; no dead outbox rows. Test records and their outbox rows were removed.
+- Findings: `user-guide` is not in the delete allow-list (expected). `/api/airtable/listings` needs `tableName`, so it returns 400 without it. That is not an Airtable dependency.
+- Still to exercise: the UI flows (approval, publish preview, uploads, Jotform webhook).
