@@ -959,6 +959,13 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/jotform/ingestSubmissionWebhook.handler
+      Timeout: 30
+      Policies:
+        - !If
+          - CreatePostgres
+          - S3CrudPolicy:
+              BucketName: !Ref MediaBucket
+          - !Ref AWS::NoValue
       Events:
         ApiEvent:
           Type: HttpApi
@@ -1034,6 +1041,12 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/airtable/upsertConfiguredRecord.createHandler
+      Policies:
+        - !If
+          - CreatePostgres
+          - S3ReadPolicy:
+              BucketName: !Ref MediaBucket
+          - !Ref AWS::NoValue
       Events:
         ApiEvent:
           Type: HttpApi
@@ -1049,6 +1062,12 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/airtable/upsertConfiguredRecord.updateHandler
+      Policies:
+        - !If
+          - CreatePostgres
+          - S3ReadPolicy:
+              BucketName: !Ref MediaBucket
+          - !Ref AWS::NoValue
       Events:
         ApiEvent:
           Type: HttpApi
