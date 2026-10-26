@@ -40,6 +40,32 @@ export async function exportBackup(pool: Queryable, store: BackupStore, prefix: 
   return manifest;
 }
 
+/** Parents before children, so foreign keys hold while loading. */
+async function orderByDependencies(pool: Queryable, tables: string[]): Promise<string[]> {
+  const fks = await pool.query<{ child: string; parent: string }>(
+    `SELECT c.conrelid::regclass::text AS child, c.confrelid::regclass::text AS parent
+     FROM pg_constraint c WHERE c.contype = 'f' AND c.connamespace = current_schema()::regnamespace`,
+  );
+  const unquote = (name: string) => name.replace(/^"|"$/g, '').replace(/^[^.]*\./, '');
+  const parents = new Map<string, Set<string>>(tables.map((t) => [t, new Set<string>()]));
+  for (const fk of fks.rows) {
+    const child = unquote(fk.child);
+    const parent = unquote(fk.parent);
+    if (child !== parent && parents.has(child) && parents.has(parent)) parents.get(child)!.add(parent);
+  }
+  const ordered: string[] = [];
+  const remaining = new Set(tables);
+  while (remaining.size) {
+    const ready = [...remaining].filter((t) => [...parents.get(t)!].every((p) => !remaining.has(p)));
+    if (!ready.length) throw new Error('Circular foreign keys between tables; cannot order the restore.');
+    for (const t of ready) {
+      ordered.push(t);
+      remaining.delete(t);
+    }
+  }
+  return ordered;
+}
+
 const BATCH = 500;
 
 /** Loads a backup into an already-migrated, empty database and checks the row counts against the manifest. */
@@ -54,7 +80,9 @@ export async function restoreBackup(pool: Queryable, store: BackupStore, prefix:
     if (existing.rowCount && table !== 'schema_migrations') throw new Error(`Target table ${table} is not empty; restore into a fresh database.`);
   }
 
-  for (const [table, expected] of Object.entries(manifest.tables)) {
+  const order = await orderByDependencies(pool, Object.keys(manifest.tables));
+  for (const table of order) {
+    const expected = manifest.tables[table];
     const quoted = assertSafe(table);
     const cols = await pool.query<{ column_name: string }>(
       `SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = $1 AND is_generated = 'NEVER' ORDER BY ordinal_position`,

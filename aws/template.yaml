@@ -1464,13 +1464,6 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-      LifecycleConfiguration:
-        Rules:
-          - Id: expire-old-backups
-            Status: Enabled
-            ExpirationInDays: 35
-            NoncurrentVersionExpiration:
-              NoncurrentDays: 7
 
   BackupExportFunction:
     Type: AWS::Serverless::Function
