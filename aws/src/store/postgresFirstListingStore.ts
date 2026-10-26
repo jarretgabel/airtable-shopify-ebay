@@ -3,6 +3,7 @@ import type { Pool, PoolClient } from 'pg';
 import { HttpError } from '../shared/errors.js';
 import { logError } from '../shared/logging.js';
 import { validateFieldValues, type FieldMeta } from './fieldValidation.js';
+import { applyLastModifiedStamps } from './computedFields.js';
 import { newRecordId, type PostgresTable } from './postgresListingStore.js';
 import { findWorkflowImageMetadataPatch, syncWorkflowImages } from '../db/workflowImages.js';
 import type { MediaStore } from '../providers/media/mediaStore.js';
@@ -191,16 +192,17 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
 
       return inTransaction(source, recordId, async (client) => {
         await assertSkuAllowed(client, baseId, tableId, recordId, writable, {});
+        const stamped = applyLastModifiedStamps({}, writable);
         const created = await client.query<RecordRow>(
           `INSERT INTO records (base_id, table_id, record_id, fields, airtable_created_at, synced_at)
            VALUES ($1, $2, $3, $4::jsonb, now(), now())
            RETURNING fields, airtable_created_at, synced_at`,
-          [baseId, tableId, recordId, JSON.stringify(applyFieldPatch({}, writable))],
+          [baseId, tableId, recordId, JSON.stringify(applyFieldPatch({}, stamped.mirror))],
         );
         await client.query(
           `INSERT INTO write_outbox (source, base_id, table_id, record_id, fields, typecast, op)
            VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'create')`,
-          [source, baseId, tableId, recordId, JSON.stringify(writable), Boolean(writeOptions?.typecast)],
+          [source, baseId, tableId, recordId, JSON.stringify(stamped.outbox), Boolean(writeOptions?.typecast)],
         );
         const metadata = findWorkflowImageMetadataPatch(writable);
         if (metadata) await syncWorkflowImages(client, baseId, recordId, metadata.value);
@@ -244,18 +246,21 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
         }
         assertValid(meta, writable, current.rows[0].fields, Boolean(writeOptions?.typecast));
         await assertSkuAllowed(client, baseId, tableId, recordId, writable, current.rows[0].fields);
-        const merged = applyFieldPatch(current.rows[0].fields, writable);
+        const stamped = applyLastModifiedStamps(current.rows[0].fields, writable);
+        const merged = applyFieldPatch(current.rows[0].fields, stamped.mirror);
         const updated = await client.query<RecordRow>(
           `UPDATE records SET fields = $4::jsonb, synced_at = now()
            WHERE base_id = $1 AND table_id = $2 AND record_id = $3
            RETURNING fields, airtable_created_at, synced_at`,
           [baseId, tableId, recordId, JSON.stringify(merged)],
         );
-        await client.query(
-          `INSERT INTO write_outbox (source, base_id, table_id, record_id, fields, typecast)
-           VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
-          [source, baseId, tableId, recordId, JSON.stringify(writable), Boolean(writeOptions?.typecast)],
-        );
+        if (Object.keys(stamped.outbox).length > 0) {
+          await client.query(
+            `INSERT INTO write_outbox (source, base_id, table_id, record_id, fields, typecast)
+             VALUES ($1, $2, $3, $4, $5::jsonb, $6)`,
+            [source, baseId, tableId, recordId, JSON.stringify(stamped.outbox), Boolean(writeOptions?.typecast)],
+          );
+        }
         const metadata = findWorkflowImageMetadataPatch(writable);
         if (metadata) await syncWorkflowImages(client, baseId, recordId, metadata.value);
         await client.query('COMMIT');
