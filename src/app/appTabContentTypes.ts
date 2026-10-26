@@ -82,6 +82,7 @@ export interface AppTabContentProps {
   atLoading: boolean;
   atError: Error | null;
   products: ReturnType<typeof useShopifyProducts>['products'];
+  workflowListedSkus?: ReadonlySet<string>;
   storeDomain?: string;
   spLoading: boolean;
   spError: Error | null;

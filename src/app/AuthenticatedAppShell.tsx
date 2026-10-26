@@ -351,6 +351,7 @@ export function AuthenticatedAppShell({
             atLoading={airtable.loading}
             atError={airtable.error}
             products={shopify.products}
+            workflowListedSkus={shopify.workflowListedSkus}
             storeDomain={shopifyStoreDomain}
             spLoading={shopify.loading}
             spError={shopify.error}

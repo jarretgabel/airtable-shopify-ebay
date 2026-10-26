@@ -97,7 +97,7 @@ type AirtableInput = Pick<
 
 type ShopifyInput = Pick<
   AppTabContentProps,
-  'spLoading' | 'spError' | 'products' | 'storeDomain' | 'nonEmptyListings'
+  'spLoading' | 'spError' | 'products' | 'storeDomain' | 'nonEmptyListings' | 'workflowListedSkus'
 >;
 
 type MarketInput = Pick<
@@ -296,7 +296,7 @@ export function buildAirtableTabViewModel(input: AirtableInput): AirtableTabView
 }
 
 export function buildShopifyTabViewModel(input: ShopifyInput): ShopifyTabViewModel {
-  const eligibleListingSkus = buildUsedGearWorkflowListingSkuSet(input.nonEmptyListings);
+  const eligibleListingSkus = new Set([...buildUsedGearWorkflowListingSkuSet(input.nonEmptyListings), ...(input.workflowListedSkus ?? [])]);
 
   return {
     loading: input.spLoading,

@@ -11,6 +11,7 @@ import { useDashboardMetrics } from '@/hooks/useDashboardMetrics';
 import { useEbayListings } from '@/hooks/useEbayListings';
 import { useHiFiShark } from '@/hooks/useHiFiShark';
 import { useJotFormInquiries } from '@/hooks/useJotForm';
+import { useUsedGearWorkflowListedSkus } from '@/hooks/useUsedGearWorkflowListedSkus';
 import { useListings } from '@/hooks/useListings';
 import { useShopifyProducts } from '@/hooks/useShopifyProducts';
 import { useUsedGearWorkflowDashboardTargets } from '@/hooks/useUsedGearWorkflowDashboardTargets';
@@ -39,7 +40,9 @@ export function useAppData({ enabled = true, canAccessPage, activeTab, currentUs
   const airtable = useListings(tableName, viewId, airtableEnabled);
   const nonEmptyListings = airtable.listings.filter((listing) => hasNonEmptyFields(listing.fields));
 
-  const shopify = useShopifyProducts(shopifyEnabled);
+  const shopifyProducts = useShopifyProducts(shopifyEnabled);
+  const workflowListedSkus = useUsedGearWorkflowListedSkus(shopifyEnabled);
+  const shopify = { ...shopifyProducts, workflowListedSkus };
   const market = useHiFiShark();
   const ebay = useEbayListings(ebayEnabled);
   const approval = useApprovalQueueSummary(enabled && dashboardActive && canAccessPage('listings') && runtimeFeatures.approvalEbay.available);

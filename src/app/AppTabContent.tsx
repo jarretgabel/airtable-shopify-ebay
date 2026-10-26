@@ -293,6 +293,7 @@ export function AppTabContent({
   atLoading,
   atError,
   products,
+  workflowListedSkus,
   storeDomain,
   spLoading,
   spError,
@@ -619,6 +620,7 @@ export function AppTabContent({
           spLoading,
           spError,
           products,
+          workflowListedSkus,
           nonEmptyListings,
           storeDomain,
         });
