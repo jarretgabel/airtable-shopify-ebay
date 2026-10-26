@@ -790,7 +790,7 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - [ ] 14.5 Legacy inventory table (411 rows, `tblgA8olAJtkRNZvK`): give it its own source so it is writable and no longer a frozen backfill.
 - [ ] 14.6 Phase 13A image work: S3-aware readers (eBay, Shopify, metadata validation, image proxy), HEIC/HEIF conversion, copy CLI, URL rewrite (full copy runs at production cutover).
 - [ ] 14.7 `postgres-only` backend mode: writes skip the outbox, no Airtable key required, Airtable client not loaded. Test on pg-test with the outbox off and the key removed.
-- [ ] 14.8 Backups: scheduled Postgres-to-S3 JSON/CSV export plus a restore drill; final full Airtable snapshot kept as an archive.
+- [~] 14.8 (export + restore built, see Update 2026-10-26 below; deploy and drill pending) Backups: scheduled Postgres-to-S3 JSON/CSV export plus a restore drill; final full Airtable snapshot kept as an archive.
 - [ ] 14.9 Production readiness: check Airtable automations, scripts, interfaces and integrations in the production base for anything that reads or writes data (the biggest unknown); rerun the comparison tool and SKU-collision/view-filter checks on production, apply migrations, production alarms, Multi-AZ, backfill.
 - [ ] 14.10 Cutover: freeze Airtable writes, final sync, switch production to `postgres-only`, monitor, keep Airtable read-only for a retention period.
 - [ ] 14.11 Cleanup after the retention period: rename `/api/airtable/*` routes and `airtable` files to neutral names (old routes kept as aliases), remove the Airtable-only paths (stale cache, `filterByFormula`, view ids in env), remove the Airtable key and outbox worker.
@@ -848,3 +848,10 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Incident (test base only): running the full aws test suite against the pg-test DB let the worker tests mark all pending real outbox rows as `sent` without sending them (incl. the 4 SKU clears), and applied migration 0011 early. Airtable test base therefore missed those changes. Harmless now (Airtable is being retired); rule: run DB tests against a throwaway DB only.
 - audit_log read endpoint built: `GET /api/audit/{source}/{recordId}?limit=` (admin only, newest first, `readAuditLog` in `aws/src/store/auditLog.ts`). Full aws suite on a throwaway `scratch_tests` DB (created, then dropped): 110 pass, 0 fail, so the earlier worker-test failure came from the shared pg-test DB.
 - Live check on pg-test (postgres-only mode): create + update on `user-guide` wrote 2 `audit_log` rows, queued 0 outbox rows, and `GET /api/audit/user-guide/{id}` returned both (admin session). Test record removed. 14.4 step 3 done; steps 4-5 optional.
+
+## Update 2026-10-26: 14.8 backups
+- Already in place: RDS automated backups (7 days), deletion protection, `DeletionPolicy: Snapshot`; S3 media bucket has versioning (answers the earlier unknown).
+- Built: `BackupExportFunction` (daily 08:00 UTC) writes gzipped JSON-lines per public table plus `manifest.json` (last) to a new private, versioned, encrypted `BackupBucket` under `postgres/YYYY-MM-DD/`; 35-day expiry. Separate bucket on purpose: the media bucket is served through `/api/media/`.
+- Restore: `aws/src/db/backup-restore-cli.ts --bucket B --prefix postgres/DATE/` into a freshly migrated, empty database; skips generated columns, resets sequences, verifies counts against the manifest, refuses a non-empty target.
+- Tests: unit test round-trips rows, a generated column and a bigserial sequence; full aws suite on a throwaway DB: 111 pass.
+- Still to do: deploy, run the export once, restore it into a scratch DB and compare counts (the drill), then keep a final full Airtable snapshot at cutover. Scale note: export holds one table in memory; fine at ~5k rows, revisit before it is 100x larger.

@@ -1447,6 +1447,53 @@ Resources:
           Properties:
             Schedule: rate(1 minute)
 
+  BackupBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreatePostgres
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-old-backups
+            Status: Enabled
+            ExpirationInDays: 35
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 7
+
+  BackupExportFunction:
+    Type: AWS::Serverless::Function
+    Condition: CreatePostgres
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/backup/exportBackup.handler
+      Timeout: 300
+      MemorySize: 1024
+      Environment:
+        Variables:
+          BACKUP_BUCKET: !Ref BackupBucket
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref BackupBucket
+      Events:
+        Daily:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 8 * * ? *)
+
   OutboxDeadAlarm:
     Type: AWS::CloudWatch::Alarm
     Condition: CreateCloudWatchAlarms
