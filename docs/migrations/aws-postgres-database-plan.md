@@ -791,7 +791,7 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - [ ] 14.6 Phase 13A image work: S3-aware readers (eBay, Shopify, metadata validation, image proxy), HEIC/HEIF conversion, copy CLI, URL rewrite (full copy runs at production cutover).
 - [ ] 14.7 `postgres-only` backend mode: writes skip the outbox, no Airtable key required, Airtable client not loaded. Test on pg-test with the outbox off and the key removed.
 - [ ] 14.8 Backups: scheduled Postgres-to-S3 JSON/CSV export plus a restore drill; final full Airtable snapshot kept as an archive.
-- [ ] 14.9 Production readiness: rerun the comparison tool and SKU-collision/view-filter checks on production, apply migrations, production alarms, Multi-AZ, backfill.
+- [ ] 14.9 Production readiness: check Airtable automations, scripts, interfaces and integrations in the production base for anything that reads or writes data (the biggest unknown); rerun the comparison tool and SKU-collision/view-filter checks on production, apply migrations, production alarms, Multi-AZ, backfill.
 - [ ] 14.10 Cutover: freeze Airtable writes, final sync, switch production to `postgres-only`, monitor, keep Airtable read-only for a retention period.
 - [ ] 14.11 Cleanup after the retention period: rename `/api/airtable/*` routes and `airtable` files to neutral names (old routes kept as aliases), remove the Airtable-only paths (stale cache, `filterByFormula`, view ids in env), remove the Airtable key and outbox worker.
 
@@ -814,3 +814,16 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Deployed the restamp fix and set `AirtableOutboxSync=paused` on pg-test (66 Lambdas modified, `UPDATE_COMPLETE`; the setting is in the gitignored samconfig). Writes now stay in Postgres and queue in `write_outbox` as `pending`; nothing reaches Airtable.
 - To end the trial: remove `AirtableOutboxSync=paused` from the samconfig pg-test overrides and deploy via change set; the worker then drains the queue in order. If something looks wrong, nothing is lost: the queue holds every write.
 - [ ] Use the app normally on pg-test (listings, intake, photos, approval, publish, users, user guide) and note anything that breaks without Airtable. Check `write_outbox` pending count afterwards.
+
+### Gap list: what Airtable does that Postgres does not yet (2026-10-25)
+- Covered: reads/writes/soft delete on all 9 sources, paging/sort/filter/search/queue counts, field validation, SKU group rule, last-modified restamps, S3 attachments and uploads, `workflow_images`, Jotform ingest, users and contacts.
+- [ ] Airtable automations, scripts and integrations (unknown; production check in 14.9).
+- [ ] Manual editing UI: staff cannot edit rows in a grid; build an admin tool or rely on SQL for data fixes.
+- [ ] Per-record version history and restore: only DB backups exist (restore drill never run); `audit_log` is 14.4.
+- [ ] Record ids: new records have our id first and Airtable's id after sync (goes away once Airtable is gone).
+- [ ] SKU uniqueness enforced in code, not the database (14.4); 3 collisions remain in the test data.
+- [ ] Drive image URLs (17,847 rows) and Drive-only readers (13A).
+- [ ] Select-option checks, typecasting of strings to numbers/dates, email/URL format checks, computed-field write blocking.
+- [ ] Production computed-field inventory (only the test base was checked).
+- [ ] Scheduled export, alarms, restore drill.
+- [ ] `postgres-only` mode (14.7): the Airtable key and outbox code are still required.
