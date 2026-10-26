@@ -106,7 +106,7 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
     const statuses = resolveSubsetStatuses(source, read.subset);
     if (statuses) {
       params.push(statuses);
-      where.push(`fields ->> 'Workflow Status' = ANY($${params.length}::text[])`);
+      where.push(`workflow_status = ANY($${params.length}::text[])`);
     }
 
     if (read.filterByFormula?.trim()) {
