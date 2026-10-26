@@ -111,7 +111,18 @@ function computeRetryDelayMs(attempt: number, retryAfterValue: string | null): n
   return Math.min(exponentialDelay + jitter, AIRTABLE_RETRY_MAX_DELAY_MS);
 }
 
+export function isAirtableDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.AIRTABLE_DISABLED?.trim().toLowerCase() === 'true';
+}
+
 async function airtableFetchWithRetry(input: string, init: RequestInit): Promise<Response> {
+  if (isAirtableDisabled()) {
+    throw new HttpError(503, 'Airtable is disabled (AIRTABLE_DISABLED=true).', {
+      service: 'airtable',
+      code: 'AIRTABLE_DISABLED',
+      retryable: false,
+    });
+  }
   let attempt = 0;
 
   while (true) {

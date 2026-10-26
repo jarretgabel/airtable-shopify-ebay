@@ -11,6 +11,11 @@ Parameters:
     Default: 'on'
     AllowedValues: ['on', paused]
     Description: Kill switch for sending Postgres-first writes to Airtable. paused keeps writes queued in the outbox and sends nothing.
+  AirtableDisabled:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['false', 'true']
+    Description: Tripwire. true makes every Airtable API call fail with 503 AIRTABLE_DISABLED and keeps the outbox worker idle; nothing is deleted.
   ImageArchiveBackend:
     Type: String
     Default: drive
@@ -254,6 +259,7 @@ Globals:
         MEDIA_PUBLIC_BASE_URL: !Ref MediaPublicBaseUrl
         IMAGE_ARCHIVE_BACKEND: !Ref ImageArchiveBackend
         AIRTABLE_OUTBOX_SYNC: !Ref AirtableOutboxSync
+        AIRTABLE_DISABLED: !Ref AirtableDisabled
         DATA_BACKEND_OVERRIDES: !Ref DataBackendOverrides
         DATABASE_URL: !If
           - CreatePostgres
