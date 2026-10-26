@@ -181,8 +181,15 @@ export function createPostgresListingStore(options: PostgresListingStoreOptions)
        WHERE base_id = $1 AND table_id = $2 AND record_id = $3 AND deleted_at IS NULL`,
       [baseId, tableId, recordId],
     );
-    if (!result.rows[0]) throw notFound();
-    return toListingRecord(result.rows[0]);
+    if (result.rows[0]) return toListingRecord(result.rows[0]);
+    // Archived (old Shipped) records stay readable by id, e.g. from a bookmarked link; they are not editable.
+    const archived = await pool.query<RecordRow>(
+      `SELECT record_id, fields, airtable_created_at, synced_at FROM records_archive
+       WHERE base_id = $1 AND table_id = $2 AND record_id = $3`,
+      [baseId, tableId, recordId],
+    );
+    if (!archived.rows[0]) throw notFound();
+    return toListingRecord(archived.rows[0]);
   }
 
   return {

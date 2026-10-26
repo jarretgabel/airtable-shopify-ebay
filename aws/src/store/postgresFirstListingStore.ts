@@ -112,7 +112,11 @@ export function createPostgresFirstListingStore(options: PostgresFirstStoreOptio
       `SELECT record_id FROM records WHERE base_id = $1 AND table_id = $2 AND record_id <> $3 AND deleted_at IS NULL AND sku = $4 LIMIT 1`,
       [baseId, tableId, recordId, sku],
     );
-    if (clash.rows[0]) {
+    const archivedClash = clash.rows[0] ? null : await client.query(
+      'SELECT record_id FROM records_archive WHERE base_id = $1 AND table_id = $2 AND record_id <> $3 AND sku = $4 LIMIT 1',
+      [baseId, tableId, recordId, sku],
+    );
+    if (clash.rows[0] || archivedClash?.rows[0]) {
       throw httpError(422, 'POSTGRES_SKU_CONFLICT', `SKU ${sku} is already used by another record.`);
     }
   }
