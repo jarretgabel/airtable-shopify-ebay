@@ -1,5 +1,5 @@
 import type { AirtableRecord } from '../airtable/client.js';
-import { getConfiguredRecords, updateConfiguredRecord } from '../airtable/sources.js';
+import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
 import { getSubmission } from './client.js';
 import { mapJotFormSubmissionToWorkflowItems } from './workflowIngestMapper.js';
 import {

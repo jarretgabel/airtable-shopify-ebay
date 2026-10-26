@@ -1,4 +1,5 @@
-import { getConfiguredRecord, updateConfiguredRecord, type AirtableConfiguredRecordsSource } from '../airtable/sources.js';
+import type { AirtableConfiguredRecordsSource } from '../airtable/sources.js';
+import { getConfiguredRecord, updateConfiguredRecord } from '../../store/index.js';
 import type { ShopifyApprovalPublishResult, ShopifyApprovalPreviewResult as ShopifyApprovalPreview } from '../../shared/contracts/shopifyApproval.js';
 import { logInfo } from '../../shared/logging.js';
 import {

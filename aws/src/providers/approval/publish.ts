@@ -1,4 +1,4 @@
-import { getConfiguredRecord } from '../airtable/sources.js';
+import { getConfiguredRecord } from '../../store/index.js';
 import {
   buildEbayDraftPayloadBundleFromApprovalFields,
 } from '../ebay/approvalDraft.js';

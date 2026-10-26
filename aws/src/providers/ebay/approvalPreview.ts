@@ -1,5 +1,5 @@
 import type { AirtableConfiguredRecordsSource } from '../airtable/sources.js';
-import { getConfiguredRecord } from '../airtable/sources.js';
+import { getConfiguredRecord } from '../../store/index.js';
 import type {
   ApprovalEbayBodyPreviewInput as EbayBodyPreviewInput,
   ApprovalEbayCategoryPreviewInput as EbayCategoryPreviewInput,

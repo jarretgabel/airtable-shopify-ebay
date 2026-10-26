@@ -1,7 +1,7 @@
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { HttpError } from '../../shared/errors.js';
 import { downloadWorkflowImageHeader, getWorkflowImageId } from '../media/workflowImageArchive.js';
-import { getConfiguredRecord, updateConfiguredRecord } from './sources.js';
+import { getConfiguredRecord, updateConfiguredRecord } from '../../store/index.js';
 
 interface WorkflowImageMetadataRecord {
   [key: string]: unknown;

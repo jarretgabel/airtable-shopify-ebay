@@ -794,3 +794,10 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - [ ] 14.9 Production readiness: rerun the comparison tool and SKU-collision/view-filter checks on production, apply migrations, production alarms, Multi-AZ, backfill.
 - [ ] 14.10 Cutover: freeze Airtable writes, final sync, switch production to `postgres-only`, monitor, keep Airtable read-only for a retention period.
 - [ ] 14.11 Cleanup after the retention period: rename `/api/airtable/*` routes and `airtable` files to neutral names (old routes kept as aliases), remove the Airtable-only paths (stale cache, `filterByFormula`, view ids in env), remove the Airtable key and outbox worker.
+
+### Jotform ingest test and store-bypass fix (2026-10-25, pg-test)
+- The pg-test Lambdas' Jotform key is rejected by Jotform (401) and the webhook secret is empty, so the webhook cannot run on pg-test until valid values are deployed. Ingest was run locally against pg-test instead (real key from `.env.local`, one real submission, test base only).
+- **Bug found:** the Jotform ingest/backfill, Shopify/eBay approval preview and publish, the shared approval publish and the image-metadata validation imported `providers/airtable/sources.js` directly, so they read and wrote Airtable and skipped Postgres entirely (the first ingest created the record only in Airtable). Fixed: all seven now import `store/index.js`. Not yet deployed.
+- After the fix: ingest created the record in Postgres (Pending Review), one `workflow_images` row with an S3 key, S3 objects, and 3 outbox rows `sent` with the record appearing in Airtable; a re-run updated the same record (no duplicate); delete went through the outbox and removed it from Airtable. Test record, S3 objects and image row were cleaned up.
+- [ ] Deploy the store-bypass fix to pg-test (change set), set a valid `JotformApiKey` and `JotformWebhookSecret`, then test the real webhook.
+- [ ] Re-check any other code that talks to Airtable directly (`api.airtable.com`, `airtableRequest`) for the same bypass.

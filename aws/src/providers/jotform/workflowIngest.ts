@@ -3,7 +3,7 @@ import {
   createConfiguredRecord,
   getConfiguredRecords,
   updateConfiguredRecord,
-} from '../airtable/sources.js';
+} from '../../store/index.js';
 import { archiveWorkflowImages } from '../media/workflowImageArchive.js';
 import { getSubmission, type JotFormSubmission } from './client.js';
 import { mapJotFormSubmissionToWorkflowItems } from './workflowIngestMapper.js';
