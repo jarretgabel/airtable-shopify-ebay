@@ -833,5 +833,6 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Smoke test: all 9 sources list 200; create and update on `user-guide` 200 and queued in `write_outbox`; no `AIRTABLE_DISABLED` errors in the listings Lambda logs; no dead outbox rows. Test records and their outbox rows were removed.
 - Findings: `user-guide` is not in the delete allow-list (expected). `/api/airtable/listings` needs `tableName`, so it returns 400 without it. That is not an Airtable dependency.
 - UI and API pass (Airtable disabled): all 20 routes load with no Airtable errors (workflow hub, listings, jotform, intake, photography, parking lot, trash, shipments, post-publish, ebay, shopify, market, imagelab, guide, account pages). Shopify and eBay previews, search, paging and the upload presign all work. No `AIRTABLE_DISABLED` hits in any Lambda log group.
-- Not Airtable-related on pg-test: Shopify products 401, eBay `EBAY_REFRESH_TOKEN` missing, no `/api/health` route locally.
+- Fixed: the pg-test Shopify token was stale and the eBay credentials were empty. Set both from `.env.local` through a change set; Shopify products and the eBay snapshot now return 200. **pg-test now has live Shopify and eBay write access, so never publish or take down from it.** Production publish stays untested here.
+- Not a bug: no `/api/health` route locally.
 - Not run (they write to live Shopify/eBay): publish and takedown. Jotform ingest was tested earlier.
