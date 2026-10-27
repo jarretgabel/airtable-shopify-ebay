@@ -142,6 +142,11 @@ function setAwsEnv() {
 
   process.env.JOTFORM_API_KEY = requireEnv(mergedEnv, 'VITE_JOTFORM_API_KEY');
   process.env.JOTFORM_WEBHOOK_SECRET = getOptionalEnv(mergedEnv, 'JOTFORM_WEBHOOK_SECRET') || getOptionalEnv(mergedEnv, 'VITE_JOTFORM_WEBHOOK_SECRET');
+  // Data layer settings are passed through as-is, so local dev can run on Postgres.
+  for (const name of ['DATA_BACKEND', 'DATA_BACKEND_OVERRIDES', 'DATABASE_URL', 'AIRTABLE_DISABLED', 'AIRTABLE_WRITE_MODE', 'AIRTABLE_OUTBOX_SYNC']) {
+    const value = getOptionalEnv(mergedEnv, name);
+    if (value) process.env[name] = value;
+  }
   // With Airtable switched off (Postgres-only), no key is needed.
   const airtableDisabled = ['1', 'true', 'yes', 'on'].includes(getOptionalEnv(mergedEnv, 'AIRTABLE_DISABLED').toLowerCase());
   process.env.AIRTABLE_API_KEY = airtableDisabled
