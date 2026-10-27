@@ -894,3 +894,11 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - The 4 duplicate-SKU records skipped in step 1 are not visible in the app until fixed and re-backfilled.
 - Direct edits made in the Airtable UI are not synced to Postgres from now on; edit through the app.
 - Rollback: set `DataBackend=airtable` in the staging samconfig and redeploy. Samconfig backup before this step: `backups/samconfig.toml.pre-staging-step2`.
+
+## Staging cutover, step 3 (2026-10-26)
+
+- Set `DataBackend=postgres` on `airtable-shopify-ebay-staging` (68 Lambdas modified, `UPDATE_COMPLETE`, site HTTP 200). Writes commit to Postgres first; `AirtableWriteMode=outbox` with `AirtableOutboxSync=on` copies them to the production Airtable base every minute as a rollback copy. `AirtableDisabled=false`, `ImageArchiveBackend=drive` (unchanged).
+- Never re-run the Airtable backfill from now on.
+- The 4 skipped duplicate-SKU records are still only in Airtable.
+- Rollback: `DataBackend=postgres-read` and redeploy (outbox keeps Airtable current). Samconfig backup: `backups/samconfig.toml.pre-staging-step3`.
+- Next: verify a test write reaches Airtable via the outbox, then step 4 (`postgres-only`, `AirtableDisabled=true`, remove the pg-test Jotform webhook, full Drive-to-S3 image copy).
