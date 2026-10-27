@@ -6,6 +6,8 @@ export interface MediaStore {
   signedPutUrl(key: string, contentType: string, expiresInSeconds?: number): Promise<string>;
   /** First bytes of an object, for image-type checks; null when the object does not exist. */
   header(key: string, bytes?: number): Promise<Buffer | null>;
+  /** Server-side copy; the source object is left in place so URLs already published keep working. */
+  copy(fromKey: string, toKey: string): Promise<void>;
   /** Short-lived direct download URL for a stored object. */
   signedUrl(key: string, expiresInSeconds?: number): Promise<string>;
   /** Stable URL stored on the record; resolves through the media redirect route. */
@@ -59,6 +61,11 @@ export function createS3MediaStore(options: { bucket: string; publicBaseUrl: str
         if (name === 'NoSuchKey' || name === 'NotFound') return null;
         throw error;
       }
+    },
+    async copy(fromKey, toKey) {
+      const { CopyObjectCommand } = await import('@aws-sdk/client-s3');
+      const source = `${options.bucket}/${fromKey.split('/').map(encodeURIComponent).join('/')}`;
+      await (await getClient()).send(new CopyObjectCommand({ Bucket: options.bucket, Key: toKey, CopySource: source }));
     },
     async signedPutUrl(key, contentType, expiresInSeconds = 300) {
       const { PutObjectCommand } = await import('@aws-sdk/client-s3');

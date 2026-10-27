@@ -7,6 +7,7 @@ import { getMediaStoreFromEnv } from '../../providers/media/mediaStore.js';
 import {
   finalizeWorkflowImageUpload,
   presignWorkflowImageUpload,
+  renameWorkflowImage,
   type DirectUploadFile,
 } from '../../providers/media/workflowImageDirectUpload.js';
 
@@ -16,6 +17,8 @@ interface Body {
   files?: DirectUploadFile[];
   processedKey?: string;
   originalKey?: string;
+  url?: string;
+  filename?: string;
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
@@ -45,6 +48,11 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       }, media);
       logInfo('Finalized workflow image upload', { source, recordId, key: archive.processed.id });
       return jsonOk({ uploaded: false, archived: true, archive }, { origin });
+    }
+    if (action === 'rename') {
+      const renamed = await renameWorkflowImage({ url: body.url?.trim() ?? '', filename: body.filename ?? '' }, media);
+      logInfo('Renamed workflow image', { source, recordId, key: renamed.id });
+      return jsonOk({ enabled: true, renamed }, { origin });
     }
     return jsonError(404, { message: 'Unknown action', service: 'airtable', code: 'DIRECT_UPLOAD_ACTION_UNKNOWN', retryable: false }, { origin });
   } catch (error) {

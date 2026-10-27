@@ -214,6 +214,11 @@ export function WorkflowImageMetadataEditor({
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </ApprovalSelect>
+                    {namingContext ? (
+                      <span className="mt-1.5 block text-xs text-[var(--muted)]">
+                        Changing the role updates the alt text now and renames the image file when you save, so the filename keeps matching for SEO.
+                      </span>
+                    ) : null}
                   </label>
 
                   {getWorkflowImageRoleSelectValue(record.imageRole, record.customImageRole, imageRoleOptions) === 'custom' ? (

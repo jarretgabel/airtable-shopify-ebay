@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { MediaStore } from './mediaStore.js';
-import { finalizeWorkflowImageUpload, presignWorkflowImageUpload } from './workflowImageDirectUpload.js';
+import { finalizeWorkflowImageUpload, presignWorkflowImageUpload, renameWorkflowImage } from './workflowImageDirectUpload.js';
 
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+
+const copies: string[][] = [];
 
 function fakeMedia(objects: Record<string, Buffer> = {}): MediaStore {
   return {
     async put() {},
     async header(key) { return objects[key] ?? null; },
+    async copy(from, to) { copies.push([from, to]); objects[to] = objects[from] ?? PNG; },
     async signedPutUrl(key, type) { return `https://put.test/${key}?type=${type}`; },
     async signedUrl() { return 'signed'; },
     publicUrl(key) { return `https://api.test/api/media/${key}`; },
@@ -43,4 +46,17 @@ test('finalize checks the objects are images under the record prefix', async () 
   await assert.rejects(finalizeWorkflowImageUpload({ recordKey: 'rec1', stage: 'photos', processedKey: 'used-gear-workflow/rec1/photos/photos--b.png' }, media));
   await assert.rejects(finalizeWorkflowImageUpload({ recordKey: 'rec1', stage: 'photos', processedKey: 'used-gear-workflow/rec2/photos/photos--a.png' }, media));
   await assert.rejects(finalizeWorkflowImageUpload({ recordKey: 'rec1', stage: 'photos', processedKey: 'used-gear-workflow/rec1/photos/missing.png' }, media));
+});
+
+test('rename copies to the new SEO filename, avoids collisions and keeps the old object', async () => {
+  const old = 'used-gear-workflow/rec1/testing/testing--old-name.jpg';
+  const taken = 'used-gear-workflow/rec1/testing/testing--emt-cartridge-bottom.jpg';
+  const media = fakeMedia({ [old]: PNG, [taken]: PNG });
+  copies.length = 0;
+  const result = await renameWorkflowImage({ url: `/api/media/${old}`, filename: 'emt-cartridge-bottom.jpg' }, media);
+  assert.equal(result.filename, 'testing--emt-cartridge-bottom-2.jpg');
+  assert.deepEqual(copies, [[old, 'used-gear-workflow/rec1/testing/testing--emt-cartridge-bottom-2.jpg']]);
+  const same = await renameWorkflowImage({ url: `/api/media/${old}`, filename: 'old-name.jpg' }, media);
+  assert.equal(same.id, old);
+  await assert.rejects(renameWorkflowImage({ url: 'https://drive.google.com/uc?id=1', filename: 'a.jpg' }, media));
 });

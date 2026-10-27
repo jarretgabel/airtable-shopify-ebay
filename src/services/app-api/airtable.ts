@@ -492,6 +492,18 @@ async function tryDirectWorkflowImageUpload(
   }
 }
 
+/** Copies a hosted workflow image to a new filename on the server. Null when direct storage is off. */
+export async function renameWorkflowImage(
+  source: AirtableConfiguredAttachmentSource,
+  recordId: string,
+  url: string,
+  filename: string,
+): Promise<{ id: string; filename: string; url: string } | null> {
+  const base = `/api/airtable/configured-attachments/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}/direct-upload`;
+  const result = await postJson<{ enabled: boolean; renamed?: { id: string; filename: string; url: string } }>(`${base}/rename`, { url, filename });
+  return result.enabled ? result.renamed ?? null : null;
+}
+
 export async function uploadConfiguredAttachment(
   source: AirtableConfiguredAttachmentSource,
   recordId: string,

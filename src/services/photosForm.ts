@@ -23,6 +23,7 @@ import {
   parseWorkflowImageMetadata,
   type WorkflowImageMetadataRecord,
 } from '@/services/workflowImageMetadata';
+import { renameImagesForChangedRoles } from '@/services/workflowImageRename';
 import { mergeWorkflowImageStageEdits, WorkflowImageEditError } from '@/services/workflowImageStageEdits';
 import { buildUsedGearItemTitle } from '../../aws/src/shared/contracts/usedGearItemTitle';
 import { getUsedGearRecordItemTitle } from '@/services/usedGearItemTitle';
@@ -447,6 +448,20 @@ export async function submitPhotosForm(
       }
 
       const workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
+      const roleRenamed = options.imageMetadata
+        ? await renameImagesForChangedRoles({
+            source: 'used-gear-workflow',
+            recordId,
+            stage: 'photos',
+            rawMetadata: workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME],
+            imageMetadata: options.imageMetadata,
+            originalImageMetadata: options.originalImageMetadata,
+            namingContext: { brand: values.make, model: values.model, productType: values.componentType, companyName: 'Resolution AV' },
+          })
+        : null;
+      const imageMetadata = roleRenamed?.imageMetadata ?? options.imageMetadata;
+      const originalImageMetadata = roleRenamed?.originalImageMetadata ?? options.originalImageMetadata;
+      const rawImageMetadata = roleRenamed ? roleRenamed.rawMetadata : workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME];
       assertApprovedPhotosWorkflowRecord(workflowRecord);
       if (options.completeWorkflowStage) {
         assertPhotographyStageReadyForCompletion(workflowRecord);
@@ -477,14 +492,14 @@ export async function submitPhotosForm(
         [PHOTOGRAPHY_COSMETIC_NOTES_FIELD_NAME]: trimToUndefined(values.cosmeticConditionNotes),
         "Photo'd": trimToUndefined(values.photoDate),
         Status: statusValue,
-        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: options.imageMetadata
-          ? mergeWorkflowImageStageEdits(workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME], options.imageMetadata, 'photos', options.originalImageMetadata)
+        [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: imageMetadata
+          ? mergeWorkflowImageStageEdits(rawImageMetadata, imageMetadata, 'photos', originalImageMetadata)
           : undefined,
         ...(options.completeWorkflowStage ? buildWorkflowPhotographyFields(workflowRecord, actorName, photographedAt) : {}),
       });
 
       const updatedRecord = await updateConfiguredRecord(recordSource, recordId, baseFields, { typecast: true });
-      const initialImageMetadata = options.imageMetadata ?? parseWorkflowImageMetadata(workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
+      const initialImageMetadata = imageMetadata ?? parseWorkflowImageMetadata(workflowRecord.fields[WORKFLOW_IMAGE_METADATA_FIELD_NAME]);
       let finalImageMetadata = initialImageMetadata;
       let usedArchiveOnlyWorkflowUpload = false;
 

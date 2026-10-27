@@ -301,6 +301,7 @@ if (!url) {
       objects,
       put: async (key, body) => { objects.set(key, body); },
       header: async (key) => objects.get(key)?.subarray(0, 64) ?? null,
+      copy: async () => {},
       signedPutUrl: async (key) => `https://put.example/${key}`,
       signedUrl: async (key) => `https://signed.example/${key}`,
       publicUrl: (key) => `/api/media/${key}`,

@@ -11,7 +11,7 @@ const FIELD_ALIASES = {
 
 export class WorkflowImageEditError extends Error {}
 
-function imageKey(record: WorkflowImageMetadataRecord): string {
+export function imageKey(record: WorkflowImageMetadataRecord): string {
   return record.attachmentId ? `id:${record.attachmentId}` : `url:${record.url.trim()}`;
 }
 

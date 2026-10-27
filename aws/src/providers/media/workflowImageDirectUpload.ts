@@ -2,7 +2,7 @@ import { HttpError } from '../../shared/errors.js';
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import type { WorkflowImageArchiveResult } from '../googleDrive/client.js';
 import { ARCHIVE_TABLE_PREFIX, buildFilename, safeSegment } from './workflowImageArchive.js';
-import type { MediaStore } from './mediaStore.js';
+import { extractWorkflowMediaKey, type MediaStore } from './mediaStore.js';
 
 export type DirectUploadStage = 'intake' | 'testing' | 'photos';
 type Variant = 'original' | 'processed';
@@ -72,4 +72,31 @@ export async function finalizeWorkflowImageUpload(
   const processed = await check(request.processedKey, 'processed');
   const original = request.originalKey ? await check(request.originalKey, 'original') : processed;
   return { folderId: prefix.split('/').slice(0, 2).join('/'), original, processed };
+}
+
+/** Copies a stored image to a new SEO filename in the same folder. The old object stays so published URLs keep resolving. */
+export async function renameWorkflowImage(
+  request: { url: string; filename: string },
+  media: MediaStore,
+): Promise<{ id: string; filename: string; url: string }> {
+  const key = extractWorkflowMediaKey(request.url) || (request.url.startsWith(`${ARCHIVE_TABLE_PREFIX}/`) ? request.url : '');
+  const parts = key.split('/');
+  if (parts.length !== 4) throw fail(400, 'WORKFLOW_RENAME_KEY_INVALID', 'The image is not stored in the workflow media bucket.');
+  const stage = assertStage(parts[2]);
+  const folder = parts.slice(0, 3).join('/');
+  if (!request.filename?.trim()) throw fail(400, 'WORKFLOW_RENAME_NAME_INVALID', 'A new filename is required.');
+
+  const wanted = buildFilename(stage, 'processed', request.filename);
+  if (wanted === parts[3]) return { id: key, filename: wanted, url: media.publicUrl(key) };
+
+  const extension = wanted.match(/\.[^.]+$/)?.[0] ?? '';
+  const stem = extension ? wanted.slice(0, -extension.length) : wanted;
+  let name = wanted;
+  for (let attempt = 2; await media.header(`${folder}/${name}`, 1); attempt += 1) {
+    if (attempt > 50) throw fail(409, 'WORKFLOW_RENAME_CONFLICT', 'Could not find a free filename.');
+    name = `${stem}-${attempt}${extension}`;
+  }
+  const nextKey = `${folder}/${name}`;
+  await media.copy(key, nextKey);
+  return { id: nextKey, filename: name, url: media.publicUrl(nextKey) };
 }
