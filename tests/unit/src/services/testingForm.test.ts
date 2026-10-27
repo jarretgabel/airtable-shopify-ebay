@@ -442,6 +442,47 @@ describe('testingForm', () => {
     ]);
   });
 
+  it('keeps the image role and alt text when the archive renames the uploaded file', async () => {
+    const originalFile = new File(['original-image'], 'front.jpg', { type: 'image/jpeg' });
+    const processedFile = new File(['processed-image'], 'front.jpg', { type: 'image/jpeg' });
+    const values: TestingFormValues = {
+      ...createTestingFormDefaults(),
+      sku: 'SKU-105',
+      make: 'McIntosh',
+      model: 'MC240',
+      componentType: 'Amplifier',
+      audiogonRating: '8/10',
+      testingNotes: 'Bench tested.',
+      testingTimeMinutes: '20',
+      testingDate: '2026-04-05',
+      imageFiles: [processedFile],
+    };
+
+    vi.mocked(getConfiguredRecord).mockResolvedValue(buildRecord({ 'Workflow Status': 'Testing In Progress' }));
+    vi.mocked(updateConfiguredRecord)
+      .mockResolvedValueOnce(buildRecord({}))
+      .mockResolvedValueOnce(buildRecord({}));
+    vi.mocked(uploadConfiguredAttachment).mockResolvedValue({
+      uploaded: false,
+      archived: true,
+      archive: {
+        folderId: 'folder-1',
+        original: { id: 'o', filename: 'testing--front--original.jpg', url: '/api/media/o' },
+        processed: { id: 'p', filename: 'testing--front.jpg', url: '/api/media/p' },
+      },
+    });
+
+    await submitTestingForm(values, 'recTesting123', {
+      recordSource: 'used-gear-workflow',
+      imageUploadAssets: [{ originalFile, uploadFile: processedFile, imageRole: 'front', altText: 'Front panel' }],
+    });
+
+    const metadataPayload = vi.mocked(updateConfiguredRecord).mock.calls[1]?.[2] as Record<string, unknown>;
+    expect(JSON.parse(String(metadataPayload['Workflow Image Metadata JSON']))).toEqual([
+      expect.objectContaining({ filename: 'testing--front.jpg', imageRole: 'front', alt: 'Front panel' }),
+    ]);
+  });
+
   it('rejects testing updates when no workflow record id is provided', async () => {
     const values: TestingFormValues = {
       sku: 'SKU-100',

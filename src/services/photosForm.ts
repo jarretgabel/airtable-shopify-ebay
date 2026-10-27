@@ -112,6 +112,16 @@ function buildContextAttachmentsFromMetadata(records: WorkflowImageMetadataRecor
   }));
 }
 
+// The archive renames files (for example `testing--name.jpg`), so match the upload by position, not by its original name.
+function withArchivedAsset(
+  assets: Map<string, FormImageUploadAsset>,
+  archivedFilename: string,
+  asset: FormImageUploadAsset | undefined,
+): Map<string, FormImageUploadAsset> {
+  if (!asset) return assets;
+  return new Map(assets).set(archivedFilename.toLowerCase(), asset);
+}
+
 function appendArchivedStageMetadata(
   records: WorkflowImageMetadataRecord[],
   archivedFiles: Array<{ id: string; url: string; filename: string }>,
@@ -514,7 +524,7 @@ export async function submitPhotosForm(
 
           if (shouldArchiveOnly && uploadResult.archive?.processed) {
             usedArchiveOnlyWorkflowUpload = true;
-            finalImageMetadata = appendArchivedStageMetadata(finalImageMetadata, [uploadResult.archive.processed], assetMetadataByFilename);
+            finalImageMetadata = appendArchivedStageMetadata(finalImageMetadata, [uploadResult.archive.processed], withArchivedAsset(assetMetadataByFilename, uploadResult.archive.processed.filename, options.imageUploadAssets?.[index]));
           }
 
           options.onImageUploadProgress?.({
