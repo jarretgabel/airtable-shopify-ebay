@@ -112,6 +112,8 @@ let parameterOverrides = match[2];
 for (const [key, value] of replacements) {
   // Airtable is being retired; a missing local key must not blank the one already in samconfig.
   if (key === 'AirtableApiKey' && !value) continue;
+  // Staging data lives under its own base; local .env.local points at the test base and must not overwrite it.
+  if (deployEnv === 'staging' && /^(AirtableBaseId|Airtable.*Table(Ref|Name)|AllowedAirtable)/.test(key)) continue;
   parameterOverrides = upsertParameterOverride(parameterOverrides, key, value);
 }
 
