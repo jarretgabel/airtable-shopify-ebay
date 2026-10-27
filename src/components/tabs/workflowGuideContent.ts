@@ -290,7 +290,7 @@ export const ROLE_GUIDES: Record<UserRole, RoleGuide> = {
     quickStartSummary: 'This guide is your plain-language map while you work in source feeds, account tooling, and local validation.',
     quickStartItems: [
       'Use this page first when you need the operational context behind a route, field, or workflow label.',
-      'Use JotForm, HiFi Shark, Image Lab, and workflow-related pages to trace where data enters the system and where it surfaces.',
+      'Use JotForm, HiFi Shark, and workflow-related pages to trace where data enters the system and where it surfaces.',
       'Keep settings and notifications in view when you are testing role-specific behavior or account flows.',
     ],
     flowSummary: 'You mostly need the seams between tools, not every day-to-day operational step, so this version focuses on handoff boundaries.',
@@ -414,6 +414,8 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
       'Actions: role-aware shortcuts into the exact queue, bucket, or handoff that needs work.',
       'Insights: alert-style prompts that explain backlog, stale follow-up, and publish blockers.',
       'Workflow snapshot reporting: post-sale exception counts, refund exposure, and disposition gaps derived from the approved workflow row without creating a separate post-sale workflow.',
+      'Reports (admin only): inventory by status, average time per workflow stage, and shipped items by brand with total cost.',
+      'Customers (full-access roles): seller list with their items, notes, and follow-ups; due follow-ups are listed first.',
     ],
     workflows: [
       'Start here when you do not yet know which queue owns the problem.',
@@ -636,20 +638,6 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
     ],
   },
   {
-    title: 'Image Lab',
-    pages: ['imagelab'],
-    summary: 'Image Lab is the image utility page for AI identification, processing, and upload prep.',
-    modules: [
-      'Options panel: processing settings and AI-provider context.',
-      'Drop zone and bulk actions: stage image batches and run identify/process actions.',
-      'Image cards: per-item results, copy actions, and upload actions.',
-    ],
-    workflows: [
-      'Use it when the job is image processing or AI-assisted identification rather than queue workflow routing.',
-      'Treat it as a utility page that supports listing assets, not as a workflow decision page.',
-    ],
-  },
-  {
     title: 'User Management',
     pages: ['users'],
     summary: 'User Management is the admin page for account provisioning, role access, and workflow alert defaults.',
@@ -791,6 +779,7 @@ const RECORD_GUIDE_CARDS: RecordGuideCard[] = [
       'Workflow summary and blocker state.',
       'Shared, Shopify, and eBay section editors with section nav.',
       'Record actions and payload previews where applicable.',
+      'Edit history (full-access roles): collapsible list of past changes to the record, newest first. It shows new values only and cannot restore.',
     ],
     workflows: [
       'Use it when one listing row needs final readiness work, approve-for-publish action, or listing-phase audit context.',
