@@ -38,3 +38,13 @@ describe('WorkflowImageMetadataEditor role change', () => {
     expect(next.alt).toBe('Hand written description');
   });
 });
+
+describe('WorkflowImageMetadataEditor pending filename', () => {
+  it('previews the new filename after a role change without renaming until save', async () => {
+    const view = render(<WorkflowImageMetadataEditor metadata={[{ ...base, url: '/api/media/used-gear-workflow/r/testing/testing--a.jpg' }]} onChange={vi.fn()} title="t" description="" emptyMessage="" namingContext={namingContext} />);
+    await screen.findAllByText('testing--front-panel.jpg');
+    view.rerender(<WorkflowImageMetadataEditor metadata={[{ ...base, url: '/api/media/used-gear-workflow/r/testing/testing--a.jpg', imageRole: 'front' }]} onChange={vi.fn()} title="t" description="" emptyMessage="" namingContext={namingContext} />);
+    expect(await screen.findByText('testing--mcintosh-mc275-amplifier-front-view.jpg')).toBeInTheDocument();
+    expect(screen.getByText('Renames on save')).toBeInTheDocument();
+  });
+});

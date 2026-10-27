@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { WorkflowImageMetadataRecord } from '@/services/workflowImageMetadata';
 import {
   getSortedWorkflowImageMetadata,
@@ -16,7 +16,7 @@ import {
   toWorkflowImageRoleSelection,
   type WorkflowImageRoleSelectOption,
 } from '@/services/workflowImageRoles';
-import { buildImageAltText, type ImageNamingContext } from '@/services/imageNamingFormatter';
+import { buildImageAltText, buildImageFilename, type ImageNamingContext } from '@/services/imageNamingFormatter';
 import { ApprovalSelect } from '@/components/approval/ApprovalSelect';
 import { WorkflowReferenceImageCard, type WorkflowImagePreviewSource } from './WorkflowReferenceImagesPanel';
 
@@ -53,6 +53,15 @@ export function WorkflowImageMetadataEditor({
   namingContext,
 }: WorkflowImageMetadataEditorProps) {
   const sortedMetadata = getSortedWorkflowImageMetadata(metadata);
+  // Role each image had when first shown, so a changed role can preview its new filename before saving.
+  const initialRoles = useRef(new Map<string, string>());
+  const roleKey = (record: WorkflowImageMetadataRecord) => `${record.imageRole ?? ''}|${record.customImageRole ?? ''}`;
+  sortedMetadata.forEach((record) => { if (!initialRoles.current.has(record.url)) initialRoles.current.set(record.url, roleKey(record)); });
+  const getPendingFilename = (record: WorkflowImageMetadataRecord): string | null => {
+    if (!namingContext || !record.imageRole || !/\/api\/media\//.test(record.url) || initialRoles.current.get(record.url) === roleKey(record)) return null;
+    const { filename } = buildImageFilename(namingContext, { role: record.imageRole, customRole: record.imageRole === 'custom' ? record.customImageRole ?? '' : '' });
+    return `${record.sourceStage}--${filename}`;
+  };
   const [imageRoleOptions, setImageRoleOptions] = useState<WorkflowImageRoleSelectOption[]>([]);
   const [savingCustomRoleUrl, setSavingCustomRoleUrl] = useState<string | null>(null);
   const [customRoleSaveErrors, setCustomRoleSaveErrors] = useState<Record<string, string>>({});
@@ -194,7 +203,14 @@ export function WorkflowImageMetadataEditor({
                     <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
                       {record.sourceStage}
                     </span>
-                    <span className="truncate text-sm font-semibold text-[var(--ink)]">{record.filename}</span>
+                    {getPendingFilename(record) ? (
+                      <>
+                        <span className="truncate text-sm font-semibold text-[var(--ink)]">{getPendingFilename(record)}</span>
+                        <span className="rounded-full border border-[var(--accent)] px-2 py-0.5 text-xs text-[var(--muted)]">Renames on save</span>
+                      </>
+                    ) : (
+                      <span className="truncate text-sm font-semibold text-[var(--ink)]">{record.filename}</span>
+                    )}
                   </div>
 
                   <label className="block">
