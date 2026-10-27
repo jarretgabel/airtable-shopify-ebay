@@ -20,6 +20,14 @@ const WATCH_TARGETS = [
 
 const ROUTES = [
   ['GET', '/api/dashboard/sellers-summary', 'handlers/dashboard/getSellersSummary.js', 'handler'],
+  ['GET', '/api/dashboard/reports', 'handlers/dashboard/getReports.js', 'handler'],
+  ['GET', '/api/dashboard/crm/contacts', 'handlers/crm/listContacts.js', 'handler'],
+  ['GET', '/api/dashboard/crm/contacts/{contactId}', 'handlers/crm/getContact.js', 'handler'],
+  ['POST', '/api/dashboard/crm/contacts/{contactId}/interactions', 'handlers/crm/addInteraction.js', 'handler'],
+  ['POST', '/api/dashboard/crm/contacts/{contactId}/follow-ups', 'handlers/crm/addFollowUp.js', 'handler'],
+  ['GET', '/api/dashboard/crm/follow-ups/due', 'handlers/crm/listDueFollowUps.js', 'handler'],
+  ['PATCH', '/api/dashboard/crm/follow-ups/{followUpId}', 'handlers/crm/closeFollowUp.js', 'handler'],
+  ['GET', '/api/audit/{source}/{recordId}', 'handlers/audit/getRecordHistory.js', 'handler'],
   ['POST', '/api/auth/login', 'handlers/auth/login.js', 'handler'],
   ['GET', '/api/auth/session', 'handlers/auth/resolveSession.js', 'handler'],
   ['POST', '/api/auth/password-reset/request', 'handlers/auth/requestPasswordReset.js', 'handler'],
