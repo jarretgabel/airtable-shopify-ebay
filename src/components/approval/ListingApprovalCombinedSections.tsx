@@ -1,4 +1,5 @@
 import { ListingApprovalCombinedEbaySection } from '@/components/approval/ListingApprovalCombinedEbaySection';
+import { ListingEditHistory } from '@/components/approval/ListingEditHistory';
 import { ListingApprovalCombinedIntakeSection } from '@/components/approval/ListingApprovalCombinedIntakeSection';
 import { ListingApprovalCombinedSharedSection } from '@/components/approval/ListingApprovalCombinedSharedSection';
 import { ListingApprovalCombinedShopifySection } from '@/components/approval/ListingApprovalCombinedShopifySection';
@@ -190,6 +191,8 @@ export function ListingApprovalCombinedSections({
         isEbayPayloadPreviewContext={isEbayPayloadPreviewContext}
         ebayDraftPayloadBundle={ebayDraftPayloadBundle}
       />
+
+      <ListingEditHistory recordId={selectedRecord.id} />
     </div>
   );
 }
