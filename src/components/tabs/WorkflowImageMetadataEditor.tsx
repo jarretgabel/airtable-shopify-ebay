@@ -200,9 +200,6 @@ export function WorkflowImageMetadataEditor({
                     <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold text-[var(--ink)]">
                       #{record.sortOrder}
                     </span>
-                    <span className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                      {record.sourceStage}
-                    </span>
                     {getPendingFilename(record) ? (
                       <span className="truncate text-sm font-semibold text-[var(--ink)]">{getPendingFilename(record)}</span>
                     ) : (
