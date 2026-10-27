@@ -49,7 +49,7 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     disabledReason: disabledTabReasons[tab],
   });
 
-  const navigableTabs = visibleTabs.filter((tab) => !FORM_ONLY_TAB_SET.has(tab) && !HIDDEN_TAB_SET.has(tab));
+  const navigableTabs = visibleTabs.filter((tab) => !FORM_ONLY_TAB_SET.has(tab) && !HIDDEN_TAB_SET.has(tab) && tab !== 'imagelab');
 
   const mainTabs = navigableTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !LISTINGS_TAB_SET.has(tab) && !POST_PUBLISH_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
   const postEbayTabs = navigableTabs.filter((tab) => !UTILITY_TAB_SET.has(tab) && !LISTINGS_TAB_SET.has(tab) && !POST_PUBLISH_TAB_SET.has(tab) && !INTAKE_TAB_SET.has(tab) && !INVENTORY_PROCESSING_TAB_SET.has(tab) && !mainTabs.includes(tab) && tab !== 'settings' && tab !== 'users' && tab !== 'notifications');
