@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Fragment, useCallback, useEffect, useState, type FormEvent } from 'react';
 import { dashboardAppApi } from '@/services/app-api';
 import type { CrmContactDetail, CrmContactRow, CrmDueFollowUp, InteractionKind } from '@/services/app-api/dashboard';
 import { smallPrimaryActionButtonClass, smallSecondaryActionButtonClass } from '@/components/app/buttonStyles';
@@ -91,52 +91,7 @@ export function DashboardCustomersSection({ showWarnings = false, api = dashboar
   }
   if (!contacts) return null;
 
-  return (
-    <DashboardSectionPanel id="customers" title="Customers">
-      {due.length > 0 ? (
-        <DashboardSubPanel title={`Follow-ups due (${due.length})`}>
-          <ul className="space-y-1 text-[0.82rem] text-[var(--ink)]">
-            {due.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-3">
-                <button type="button" className="text-left underline" onClick={() => void openContact(item.contactId)}>{item.contactEmail}</button>
-                <span className="flex-1 truncate text-[var(--muted)]">{formatDate(item.dueAt)} · {item.note ?? ''}</span>
-                <button type="button" className={smallSecondaryActionButtonClass} onClick={() => void run(() => api.closeCrmFollowUp(item.id, 'done'))}>Done</button>
-              </li>
-            ))}
-          </ul>
-        </DashboardSubPanel>
-      ) : null}
-
-      <input
-        type="search"
-        aria-label="Search customers"
-        placeholder="Search customers by email, name or phone"
-        className={tabFormControlBaseClass}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-      />
-      <table className="mt-3 w-full text-left text-[0.82rem] text-[var(--ink)]">
-        <thead>
-          <tr className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]">
-            <th className="py-1 pr-3">Customer</th><th className="py-1 pr-3">Location</th><th className="py-1 pr-3">Items</th><th className="py-1">Open follow-ups</th>
-          </tr>
-        </thead>
-        <tbody>
-          {contacts.map((contact) => (
-            <tr key={contact.id} className="border-t border-[var(--line)]">
-              <td className="py-1.5 pr-3">
-                <button type="button" className="text-left underline" onClick={() => void openContact(contact.id)}>{contact.name || contact.email}</button>
-              </td>
-              <td className="py-1.5 pr-3">{contact.location ?? '—'}</td>
-              <td className="py-1.5 pr-3">{contact.itemCount}</td>
-              <td className="py-1.5">{contact.openFollowUps}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {contacts.length === 0 ? <p className="mt-2 text-sm text-[var(--muted)]">No customers match.</p> : null}
-
-      {selectedId ? (
+  const detailPanel = (
         <DashboardSubPanel title={detail ? `${detail.contact.name || detail.contact.email}` : 'Customer'}>
           {actionError ? <p role="alert" className="mb-2 text-sm">{actionError}</p> : null}
           {!detail && !actionError ? <p>Loading customer…</p> : null}
@@ -187,7 +142,60 @@ export function DashboardCustomersSection({ showWarnings = false, api = dashboar
             </div>
           ) : null}
         </DashboardSubPanel>
+  );
+
+  return (
+    <DashboardSectionPanel id="customers" title="Customers">
+      {due.length > 0 ? (
+        <DashboardSubPanel title={`Follow-ups due (${due.length})`}>
+          <ul className="space-y-1 text-[0.82rem] text-[var(--ink)]">
+            {due.map((item) => (
+              <li key={item.id} className="flex items-center justify-between gap-3">
+                <button type="button" className="text-left underline" onClick={() => { setSearch(item.contactEmail); void openContact(item.contactId); }}>{item.contactEmail}</button>
+                <span className="flex-1 truncate text-[var(--muted)]">{formatDate(item.dueAt)} · {item.note ?? ''}</span>
+                <button type="button" className={smallSecondaryActionButtonClass} onClick={() => void run(() => api.closeCrmFollowUp(item.id, 'done'))}>Done</button>
+              </li>
+            ))}
+          </ul>
+        </DashboardSubPanel>
       ) : null}
+
+      <input
+        type="search"
+        aria-label="Search customers"
+        placeholder="Search customers by email, name or phone"
+        className={tabFormControlBaseClass}
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+      />
+      <table className="mt-3 w-full text-left text-[0.82rem] text-[var(--ink)]">
+        <thead>
+          <tr className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]">
+            <th className="py-1 pr-3">Customer</th><th className="py-1 pr-3">Location</th><th className="py-1 pr-3">Items</th><th className="py-1">Open follow-ups</th>
+          </tr>
+        </thead>
+        <tbody>
+          {contacts.map((contact) => (
+            <Fragment key={contact.id}>
+              <tr className="border-t border-[var(--line)]">
+                <td className="py-1.5 pr-3">
+                  <button type="button" className="text-left underline" aria-expanded={selectedId === contact.id} onClick={() => (selectedId === contact.id ? setSelectedId(null) : void openContact(contact.id))}>{contact.name || contact.email}</button>
+                </td>
+                <td className="py-1.5 pr-3">{contact.location ?? '—'}</td>
+                <td className="py-1.5 pr-3">{contact.itemCount}</td>
+                <td className="py-1.5">{contact.openFollowUps}</td>
+              </tr>
+              {selectedId === contact.id ? (
+                <tr>
+                  <td colSpan={4} className="pb-3">{detailPanel}</td>
+                </tr>
+              ) : null}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+      {contacts.length === 0 ? <p className="mt-2 text-sm text-[var(--muted)]">No customers match.</p> : null}
+
     </DashboardSectionPanel>
   );
 }
