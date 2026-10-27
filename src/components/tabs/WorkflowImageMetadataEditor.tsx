@@ -216,7 +216,7 @@ export function WorkflowImageMetadataEditor({
                     </ApprovalSelect>
                   </label>
 
-                  {record.imageRole === 'custom' ? (
+                  {getWorkflowImageRoleSelectValue(record.imageRole, record.customImageRole, imageRoleOptions) === 'custom' ? (
                     <div className="grid gap-2">
                       <label className="block">
                         <span className="text-sm font-semibold text-[var(--ink)]">Custom Image Role</span>
