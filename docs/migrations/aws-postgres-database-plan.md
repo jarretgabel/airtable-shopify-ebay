@@ -933,3 +933,10 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Item 4: removed the per-instance read cache TTLs (reads could go stale after a write on another Lambda instance). The Airtable fallback stays until Airtable code removal.
 - `loadUsedGearOperationalRecords` now does one read (required + optional fields) instead of two.
 - Test note: a fresh scratch DB needs `db:migrate` against `POSTGRES_TEST_URL` before the aws test suite.
+
+## Next features (in progress)
+
+- Item 9: migration `0013` enables `pg_stat_statements` (already preloaded on RDS, no reboot). Performance Insights is not supported on `db.t4g.micro`; revisit with a larger instance class. Not yet applied to staging/pg-test.
+- Item 1: edit history UI. Backend `GET /api/audit/{source}/{recordId}` (admin only) already exists.
+- Item 3: one Reports tab (inventory by status, time in each stage, sales by vendor/brand) from `items`, `listings` and `audit_log`.
+- Item 5: CRM screens over `contacts`, `interactions`, `inquiries`, `follow_ups`.
