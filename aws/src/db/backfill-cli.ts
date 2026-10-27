@@ -13,7 +13,7 @@ const DEFAULT_TABLES = [
   'tbl3yTb0JkzUMFNnS', // Ebay Listing
 ];
 
-// Usage: backfill-cli --base appXXXX [--tables tblA,tblB] [--apply] [--allow-production-read]
+// Usage: backfill-cli --base appXXXX [--tables tblA,tblB] [--apply] [--allow-production-read] [--skip-records recA,recB]
 // Default is a dry run: reads Airtable (GET only) and reports counts, writes nothing to Postgres.
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
@@ -36,6 +36,7 @@ if (!apiKey) {
   process.exit(1);
 }
 const apply = flag('apply');
+const skipRecords = new Set(arg('skip-records')?.split(',').map((r) => r.trim()).filter(Boolean) ?? []);
 const tables = arg('tables')?.split(',').map((t) => t.trim()).filter(Boolean) ?? DEFAULT_TABLES;
 
 async function fetchSchema(): Promise<Map<string, BackfillField[]>> {
@@ -70,7 +71,9 @@ try {
       failed = true;
       continue;
     }
-    const records = await getRecords(baseId, tableId);
+    const allRecords = await getRecords(baseId, tableId);
+    const records = allRecords.filter((r) => !skipRecords.has(r.id));
+    if (records.length !== allRecords.length) console.log(`${tableId}: skipped ${allRecords.length - records.length} record(s) by --skip-records`);
     if (!client) {
       console.log(`${tableId}: ${records.length} records, ${fields.length} fields`);
       continue;

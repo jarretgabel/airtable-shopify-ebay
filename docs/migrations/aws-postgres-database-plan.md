@@ -876,3 +876,14 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Needed a temporary inline IAM policy on the deploy user (SNS topic/subscribe, CloudWatch alarm actions); it can be removed.
 - [ ] Email subscription must be confirmed from the AWS email; then test with `set-alarm-state` on one alarm.
 - Production: reuse the same parameters; Multi-AZ and the point-in-time restore drill are still open.
+
+## Staging cutover, step 1 (2026-10-26)
+
+- Added Postgres to the live `airtable-shopify-ebay-staging` stack (RDS, media and backup buckets, alarms, SNS topic, backup Lambda, outbox worker). The app still reads and writes Airtable (`DataBackend=airtable`); the live site stayed up (HTTP 200).
+- Two attempts rolled back first, leaving two empty orphaned RDS instances (deleted, with their subnet/parameter/security groups, with approval):
+  1. Lambda environment variables hit the 4 KB limit (4,100 bytes). Fixed by dropping 4 redundant table-ref/name parameters from the staging samconfig (code defaults are the same IDs). Watch this limit when adding env vars.
+  2. The deploy user lacked `events:*` on the staging EventBridge rules (only matched pg-test names). Fixed by widening the user's inline policy to `rule/airtable-shopify-ebay-*`.
+- Applied migrations 0001-0012 to the staging DB.
+- Backfill from the PRODUCTION base (read-only on Airtable): listings 3,498, vendors 646, user guide 65, image roles 47, users 18, shopify 3, ebay 2, legacy `tblgA8olAJtkRNZvK` 411. Compare on listings: 3,498 identical, 0 differing.
+- FINDING: production has 4 duplicate SKUs, which the unique SKU index rejects: 10650, 10066, 11499, 12170. User chose to skip the second record of each pair for now: `recJ79Rt24rtTdXRh`, `recErKIzuC3NEpzSu`, `rec8tgcJvY31num7b`, `recXJr8UGJPlhF2vw` (present only in Airtable). They MUST be resolved (SKU fixed or record retired in Airtable) and re-backfilled before reads move to Postgres, or they will be invisible. `backfill-cli` got a `--skip-records` flag for this.
+- Next: step 2 (serve reads from Postgres), then step 3 (Postgres-first writes with the outbox on).
