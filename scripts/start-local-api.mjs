@@ -142,7 +142,11 @@ function setAwsEnv() {
 
   process.env.JOTFORM_API_KEY = requireEnv(mergedEnv, 'VITE_JOTFORM_API_KEY');
   process.env.JOTFORM_WEBHOOK_SECRET = getOptionalEnv(mergedEnv, 'JOTFORM_WEBHOOK_SECRET') || getOptionalEnv(mergedEnv, 'VITE_JOTFORM_WEBHOOK_SECRET');
-  process.env.AIRTABLE_API_KEY = requireEnv(mergedEnv, 'VITE_AIRTABLE_API_KEY');
+  // With Airtable switched off (Postgres-only), no key is needed.
+  const airtableDisabled = ['1', 'true', 'yes', 'on'].includes(getOptionalEnv(mergedEnv, 'AIRTABLE_DISABLED').toLowerCase());
+  process.env.AIRTABLE_API_KEY = airtableDisabled
+    ? getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_API_KEY')
+    : requireEnv(mergedEnv, 'VITE_AIRTABLE_API_KEY');
   process.env.AIRTABLE_BASE_ID = requireEnv(mergedEnv, 'VITE_AIRTABLE_BASE_ID');
   process.env.ALLOWED_AIRTABLE_TABLE_NAME = requireEnv(mergedEnv, 'VITE_AIRTABLE_TABLE_NAME');
   process.env.AIRTABLE_USERS_TABLE_REF = getOptionalEnv(mergedEnv, 'VITE_AIRTABLE_USERS_TABLE_REF');
