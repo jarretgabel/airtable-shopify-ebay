@@ -479,7 +479,7 @@ export function AirtableEmbeddedForm({
   const sharedFieldValues = sharedValues as unknown as FieldValueMap;
 
   if (loadingOptions) {
-    return <LoadingSurface message="Loading Manual Intake form configuration from Airtable..." />;
+    return <LoadingSurface message="Loading Manual Intake form configuration..." />;
   }
 
   if (optionsError || !optionSets) {

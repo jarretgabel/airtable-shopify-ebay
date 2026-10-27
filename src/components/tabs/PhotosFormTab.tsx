@@ -390,7 +390,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
   };
 
   if (loadingOptions) {
-    return <LoadingSurface message="Loading Photos form configuration from Airtable..." />;
+    return <LoadingSurface message="Loading Photos form configuration..." />;
   }
 
   if (optionsError || !optionSets) {

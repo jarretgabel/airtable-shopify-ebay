@@ -401,7 +401,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
   };
 
   if (loadingOptions) {
-    return <LoadingSurface message="Loading Testing form configuration from Airtable..." />;
+    return <LoadingSurface message="Loading Testing form configuration..." />;
   }
 
   if (optionsError || !optionSets) {

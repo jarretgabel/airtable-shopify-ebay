@@ -212,13 +212,13 @@ export function WorkflowGuideEditorTab({ className }: WorkflowGuideEditorTabProp
         </p>
         <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4 text-sm text-[var(--muted)]">
           <p className="m-0">Edit access: <span className="font-semibold text-[var(--ink)]">Admin, Owner, Developer</span></p>
-          {loading ? <p className="m-0 mt-2">Refreshing guide content from Airtable...</p> : null}
+          {loading ? <p className="m-0 mt-2">Refreshing guide content...</p> : null}
           {guideSource === 'default' ? <p className="m-0 mt-2 text-amber-200">Airtable guide rows are unavailable, so this page is showing fallback content and saves are blocked until the configured source comes back.</p> : null}
         </div>
       </section>
 
       {editableRecords.length === 0 ? (
-        loading ? <LoadingSurface message="Loading editable guide rows from Airtable..." /> : <ErrorSurface title="Guide editing unavailable" message="The User Guide Airtable rows could not be loaded for editing." />
+        loading ? <LoadingSurface message="Loading editable guide rows..." /> : <ErrorSurface title="Guide editing unavailable" message="The User Guide Airtable rows could not be loaded for editing." />
       ) : (
         <section className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 shadow-[0_18px_40px_rgba(2,6,23,0.18)]">

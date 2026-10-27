@@ -63,7 +63,7 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
 
       {atLoading ? (
         <>
-          <DashboardLoadingBanner label="Loading Airtable inventory snapshot" />
+          <DashboardLoadingBanner label="Loading inventory snapshot" />
           <DashboardStatTileSkeletonGrid />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <section className="rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-4"><h3 className="mb-3 text-[0.9rem] font-bold text-[var(--ink)]">By Component Type</h3><DashboardBarListSkeleton /></section>
