@@ -18,6 +18,8 @@ export interface GenerateVariantsOptions {
   resize: (bytes: Buffer, width: ImageVariantWidth) => Promise<Buffer>;
   apply: boolean;
   limit?: number;
+  /** Images processed at once; defaults to 1. */
+  concurrency?: number;
   onProgress?: (report: GenerateVariantsReport, done: number, total: number) => void;
 }
 
@@ -30,7 +32,7 @@ export async function generateImageVariants(options: GenerateVariantsOptions): P
   );
   const keys = (rows.rows as Array<{ s3_key: string }>).map((row) => row.s3_key).slice(0, options.limit ?? undefined);
 
-  for (const [index, key] of keys.entries()) {
+  const handle = async (key: string) => {
     report.images += 1;
     try {
       const missing: ImageVariantWidth[] = [];
@@ -52,7 +54,12 @@ export async function generateImageVariants(options: GenerateVariantsOptions): P
       report.failed += 1;
       report.failures.push({ key, reason: error instanceof Error ? error.message : String(error) });
     }
-    options.onProgress?.(report, index + 1, keys.length);
+  };
+
+  const size = Math.max(1, options.concurrency ?? 1);
+  for (let start = 0; start < keys.length; start += size) {
+    await Promise.all(keys.slice(start, start + size).map(handle));
+    options.onProgress?.(report, Math.min(start + size, keys.length), keys.length);
   }
   return report;
 }

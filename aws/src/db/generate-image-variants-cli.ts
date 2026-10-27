@@ -27,10 +27,11 @@ try {
   const report = await generateImageVariants({
     client, baseId, apply,
     media: createS3MediaStore({ bucket, publicBaseUrl: '' }),
+    concurrency: arg('concurrency') ? Number(arg('concurrency')) : 1,
     limit: arg('limit') ? Number(arg('limit')) : undefined,
     resize: (bytes, width) => sharp(bytes).rotate().resize({ width, height: width, fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 82 }).toBuffer(),
     onProgress: (r, done, total) => {
-      if (done % 100 === 0 || done === total) console.log(`[${new Date().toISOString().slice(11, 19)}] ${done}/${total} images, created ${r.created}, skipped ${r.skipped}, failed ${r.failed}`);
+      if (done % 100 < Number(arg('concurrency') ?? 1) || done === total) console.log(`[${new Date().toISOString().slice(11, 19)}] ${done}/${total} images, created ${r.created}, skipped ${r.skipped}, failed ${r.failed}`);
     },
   });
   console.log(apply ? 'APPLY' : 'DRY RUN', JSON.stringify({ ...report, failures: report.failures.slice(0, 20) }));
