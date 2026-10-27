@@ -940,4 +940,4 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Item 1: edit history UI. Backend `GET /api/audit/{source}/{recordId}` (admin only) already exists.
 - Item 1 done: "Edit history" panel on the combined listing page (full-access roles).
 - Item 3 done: "Reports" section on the Dashboard (full-access roles; admin-only `GET /api/dashboard/reports`): inventory by status, average time per stage, shipped items by brand. Vendor is empty on all items, so sales are by brand (make). Needs a Lambda + frontend deploy.
-- Item 5: CRM screens over `contacts`, `interactions`, `inquiries`, `follow_ups`.
+- Item 5 done (sellers/notes/follow-ups; inquiries inbox not built): "Customers" section on the Dashboard (full-access roles). Search contacts, see their items, add notes (`interactions`), add and close follow-ups, and a "due" list. Routes: `/api/dashboard/crm/...` (6 Lambdas). This is human-entered data that exists only in Postgres; it is covered by the table-wide backups, and a rollback to Airtable would lose it.
