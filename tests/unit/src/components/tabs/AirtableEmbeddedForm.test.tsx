@@ -84,7 +84,7 @@ describe('AirtableEmbeddedForm grouped intake', () => {
       }),
     );
 
-    expect(await screen.findByText('Grouped intake saved to Airtable. 2 records created.')).toBeInTheDocument();
+    expect(await screen.findByText('Grouped intake saved. 2 records created.')).toBeInTheDocument();
   });
 
   it('duplicates item fields into a new card', async () => {

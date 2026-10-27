@@ -172,7 +172,7 @@ export function useListingApprovalRecordLifecycle({
 
       await loadRecords(tableReference, tableName, true);
       onSelectRecord(createdRecord.id);
-      pushInlineActionNotice('success', 'New Shopify listing created', 'A new Airtable row is ready. Fill the required Shopify fields, save, then approve.');
+      pushInlineActionNotice('success', 'New Shopify listing created', 'A new row is ready. Fill the required Shopify fields, save, then approve.');
     } catch (createError) {
       pushInlineActionNotice('error', 'Unable to create Shopify listing', describeShopifyCreateError(createError));
     } finally {

@@ -1110,20 +1110,20 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           if (skippedFields.length > 0) {
             const categorySkipMessages = skippedFields
               .filter((field) => isCategoryLikeFieldName(field.name))
-              .map((field) => `${field.name}: ${field.reason ?? 'Airtable rejected the value shape'}`);
+              .map((field) => `${field.name}: ${field.reason ?? 'The server rejected the value shape'}`);
 
             if (categorySkipMessages.length > 0) {
               throw new Error(`Failed to save category fields. ${categorySkipMessages.join(' | ')}`);
             }
 
             const skippedMessages = skippedFields
-              .map((field) => `${field.name}: ${field.reason ?? 'Airtable rejected the value'}`)
+              .map((field) => `${field.name}: ${field.reason ?? 'The server rejected the value'}`)
               .join(' | ');
             throw new Error(`Failed to save fields. ${skippedMessages}`);
           }
 
           if (updatedFields.length === 0 && skippedFields.length === 0) {
-            throw new Error('No Airtable fields were updated.');
+            throw new Error('No fields were updated.');
           }
           }
         } else {
@@ -1158,7 +1158,7 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
         await get().loadRecords(tableReference, tableName, true);
         set({ initialFormValues: { ...get().formValues } });
       } else if (mode === 'full' && droppedChangedFieldNames.length > 0) {
-        throw new Error(`Failed to save fields. ${droppedChangedFieldNames.join(', ')} are not writable in the current Airtable source.`);
+        throw new Error(`Failed to save fields. ${droppedChangedFieldNames.join(', ')} are not writable in the current source.`);
       }
 
       onSuccess();

@@ -359,7 +359,7 @@ async function createUserRecordInAirtable(fields: Record<string, unknown>): Prom
     }
   }
 
-  throw new Error('Failed to create user in Airtable after removing unsupported fields.');
+  throw new Error('Failed to create user after removing unsupported fields.');
 }
 
 async function updateUserRecordInAirtable(recordId: string, fields: Record<string, unknown>): Promise<{ id: string; fields: Record<string, unknown> }> {
@@ -377,7 +377,7 @@ async function updateUserRecordInAirtable(recordId: string, fields: Record<strin
     }
   }
 
-  throw new Error('Failed to update user in Airtable after removing unsupported fields.');
+  throw new Error('Failed to update user after removing unsupported fields.');
 }
 
 async function deleteUserRecordInAirtable(recordId: string): Promise<void> {
@@ -429,7 +429,7 @@ export async function createUserInAirtable(user: AppUser): Promise<AppUser> {
 
 export async function updateUserInAirtable(user: AppUser): Promise<AppUser> {
   if (!user.airtableRecordId) {
-    throw new Error(`Missing Airtable record id for user ${user.email}.`);
+    throw new Error(`Missing record id for user ${user.email}.`);
   }
 
   await updateUserRecordInAirtable(user.airtableRecordId, await serializeUserFields(user, false));
@@ -438,7 +438,7 @@ export async function updateUserInAirtable(user: AppUser): Promise<AppUser> {
 
 export async function deleteUserInAirtable(user: AppUser): Promise<void> {
   if (!user.airtableRecordId) {
-    throw new Error(`Missing Airtable record id for user ${user.email}.`);
+    throw new Error(`Missing record id for user ${user.email}.`);
   }
 
   await deleteUserRecordInAirtable(user.airtableRecordId);

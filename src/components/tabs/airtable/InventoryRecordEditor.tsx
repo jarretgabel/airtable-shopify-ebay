@@ -290,7 +290,7 @@ export function InventoryRecordEditor({
   copy = {
     eyebrow: 'SB Inventory',
     title: 'Edit Record',
-    description: 'Review and update the editable Airtable fields for this inventory item, then save your changes back to SB Inventory.',
+    description: 'Review and update the editable fields for this inventory item, then save your changes back to SB Inventory.',
     emptyMessage: 'Load a record from the inventory directory to start editing its SB Inventory fields.',
   },
 }: InventoryRecordEditorProps) {
@@ -569,8 +569,8 @@ export function InventoryRecordEditor({
         <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="m-0 text-sm text-[var(--muted)]">
             {dirtyFieldNames.length === 0
-              ? 'No unsaved changes. Reload to pull the latest Airtable values, or update any field and save.'
-              : `${dirtyFieldNames.length} field${dirtyFieldNames.length === 1 ? '' : 's'} changed. Reset to discard local edits or save to Airtable.`}
+              ? 'No unsaved changes. Reload to pull the latest values, or update any field and save.'
+              : `${dirtyFieldNames.length} field${dirtyFieldNames.length === 1 ? '' : 's'} changed. Reset to discard local edits or save.`}
           </p>
           <div className="flex flex-wrap gap-3">
             <button

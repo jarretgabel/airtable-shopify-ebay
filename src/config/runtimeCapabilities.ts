@@ -55,19 +55,19 @@ export function getRuntimeFeatureCapabilities(): RuntimeFeatureMap {
     approvalEbay: createCapability(
       ['VITE_AIRTABLE_APPROVAL_TABLE_REF', 'VITE_AIRTABLE_APPROVAL_TABLE_NAME'],
       {
-        missingMessage: 'Configure the eBay approval Airtable source to enable the combined listings workflow and dashboard summary.',
+        missingMessage: 'Configure the eBay approval source to enable the combined listings workflow and dashboard summary.',
       },
     ),
     approvalShopify: createCapability(
       ['VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_REF', 'VITE_AIRTABLE_SHOPIFY_APPROVAL_TABLE_NAME'],
       {
-        missingMessage: 'Configure the Shopify approval Airtable source to enable the combined listings workflow and dashboard summary.',
+        missingMessage: 'Configure the Shopify approval source to enable the combined listings workflow and dashboard summary.',
       },
     ),
     approvalCombined: createCapability(
       ['VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF', 'VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_NAME'],
       {
-        missingMessage: 'Configure the combined listings Airtable source to enable the combined approval workflow.',
+        missingMessage: 'Configure the combined listings source to enable the combined approval workflow.',
       },
     ),
   };

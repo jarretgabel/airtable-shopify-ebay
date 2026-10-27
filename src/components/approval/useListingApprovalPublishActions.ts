@@ -505,14 +505,14 @@ export function useListingApprovalPublishActions({
     const confirmed = await requestConfirmation({
       title: target === 'both' ? 'Publish to both channels' : `Publish to ${target === 'shopify' ? 'Shopify' : 'eBay'}`,
       message: changedFieldNames.length > 0
-        ? 'Save the current page changes to Airtable, then publish using those values.'
+        ? 'Save the current page changes, then publish using those values.'
         : 'Publish using the current page values rather than the last saved backend payload.',
       confirmLabel: target === 'both' ? 'Publish both' : `Publish ${target}`,
       bullets: [
         `Record: ${recordTitle(selectedRecord.fields)}`,
         `Target: ${target === 'both' ? 'Shopify and eBay' : target === 'shopify' ? 'Shopify' : 'eBay'}`,
         ...(changedFieldNames.length > 0
-          ? ['Unsaved listing changes will be saved to Airtable before publishing.']
+          ? ['Unsaved listing changes will be saved before publishing.']
           : ['Current in-page values will be used for the publish request.']),
         ...(workflowPublishSummary ? [
           `Workflow status: ${workflowPublishSummary.workflowStatus || 'Not set'}`,

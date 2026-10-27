@@ -4,7 +4,7 @@ import type { AppUser } from '@/stores/auth/authTypes';
 export function buildDeleteUserConfirmationRequest(user: AppUser): ConfirmationRequest {
   return {
     title: 'Delete user account',
-    message: 'Delete this user from Airtable and revoke access immediately.',
+    message: 'Delete this user and revoke access immediately.',
     confirmLabel: 'Delete user',
     tone: 'danger',
     bullets: [

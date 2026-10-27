@@ -198,7 +198,7 @@ export function ListingApprovalCombinedShopifySection({
         <details className={`mt-4 ${detailDisclosureClass}`}>
           <summary className={detailDisclosureSummaryClass}>Shopify Body (HTML)</summary>
           <div className={detailDisclosureBodyClass}>
-            <p className="m-0 mb-2 text-xs text-[var(--muted)]">Generated from the current Shopify body preview when available, otherwise falls back to the saved Airtable field.</p>
+            <p className="m-0 mb-2 text-xs text-[var(--muted)]">Generated from the current Shopify body preview when available, otherwise falls back to the saved field.</p>
             {!combinedShopifyBodyHtmlFieldName && (
               <p className="m-0 mb-2 text-xs text-[var(--muted)]">No Shopify Body HTML field was found for this record.</p>
             )}

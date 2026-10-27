@@ -49,8 +49,8 @@ export function buildListingApprovalSaveResultNotification({
   const title = succeeded ? 'Listing changes saved' : 'Listing save failed';
   const recordLabel = recordTitle(record.fields);
   const message = succeeded
-    ? `${recordLabel} was saved to Airtable for the ${approvalChannelLabelMap[approvalChannel]} approval flow with ${formatCount('field', changedFieldCount)} updated.`
-    : `${recordLabel} could not be saved to Airtable for the ${approvalChannelLabelMap[approvalChannel]} approval flow. ${errorMessage ?? 'Review the approval error section and try again.'}`;
+    ? `${recordLabel} was saved for the ${approvalChannelLabelMap[approvalChannel]} approval flow with ${formatCount('field', changedFieldCount)} updated.`
+    : `${recordLabel} could not be saved for the ${approvalChannelLabelMap[approvalChannel]} approval flow. ${errorMessage ?? 'Review the approval error section and try again.'}`;
 
   return {
     key: `approval-save-result:${record.id}`,

@@ -451,8 +451,8 @@ export function AirtableEmbeddedForm({
 
       setSubmitSuccess(
         createdRecordIds.length === 1
-          ? `Submission saved to Airtable. Record ID: ${createdRecordIds[0]}.`
-          : `Grouped intake saved to Airtable. ${createdRecordIds.length} records created.`,
+          ? `Submission saved. Record ID: ${createdRecordIds[0]}.`
+          : `Grouped intake saved. ${createdRecordIds.length} records created.`,
       );
       resetGroupedFormValues();
       onCreateSuccess?.(createdRecordIds);
@@ -483,7 +483,7 @@ export function AirtableEmbeddedForm({
   }
 
   if (optionsError || !optionSets) {
-    return <ErrorSurface title="Unable to load Manual Intake" message={optionsError ?? 'The Airtable form configuration is unavailable.'} />;
+    return <ErrorSurface title="Unable to load Manual Intake" message={optionsError ?? 'The form configuration is unavailable.'} />;
   }
 
   return (

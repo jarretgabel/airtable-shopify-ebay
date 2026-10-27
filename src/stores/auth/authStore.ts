@@ -338,7 +338,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to update role in Airtable.',
+        message: error instanceof Error ? error.message : 'Failed to update role.',
       };
     }
   },
@@ -381,7 +381,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to delete user from Airtable.',
+        message: error instanceof Error ? error.message : 'Failed to delete user.',
       };
     }
   },
@@ -414,7 +414,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to create user in Airtable.',
+        message: error instanceof Error ? error.message : 'Failed to create user.',
       };
     }
   },
@@ -597,7 +597,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to update notifications in Airtable.',
+        message: error instanceof Error ? error.message : 'Failed to update notifications.',
       };
     }
   },
@@ -654,7 +654,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to update workflow notifications in Airtable.',
+        message: error instanceof Error ? error.message : 'Failed to update workflow notifications.',
       };
     }
   },

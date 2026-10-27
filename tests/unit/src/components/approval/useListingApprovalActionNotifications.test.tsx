@@ -136,7 +136,7 @@ describe('approval action notifications', () => {
 
     expect(requestConfirmation).toHaveBeenCalledTimes(1);
     expect(saveRecord).toHaveBeenCalledTimes(1);
-    expect(pushInlineActionNotice).toHaveBeenCalledWith('success', 'Listing updated', 'Listing changes were saved to Airtable.');
+    expect(pushInlineActionNotice).toHaveBeenCalledWith('success', 'Listing updated', 'Listing changes were saved.');
 
     await waitFor(() => {
       const notification = useNotificationStore.getState().notifications[0];
@@ -289,9 +289,9 @@ describe('approval action notifications', () => {
     });
 
     expect(requestConfirmation).toHaveBeenCalledWith(expect.objectContaining({
-      message: 'Save the current page changes to Airtable, then publish using those values.',
+      message: 'Save the current page changes, then publish using those values.',
       bullets: expect.arrayContaining([
-        'Unsaved listing changes will be saved to Airtable before publishing.',
+        'Unsaved listing changes will be saved before publishing.',
       ]),
     }));
     expect(savePendingUpdates).toHaveBeenCalledTimes(1);

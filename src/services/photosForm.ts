@@ -261,7 +261,7 @@ async function loadConfiguredPhotosRecord(recordId: string): Promise<{ source: P
   try {
     workflowRecord = await getConfiguredRecord('used-gear-workflow', recordId);
   } catch (error) {
-    const nextError = new Error('This workflow record could not be found in the current Airtable workflow table. If sample data was reseeded, reopen the item from the workflow queue to use its current record URL.') as Error & { cause?: unknown };
+    const nextError = new Error('This workflow record could not be found in the current workflow table. If sample data was reseeded, reopen the item from the workflow queue to use its current record URL.') as Error & { cause?: unknown };
     nextError.cause = error;
     throw nextError;
   }
@@ -370,7 +370,7 @@ export async function loadPhotosFormValues(recordId: string): Promise<PhotosForm
     };
   } catch (error) {
     logServiceError('photosForm', `Error loading Photos form values for ${recordId}`, error);
-    const userMessage = error instanceof Error && error.message.includes('could not be found in the current Airtable workflow table')
+    const userMessage = error instanceof Error && error.message.includes('could not be found in the current workflow table')
       ? error.message
       : 'Unable to load the selected inventory record into Photos.';
     const serviceError = createServiceError({
@@ -409,7 +409,7 @@ export async function loadPhotosFormOptionSets(): Promise<PhotosOptionSet> {
     const serviceError = createServiceError({
       service: 'photosForm',
       code: 'PHOTOS_FORM_OPTIONS_FAILED',
-      userMessage: 'Unable to load the Photos form options from Airtable.',
+      userMessage: 'Unable to load the Photos form options.',
       retryable: true,
       cause: error,
     });

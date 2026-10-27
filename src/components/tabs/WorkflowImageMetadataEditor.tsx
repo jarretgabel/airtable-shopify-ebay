@@ -76,7 +76,7 @@ export function WorkflowImageMetadataEditor({
     if (!customRoleValue) {
       setCustomRoleSaveErrors((current) => ({
         ...current,
-        [record.url]: 'Enter a custom image role before adding it to Airtable.',
+        [record.url]: 'Enter a custom image role before adding it.',
       }));
       setCustomRoleSaveSuccess((current) => ({ ...current, [record.url]: '' }));
       return;
@@ -88,7 +88,7 @@ export function WorkflowImageMetadataEditor({
       setCustomRoleSaveErrors((current) => ({ ...current, [record.url]: '' }));
       setCustomRoleSaveSuccess((current) => ({
         ...current,
-        [record.url]: 'Role already exists in shared Airtable roles and is now selected.',
+        [record.url]: 'Role already exists in shared roles and is now selected.',
       }));
       onChange(updateWorkflowImageRole(
         sortedMetadata,
@@ -119,12 +119,12 @@ export function WorkflowImageMetadataEditor({
       ));
       setCustomRoleSaveSuccess((current) => ({
         ...current,
-        [record.url]: 'Added to shared Airtable roles.',
+        [record.url]: 'Added to shared roles.',
       }));
     } catch (error) {
       setCustomRoleSaveErrors((current) => ({
         ...current,
-        [record.url]: error instanceof Error ? error.message : 'Unable to add role to Airtable.',
+        [record.url]: error instanceof Error ? error.message : 'Unable to add role.',
       }));
       setCustomRoleSaveSuccess((current) => ({ ...current, [record.url]: '' }));
     } finally {
@@ -246,7 +246,7 @@ export function WorkflowImageMetadataEditor({
                         >
                           {savingCustomRoleUrl === record.url ? 'Saving…' : 'Save'}
                         </button>
-                        <span className="text-xs text-[var(--muted)]">Saves this custom role to the shared Airtable roles table.</span>
+                        <span className="text-xs text-[var(--muted)]">Saves this custom role to the shared roles table.</span>
                       </div>
                       {customRoleSaveErrors[record.url] ? (
                         <p className="m-0 text-xs text-rose-300">{customRoleSaveErrors[record.url]}</p>

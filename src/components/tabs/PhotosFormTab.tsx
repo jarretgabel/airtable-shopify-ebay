@@ -394,7 +394,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
   }
 
   if (optionsError || !optionSets) {
-    return <ErrorSurface title="Unable to load Photos form" message={optionsError ?? 'The Airtable Photos form configuration is unavailable.'} />;
+    return <ErrorSurface title="Unable to load Photos form" message={optionsError ?? 'The Photos form configuration is unavailable.'} />;
   }
 
   const applicableIncludedItems = buildApplicableIncludedItems(formValues);
@@ -452,7 +452,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
             {submitSuccess.action === 'updated'
               ? <>Photos fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>
-              : <>Photos submission saved to Airtable. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>}
+              : <>Photos submission saved. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>}
           </div>
         ) : null}
 

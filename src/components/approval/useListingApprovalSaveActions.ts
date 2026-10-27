@@ -74,7 +74,7 @@ export function useListingApprovalSaveActions({
     if (!selectedRecord) return;
     const confirmed = await requestConfirmation({
       title: 'Reset page data',
-      message: 'Discard local edits and restore the current Airtable values for this record.',
+      message: 'Discard local edits and restore the current values for this record.',
       confirmLabel: 'Reset page data',
       bullets: [
         `Record: ${recordTitle(selectedRecord.fields)}`,
@@ -87,7 +87,7 @@ export function useListingApprovalSaveActions({
       ...Object.keys(selectedRecord.fields),
     ])).sort((left, right) => left.localeCompare(right));
     hydrateForm(selectedRecord, hydrateFieldNames, approvedFieldName);
-    pushInlineActionNotice('info', 'Page data reset', 'Form values were restored to current Airtable values.');
+    pushInlineActionNotice('info', 'Page data reset', 'Form values were restored to current values.');
   };
 
   const saveCurrentUpdates = async (effectiveChangedFieldNames: string[]): Promise<boolean> => {
@@ -127,7 +127,7 @@ export function useListingApprovalSaveActions({
       );
 
       if (saveSucceeded) {
-        pushInlineActionNotice('success', 'Listing updated', 'Listing changes were saved to Airtable.');
+        pushInlineActionNotice('success', 'Listing updated', 'Listing changes were saved.');
         pushResultNotification(
           `approval-save-result:${selectedRecord.id}`,
           buildListingApprovalSaveResultNotification({
@@ -140,7 +140,7 @@ export function useListingApprovalSaveActions({
         return true;
       } else {
         const saveErrorMessage = useApprovalStore.getState().error
-          || 'Could not save listing changes to Airtable. Review the error section and try again.';
+          || 'Could not save listing changes. Review the error section and try again.';
         pushInlineActionNotice('error', 'Save failed', saveErrorMessage);
         pushResultNotification(
           `approval-save-result:${selectedRecord.id}`,
@@ -159,7 +159,7 @@ export function useListingApprovalSaveActions({
     try {
       return await runSave();
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : 'Unable to save listing changes to Airtable.';
+      const message = saveError instanceof Error ? saveError.message : 'Unable to save listing changes.';
       pushInlineActionNotice('error', 'Save failed', message);
       pushResultNotification(
         `approval-save-result:${selectedRecord.id}`,
@@ -186,7 +186,7 @@ export function useListingApprovalSaveActions({
     const effectiveChangedFieldNames = getEffectiveChangedFieldNames();
     const confirmed = await requestConfirmation({
       title: 'Save listing updates',
-      message: 'Write the current page values back to Airtable for this listing.',
+      message: 'Write the current page values for this listing.',
       confirmLabel: 'Save updates',
       bullets: [
         `Record: ${recordTitle(selectedRecord.fields)}`,

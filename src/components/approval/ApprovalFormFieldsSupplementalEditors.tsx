@@ -589,7 +589,7 @@ export function ApprovalFormFieldsSupplementalEditors({
             value={formValues[activeBodyDescriptionFieldName] ?? ''}
             onChange={(event) => setFormValue(activeBodyDescriptionFieldName, event.target.value)}
             placeholder={isEbayApprovalForm
-              ? 'Listing description saved to Airtable Description and mirrored into Body HTML'
+              ? 'Listing description saved to Description and mirrored into Body HTML'
               : 'Short product description used in listing body HTML'}
             disabled={saving}
           />

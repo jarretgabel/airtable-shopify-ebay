@@ -125,7 +125,7 @@ export function DashboardAirtableSection(props: DashboardAirtableSectionProps) {
               message={errorMessage}
             />
           )}
-          <p className="m-0 text-[var(--muted)]">No Airtable inventory records available yet.</p>
+          <p className="m-0 text-[var(--muted)]">No inventory records available yet.</p>
         </>
       )}
     </DashboardSectionPanel>

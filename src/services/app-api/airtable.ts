@@ -98,7 +98,7 @@ function toAirtableError(error: unknown, tableName: string) {
   return toServiceErrorMessage(
     'airtable',
     'AIRTABLE_GET_RECORDS_FAILED',
-    `Failed to load Airtable records from ${tableName}.`,
+    `Failed to load records from ${tableName}.`,
     error,
     true,
   );
@@ -112,7 +112,7 @@ function toConfiguredSourceError(error: unknown, source: AirtableConfiguredRecor
   return toServiceErrorMessage(
     'airtable',
     'AIRTABLE_GET_RECORDS_FAILED',
-    `Failed to load Airtable records for ${source}.${causeMessage}`,
+    `Failed to load records for ${source}.${causeMessage}`,
     error,
     true,
   );
@@ -241,10 +241,10 @@ export async function getRecordsFromResolvedSource(
   }
 
   if (!tableReference) {
-    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+    throw toConfiguredSourceError(new Error('Table reference is required.'), 'approval-ebay');
   }
 
-  throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda read path.'), 'approval-ebay');
+  throw toConfiguredSourceError(new Error('Unsupported source for Lambda read path.'), 'approval-ebay');
 }
 
 export async function getRecordsSummaryFromResolvedSource(
@@ -258,10 +258,10 @@ export async function getRecordsSummaryFromResolvedSource(
   }
 
   if (!tableReference) {
-    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+    throw toConfiguredSourceError(new Error('Table reference is required.'), 'approval-ebay');
   }
 
-  throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda read path.'), 'approval-ebay');
+  throw toConfiguredSourceError(new Error('Unsupported source for Lambda read path.'), 'approval-ebay');
 }
 
 export async function getRecordFromResolvedSource(
@@ -272,11 +272,11 @@ export async function getRecordFromResolvedSource(
   const resolvedSource = resolveConfiguredRecordsSource(tableReference, tableName);
 
   if (!tableReference) {
-    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+    throw toConfiguredSourceError(new Error('Table reference is required.'), 'approval-ebay');
   }
 
   if (!resolvedSource) {
-    throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda read path.'), 'approval-ebay');
+    throw toConfiguredSourceError(new Error('Unsupported source for Lambda read path.'), 'approval-ebay');
   }
 
   try {
@@ -392,10 +392,10 @@ export async function createRecordFromResolvedSource(
   }
 
   if (!tableReference) {
-    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+    throw toConfiguredSourceError(new Error('Table reference is required.'), 'approval-ebay');
   }
 
-  throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda write path.'), 'approval-ebay');
+  throw toConfiguredSourceError(new Error('Unsupported source for Lambda write path.'), 'approval-ebay');
 }
 
 export async function updateRecordFromResolvedSource(
@@ -412,10 +412,10 @@ export async function updateRecordFromResolvedSource(
   }
 
   if (!tableReference) {
-    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+    throw toConfiguredSourceError(new Error('Table reference is required.'), 'approval-ebay');
   }
 
-  throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda write path.'), 'approval-ebay');
+  throw toConfiguredSourceError(new Error('Unsupported source for Lambda write path.'), 'approval-ebay');
 }
 
 export async function deleteRecordFromResolvedSource(
@@ -431,10 +431,10 @@ export async function deleteRecordFromResolvedSource(
   }
 
   if (!tableReference) {
-    throw toConfiguredSourceError(new Error('Airtable table reference is required.'), 'approval-ebay');
+    throw toConfiguredSourceError(new Error('Table reference is required.'), 'approval-ebay');
   }
 
-  throw toConfiguredSourceError(new Error('Unsupported Airtable source for Lambda write path.'), 'approval-ebay');
+  throw toConfiguredSourceError(new Error('Unsupported source for Lambda write path.'), 'approval-ebay');
 }
 
 export async function getConfiguredFieldMetadata(

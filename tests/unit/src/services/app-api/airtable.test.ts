@@ -84,11 +84,11 @@ describe('app-api airtable', () => {
     );
 
     await expect(getListings('tbl123')).rejects.toMatchObject({
-      message: 'Failed to load Airtable records from tbl123.',
+      message: 'Failed to load records from tbl123.',
       serviceError: {
         service: 'airtable',
         code: 'AIRTABLE_GET_RECORDS_FAILED',
-        userMessage: 'Failed to load Airtable records from tbl123.',
+        userMessage: 'Failed to load records from tbl123.',
         retryable: false,
       },
     });

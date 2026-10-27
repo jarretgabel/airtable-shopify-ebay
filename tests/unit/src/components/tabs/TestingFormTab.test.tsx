@@ -375,7 +375,7 @@ describe('TestingFormTab', () => {
 
     const saveNotice = await screen.findByText('Testing changes saved');
     const statusNotice = saveNotice.closest('[role="status"]');
-    expect(statusNotice).toHaveTextContent('Testing details for SKU-500 were saved to Airtable.');
+    expect(statusNotice).toHaveTextContent('Testing details for SKU-500 were saved.');
     expect(statusNotice).toHaveClass('rounded-lg', 'border-emerald-400/35');
     expect(statusNotice?.nextElementSibling).toContainElement(screen.getByRole('button', { name: 'Save Testing' }));
   });

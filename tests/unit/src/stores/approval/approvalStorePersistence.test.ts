@@ -752,7 +752,7 @@ describe('approvalStorePersistence', () => {
     expect(updateRecordFromResolvedSourceMock).not.toHaveBeenCalled();
     expect(loadRecordsMock).not.toHaveBeenCalled();
     expect(setMock).toHaveBeenCalledWith(expect.objectContaining({
-      error: 'Failed to save fields. Description are not writable in the current Airtable source.',
+      error: 'Failed to save fields. Description are not writable in the current source.',
     }));
   });
 

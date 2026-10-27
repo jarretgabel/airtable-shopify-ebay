@@ -196,7 +196,7 @@ export function useListingApprovalApproveAction({
       bullets: [
         `Record: ${recordTitle(selectedRecord.fields)}`,
         `Channel: ${approvalChannel}`,
-        createShopifyDraftOnApprove ? 'A Shopify draft will be created or refreshed before approval completes.' : 'Approval will update Airtable status only.',
+        createShopifyDraftOnApprove ? 'A Shopify draft will be created or refreshed before approval completes.' : 'Approval will update status only.',
       ],
     });
     if (!confirmed) return;
@@ -273,7 +273,7 @@ export function useListingApprovalApproveAction({
         );
 
         if (!approveSucceeded) {
-          pushInlineActionNotice('error', 'Approval failed', 'Could not mark this listing as approved in Airtable.');
+          pushInlineActionNotice('error', 'Approval failed', 'Could not mark this listing as approved.');
         }
       } finally {
         setApproving(false);

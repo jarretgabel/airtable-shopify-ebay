@@ -405,7 +405,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
   }
 
   if (optionsError || !optionSets) {
-    return <ErrorSurface title="Unable to load Testing form" message={optionsError ?? 'The Airtable Testing form configuration is unavailable.'} />;
+    return <ErrorSurface title="Unable to load Testing form" message={optionsError ?? 'The Testing form configuration is unavailable.'} />;
   }
 
   const stageImageMetadata = filterWorkflowImageMetadataByStage(imageMetadata, 'testing');
@@ -498,7 +498,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
                 {submitSuccess.action === 'updated' ? 'Testing changes saved' : 'Testing submission saved'}
               </p>
               <p className="m-0 mt-1 text-xs text-emerald-200/90">
-                Testing details for <strong>{submitSuccess.sku}</strong> were saved to Airtable.
+                Testing details for <strong>{submitSuccess.sku}</strong> were saved.
               </p>
             </section>
           ) : null}

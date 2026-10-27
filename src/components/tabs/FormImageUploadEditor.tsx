@@ -534,7 +534,7 @@ export function FormImageUploadEditor({
     if (!customRoleValue) {
       setCustomRoleSaveErrors((current) => ({
         ...current,
-        [itemId]: 'Enter a custom role before adding it to Airtable.',
+        [itemId]: 'Enter a custom role before adding it.',
       }));
       setCustomRoleSaveSuccess((current) => ({ ...current, [itemId]: '' }));
       return;
@@ -546,7 +546,7 @@ export function FormImageUploadEditor({
       setCustomRoleSaveErrors((current) => ({ ...current, [itemId]: '' }));
       setCustomRoleSaveSuccess((current) => ({
         ...current,
-        [itemId]: 'Role already exists in shared Airtable roles and is now selected.',
+        [itemId]: 'Role already exists in shared roles and is now selected.',
       }));
       updateItem(itemId, (item) => ({
         ...item,
@@ -589,12 +589,12 @@ export function FormImageUploadEditor({
       });
       setCustomRoleSaveSuccess((current) => ({
         ...current,
-        [itemId]: 'Added to shared Airtable roles.',
+        [itemId]: 'Added to shared roles.',
       }));
     } catch (error) {
       setCustomRoleSaveErrors((current) => ({
         ...current,
-        [itemId]: error instanceof Error ? error.message : 'Unable to add role to Airtable.',
+        [itemId]: error instanceof Error ? error.message : 'Unable to add role.',
       }));
       setCustomRoleSaveSuccess((current) => ({ ...current, [itemId]: '' }));
     } finally {
@@ -1037,7 +1037,7 @@ export function FormImageUploadEditor({
                               >
                                 {savingCustomRoleItemId === item.id ? 'Saving…' : 'Save'}
                               </button>
-                              <span className="text-xs text-[var(--muted)]">Saves this custom role to the shared Airtable roles table.</span>
+                              <span className="text-xs text-[var(--muted)]">Saves this custom role to the shared roles table.</span>
                             </div>
                             {customRoleSaveErrors[item.id] ? (
                               <p className="m-0 text-xs text-rose-300">{customRoleSaveErrors[item.id]}</p>

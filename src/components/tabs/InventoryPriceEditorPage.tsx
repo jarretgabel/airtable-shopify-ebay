@@ -109,7 +109,7 @@ export function InventoryPriceEditorPage({ recordId, onBackToInventoryRecord }: 
       setRecord(nextRecord);
       setDraftValues(nextDraftValues);
       setInitialDraftValues(nextDraftValues);
-      setSaveMessage(`Saved ${dirtyFieldNames.length} inventory price field${dirtyFieldNames.length === 1 ? '' : 's'} to Airtable.`);
+      setSaveMessage(`Saved ${dirtyFieldNames.length} inventory price field${dirtyFieldNames.length === 1 ? '' : 's'}.`);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to save the selected inventory price record.');
     } finally {
@@ -166,7 +166,7 @@ export function InventoryPriceEditorPage({ recordId, onBackToInventoryRecord }: 
             copy={{
               eyebrow: 'Inventory Pricing',
               title: 'Edit Inventory Prices',
-              description: 'Review and update the editable Airtable price fields for this operational row, then save your changes back to the combined listings table.',
+              description: 'Review and update the editable price fields for this operational row, then save your changes back to the combined listings table.',
               emptyMessage: 'Load an operational row to start editing its publish-readiness price fields.',
             }}
           />

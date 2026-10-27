@@ -404,7 +404,7 @@ export async function loadTestingFormOptionSets(): Promise<TestingOptionSet> {
     const serviceError = createServiceError({
       service: 'testingForm',
       code: 'TESTING_FORM_OPTIONS_FAILED',
-      userMessage: 'Unable to load the Testing form options from Airtable.',
+      userMessage: 'Unable to load the Testing form options.',
       retryable: true,
       cause: error,
     });

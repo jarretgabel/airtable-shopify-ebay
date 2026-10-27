@@ -835,7 +835,7 @@ export function ListingApprovalQueuePanel({
         <section className={errorSurfaceClass}>
           <p className="m-0 font-bold text-[var(--error-text)]">Listing approval source is not configured</p>
           <p className="mt-2 text-[var(--error-text)]/85">
-            Set the Airtable table reference env variable for this page and refresh.
+            Set the table reference env variable for this page and refresh.
           </p>
         </section>
       )}

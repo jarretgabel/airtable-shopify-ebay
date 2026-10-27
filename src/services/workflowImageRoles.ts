@@ -193,7 +193,7 @@ export function findWorkflowImageRoleOption(
 export async function createWorkflowImageRoleOption(rawValue: string): Promise<WorkflowImageRoleSelectOption> {
   const choice = normalizeFreeText(rawValue);
   if (!choice) {
-    throw new Error('Enter a custom role before adding it to Airtable.');
+    throw new Error('Enter a custom role before adding it.');
   }
 
   try {
@@ -203,7 +203,7 @@ export async function createWorkflowImageRoleOption(rawValue: string): Promise<W
     if (error instanceof Error && error.message.trim().length > 0) {
       throw error;
     }
-    throw new Error('Unable to add image role to Airtable. Check table permissions and Name field access.');
+    throw new Error('Unable to add image role. Check table permissions and Name field access.');
   }
 }
 

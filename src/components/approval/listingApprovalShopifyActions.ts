@@ -67,7 +67,7 @@ export async function createNewShopifyListingRecord(params: {
   }
 
   if (!createdRecord) {
-    throw lastError ?? new Error('Unable to create a new Shopify listing row in Airtable.');
+    throw lastError ?? new Error('Unable to create a new Shopify listing row.');
   }
 
   return createdRecord;
@@ -297,7 +297,7 @@ export async function ensureShopifyDraftBeforeApproval(
             ...(writebackResult.wrote ? [] : [{
               tone: 'warning' as const,
               title: 'Draft created, ID writeback failed',
-              message: 'Shopify draft was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.',
+              message: 'Shopify draft was created, but saving the Shopify REST Product ID failed. You may need to save the ID manually.',
             }]),
             {
               tone: 'success',
@@ -353,7 +353,7 @@ export async function ensureShopifyDraftBeforeApproval(
         ...(writebackResult.wrote ? [] : [{
           tone: 'warning' as const,
           title: 'Draft created, ID writeback failed',
-          message: 'Shopify draft was created, but writing Shopify REST Product ID to Airtable failed. You may need to save the ID manually.',
+          message: 'Shopify draft was created, but saving the Shopify REST Product ID failed. You may need to save the ID manually.',
         }]),
         {
           tone: 'success',

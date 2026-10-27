@@ -275,7 +275,7 @@ export function ShopifyVendorSelect({
       }
 
       if (!created) {
-        throw new Error('Unable to create vendor in Airtable. Check the vendors table field names.');
+        throw new Error('Unable to create vendor. Check the vendors table field names.');
       }
 
       setVendors((current) => {

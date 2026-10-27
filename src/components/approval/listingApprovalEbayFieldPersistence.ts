@@ -309,7 +309,7 @@ export async function saveEbayApprovalSupplementalFields({
         options: { typecast: false, coerceNumber: false },
       });
       if (!savedCopyField) {
-        throw new Error('Cannot save eBay Template Copy. Add a writable long-text field named "eBay Template Copy" to the current Airtable source.');
+        throw new Error('Cannot save eBay Template Copy. Add a writable long-text field named "eBay Template Copy" to the current source.');
       }
       setFormValue(savedCopyField, templateCopyRaw);
     }
@@ -341,7 +341,7 @@ export async function saveEbayApprovalSupplementalFields({
         setFormValue(fieldName, formValues[fieldName] ?? '');
       });
     } else if (bodyEditorFieldNames.length > 0) {
-      throw new Error('Cannot save eBay template copy because the listing body field is not writable in the current Airtable source.');
+      throw new Error('Cannot save eBay template copy because the listing body field is not writable in the current source.');
     }
   }
 

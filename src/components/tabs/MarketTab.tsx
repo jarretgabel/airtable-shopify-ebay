@@ -51,7 +51,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
           <p className="m-0 text-sm text-[var(--muted)]">
             Enter a HiFiShark model slug from{' '}
             <code className={mutedCodeClass}>hifishark.com/model/accuphase-e-530</code>.
-            You can also click a model in the Airtable tab to pre-fill.
+            You can also click a model in the Inventory tab to pre-fill.
           </p>
         </form>
       </section>

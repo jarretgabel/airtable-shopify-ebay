@@ -29,7 +29,7 @@ export function EbayListingsDirectoryTab({
       ? 'Connected'
       : 'Disconnected';
   const pageDescription = usingAirtableSnapshot
-    ? 'This page is read-only. The live eBay runtime is unavailable, so this screen is showing Airtable-backed eBay listing snapshots instead. Use the combined Listings page for approvals, edits, and listing changes.'
+    ? 'This page is read-only. The live eBay runtime is unavailable, so this screen is showing stored eBay listing snapshots instead. Use the combined Listings page for approvals, edits, and listing changes.'
     : 'This page is read-only. Use the combined Listings page for approvals, edits, and listing changes; keep this screen for eBay inventory, offer, and connection visibility only.';
 
   return (

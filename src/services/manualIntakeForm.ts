@@ -198,7 +198,7 @@ export async function loadManualIntakeFormOptionSets(): Promise<ManualIntakeOpti
     const serviceError = createServiceError({
       service: 'manualIntakeForm',
       code: 'MANUAL_INTAKE_OPTIONS_FAILED',
-      userMessage: 'Unable to load the Manual Intake form options from Airtable.',
+      userMessage: 'Unable to load the Manual Intake form options.',
       retryable: true,
       cause: error,
     });
@@ -326,7 +326,7 @@ export async function submitManualIntakeForm(
   const serviceError = createServiceError({
     service: 'manualIntakeForm',
     code: 'MANUAL_INTAKE_SUBMIT_FAILED',
-    userMessage: 'Unable to submit the Manual Intake form to Airtable.',
+    userMessage: 'Unable to submit the Manual Intake form.',
     retryable: true,
     cause: lastError,
   });

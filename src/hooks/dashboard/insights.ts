@@ -107,7 +107,7 @@ export function buildDashboardInsights(input: InsightInput): DashboardInsight[] 
       insights.push({
         id: 'brand-concentration',
         title: 'Inventory concentration risk',
-        detail: `${airtableBrandSummary[0][0]} accounts for ${Math.round(topBrandShare * 100)}% of Airtable inventory.`,
+        detail: `${airtableBrandSummary[0][0]} accounts for ${Math.round(topBrandShare * 100)}% of inventory.`,
         severity: 'info',
         targetTab: 'inventory',
       });

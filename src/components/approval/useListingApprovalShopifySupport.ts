@@ -39,7 +39,7 @@ export function useListingApprovalShopifySupport({
       if (typeof data?.message === 'string') return data.message;
       if (typeof error.message === 'string' && error.message.length > 0) return error.message;
     }
-    return error instanceof Error ? error.message : 'Unable to create Shopify draft product or save its ID back to Airtable.';
+    return error instanceof Error ? error.message : 'Unable to create Shopify draft product or save its ID.';
   };
 
   const describeCollectionJoinFailure = (detail: string): string => {
@@ -51,7 +51,7 @@ export function useListingApprovalShopifySupport({
     if (smartCollectionIds.length > 0) {
       return [
         'Some selected collections are smart collections, and Shopify does not allow manual product assignment to smart collections.',
-        `Remove or replace these IDs in Airtable Collections: ${smartCollectionIds.join(', ')}.`,
+        `Remove or replace these IDs in Collections: ${smartCollectionIds.join(', ')}.`,
         'The listing was saved, but those collection joins were skipped.',
       ].join(' ');
     }
