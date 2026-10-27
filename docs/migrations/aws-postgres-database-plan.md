@@ -917,3 +917,11 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Set `AirtableWriteMode=postgres-only`, `AirtableOutboxSync=paused`, `AirtableDisabled=true` on `airtable-shopify-ebay-staging` (68 Lambdas modified, `UPDATE_COMPLETE`, site 200). The live site no longer reads or writes Airtable. The production base is frozen as of this moment and must be left untouched as a snapshot.
 - Rollback: redeploy with `AirtableWriteMode=outbox AirtableOutboxSync=on AirtableDisabled=false` (backup `backups/samconfig.toml.pre-staging-step4`); anything written after the switch would not be in Airtable.
 - Still open: remove the pg-test Jotform webhook; full Drive-to-S3 image copy (existing photos still load from Drive); 4 duplicate-SKU records exist only in Airtable; Airtable key is still on the Lambdas (inert while disabled); first scheduled backup on staging is tomorrow after 08:00 UTC.
+
+## Staging cleanup after Airtable off (2026-10-26)
+
+- Verified a second live edit (`recMnIsZoWH4G6pFK`): audit row written, nothing queued to Airtable.
+- User-facing copy and the page title no longer say "Airtable" (37 files, tests updated; web tests 1,184 pass). Internal identifiers, logs and the `Primary/Secondary Category Airtable` data columns are unchanged. Deployed to the live site.
+- Removed the pg-test Jotform webhook (index 0). Form 213604252654047 now has only the two live webhooks.
+- Full Drive-to-S3 copy into the staging media bucket started (`db:copy-drive-images --apply`, 2,522 records, 19,140 images, about 7 h at about 10 records per 100 s). Safe to re-run: copied images are skipped. The tool now logs progress every 10 records (`onProgress`). Media base URL is empty (relative `/api/media/...` URLs, as on pg-test).
+- After the copy: set `ImageArchiveBackend` to S3 on staging so new uploads stop going to Drive (deploy, needs approval), then check failures and the first staging backup (2026-10-27 08:00 UTC).

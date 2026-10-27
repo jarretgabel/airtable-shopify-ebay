@@ -31,6 +31,7 @@ export interface CopyDriveImagesOptions {
   /** Only these records (for trying one record first). */
   recordIds?: string[];
   limit?: number;
+  onProgress?: (report: CopyDriveImagesReport, done: number, total: number) => void;
 }
 
 type Entry = Record<string, unknown>;
@@ -69,7 +70,8 @@ export async function copyDriveImages(options: CopyDriveImagesOptions): Promise<
   );
   const recordIds = candidates.rows.map((row) => row.record_id).slice(0, options.limit ?? Infinity);
 
-  for (const recordId of recordIds) {
+  for (const [index, recordId] of recordIds.entries()) {
+    if (index % 10 === 0) options.onProgress?.(report, index, recordIds.length);
     const stored = await client.query<{ table_id: string; fields: Record<string, unknown> }>(
       'SELECT table_id, fields FROM records WHERE base_id = $1 AND record_id = $2 AND deleted_at IS NULL',
       [baseId, recordId],

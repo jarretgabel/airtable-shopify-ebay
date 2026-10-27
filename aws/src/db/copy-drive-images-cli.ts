@@ -29,6 +29,7 @@ try {
   const report = await copyDriveImages({
     client, baseId, media, apply,
     recordIds: arg('record')?.split(',').map((id) => id.trim()).filter(Boolean),
+    onProgress: (r, done, total) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${done}/${total} records, ${r.images} images, copied ${r.copied}, converted ${r.converted}, skipped ${r.skipped}, failed ${r.failed}, ${Math.round(r.bytes / 1048576)} MB`),
     limit: arg('limit') ? Number(arg('limit')) : undefined,
     download: downloadGoogleDriveFile,
     convertHeic: async (bytes) => {
