@@ -49,7 +49,7 @@ function upsertParameterOverride(parameterOverrides, key, value) {
 }
 
 const replacements = [
-  ['AirtableApiKey', requireEnv('VITE_AIRTABLE_API_KEY')],
+  ['AirtableApiKey', getOptionalEnv('VITE_AIRTABLE_API_KEY')],
   ['AirtableBaseId', getOptionalEnv('VITE_AIRTABLE_BASE_ID')],
   ['AllowedAirtableTableName', getOptionalEnv('VITE_AIRTABLE_TABLE_NAME')],
   ['AllowedAirtableViewId', getOptionalEnv('VITE_AIRTABLE_VIEW_ID')],
@@ -110,6 +110,8 @@ if (!match) {
 
 let parameterOverrides = match[2];
 for (const [key, value] of replacements) {
+  // Airtable is being retired; a missing local key must not blank the one already in samconfig.
+  if (key === 'AirtableApiKey' && !value) continue;
   parameterOverrides = upsertParameterOverride(parameterOverrides, key, value);
 }
 
