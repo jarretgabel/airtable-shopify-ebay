@@ -887,3 +887,10 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Backfill from the PRODUCTION base (read-only on Airtable): listings 3,498, vendors 646, user guide 65, image roles 47, users 18, shopify 3, ebay 2, legacy `tblgA8olAJtkRNZvK` 411. Compare on listings: 3,498 identical, 0 differing.
 - FINDING: production has 4 duplicate SKUs, which the unique SKU index rejects: 10650, 10066, 11499, 12170. User chose to skip the second record of each pair for now: `recJ79Rt24rtTdXRh`, `recErKIzuC3NEpzSu`, `rec8tgcJvY31num7b`, `recXJr8UGJPlhF2vw` (present only in Airtable). They MUST be resolved (SKU fixed or record retired in Airtable) and re-backfilled before reads move to Postgres, or they will be invisible. `backfill-cli` got a `--skip-records` flag for this.
 - Next: step 2 (serve reads from Postgres), then step 3 (Postgres-first writes with the outbox on).
+
+## Staging cutover, step 2 (2026-10-26)
+
+- Set `DataBackend=postgres-read` on `airtable-shopify-ebay-staging` (68 Lambdas modified, `UPDATE_COMPLETE`, site HTTP 200). Reads come from Postgres with Airtable fallback on error; writes still go through the dual store (Airtable plus Postgres mirror).
+- The 4 duplicate-SKU records skipped in step 1 are not visible in the app until fixed and re-backfilled.
+- Direct edits made in the Airtable UI are not synced to Postgres from now on; edit through the app.
+- Rollback: set `DataBackend=airtable` in the staging samconfig and redeploy. Samconfig backup before this step: `backups/samconfig.toml.pre-staging-step2`.
