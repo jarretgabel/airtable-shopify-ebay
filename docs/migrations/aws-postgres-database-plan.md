@@ -909,3 +909,11 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Verified at store level with the local env: `used-gear-workflow` 3,471, `users` 18 records read from Postgres, no Airtable call.
 - Local writes land in the pg-test database (shared with the pg-test stack). Image uploads still use the default archive backend.
 - Not exercised: a full browser session against `npm run dev:full` (needs a user login).
+
+## Staging cutover, step 4a: Airtable off (2026-10-26)
+
+- Before switching: step 3 write verified end to end (edit on `recMnIsZoWH4G6pFK` reached Postgres, outbox `sent`, Airtable matched). Outbox drained (0 pending). Manual backup of the staging DB: `postgres/manual-2026-10-26-pre-airtable-off/` in the staging backup bucket (4,690 records).
+- Found that staging's normalized and image tables were empty (never populated there). Ran `db:normalize --apply` (3,498 items, 802 contacts, 45 listings, 656 history, 3,772 item images) and `db:sync-workflow-images --apply` (17,844 rows, 0 orphans). Both read only the mirror.
+- Set `AirtableWriteMode=postgres-only`, `AirtableOutboxSync=paused`, `AirtableDisabled=true` on `airtable-shopify-ebay-staging` (68 Lambdas modified, `UPDATE_COMPLETE`, site 200). The live site no longer reads or writes Airtable. The production base is frozen as of this moment and must be left untouched as a snapshot.
+- Rollback: redeploy with `AirtableWriteMode=outbox AirtableOutboxSync=on AirtableDisabled=false` (backup `backups/samconfig.toml.pre-staging-step4`); anything written after the switch would not be in Airtable.
+- Still open: remove the pg-test Jotform webhook; full Drive-to-S3 image copy (existing photos still load from Drive); 4 duplicate-SKU records exist only in Airtable; Airtable key is still on the Lambdas (inert while disabled); first scheduled backup on staging is tomorrow after 08:00 UTC.
