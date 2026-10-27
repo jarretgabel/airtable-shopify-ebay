@@ -204,10 +204,7 @@ export function WorkflowImageMetadataEditor({
                       {record.sourceStage}
                     </span>
                     {getPendingFilename(record) ? (
-                      <>
-                        <span className="truncate text-sm font-semibold text-[var(--ink)]">{getPendingFilename(record)}</span>
-                        <span className="rounded-full border border-[var(--accent)] px-2 py-0.5 text-xs text-[var(--muted)]">Renames on save</span>
-                      </>
+                      <span className="truncate text-sm font-semibold text-[var(--ink)]">{getPendingFilename(record)}</span>
                     ) : (
                       <span className="truncate text-sm font-semibold text-[var(--ink)]">{record.filename}</span>
                     )}

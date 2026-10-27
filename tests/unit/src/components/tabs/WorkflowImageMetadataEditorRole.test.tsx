@@ -45,6 +45,5 @@ describe('WorkflowImageMetadataEditor pending filename', () => {
     await screen.findAllByText('testing--front-panel.jpg');
     view.rerender(<WorkflowImageMetadataEditor metadata={[{ ...base, url: '/api/media/used-gear-workflow/r/testing/testing--a.jpg', imageRole: 'front' }]} onChange={vi.fn()} title="t" description="" emptyMessage="" namingContext={namingContext} />);
     expect(await screen.findByText('testing--mcintosh-mc275-amplifier-front-view.jpg')).toBeInTheDocument();
-    expect(screen.getByText('Renames on save')).toBeInTheDocument();
   });
 });
