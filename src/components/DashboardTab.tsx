@@ -5,6 +5,7 @@ import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
 import { getDashboardDegradedSources, hasDashboardPartialData } from '@/components/dashboard/dashboardSourceHealth';
+import { DashboardReportsSection } from '@/components/dashboard/DashboardReportsSection';
 import { DashboardSellersSection } from '@/components/dashboard/DashboardSellersSection';
 import { DashboardActionsSection } from '@/components/dashboard/DashboardActionsSection';
 import { DashboardPartialDataNotice, DashboardSectionPanel } from '@/components/dashboard/dashboardPrimitives';
@@ -117,6 +118,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         />
       ) : null}
       {hasFullAccessRole(workflow.currentUserRole) ? <DashboardSellersSection showWarnings={isDeveloper} /> : null}
+      {hasFullAccessRole(workflow.currentUserRole) ? <DashboardReportsSection showWarnings={isDeveloper} /> : null}
     </AppPageLayout>
   );
 }

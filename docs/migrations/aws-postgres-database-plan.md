@@ -938,5 +938,6 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 
 - Item 9: migration `0013` enables `pg_stat_statements` (already preloaded on RDS, no reboot). Performance Insights is not supported on `db.t4g.micro`; revisit with a larger instance class. Not yet applied to staging/pg-test.
 - Item 1: edit history UI. Backend `GET /api/audit/{source}/{recordId}` (admin only) already exists.
-- Item 3: one Reports tab (inventory by status, time in each stage, sales by vendor/brand) from `items`, `listings` and `audit_log`.
+- Item 1 done: "Edit history" panel on the combined listing page (full-access roles).
+- Item 3 done: "Reports" section on the Dashboard (full-access roles; admin-only `GET /api/dashboard/reports`): inventory by status, average time per stage, shipped items by brand. Vendor is empty on all items, so sales are by brand (make). Needs a Lambda + frontend deploy.
 - Item 5: CRM screens over `contacts`, `interactions`, `inquiries`, `follow_ups`.

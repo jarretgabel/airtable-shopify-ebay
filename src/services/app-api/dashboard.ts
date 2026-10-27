@@ -28,3 +28,13 @@ export async function getRecordHistory(source: string, recordId: string, limit =
   const result = await getJson<{ entries: RecordHistoryEntry[] }>(`/api/audit/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}`, { limit });
   return result.entries;
 }
+
+export interface ReportsSummary {
+  inventoryByStatus: Array<{ status: string; count: number }>;
+  timeInStage: Array<{ status: string; avgDays: number; stints: number }>;
+  shippedByBrand: Array<{ brand: string; count: number; totalCost: number }>;
+}
+
+export function getReports(): Promise<ReportsSummary> {
+  return getJson<ReportsSummary>('/api/dashboard/reports');
+}

@@ -1303,6 +1303,21 @@ Resources:
             Method: GET
             Path: /api/dashboard/sellers-summary
 
+  DashboardReportsFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/dashboard/getReports.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/dashboard/reports
+
   DashboardSellerHistoryFunction:
     Type: AWS::Serverless::Function
     Metadata:
