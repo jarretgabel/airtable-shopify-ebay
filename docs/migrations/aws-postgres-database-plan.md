@@ -902,3 +902,10 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - The 4 skipped duplicate-SKU records are still only in Airtable.
 - Rollback: `DataBackend=postgres-read` and redeploy (outbox keeps Airtable current). Samconfig backup: `backups/samconfig.toml.pre-staging-step3`.
 - Next: verify a test write reaches Airtable via the outbox, then step 4 (`postgres-only`, `AirtableDisabled=true`, remove the pg-test Jotform webhook, full Drive-to-S3 image copy).
+
+## Local dev on Postgres (2026-10-26)
+
+- `.env.local` (gitignored) now sets `DATA_BACKEND=postgres`, `AIRTABLE_DISABLED=true`, `AIRTABLE_WRITE_MODE=postgres-only`, `AIRTABLE_OUTBOX_SYNC=paused` and `DATABASE_URL` for the pg-test database (a copy of the TEST Airtable base). The Airtable API key is commented out and `VITE_AIRTABLE_BASE_ID`/`AIRTABLE_BASE_ID` point at the test base `appKOs3hF99ZGBKK3` (they pointed at production before). Backup of the old file: `backups/env.local.pre-postgres`.
+- Verified at store level with the local env: `used-gear-workflow` 3,471, `users` 18 records read from Postgres, no Airtable call.
+- Local writes land in the pg-test database (shared with the pg-test stack). Image uploads still use the default archive backend.
+- Not exercised: a full browser session against `npm run dev:full` (needs a user login).
