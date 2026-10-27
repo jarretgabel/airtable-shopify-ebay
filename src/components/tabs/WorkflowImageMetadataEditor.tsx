@@ -16,6 +16,7 @@ import {
   toWorkflowImageRoleSelection,
   type WorkflowImageRoleSelectOption,
 } from '@/services/workflowImageRoles';
+import { buildImageAltText, type ImageNamingContext } from '@/services/imageNamingFormatter';
 import { ApprovalSelect } from '@/components/approval/ApprovalSelect';
 import { WorkflowReferenceImageCard, type WorkflowImagePreviewSource } from './WorkflowReferenceImagesPanel';
 
@@ -30,6 +31,8 @@ export interface WorkflowImageMetadataEditorProps {
   className?: string;
   recordSource?: WorkflowImagePreviewSource;
   recordId?: string;
+  /** When set, changing a role also refreshes the alt text unless it was edited by hand. */
+  namingContext?: ImageNamingContext;
 }
 
 function getNextIsoTimestamp(): string {
@@ -47,6 +50,7 @@ export function WorkflowImageMetadataEditor({
   className = '',
   recordSource,
   recordId,
+  namingContext,
 }: WorkflowImageMetadataEditorProps) {
   const sortedMetadata = getSortedWorkflowImageMetadata(metadata);
   const [imageRoleOptions, setImageRoleOptions] = useState<WorkflowImageRoleSelectOption[]>([]);
@@ -71,6 +75,19 @@ export function WorkflowImageMetadataEditor({
     };
   }, []);
 
+  const applyRole = (record: WorkflowImageMetadataRecord, imageRole: WorkflowImageMetadataRecord['imageRole'], customImageRole: string) => {
+    const nowIso = getNextIsoTimestamp();
+    const withRole = updateWorkflowImageRole(sortedMetadata, record.url, imageRole, customImageRole, nowIso);
+    if (!namingContext) return withRole;
+    const previousAuto = buildImageAltText(namingContext, { role: record.imageRole, customRole: record.customImageRole ?? '' });
+    const currentAlt = record.alt.trim();
+    const key = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const filenameAlt = key(record.filename.replace(/\.[^.]+$/, ''));
+    if (currentAlt && currentAlt !== previousAuto && key(currentAlt) !== filenameAlt) return withRole;
+    const nextAlt = buildImageAltText(namingContext, { role: imageRole, customRole: imageRole === 'custom' ? customImageRole : '' });
+    return updateWorkflowImageAltText(withRole, record.url, nextAlt, nowIso);
+  };
+
   const addCustomRoleToSharedTable = async (record: WorkflowImageMetadataRecord) => {
     const customRoleValue = (record.customImageRole ?? '').trim();
     if (!customRoleValue) {
@@ -90,13 +107,7 @@ export function WorkflowImageMetadataEditor({
         ...current,
         [record.url]: 'Role already exists in shared roles and is now selected.',
       }));
-      onChange(updateWorkflowImageRole(
-        sortedMetadata,
-        record.url,
-        existingSelection.imageRole,
-        existingSelection.customImageRole,
-        getNextIsoTimestamp(),
-      ));
+      onChange(applyRole(record, existingSelection.imageRole, existingSelection.customImageRole));
       return;
     }
 
@@ -110,13 +121,7 @@ export function WorkflowImageMetadataEditor({
 
       const selectedOption = findWorkflowImageRoleOption(refreshedOptions, customRoleValue) ?? createdOption;
       const createdSelection = toWorkflowImageRoleSelection(selectedOption.value, customRoleValue);
-      onChange(updateWorkflowImageRole(
-        sortedMetadata,
-        record.url,
-        createdSelection.imageRole,
-        createdSelection.customImageRole,
-        getNextIsoTimestamp(),
-      ));
+      onChange(applyRole(record, createdSelection.imageRole, createdSelection.customImageRole));
       setCustomRoleSaveSuccess((current) => ({
         ...current,
         [record.url]: 'Added to shared roles.',
@@ -199,13 +204,7 @@ export function WorkflowImageMetadataEditor({
                       value={getWorkflowImageRoleSelectValue(record.imageRole, record.customImageRole, imageRoleOptions)}
                       onChange={(event) => {
                         const selection = toWorkflowImageRoleSelection(event.currentTarget.value, record.customImageRole ?? '');
-                        onChange(updateWorkflowImageRole(
-                          sortedMetadata,
-                          record.url,
-                          selection.imageRole,
-                          selection.customImageRole,
-                          getNextIsoTimestamp(),
-                        ));
+                        onChange(applyRole(record, selection.imageRole, selection.customImageRole));
                       }}
                       disabled={disabled}
                       selectProps={{ 'aria-label': `Image role for ${record.filename}` }}
@@ -228,7 +227,7 @@ export function WorkflowImageMetadataEditor({
                           onChange={(event) => {
                             setCustomRoleSaveErrors((current) => ({ ...current, [record.url]: '' }));
                             setCustomRoleSaveSuccess((current) => ({ ...current, [record.url]: '' }));
-                            onChange(updateWorkflowImageRole(sortedMetadata, record.url, record.imageRole, event.currentTarget.value, getNextIsoTimestamp()));
+                            onChange(applyRole(record, record.imageRole, event.currentTarget.value));
                           }}
                           placeholder="For example: side profile"
                           aria-label={`Custom image role for ${record.filename}`}

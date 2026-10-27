@@ -315,6 +315,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
           onProcessingSummaryChange={setImageProcessingSummary}
           afterUploadContent={stageImageMetadata.length > 0 ? (
             <WorkflowImageMetadataEditor
+              namingContext={{ brand: formValues.make, model: formValues.model, productType: formValues.componentType, companyName: 'Resolution AV' }}
               metadata={stageImageMetadata}
               recordSource={recordSource === 'used-gear-workflow' ? recordSource : undefined}
               recordId={recordId ?? undefined}
