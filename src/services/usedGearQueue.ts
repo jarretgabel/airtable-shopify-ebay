@@ -460,51 +460,16 @@ function normalizeNullableCurrency(value: number | null | undefined): number | n
   return Math.round(value * 100) / 100;
 }
 
-function mergeConfiguredRecordFields(
-  baseRecords: AirtableRecord[],
-  supplementalRecords: AirtableRecord[],
-): AirtableRecord[] {
-  const supplementalFieldsById = new Map(
-    supplementalRecords.map((record) => [record.id, record.fields]),
-  );
-
-  return baseRecords.map((record) => {
-    const supplementalFields = supplementalFieldsById.get(record.id);
-    if (!supplementalFields) {
-      return record;
-    }
-
-    return {
-      ...record,
-      fields: {
-        ...record.fields,
-        ...supplementalFields,
-      },
-    };
-  });
-}
-
 async function loadUsedGearOperationalRecords(options?: { includeOptionalReadFields?: boolean; excludeImageMetadata?: boolean; subset?: 'workflow-progress' | 'parking-lot-arrival' }): Promise<AirtableRecord[]> {
-  const requiredRecords = await getConfiguredRecords('used-gear-workflow', {
-    subset: options?.subset,
-    fields: options?.excludeImageMetadata
-      ? USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS.filter((fieldName) => fieldName !== WORKFLOW_IMAGE_METADATA_FIELD)
-      : [...USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS],
-  });
+  const requiredFields = options?.excludeImageMetadata
+    ? USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS.filter((fieldName) => fieldName !== WORKFLOW_IMAGE_METADATA_FIELD)
+    : [...USED_GEAR_WORKFLOW_REQUIRED_RECORD_FIELDS];
+  // Postgres ignores fields a record does not have, so required and optional fields come back in one read.
+  const fields = options?.includeOptionalReadFields
+    ? Array.from(new Set([...requiredFields, ...USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELDS]))
+    : requiredFields;
 
-  if (!options?.includeOptionalReadFields) {
-    return requiredRecords;
-  }
-
-  try {
-    const optionalRecords = await getConfiguredRecords('used-gear-workflow', {
-      fields: [...USED_GEAR_WORKFLOW_OPTIONAL_READ_FIELDS],
-    });
-
-    return mergeConfiguredRecordFields(requiredRecords, optionalRecords);
-  } catch {
-    return requiredRecords;
-  }
+  return getConfiguredRecords('used-gear-workflow', { subset: options?.subset, fields });
 }
 
 function normalizeAllocationText(value: string | undefined): string | null {

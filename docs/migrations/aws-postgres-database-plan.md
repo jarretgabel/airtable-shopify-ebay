@@ -925,3 +925,11 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Removed the pg-test Jotform webhook (index 0). Form 213604252654047 now has only the two live webhooks.
 - Full Drive-to-S3 copy into the staging media bucket started (`db:copy-drive-images --apply`, 2,522 records, 19,140 images, about 7 h at about 10 records per 100 s). Safe to re-run: copied images are skipped. The tool now logs progress every 10 records (`onProgress`). Media base URL is empty (relative `/api/media/...` URLs, as on pg-test).
 - After the copy: set `ImageArchiveBackend` to S3 on staging so new uploads stop going to Drive (deploy, needs approval), then check failures and the first staging backup (2026-10-27 08:00 UTC).
+
+## Postgres performance review (staging)
+
+- Measured on staging (11 MB `records` table, fits in memory): queue query 3 ms, search 30 ms (seq scan), JSON-field sort 11 ms. Extra indexes (item 2) are not worth adding at this size; revisit if the table grows 10x+.
+- Frontend already pages (40 rows first load), projects `fields`, and searches server-side (items 1 and 3 already in place). Remaining whole-table loads are small (users, vendors, inventory directory).
+- Item 4: removed the per-instance read cache TTLs (reads could go stale after a write on another Lambda instance). The Airtable fallback stays until Airtable code removal.
+- `loadUsedGearOperationalRecords` now does one read (required + optional fields) instead of two.
+- Test note: a fresh scratch DB needs `db:migrate` against `POSTGRES_TEST_URL` before the aws test suite.

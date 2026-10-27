@@ -35,7 +35,8 @@ let postgresReadStore: ListingStore | undefined;
 let postgresFirstStore: ListingStore | undefined;
 
 // Near-static sources only. Users stay short so a disabled account or changed password takes effect quickly on other instances.
-const READ_CACHE_TTL_MS = { 'shopify-vendors': 60_000, 'user-guide': 60_000, users: 15_000 } as const;
+// Postgres reads take milliseconds, and a per-instance cache would serve stale rows after a write handled by another instance.
+const READ_CACHE_TTL_MS = {} as const;
 
 function getDualStore(): ListingStore {
   dualStore ??= createDualListingStore({
