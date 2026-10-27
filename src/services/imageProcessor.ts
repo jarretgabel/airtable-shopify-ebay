@@ -242,3 +242,15 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
+
+/** Smaller JPEG copy of an already processed image; null when it is not larger than `maxPx`. */
+export async function resizeImageToJpeg(file: Blob, maxPx: number, quality = 82): Promise<Blob | null> {
+  const src = await loadImage(file as File);
+  const scale = maxPx / Math.max(src.naturalWidth, src.naturalHeight);
+  if (scale >= 1) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(src.naturalWidth * scale));
+  canvas.height = Math.max(1, Math.round(src.naturalHeight * scale));
+  canvas.getContext('2d')!.drawImage(src, 0, 0, canvas.width, canvas.height);
+  return canvasToBlob(canvas, 'image/jpeg', quality / 100);
+}

@@ -1,3 +1,4 @@
+import { getImageVariantUrl } from '@/services/imageVariantUrl';
 import { useEffect, useRef, useState } from 'react';
 import { isGoogleDriveImageUrl } from '@/services/workflowImageMetadata';
 import { getConfiguredWorkflowImagePreview } from '@/services/app-api/airtable';
@@ -97,7 +98,8 @@ export function WorkflowReferenceImageCard({
     if (!isNearViewport) return;
 
     if (!recordSource || !recordId || !fileId) {
-      setPreviewDataUrl(getReferencePreviewUrl(image.url) ?? null);
+      const preview = getReferencePreviewUrl(image.url);
+      setPreviewDataUrl(preview ? getImageVariantUrl(preview, 800) : null);
       return;
     }
 

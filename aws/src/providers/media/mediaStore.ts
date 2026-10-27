@@ -6,6 +6,8 @@ export interface MediaStore {
   signedPutUrl(key: string, contentType: string, expiresInSeconds?: number): Promise<string>;
   /** First bytes of an object, for image-type checks; null when the object does not exist. */
   header(key: string, bytes?: number): Promise<Buffer | null>;
+  /** Whole object; null when it does not exist. */
+  get(key: string): Promise<Buffer | null>;
   /** Server-side copy; the source object is left in place so URLs already published keep working. */
   copy(fromKey: string, toKey: string): Promise<void>;
   /** Short-lived direct download URL for a stored object. */
@@ -55,6 +57,17 @@ export function createS3MediaStore(options: { bucket: string; publicBaseUrl: str
       const { GetObjectCommand } = await import('@aws-sdk/client-s3');
       try {
         const result = await (await getClient()).send(new GetObjectCommand({ Bucket: options.bucket, Key: key, Range: `bytes=0-${bytes - 1}` }));
+        return result.Body ? Buffer.from(await result.Body.transformToByteArray()) : null;
+      } catch (error) {
+        const name = (error as { name?: string }).name;
+        if (name === 'NoSuchKey' || name === 'NotFound') return null;
+        throw error;
+      }
+    },
+    async get(key) {
+      const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+      try {
+        const result = await (await getClient()).send(new GetObjectCommand({ Bucket: options.bucket, Key: key }));
         return result.Body ? Buffer.from(await result.Body.transformToByteArray()) : null;
       } catch (error) {
         const name = (error as { name?: string }).name;

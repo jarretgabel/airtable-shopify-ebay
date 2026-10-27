@@ -12,6 +12,7 @@ function fakeMedia() {
     async put(key, body, contentType) { puts.set(key, { size: body.length, contentType }); },
     async header(key) { return key.endsWith('.png') ? Buffer.from(PNG, 'base64') : Buffer.from('<html>'); },
     async signedUrl() { return 'signed'; },
+    async get(key) { return null; },
     async copy() {},
     async signedPutUrl(key) { return `https://put.example/${key}`; },
     publicUrl(key) { return `https://api.test/api/media/${key}`; },

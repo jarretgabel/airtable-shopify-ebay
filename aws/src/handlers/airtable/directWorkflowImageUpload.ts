@@ -6,7 +6,7 @@ import { logError, logInfo } from '../../shared/logging.js';
 import { getMediaStoreFromEnv } from '../../providers/media/mediaStore.js';
 import {
   finalizeWorkflowImageUpload,
-  presignWorkflowImageUpload,
+  presignWorkflowImageUploadWithVariants,
   renameWorkflowImage,
   type DirectUploadFile,
 } from '../../providers/media/workflowImageDirectUpload.js';
@@ -18,6 +18,7 @@ interface Body {
   processedKey?: string;
   originalKey?: string;
   url?: string;
+  variantWidths?: number[];
   filename?: string;
 }
 
@@ -38,9 +39,9 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const recordKey = body.folderKey?.trim() || recordId;
     if (action === 'presign') {
-      const uploads = await presignWorkflowImageUpload({ recordKey, stage: body.stage, files: body.files ?? [] }, media);
+      const { uploads, variantUploads } = await presignWorkflowImageUploadWithVariants({ recordKey, stage: body.stage, files: body.files ?? [], variantWidths: body.variantWidths }, media);
       logInfo('Issued workflow image upload URLs', { source, recordId, count: uploads.length });
-      return jsonOk({ enabled: true, uploads }, { origin });
+      return jsonOk({ enabled: true, uploads, variantUploads }, { origin });
     }
     if (action === 'finalize') {
       const archive = await finalizeWorkflowImageUpload({

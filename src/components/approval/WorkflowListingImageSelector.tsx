@@ -1,3 +1,4 @@
+import { getImageVariantUrl } from '@/services/imageVariantUrl';
 import { useEffect, useState, type ReactNode, type SyntheticEvent } from 'react';
 import type { WorkflowListingImageAttachment } from '@/components/approval/workflowListingImageHelpers';
 import { isGoogleDriveImageUrl } from '@/services/workflowImageMetadata';
@@ -352,7 +353,7 @@ export function WorkflowListingImageSelector({
             loading="lazy"
             onError={(event) => applyPreviewFallback(event, attachment.url)}
             referrerPolicy="no-referrer"
-            src={getPreviewUrl(attachment.url)}
+            src={getImageVariantUrl(getPreviewUrl(attachment.url), 400)}
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-slate-950/70 px-2 py-1 text-white">
             <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

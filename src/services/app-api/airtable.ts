@@ -5,6 +5,8 @@ import {
 } from './airtableSources';
 import { isAppApiHttpError } from './errors';
 import { toServiceErrorMessage } from './errors';
+import { IMAGE_VARIANT_WIDTHS } from '@/services/imageVariantUrl';
+import { resizeImageToJpeg } from '@/services/imageProcessor';
 import { deleteJson, getJson, patchJson, postJson } from './http';
 
 export type AirtableConfiguredWriteSource =
@@ -466,8 +468,10 @@ async function tryDirectWorkflowImageUpload(
     const presign = await postJson<{
       enabled: boolean;
       uploads?: Array<{ variant: 'processed' | 'original'; key: string; uploadUrl: string; contentType: string }>;
+      variantUploads?: Array<{ width: number; uploadUrl: string; contentType: string }>;
     }>(`${base}/presign`, {
       stage: archive.stage,
+      variantWidths: IMAGE_VARIANT_WIDTHS,
       files: [describe('processed', file), describe('original', archive.originalFile)],
     });
     if (!presign.enabled || !presign.uploads) return null;
@@ -480,6 +484,16 @@ async function tryDirectWorkflowImageUpload(
         body: sources[upload.variant],
       });
       if (!response.ok) return null;
+    }
+
+    // Smaller sizes are an optimisation; the image works without them, so failures are ignored.
+    for (const variant of presign.variantUploads ?? []) {
+      try {
+        const blob = await resizeImageToJpeg(file, variant.width);
+        if (blob) await fetch(variant.uploadUrl, { method: 'PUT', headers: { 'Content-Type': variant.contentType }, body: blob });
+      } catch {
+        // keep going
+      }
     }
 
     return await postJson<AirtableAttachmentUploadResult>(`${base}/finalize`, {

@@ -2,6 +2,7 @@ import { HttpError } from '../../shared/errors.js';
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import type { WorkflowImageArchiveResult } from '../googleDrive/client.js';
 import { ARCHIVE_TABLE_PREFIX, buildFilename, safeSegment } from './workflowImageArchive.js';
+import { IMAGE_VARIANT_WIDTHS, parseVariantWidth, variantKey, type ImageVariantWidth } from './imageVariants.js';
 import { extractWorkflowMediaKey, type MediaStore } from './mediaStore.js';
 
 export type DirectUploadStage = 'intake' | 'testing' | 'photos';
@@ -35,12 +36,23 @@ export async function presignWorkflowImageUpload(
   request: { recordKey: string; stage: unknown; files: DirectUploadFile[] },
   media: MediaStore,
 ): Promise<Array<{ variant: Variant; key: string; uploadUrl: string; contentType: string }>> {
+  return (await presignWorkflowImageUploadWithVariants(request, media)).uploads;
+}
+
+/** Also returns signed URLs for the smaller JPEG variants of the processed file. */
+export async function presignWorkflowImageUploadWithVariants(
+  request: { recordKey: string; stage: unknown; files: DirectUploadFile[]; variantWidths?: number[] },
+  media: MediaStore,
+): Promise<{
+  uploads: Array<{ variant: Variant; key: string; uploadUrl: string; contentType: string }>;
+  variantUploads: Array<{ width: ImageVariantWidth; key: string; uploadUrl: string; contentType: string }>;
+}> {
   const stage = assertStage(request.stage);
   const processed = request.files.filter((file) => file.variant === 'processed');
   if (processed.length !== 1 || request.files.length > 2 || request.files.some((file) => file.variant !== 'processed' && file.variant !== 'original')) {
     throw fail(400, 'WORKFLOW_UPLOAD_FILES_INVALID', 'Send one processed file and at most one original file.');
   }
-  return Promise.all(request.files.map(async (file) => {
+  const uploads = await Promise.all(request.files.map(async (file) => {
     if (!ALLOWED_TYPES.has(file.contentType) || !file.filename?.trim()) {
       throw fail(400, 'WORKFLOW_UPLOAD_TYPE_INVALID', 'Only image files can be uploaded.');
     }
@@ -50,6 +62,13 @@ export async function presignWorkflowImageUpload(
     const key = keyFor(request.recordKey, stage, file.variant, file.filename);
     return { variant: file.variant, key, uploadUrl: await media.signedPutUrl(key, file.contentType), contentType: file.contentType };
   }));
+  const processedKey = uploads.find((upload) => upload.variant === 'processed')?.key ?? '';
+  const widths = [...new Set((request.variantWidths ?? []).map((width) => parseVariantWidth(String(width))).filter((width): width is ImageVariantWidth => width !== null))];
+  const variantUploads = await Promise.all(widths.map(async (width) => {
+    const key = variantKey(processedKey, width);
+    return { width, key, uploadUrl: await media.signedPutUrl(key, 'image/jpeg'), contentType: 'image/jpeg' };
+  }));
+  return { uploads, variantUploads };
 }
 
 /** Confirms the uploaded objects exist and are real images, then returns the archive result shape. */
@@ -98,5 +117,8 @@ export async function renameWorkflowImage(
   }
   const nextKey = `${folder}/${name}`;
   await media.copy(key, nextKey);
+  for (const width of IMAGE_VARIANT_WIDTHS) {
+    if (await media.header(variantKey(key, width), 1)) await media.copy(variantKey(key, width), variantKey(nextKey, width));
+  }
   return { id: nextKey, filename: name, url: media.publicUrl(nextKey) };
 }

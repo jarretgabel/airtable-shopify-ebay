@@ -3,6 +3,7 @@ import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js
 import { getRequestOrigin, jsonError } from '../../shared/http.js';
 import { logError } from '../../shared/logging.js';
 import { getMediaStoreFromEnv, isValidMediaKey } from '../../providers/media/mediaStore.js';
+import { parseVariantWidth, resolveVariantKey } from '../../providers/media/imageVariants.js';
 
 /**
  * Public on purpose: Shopify and eBay fetch these URLs when publishing. Keys contain a random attachment id,
@@ -21,7 +22,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     }
     return {
       statusCode: 302,
-      headers: { location: await media.signedUrl(key), 'cache-control': 'private, max-age=240' },
+      headers: { location: await media.signedUrl(await resolveVariantKey(media, key, parseVariantWidth(event.queryStringParameters?.w))), 'cache-control': 'private, max-age=240' },
       body: '',
     };
   } catch (error) {

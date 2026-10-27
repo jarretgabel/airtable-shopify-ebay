@@ -11,6 +11,7 @@ function fakeMedia(objects: Record<string, Buffer> = {}): MediaStore {
   return {
     async put() {},
     async header(key) { return objects[key] ?? null; },
+    async get(key) { return null; },
     async copy(from, to) { copies.push([from, to]); objects[to] = objects[from] ?? PNG; },
     async signedPutUrl(key, type) { return `https://put.test/${key}?type=${type}`; },
     async signedUrl() { return 'signed'; },
