@@ -970,3 +970,24 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Still open in 14.11: remove the Airtable key, base config, outbox worker and Airtable-only code paths; rename `/api/airtable/*` routes last.
 - `pg-test` stack deleted (2026-10-27). Backups: RDS snapshot `pg-test-final-20261027`, and bucket copies in `s3://airtable-shopify-ebay-pg-test-archive-981750770208` (`media/` 1,885 objects, `backup/` 31 objects). Staging was not touched.
 - `DataBackend` / `DATA_BACKEND` now defaults to `postgres` (template and `backend.ts`); staging already set it explicitly. A stack that still needs Airtable must set `airtable` explicitly (the `airtable-shopify-ebay-dev` stack has no explicit value and was last updated in June). Staging Lambda logs over 7 days showed no `airtable.com` calls, read fallbacks or outbox activity.
+
+## Plan: Shopify orders and invoices in the app (proposed 2026-10-28, not started)
+"Invoice" in Shopify means an order (plus its draft order, if you invoice by hand). Shopify does not offer a separate invoice API, so we store orders and render the invoice from them.
+
+**What exists:** webhook subscriptions and the receiver for `orders-paid`, `orders-cancelled`, `refunds-create`, disputes and returns (`aws/src/handlers/shopify/receiveWebhook.ts`). They only mark the listing sold or close it. Orders are not stored. `contacts` exists for sellers only.
+
+**Steps** (each is one reviewable change; no deploy or migration without approval)
+1. Check access. Read-only: call `getCurrentShopifyAccessScopes` and confirm `read_orders` (and `read_all_orders` for history older than 60 days). If missing, you must grant it in the Shopify app settings. This is the one step that needs you.
+2. Migration (next number after `0013`): tables `orders` (shopify order id, name/number, created/paid/cancelled/refunded timestamps, financial and fulfillment status, currency, subtotal, shipping, tax, discounts, total, refunded total, customer contact id, raw JSON), `order_lines` (order id, product id, SKU, title, quantity, price, link to `items`/listing record id) and `order_payments` or transactions if needed. Idempotent upserts keyed by Shopify order id.
+3. Webhook: extend the existing order handlers to upsert the order before the sold/close logic. If the upsert fails the sold logic must still run and the failure is logged and retried. Add `orders/create` and `orders/updated` subscriptions for edits.
+4. Backfill CLI like the existing ones (`db:backfill-shopify-orders`): paginated GraphQL read, dry run by default, `--apply` to write. Read-only against Shopify. Run against staging only after you approve.
+5. Link data: match order lines to listings by SKU or product id, and buyers to `contacts` (add a `type` of buyer, or a separate `customers` table) by email.
+6. API: `GET /api/orders` (list, filter by date, status, search) and `GET /api/orders/{id}`, with the same access gating as the dashboard reports.
+7. UI: an "Orders" page (list and detail) and an invoice view with print/PDF (browser print stylesheet first). On a listing, show its order and profit (sale price minus intake cost) next to the intake cost already stored.
+8. Reports: add revenue, margin and sell-through to the Dashboard Reports section.
+9. Tests: unit tests for the mapper and webhook upsert, run on the throwaway `scratch_tests` DB.
+
+**Decisions needed**
+- Do you also use Shopify draft orders or the Shopify invoice email, or only normal checkout orders?
+- Should eBay orders be included later, so one Orders page covers both channels?
+- Do buyers go into the existing contacts table or a separate customers table?
