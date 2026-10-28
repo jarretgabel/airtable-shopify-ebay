@@ -968,3 +968,4 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - `legacyUrl` strings (Drive URLs) in `Workflow Image Metadata JSON` and `workflow_images.legacy_url` are kept as audit data.
 - Deployed to staging (change set modified 80 resources, no replacements; frontend deployed). Not yet browser-tested.
 - Still open in 14.11: remove the Airtable key, base config, outbox worker and Airtable-only code paths; rename `/api/airtable/*` routes last.
+- `pg-test` stack deleted (2026-10-27). Backups: RDS snapshot `pg-test-final-20261027`, and bucket copies in `s3://airtable-shopify-ebay-pg-test-archive-981750770208` (`media/` 1,885 objects, `backup/` 31 objects). Staging was not touched.
