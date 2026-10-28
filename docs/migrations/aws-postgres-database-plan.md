@@ -941,3 +941,12 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Item 1 done: "Edit history" panel on the combined listing page (full-access roles).
 - Item 3 done: "Reports" section on the Dashboard (full-access roles; admin-only `GET /api/dashboard/reports`): inventory by status, average time per stage, shipped items by brand. Vendor is empty on all items, so sales are by brand (make). Needs a Lambda + frontend deploy.
 - Item 5 done (sellers/notes/follow-ups; inquiries inbox not built): "Customers" section on the Dashboard (full-access roles). Search contacts, see their items, add notes (`interactions`), add and close follow-ups, and a "due" list. Routes: `/api/dashboard/crm/...` (6 Lambdas). This is human-entered data that exists only in Postgres; it is covered by the table-wide backups, and a rollback to Airtable would lose it.
+
+## Staging images on S3 (2026-10-27)
+- Image copy finished: 1,266 records, 9,820 of 9,821 images copied (295 HEIC converted), 0 failures, about 10 GB. 17,843 of 17,844 `workflow_images` rows are on S3; the remaining row is an HTML placeholder that keeps its Drive URL.
+- Staging now has `ImageArchiveBackend=s3`.
+- Incident: running `prepare-aws-samconfig` copied the local test-base values (`AirtableBaseId`, combined-listings table ref) into the staging samconfig, so staging queues and listings were empty after the S3 deploy. Restored via change set. Prevention: for `staging` the script now skips the Airtable base, table and allowed-table settings. Staging data is stored under base `apprsAm2FOohEmL2u`.
+- Role/alt fix: archive renames uploads to `<stage>--<name>`, so the pending upload's role and alt were looked up by the wrong filename and lost on save. Now matched by index. Images uploaded roughly 12:00-13:50 local on 2026-10-27 may need role and alt set by hand.
+- Saved-image editor: changing a role refreshes alt text (unless hand-edited) and previews the new filename; Save copies the S3 object to the new name (`rename` action on the direct-upload route). The old object is kept so published URLs keep working.
+- Image variants: new uploads also store 400 and 800 px JPEGs under `variants/w<width>/<key>`; `/api/media/<key>?w=400|800` redirects to the variant, else the original. Backfill (`generate-image-variants-cli`) processed 17,844 images, created 35,234 variants; 17 failed (non-image `intake--…--original.jpg` files), which keep serving the original.
+- Still open: remove the Drive fallback (14.11); base64 upload fallback does not refresh variants.
