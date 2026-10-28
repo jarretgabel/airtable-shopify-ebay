@@ -413,7 +413,6 @@ export function ListingApprovalQueuePanel({
   const [combinedWorkSearchQuery, setCombinedWorkSearchQuery] = useState('');
   const [combinedReadySortMode, setCombinedReadySortMode] = useState<CombinedQueueSortMode>('default');
   const [combinedWorkSortMode, setCombinedWorkSortMode] = useState<CombinedQueueSortMode>('default');
-  const [combinedReadyWorkflowFilter, setCombinedReadyWorkflowFilter] = useState('all');
   const [combinedWorkWorkflowFilter, setCombinedWorkWorkflowFilter] = useState('all');
   const [combinedFetchLimit, setCombinedFetchLimit] = useState(COMBINED_QUEUE_INITIAL_FETCH_LIMIT);
   const [combinedLoadingMore, setCombinedLoadingMore] = useState(false);
@@ -582,40 +581,16 @@ export function ListingApprovalQueuePanel({
       shopifyRequiredFieldNames,
     ],
   );
-  const combinedReadyWorkflowOptions = useMemo(() => {
-    const statusValues = Array.from(
-      new Set(
-        combinedReadyForPublishingRecords
-          .map((record) => normalizeCombinedWorkflowStatus(record))
-          .filter((value) => value.length > 0),
-      ),
-    ).sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
-
-    return [
-      { value: 'all', label: 'All Statuses' },
-      ...statusValues.map((value) => ({ value, label: value })),
-    ];
-  }, [combinedReadyForPublishingRecords]);
-  const combinedWorkWorkflowOptions = useMemo(() => {
-    const statusValues = Array.from(
-      new Set(
-        combinedNeedsFurtherWorkRecords
-          .map((record) => normalizeCombinedWorkflowStatus(record))
-          .filter((value) => value.length > 0),
-      ),
-    ).sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
-
-    return [
-      { value: 'all', label: 'All Statuses' },
-      ...statusValues.map((value) => ({ value, label: value })),
-    ];
-  }, [combinedNeedsFurtherWorkRecords]);
+  const combinedWorkWorkflowOptions = [
+    { value: 'all', label: 'All Rows' },
+    { value: 'shopify-ready', label: 'Ready for Shopify' },
+    { value: 'ebay-ready', label: 'Ready for eBay' },
+    { value: 'neither-ready', label: 'Not Ready for Either' },
+  ];
   const filteredCombinedReadyForPublishingRecords = useMemo(() => {
     if (!isCombinedApproval) return [];
     const normalizedQuery = combinedReadySearchQuery.trim().toLowerCase();
     const readyRecords = combinedReadyForPublishingRecords.filter((record) => {
-      const workflowStatus = normalizeCombinedWorkflowStatus(record);
-      if (combinedReadyWorkflowFilter !== 'all' && workflowStatus !== combinedReadyWorkflowFilter) return false;
       if (!normalizedQuery) return true;
 
       return buildSearchableRecordText(record, [
@@ -644,7 +619,6 @@ export function ListingApprovalQueuePanel({
     combinedReadyForPublishingRecords,
     combinedReadySearchQuery,
     combinedReadySortMode,
-    combinedReadyWorkflowFilter,
     isCombinedApproval,
     priceFieldName,
     qtyFieldName,
@@ -655,8 +629,11 @@ export function ListingApprovalQueuePanel({
     if (!isCombinedApproval) return [];
     const normalizedQuery = combinedWorkSearchQueryTrimmed.toLowerCase();
     const workRecords = combinedNeedsFurtherWorkRecords.filter((record) => {
-      const workflowStatus = normalizeCombinedWorkflowStatus(record);
-      if (combinedWorkWorkflowFilter !== 'all' && workflowStatus !== combinedWorkWorkflowFilter) return false;
+      const shopifyReady = isReadyForRequiredFields(record.fields, shopifyRequiredFieldNames);
+      const ebayReady = isReadyForRequiredFields(record.fields, ebayRequiredFieldNames);
+      if (combinedWorkWorkflowFilter === 'shopify-ready' && !shopifyReady) return false;
+      if (combinedWorkWorkflowFilter === 'ebay-ready' && !ebayReady) return false;
+      if (combinedWorkWorkflowFilter === 'neither-ready' && (shopifyReady || ebayReady)) return false;
       if (!normalizedQuery) return true;
 
       return buildSearchableRecordText(record, [
@@ -983,12 +960,6 @@ export function ListingApprovalQueuePanel({
                   refreshLoadingLabel="Refreshing listing approval queue"
                   refreshing={loading}
                   onRefresh={refreshQueue}
-                  filters={combinedReadyWorkflowOptions.length > 1 ? [{
-                    ariaLabel: 'Filter ready-for-publishing combined listings by workflow status',
-                    value: combinedReadyWorkflowFilter,
-                    options: combinedReadyWorkflowOptions,
-                    onChange: setCombinedReadyWorkflowFilter,
-                  }] : undefined}
                   compactFilters
                 />
                 {filteredCombinedReadyForPublishingRecords.length > 0 ? (
@@ -1042,12 +1013,12 @@ export function ListingApprovalQueuePanel({
                   refreshLoadingLabel="Refreshing listing approval queue"
                   refreshing={loading || combinedWorkServerSearchLoading}
                   onRefresh={refreshQueue}
-                  filters={combinedWorkWorkflowOptions.length > 1 ? [{
-                    ariaLabel: 'Filter combined listings that need further work by workflow status',
+                  filters={[{
+                    ariaLabel: 'Filter combined listings that need further work by marketplace readiness',
                     value: combinedWorkWorkflowFilter,
                     options: combinedWorkWorkflowOptions,
                     onChange: setCombinedWorkWorkflowFilter,
-                  }] : undefined}
+                  }]}
                   compactFilters
                 />
                 {combinedWorkServerSearchError ? (
