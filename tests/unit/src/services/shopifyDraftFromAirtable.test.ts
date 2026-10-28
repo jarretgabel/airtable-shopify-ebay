@@ -260,20 +260,14 @@ describe('buildShopifyDraftProductFromApprovalFields', () => {
     ]);
   });
 
-  it('maps canonical condition field into Shopify options and variant selection', () => {
+  it('does not route condition into Shopify options or variants', () => {
     const product = buildShopifyDraftProductFromApprovalFields({
       'Shopify REST Title': 'Shopify Condition Test',
       __Condition__: 'Open Box',
     });
 
-    expect(product.options).toEqual([
-      {
-        name: 'Condition',
-        position: 1,
-        values: ['Open Box'],
-      },
-    ]);
-    expect(product.variants?.[0]?.option1).toBe('Open Box');
+    expect(product.options).toBeUndefined();
+    expect(product.variants?.[0]?.option1).toBeUndefined();
   });
 
   it('uses Shopify vendor from Airtable fields and aggregates tags from Airtable tag fields', () => {

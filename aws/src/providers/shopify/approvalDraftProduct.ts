@@ -22,7 +22,7 @@ import { buildImages } from './approvalDraftImages.js';
 import { withPreOwnedHifiTag } from '../../shared/contracts/shopifyPreOwnedTag.js';
 import { buildTags } from './approvalDraftTags.js';
 import type { ApprovalFieldMap, ShopifyMetafield, ShopifyProduct, ShopifyProductOption, ShopifyProductVariant } from './approvalDraftTypes.js';
-import { CONDITION_LABELS, SHOPIFY_DEFAULT_VENDOR, SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES } from './approvalDraftTypes.js';
+import { SHOPIFY_DEFAULT_VENDOR, SHOPIFY_PRODUCT_TYPE_FIELD_CANDIDATES } from './approvalDraftTypes.js';
 
 const SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD_CANDIDATES = [
   'Shopify Condition Metafield Value',
@@ -72,36 +72,6 @@ function hasFlatVariantFields(fields: ApprovalFieldMap): boolean {
 
 function getConditionFromFields(fields: ApprovalFieldMap): string | undefined {
   return normalizeConditionLabel(getField(fields, ['__Condition__', 'Item Condition', 'Condition', 'Shopify Condition', 'Shopify REST Condition', 'eBay Inventory Condition']));
-}
-
-function applyConditionToShopifyOptionsAndVariants(
-  options: ShopifyProductOption[] | undefined,
-  variants: ShopifyProductVariant[],
-  condition: string | undefined,
-): { options: ShopifyProductOption[] | undefined; variants: ShopifyProductVariant[] } {
-  if (!condition) return { options, variants };
-  const nextOptions = (options ?? []).map((option, index) => ({ ...option, position: option.position ?? index + 1, values: [...option.values] }));
-  let conditionIndex = nextOptions.findIndex((option) => option.name.trim().toLowerCase() === 'condition');
-  if (conditionIndex === -1) {
-    if (nextOptions.length < 3) {
-      nextOptions.push({ name: 'Condition', position: nextOptions.length + 1, values: [condition] });
-      conditionIndex = nextOptions.length - 1;
-    } else {
-      conditionIndex = 0;
-      nextOptions[0] = { name: 'Condition', position: 1, values: [condition] };
-    }
-  } else {
-    const existingValues = nextOptions[conditionIndex].values.filter((value) => CONDITION_LABELS.includes(value as (typeof CONDITION_LABELS)[number]));
-    nextOptions[conditionIndex].values = Array.from(new Set([condition, ...existingValues]));
-  }
-  const conditionPosition = nextOptions[conditionIndex].position ?? conditionIndex + 1;
-  const nextVariants = variants.map((variant) => {
-    if (conditionPosition === 1) return { ...variant, option1: condition };
-    if (conditionPosition === 2) return { ...variant, option2: condition };
-    if (conditionPosition === 3) return { ...variant, option3: condition };
-    return variant;
-  });
-  return { options: nextOptions, variants: nextVariants };
 }
 
 function buildMetafields(fields: ApprovalFieldMap): ShopifyMetafield[] | undefined {
@@ -394,9 +364,8 @@ function sanitizeProductPayload(product: ShopifyProduct): ShopifyProduct {
 
 export function buildShopifyDraftProductFromApprovalFields(fields: ApprovalFieldMap): ShopifyProduct {
   const condition = getConditionFromFields(fields);
-  let options = sanitizeOptions(buildOptions(fields));
-  let variants = sanitizeVariants(buildVariants(fields, options ?? []));
-  ({ options, variants } = applyConditionToShopifyOptionsAndVariants(options, variants, condition));
+  const options = sanitizeOptions(buildOptions(fields));
+  const variants = sanitizeVariants(buildVariants(fields, options ?? []));
   const images = sanitizeImages(buildImages(fields));
   const metafields = buildMetafields(fields);
   const candidate: ShopifyProduct = {
