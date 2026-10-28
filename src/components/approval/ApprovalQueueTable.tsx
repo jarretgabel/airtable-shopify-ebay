@@ -558,7 +558,7 @@ export function ApprovalQueueTable({
 				columns={columns}
 				getItemKey={(record) => record.id}
 			/>
-			{totalPages > 1 ? (
+			{records.length > 0 && (totalPages > 1 || canRequestMore) ? (
 				<div className="mt-4 flex flex-wrap items-center justify-between gap-3">
 					<p className="text-sm text-[var(--muted)]">
 						Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, records.length)} of {hasMoreRecords ? `at least ${records.length}` : records.length}
@@ -584,17 +584,6 @@ export function ApprovalQueueTable({
 							{isLoadingNextPage ? 'Loading...' : 'Next →'}
 						</button>
 					</div>
-				</div>
-			) : canRequestMore ? (
-				<div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-					<button
-						type="button"
-						disabled={isLoadingNextPage}
-						onClick={() => { void handleNextPage(); }}
-						className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-1.5 text-sm text-[var(--ink)] transition hover:border-[var(--accent)]/45 hover:bg-[var(--line)] disabled:cursor-not-allowed disabled:opacity-40"
-					>
-						{isLoadingNextPage ? 'Loading...' : 'Load more'}
-					</button>
 				</div>
 			) : null}
 		</>

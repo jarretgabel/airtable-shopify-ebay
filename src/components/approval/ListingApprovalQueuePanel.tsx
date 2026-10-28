@@ -416,6 +416,7 @@ export function ListingApprovalQueuePanel({
   const [combinedWorkWorkflowFilter, setCombinedWorkWorkflowFilter] = useState('all');
   const [combinedFetchLimit, setCombinedFetchLimit] = useState(COMBINED_QUEUE_INITIAL_FETCH_LIMIT);
   const [combinedLoadingMore, setCombinedLoadingMore] = useState(false);
+  const [combinedExhausted, setCombinedExhausted] = useState(false);
   const [combinedWorkServerSearchRecords, setCombinedWorkServerSearchRecords] = useState<AirtableRecord[] | null>(null);
   const [combinedWorkServerSearchLoading, setCombinedWorkServerSearchLoading] = useState(false);
   const [combinedWorkServerSearchError, setCombinedWorkServerSearchError] = useState<string | null>(null);
@@ -704,10 +705,12 @@ export function ListingApprovalQueuePanel({
 
   const combinedHasMoreRecords = isCombinedApproval
     && !isCombinedWorkServerSearchEnabled
+    && !combinedExhausted
     && records.length >= combinedFetchLimit
     && combinedFetchLimit < COMBINED_QUEUE_MAX_FETCH_LIMIT;
 
   const refreshQueue = () => {
+    setCombinedExhausted(false);
     trackWorkflowEvent('approval_queue_refreshed', {
       tableReference,
     });
@@ -740,9 +743,11 @@ export function ListingApprovalQueuePanel({
 
     setCombinedLoadingMore(true);
     try {
+      const previousCount = useApprovalStore.getState().records.length;
       await loadRecords(tableReference, tableName ?? '', true, { combinedMaxRecords: nextLimit });
       setCombinedFetchLimit(nextLimit);
       const loadedCount = useApprovalStore.getState().records.length;
+      if (loadedCount <= previousCount) setCombinedExhausted(true);
       return loadedCount >= minimumRequiredCount;
     } finally {
       setCombinedLoadingMore(false);
@@ -765,9 +770,11 @@ export function ListingApprovalQueuePanel({
     }
 
     setCombinedLoadingMore(true);
+    const previousCount = records.length;
     void loadRecords(tableReference, tableName ?? '', true, { combinedMaxRecords: nextLimit })
       .then(() => {
         setCombinedFetchLimit(nextLimit);
+        if (useApprovalStore.getState().records.length <= previousCount) setCombinedExhausted(true);
       })
       .finally(() => {
         setCombinedLoadingMore(false);
@@ -781,6 +788,7 @@ export function ListingApprovalQueuePanel({
     isCombinedWorkServerSearchEnabled,
     loadRecords,
     loading,
+    records.length,
     tableName,
     tableReference,
   ]);
