@@ -1,3 +1,4 @@
+import { getImageVariantUrl } from '@/services/imageVariantUrl';
 import { useEffect, useState } from 'react';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import {
@@ -278,7 +279,7 @@ export function EbaySnapshotRecordPage({
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {imageUrls.length > 0 ? imageUrls.map((imageUrl, index) => (
                 <figure key={`${imageUrl}-${index}`} className={`${insetPanelMutedClass} m-0 overflow-hidden`}>
-                  <img src={imageUrl} alt={`${resolvedItem?.product?.title ?? recordId} image ${index + 1}`} className="h-36 w-full object-cover" loading="lazy" />
+                  <img src={getImageVariantUrl(imageUrl, 400)} alt={`${resolvedItem?.product?.title ?? recordId} image ${index + 1}`} className="h-36 w-full object-cover" loading="lazy" />
                   <figcaption className="px-3 py-2 text-xs text-[var(--muted)]">Image #{index + 1}</figcaption>
                 </figure>
               )) : <p className="m-0 text-sm text-[var(--muted)]">No inventory images on this record.</p>}

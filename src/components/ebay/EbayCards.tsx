@@ -1,3 +1,4 @@
+import { getImageVariantUrl } from '@/services/imageVariantUrl';
 import { useState } from 'react';
 import type { EbayInventoryItem, EbayOffer } from '@/services/ebay/types';
 import type { EbayPublishedListing } from '@/hooks/useEbayListings';
@@ -34,7 +35,7 @@ export function RecentEbayCard({ listing, onOpen }: { listing: EbayPublishedList
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
       <button type="button" className="w-full text-left" onClick={onOpen}>
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg)]">
-        {thumbUrl ? <img src={thumbUrl} alt={listing.item.product?.title ?? listing.item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
+        {thumbUrl ? <img src={getImageVariantUrl(thumbUrl, 400)} alt={listing.item.product?.title ?? listing.item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
         <span className="absolute right-2 top-2 rounded-md border border-green-400/35 bg-green-500/20 px-2 py-[0.2em] text-[0.65rem] font-extrabold uppercase tracking-[0.05em] text-green-200">Live</span>
       </div>
       <div className="flex flex-1 flex-col gap-1.5 px-4 py-3.5">
@@ -68,7 +69,7 @@ export function EbayCard({ item, offer, onOpen }: { item: EbayInventoryItem; off
     <article className="flex flex-col overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--panel)] shadow-[0_1px_4px_rgba(17,32,49,0.06)] transition-shadow duration-150 hover:shadow-[0_4px_16px_rgba(17,32,49,0.10)]">
       <button type="button" className="w-full text-left" onClick={onOpen}>
       <div className="relative aspect-[4/3] overflow-hidden bg-[var(--bg)]">
-        {thumbUrl ? <img src={thumbUrl} alt={item.product?.title ?? item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
+        {thumbUrl ? <img src={getImageVariantUrl(thumbUrl, 400)} alt={item.product?.title ?? item.sku} className="h-full w-full object-cover" onError={() => setImgError(true)} /> : <div className="flex h-full w-full items-center justify-center text-[var(--muted)]"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>}
         <span className={`absolute right-2 top-2 rounded-md px-2 py-[0.2em] text-[0.65rem] font-extrabold uppercase tracking-[0.05em] ${statusColor(offer?.status)}`}>{statusLabel(offer?.status)}</span>
       </div>
 

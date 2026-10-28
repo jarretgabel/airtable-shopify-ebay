@@ -1,3 +1,4 @@
+import { getImageVariantUrl } from '@/services/imageVariantUrl';
 import { useEffect, useState } from 'react';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
 import {
@@ -299,7 +300,7 @@ export function ShopifySnapshotRecordPage({
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {images.length > 0 ? images.map((image, index) => (
                 <figure key={image.id ?? index} className={`${insetPanelMutedClass} m-0 overflow-hidden`}>
-                  <img src={image.src} alt={image.alt || `Product image ${index + 1}`} className="h-36 w-full object-cover" loading="lazy" />
+                  <img src={getImageVariantUrl(image.src, 400)} alt={image.alt || `Product image ${index + 1}`} className="h-36 w-full object-cover" loading="lazy" />
                   <figcaption className="px-3 py-2 text-xs text-[var(--muted)]">Image #{image.position ?? index + 1}{image.alt ? ` · ${image.alt}` : ''}</figcaption>
                 </figure>
               )) : <p className="m-0 text-sm text-[var(--muted)]">No Shopify media on this product.</p>}
