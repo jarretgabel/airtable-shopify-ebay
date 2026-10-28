@@ -1,6 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
-import type { WorkflowImageArchiveResult } from '../googleDrive/client.js';
+import type { WorkflowImageArchiveResult } from './workflowImageTypes.js';
 import { ARCHIVE_TABLE_PREFIX, buildFilename, safeSegment } from './workflowImageArchive.js';
 import { IMAGE_VARIANT_WIDTHS, parseVariantWidth, variantKey, type ImageVariantWidth } from './imageVariants.js';
 import { extractWorkflowMediaKey, type MediaStore } from './mediaStore.js';

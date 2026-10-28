@@ -1,7 +1,7 @@
 import { getImageVariantUrl } from '@/services/imageVariantUrl';
 import { useEffect, useState, type ReactNode, type SyntheticEvent } from 'react';
 import type { WorkflowListingImageAttachment } from '@/components/approval/workflowListingImageHelpers';
-import { isGoogleDriveImageUrl } from '@/services/workflowImageMetadata';
+import { isArchivedWorkflowImageUrl } from '@/services/workflowImageMetadata';
 
 interface WorkflowListingImageSelectorProps {
   attachments: WorkflowListingImageAttachment[];
@@ -13,34 +13,6 @@ interface WorkflowListingImageSelectorProps {
   validationStatus?: 'idle' | 'checking' | 'ready' | 'error';
   validationError?: string;
   getImageValidationMessage?: (url: string) => string;
-}
-
-function getGoogleDriveFileId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.toLowerCase() !== 'drive.google.com') {
-      return null;
-    }
-
-    const queryId = parsed.searchParams.get('id')?.trim();
-    if (queryId) {
-      return queryId;
-    }
-
-    const pathMatch = parsed.pathname.match(/\/d\/([^/]+)/);
-    return pathMatch?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function getPreviewUrl(url: string, driveWidth = 1600): string {
-  const fileId = getGoogleDriveFileId(url);
-  if (!fileId) {
-    return url;
-  }
-
-  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w${driveWidth}`;
 }
 
 function applyPreviewFallback(
@@ -56,11 +28,6 @@ function applyPreviewFallback(
 function normalizeUrlForLookup(url: string): string {
   const trimmed = url.trim();
   if (!trimmed) return '';
-
-  const driveId = getGoogleDriveFileId(trimmed);
-  if (driveId) {
-    return `gdrive:${driveId.toLowerCase()}`;
-  }
 
   try {
     const parsed = new URL(trimmed);
@@ -110,12 +77,10 @@ function isGenericImageIdentity(value: string): boolean {
 
 function getAttachmentLookupKeys(attachment: WorkflowListingImageAttachment): string[] {
   const keys = new Set<string>();
-  const driveId = getGoogleDriveFileId(attachment.url);
   const normalizedUrl = normalizeUrlForLookup(attachment.url);
   if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
-  if (driveId) keys.add(`drive-id:${driveId.toLowerCase()}`);
 
-  if (!driveId && !urlHasQueryParams(attachment.url)) {
+  if (!urlHasQueryParams(attachment.url)) {
     const basename = getUrlBasename(attachment.url);
     if (basename) keys.add(`basename:${basename}`);
     const normalizedBasename = normalizeIdentityToken(basename);
@@ -139,10 +104,6 @@ function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): stri
   }
 
   const normalizedUrl = normalizeUrlForLookup(attachment.url);
-  if (normalizedUrl.startsWith('gdrive:')) {
-    return normalizedUrl;
-  }
-
   const basename = getUrlBasename(attachment.url);
   if (basename && !isGenericImageIdentity(basename)) {
     return `basename:${basename}`;
@@ -153,12 +114,10 @@ function getAttachmentIdentity(attachment: WorkflowListingImageAttachment): stri
 
 function getSelectedLookupKeys(url: string): string[] {
   const keys = new Set<string>();
-  const driveId = getGoogleDriveFileId(url);
   const normalizedUrl = normalizeUrlForLookup(url);
   if (normalizedUrl) keys.add(`url:${normalizedUrl}`);
-  if (driveId) keys.add(`drive-id:${driveId.toLowerCase()}`);
 
-  if (!driveId && !urlHasQueryParams(url)) {
+  if (!urlHasQueryParams(url)) {
     const basename = getUrlBasename(url);
     if (basename) keys.add(`basename:${basename}`);
     const normalizedBasename = normalizeIdentityToken(basename);
@@ -193,18 +152,18 @@ export function WorkflowListingImageSelector({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [previewAttachment]);
 
-  const googleDriveAttachments = attachments.filter((attachment) => isGoogleDriveImageUrl(attachment.url));
-  const googleDriveSelectedUrls = selectedUrls.filter(isGoogleDriveImageUrl);
+  const archivedAttachments = attachments.filter((attachment) => isArchivedWorkflowImageUrl(attachment.url));
+  const archivedSelectedUrls = selectedUrls.filter(isArchivedWorkflowImageUrl);
   const uniqueAttachments: WorkflowListingImageAttachment[] = [];
   const seenAttachmentIdentity = new Set<string>();
-  googleDriveAttachments.forEach((attachment) => {
+  archivedAttachments.forEach((attachment) => {
     const identity = getAttachmentIdentity(attachment);
     if (!identity || seenAttachmentIdentity.has(identity)) return;
     seenAttachmentIdentity.add(identity);
     uniqueAttachments.push(attachment);
   });
   const attachmentByLookupKey = new Map<string, WorkflowListingImageAttachment>();
-  googleDriveAttachments.forEach((attachment) => {
+  archivedAttachments.forEach((attachment) => {
     getAttachmentLookupKeys(attachment).forEach((key) => {
       if (!attachmentByLookupKey.has(key)) {
         attachmentByLookupKey.set(key, attachment);
@@ -215,7 +174,7 @@ export function WorkflowListingImageSelector({
   const selectedAttachments: WorkflowListingImageAttachment[] = [];
   const selectedUrlKeys = new Set<string>();
   const selectedAttachmentIdentity = new Set<string>();
-  googleDriveSelectedUrls.forEach((url) => {
+  archivedSelectedUrls.forEach((url) => {
     const selectedUrlKey = url.trim().toLowerCase();
     if (!selectedUrlKey || selectedUrlKeys.has(selectedUrlKey)) return;
     selectedUrlKeys.add(selectedUrlKey);
@@ -257,12 +216,12 @@ export function WorkflowListingImageSelector({
       .map((key) => attachmentByLookupKey.get(key))
       .find((attachment): attachment is WorkflowListingImageAttachment => Boolean(attachment));
     const candidateKeys = candidateAttachment ? getAttachmentLookupKeys(candidateAttachment) : getSelectedLookupKeys(normalizedUrl);
-    const hasExistingSelection = googleDriveSelectedUrls.some((selectedUrl) => {
+    const hasExistingSelection = archivedSelectedUrls.some((selectedUrl) => {
       const selectedKeys = new Set(getSelectedLookupKeys(selectedUrl));
       return candidateKeys.some((key) => selectedKeys.has(key));
     });
 
-    const selectedUrlsWithoutCandidate = googleDriveSelectedUrls.filter((selectedUrl) => {
+    const selectedUrlsWithoutCandidate = archivedSelectedUrls.filter((selectedUrl) => {
       const selectedKeys = new Set(getSelectedLookupKeys(selectedUrl));
       return !candidateKeys.some((key) => selectedKeys.has(key));
     });
@@ -272,7 +231,7 @@ export function WorkflowListingImageSelector({
         onSelectionChange([...selectedUrlsWithoutCandidate, normalizedUrl]);
         return;
       }
-      onSelectionChange([...googleDriveSelectedUrls, normalizedUrl]);
+      onSelectionChange([...archivedSelectedUrls, normalizedUrl]);
       return;
     }
 
@@ -284,7 +243,7 @@ export function WorkflowListingImageSelector({
     const normalizedTargetUrl = targetUrl.trim();
     if (!normalizedSourceUrl || !normalizedTargetUrl || normalizedSourceUrl === normalizedTargetUrl) return;
 
-    const nextSelectedUrls = [...googleDriveSelectedUrls];
+    const nextSelectedUrls = [...archivedSelectedUrls];
     const sourceKeys = new Set(getSelectedLookupKeys(normalizedSourceUrl));
     const targetKeys = new Set(getSelectedLookupKeys(normalizedTargetUrl));
     const findSelectedIndex = (lookupKeys: Set<string>) => nextSelectedUrls.findIndex((url) => {
@@ -302,12 +261,12 @@ export function WorkflowListingImageSelector({
 
   const moveSelectedUrl = (url: string, direction: -1 | 1) => {
     const lookupKeys = new Set(getSelectedLookupKeys(url));
-    const currentIndex = googleDriveSelectedUrls.findIndex((entry) => (
+    const currentIndex = archivedSelectedUrls.findIndex((entry) => (
       getSelectedLookupKeys(entry).some((key) => lookupKeys.has(key))
     ));
     const targetIndex = currentIndex + direction;
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= googleDriveSelectedUrls.length) return;
-    reorderSelectedUrls(googleDriveSelectedUrls[currentIndex], googleDriveSelectedUrls[targetIndex]);
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= archivedSelectedUrls.length) return;
+    reorderSelectedUrls(archivedSelectedUrls[currentIndex], archivedSelectedUrls[targetIndex]);
   };
 
   const getImageAltText = (attachment: WorkflowListingImageAttachment): string => {
@@ -353,7 +312,7 @@ export function WorkflowListingImageSelector({
             loading="lazy"
             onError={(event) => applyPreviewFallback(event, attachment.url)}
             referrerPolicy="no-referrer"
-            src={getImageVariantUrl(getPreviewUrl(attachment.url, 400), 400)}
+            src={getImageVariantUrl(attachment.url, 400)}
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-slate-950/70 px-2 py-1 text-white">
             <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -528,7 +487,7 @@ export function WorkflowListingImageSelector({
                 className="max-h-[75vh] w-full rounded-xl object-contain"
                 onError={(event) => applyPreviewFallback(event, previewAttachment.url)}
                 referrerPolicy="no-referrer"
-                src={getPreviewUrl(previewAttachment.url)}
+                src={previewAttachment.url}
               />
             </div>
           </div>

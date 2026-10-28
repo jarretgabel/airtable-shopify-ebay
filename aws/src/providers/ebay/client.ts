@@ -5,7 +5,6 @@ import { isEbayHostedImageCache, type EbayHostedImageCache } from '../../shared/
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
 import { normalizeProductImageFilename } from '../../shared/imageNaming.js';
 import { getOptionalSecret, requireSecret } from '../../shared/secrets.js';
-import { downloadGoogleDriveFile, extractGoogleDriveFileId } from '../googleDrive/client.js';
 
 export interface EbayInventoryItem {
   sku: string;
@@ -171,18 +170,6 @@ function requirePreparedEbayImageUrls(inventoryItem: Record<string, unknown>): v
   });
 }
 
-function buildGoogleDriveDownloadUrl(url: string): string {
-  const fileId = extractGoogleDriveFileId(url);
-  if (!fileId) return url;
-  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
-}
-
-function buildGoogleDriveConfirmedDownloadUrl(url: string): string {
-  const fileId = extractGoogleDriveFileId(url);
-  if (!fileId) return '';
-  return `https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&confirm=t`;
-}
-
 function resolveImageMimeType(contentType: string | null, bytes: Buffer): string | null {
   const normalizedContentType = contentType?.split(';')[0]?.trim().toLowerCase() ?? '';
   return normalizedContentType.startsWith('image/')
@@ -262,25 +249,7 @@ export async function uploadExternalImageUrlToEbayHostedPictures(
     return mimeType ? { bytes, mimeType } : null;
   };
 
-  const downloadUrl = buildGoogleDriveDownloadUrl(normalizedUrl);
-  let image = await downloadImage(downloadUrl);
-  if (!image) {
-    const confirmedDownloadUrl = buildGoogleDriveConfirmedDownloadUrl(normalizedUrl);
-    if (confirmedDownloadUrl && confirmedDownloadUrl !== downloadUrl) {
-      image = await downloadImage(confirmedDownloadUrl);
-    }
-  }
-
-  if (!image) {
-    const fileId = extractGoogleDriveFileId(normalizedUrl);
-    if (fileId) {
-      const downloadedFile = await downloadGoogleDriveFile(fileId);
-      const mimeType = resolveImageMimeType(downloadedFile.contentType, downloadedFile.bytes);
-      if (mimeType) {
-        image = { bytes: downloadedFile.bytes, mimeType };
-      }
-    }
-  }
+  const image = await downloadImage(normalizedUrl);
 
   if (!image) {
     throw new HttpError(400, `Listing image ${index + 1} did not return an image file.`, {

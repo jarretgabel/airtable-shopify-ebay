@@ -6,22 +6,22 @@ import { WorkflowListingImageSelector } from '@/components/approval/WorkflowList
 
 function SelectorHarness() {
   const [selectedUrls, setSelectedUrls] = useState([
-    'https://drive.google.com/image-a.jpg',
-    'https://drive.google.com/image-b.jpg',
+    '/api/media/used-gear-workflow/image-a.jpg',
+    '/api/media/used-gear-workflow/image-b.jpg',
   ]);
 
   return (
     <WorkflowListingImageSelector
       attachments={[
-        { id: 'att-1', url: 'https://drive.google.com/image-a.jpg', filename: 'image-a.jpg' },
-        { id: 'att-2', url: 'https://drive.google.com/image-b.jpg', filename: 'image-b.jpg' },
-        { id: 'att-3', url: 'https://drive.google.com/image-c.jpg', filename: 'image-c.jpg' },
+        { id: 'att-1', url: '/api/media/used-gear-workflow/image-a.jpg', filename: 'image-a.jpg' },
+        { id: 'att-2', url: '/api/media/used-gear-workflow/image-b.jpg', filename: 'image-b.jpg' },
+        { id: 'att-3', url: '/api/media/used-gear-workflow/image-c.jpg', filename: 'image-c.jpg' },
       ]}
       selectedUrls={selectedUrls}
       imageAltByUrl={{
-        'https://drive.google.com/image-a.jpg': 'Front view',
-        'https://drive.google.com/image-b.jpg': 'Rear view',
-        'https://drive.google.com/image-c.jpg': 'Detail view',
+        '/api/media/used-gear-workflow/image-a.jpg': 'Front view',
+        '/api/media/used-gear-workflow/image-b.jpg': 'Rear view',
+        '/api/media/used-gear-workflow/image-c.jpg': 'Detail view',
       }}
       onSelectionChange={setSelectedUrls}
     />
@@ -34,11 +34,11 @@ describe('WorkflowListingImageSelector', () => {
       <WorkflowListingImageSelector
         attachments={[
           { id: 'att-airtable', url: 'https://v5.airtableusercontent.com/image.jpg', filename: 'airtable.jpg' },
-          { id: 'att-drive', url: 'https://drive.google.com/uc?export=view&id=drive-image', filename: 'drive.jpg' },
+          { id: 'att-drive', url: '/api/media/used-gear-workflow/uc?export=view&id=drive-image', filename: 'drive.jpg' },
         ]}
         selectedUrls={[
           'https://v5.airtableusercontent.com/image.jpg',
-          'https://drive.google.com/uc?export=view&id=drive-image',
+          '/api/media/used-gear-workflow/uc?export=view&id=drive-image',
         ]}
         onSelectionChange={vi.fn()}
       />,
@@ -47,7 +47,7 @@ describe('WorkflowListingImageSelector', () => {
     expect(screen.getAllByTestId('selected-listing-image-card')).toHaveLength(1);
     expect(screen.getByAltText('drive.jpg')).toHaveAttribute(
       'src',
-      'https://drive.google.com/thumbnail?id=drive-image&sz=w400',
+      '/api/media/used-gear-workflow/uc?export=view&id=drive-image',
     );
     expect(screen.queryByAltText('airtable.jpg')).not.toBeInTheDocument();
     expect(document.querySelector('img[src*="airtableusercontent"]')).not.toBeInTheDocument();
@@ -67,46 +67,18 @@ describe('WorkflowListingImageSelector', () => {
     expect(selectedCardsAfter[1]).toHaveTextContent('image-a.jpg');
   });
 
-  it('reorders selected images when persisted URLs use equivalent Drive variants', () => {
-    function DriveVariantHarness() {
-      const [selectedUrls, setSelectedUrls] = useState([
-        'https://drive.google.com/uc?export=view&id=file-a',
-        'https://drive.google.com/uc?export=view&id=file-b',
-      ]);
-
-      return (
-        <WorkflowListingImageSelector
-          attachments={[
-            { id: 'att-a', url: 'https://drive.google.com/thumbnail?id=file-a&sz=w1600', filename: 'image-a.jpg' },
-            { id: 'att-b', url: 'https://drive.google.com/thumbnail?id=file-b&sz=w1600', filename: 'image-b.jpg' },
-          ]}
-          selectedUrls={selectedUrls}
-          onSelectionChange={setSelectedUrls}
-        />
-      );
-    }
-
-    render(<DriveVariantHarness />);
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'Move image later' })[0]);
-
-    const selectedCardsAfter = screen.getAllByTestId('selected-listing-image-card');
-    expect(selectedCardsAfter[0]).toHaveTextContent('image-b.jpg');
-    expect(selectedCardsAfter[1]).toHaveTextContent('image-a.jpg');
-  });
-
   it('reorders selected images through the drag handle row events', () => {
     const onSelectionChange = vi.fn();
 
     render(
       <WorkflowListingImageSelector
         attachments={[
-          { id: 'att-a', url: 'https://drive.google.com/thumbnail?id=file-a&sz=w1600', filename: 'image-a.jpg' },
-          { id: 'att-b', url: 'https://drive.google.com/thumbnail?id=file-b&sz=w1600', filename: 'image-b.jpg' },
+          { id: 'att-a', url: '/api/media/used-gear-workflow/thumbnail?id=file-a&sz=w1600', filename: 'image-a.jpg' },
+          { id: 'att-b', url: '/api/media/used-gear-workflow/thumbnail?id=file-b&sz=w1600', filename: 'image-b.jpg' },
         ]}
         selectedUrls={[
-          'https://drive.google.com/uc?export=view&id=file-a',
-          'https://drive.google.com/uc?export=view&id=file-b',
+          '/api/media/used-gear-workflow/uc?export=view&id=file-a',
+          '/api/media/used-gear-workflow/uc?export=view&id=file-b',
         ]}
         onSelectionChange={onSelectionChange}
       />,
@@ -126,10 +98,10 @@ describe('WorkflowListingImageSelector', () => {
     fireEvent.dragStart(selectedCards[0], { dataTransfer });
     fireEvent.drop(selectedCards[1], { dataTransfer });
 
-    expect(dataTransfer.getData('text/plain')).toBe('https://drive.google.com/thumbnail?id=file-a&sz=w1600');
+    expect(dataTransfer.getData('text/plain')).toBe('/api/media/used-gear-workflow/uc?export=view&id=file-a');
     expect(onSelectionChange).toHaveBeenCalledWith([
-      'https://drive.google.com/uc?export=view&id=file-b',
-      'https://drive.google.com/uc?export=view&id=file-a',
+      '/api/media/used-gear-workflow/uc?export=view&id=file-b',
+      '/api/media/used-gear-workflow/uc?export=view&id=file-a',
     ]);
   });
 
@@ -146,38 +118,6 @@ describe('WorkflowListingImageSelector', () => {
     const selectedCardsAfter = screen.getAllByTestId('selected-listing-image-card');
     expect(selectedCardsAfter).toHaveLength(3);
     expect(selectedCardsAfter[2]).toHaveTextContent('image-c.jpg');
-  });
-
-  it('allows selecting available uploads that differ by query-string identifiers', () => {
-    function QueryIdHarness() {
-      const [selectedUrls, setSelectedUrls] = useState([
-        'https://lh3.googleusercontent.com/render?id=file-1&sz=w1600',
-      ]);
-
-      return (
-        <WorkflowListingImageSelector
-          attachments={[
-            { id: 'att-1', url: 'https://lh3.googleusercontent.com/render?id=file-1&sz=w1600', filename: 'image-1-processed.jpg' },
-            { id: 'att-2', url: 'https://lh3.googleusercontent.com/render?id=file-2&sz=w1600', filename: 'image-2-processed.jpg' },
-          ]}
-          selectedUrls={selectedUrls}
-          onSelectionChange={setSelectedUrls}
-        />
-      );
-    }
-
-    render(<QueryIdHarness />);
-
-    const availableCardsBefore = screen.getAllByTestId('available-listing-image-card');
-    expect(availableCardsBefore).toHaveLength(1);
-    expect(availableCardsBefore[0]).toHaveTextContent('image-2-processed.jpg');
-
-    const checkboxes = screen.getAllByRole('checkbox');
-    fireEvent.click(checkboxes[1]);
-
-    const selectedCardsAfter = screen.getAllByTestId('selected-listing-image-card');
-    expect(selectedCardsAfter).toHaveLength(2);
-    expect(selectedCardsAfter[1]).toHaveTextContent('image-2-processed.jpg');
   });
 
   it('shows image alt text under the filename', () => {
@@ -221,21 +161,21 @@ describe('WorkflowListingImageSelector', () => {
         attachments={[
           {
             id: 'att-photo-1',
-            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
             filename: 'photo-1-processed.jpg',
           },
           {
             id: 'att-photo-1-variant',
-            url: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600',
+            url: '/api/media/used-gear-workflow/thumbnail?id=file-photo-1&sz=w1600',
             filename: 'photo-1-processed.jpg',
           },
           {
             id: 'att-testing-1',
-            url: 'https://drive.google.com/uc?export=view&id=file-testing-1',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-testing-1',
             filename: 'testing-1-processed.jpg',
           },
         ]}
-        selectedUrls={['https://drive.google.com/uc?export=view&id=file-photo-1']}
+        selectedUrls={['/api/media/used-gear-workflow/uc?export=view&id=file-photo-1']}
         onSelectionChange={onSelectionChange}
       />,
     );
@@ -255,21 +195,21 @@ describe('WorkflowListingImageSelector', () => {
         attachments={[
           {
             id: 'att-photo-1-primary',
-            url: 'https://drive.google.com/proxy/abc123?asset=photo1',
+            url: '/api/media/used-gear-workflow/proxy/abc123?asset=photo1',
             filename: 'photos--photos--rec-example-photos-1-processed.jpg',
           },
           {
             id: 'att-photo-1-variant',
-            url: 'https://drive.google.com/render/xyz789?variant=thumb',
+            url: '/api/media/used-gear-workflow/render/xyz789?variant=thumb',
             filename: 'photos--photos--rec-example-photos-1-processed.jpg',
           },
           {
             id: 'att-testing-1',
-            url: 'https://drive.google.com/testing-1.jpg',
+            url: '/api/media/used-gear-workflow/testing-1.jpg',
             filename: 'testing--testing--rec-example-testing-1-processed.jpg',
           },
         ]}
-        selectedUrls={['https://drive.google.com/proxy/abc123?asset=photo1']}
+        selectedUrls={['/api/media/used-gear-workflow/proxy/abc123?asset=photo1']}
         onSelectionChange={() => {}}
       />,
     );
@@ -289,21 +229,21 @@ describe('WorkflowListingImageSelector', () => {
         attachments={[
           {
             id: 'att-photo-1-a',
-            url: 'https://drive.google.com/images/photos--rec-example-photos-1-processed.jpg?token=abc',
+            url: '/api/media/used-gear-workflow/images/photos--rec-example-photos-1-processed.jpg?token=abc',
             filename: 'photos--rec-example-photos-1-processed.jpg',
           },
           {
             id: 'att-photo-1-b',
-            url: 'https://drive.google.com/images/photos__rec_example_photos_1_processed.jpg?token=xyz',
+            url: '/api/media/used-gear-workflow/images/photos__rec_example_photos_1_processed.jpg?token=xyz',
             filename: 'photos__rec_example_photos_1_processed.jpg',
           },
           {
             id: 'att-testing-1',
-            url: 'https://drive.google.com/images/testing-1-processed.jpg',
+            url: '/api/media/used-gear-workflow/images/testing-1-processed.jpg',
             filename: 'testing-1-processed.jpg',
           },
         ]}
-        selectedUrls={['https://drive.google.com/images/photos--rec-example-photos-1-processed.jpg?token=abc']}
+        selectedUrls={['/api/media/used-gear-workflow/images/photos--rec-example-photos-1-processed.jpg?token=abc']}
         onSelectionChange={() => {}}
       />,
     );
@@ -320,7 +260,7 @@ describe('WorkflowListingImageSelector', () => {
   it('does not duplicate available uploads after deselecting a selected URL variant', () => {
     function DeselectVariantHarness() {
       const [selectedUrls, setSelectedUrls] = useState([
-        'https://drive.google.com/uc?export=view&id=file-photo-1',
+        '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
       ]);
 
       return (
@@ -328,7 +268,7 @@ describe('WorkflowListingImageSelector', () => {
           attachments={[
             {
               id: 'att-photo-1-drive',
-              url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+              url: '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
               filename: 'b-w-805-woofer-detail-processed.jpg',
             },
             {
@@ -338,7 +278,7 @@ describe('WorkflowListingImageSelector', () => {
             },
             {
               id: 'att-testing-1',
-              url: 'https://drive.google.com/testing-1-processed.jpg',
+              url: '/api/media/used-gear-workflow/testing-1-processed.jpg',
               filename: 'testing-1-processed.jpg',
             },
           ]}
@@ -371,7 +311,7 @@ describe('WorkflowListingImageSelector', () => {
         attachments={[
           {
             id: 'att-photo-1-drive',
-            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
             filename: 'photo-1-processed.jpg',
           },
         ]}
@@ -390,19 +330,19 @@ describe('WorkflowListingImageSelector', () => {
         attachments={[
           {
             id: 'att-photo-1-drive',
-            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
             filename: 'mit-miterminator-4-badge-detail-processed.jpg',
           },
           {
             id: 'att-photo-2',
-            url: 'https://drive.google.com/photo-2-processed.jpg',
+            url: '/api/media/used-gear-workflow/photo-2-processed.jpg',
             filename: 'photo-2-processed.jpg',
           },
         ]}
         selectedUrls={[
           'https://dl.airtableusercontent.com/.attachments/variant/photo-1-token',
-          'https://drive.google.com/photo-2-processed.jpg',
-          'https://drive.google.com/uc?export=view&id=file-photo-1',
+          '/api/media/used-gear-workflow/photo-2-processed.jpg',
+          '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
         ]}
         onSelectionChange={() => {}}
       />,
@@ -413,32 +353,10 @@ describe('WorkflowListingImageSelector', () => {
     expect(document.querySelector('img[src*="airtableusercontent"]')).not.toBeInTheDocument();
   });
 
-  it('dedupes selected Google Drive URL variants for the same file id', () => {
-    render(
-      <WorkflowListingImageSelector
-        attachments={[
-          {
-            id: 'att-photo-1-drive',
-            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
-            filename: 'mit-miterminator-4-badge-detail-processed.jpg',
-          },
-        ]}
-        selectedUrls={[
-          'https://drive.google.com/uc?export=view&id=file-photo-1',
-          'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600',
-        ]}
-        onSelectionChange={() => {}}
-      />,
-    );
-
-    const selectedCards = screen.getAllByTestId('selected-listing-image-card');
-    expect(selectedCards).toHaveLength(1);
-  });
-
   it('adds available query-id variants to selected images when checked', () => {
     function VariantReplacementHarness() {
       const [selectedUrls, setSelectedUrls] = useState([
-        'https://drive.google.com/rendered/photo-1.jpg?token=old',
+        '/api/media/used-gear-workflow/rendered/photo-1.jpg?token=old',
       ]);
 
       return (
@@ -446,12 +364,12 @@ describe('WorkflowListingImageSelector', () => {
           attachments={[
             {
               id: 'att-photo-1',
-              url: 'https://drive.google.com/rendered/photo-1.jpg?token=new',
+              url: '/api/media/used-gear-workflow/rendered/photo-1.jpg?token=new',
               filename: 'photo-1-processed.jpg',
             },
             {
               id: 'att-photo-2',
-              url: 'https://drive.google.com/rendered/photo-2.jpg?token=abc',
+              url: '/api/media/used-gear-workflow/rendered/photo-2.jpg?token=abc',
               filename: 'photo-2-processed.jpg',
             },
           ]}
@@ -486,9 +404,9 @@ describe('WorkflowListingImageSelector', () => {
     render(
       <WorkflowListingImageSelector
         attachments={[
-          { id: 'att-valid', url: 'https://drive.google.com/uc?id=valid', filename: 'valid.jpg' },
+          { id: 'att-valid', url: '/api/media/used-gear-workflow/uc?id=valid', filename: 'valid.jpg' },
         ]}
-        selectedUrls={['https://drive.google.com/uc?id=valid']}
+        selectedUrls={['/api/media/used-gear-workflow/uc?id=valid']}
         onSelectionChange={vi.fn()}
         validationStatus="checking"
       />,
@@ -502,9 +420,9 @@ describe('WorkflowListingImageSelector', () => {
     render(
       <WorkflowListingImageSelector
         attachments={[
-          { id: 'att-valid', url: 'https://drive.google.com/uc?id=valid', filename: 'valid.jpg' },
+          { id: 'att-valid', url: '/api/media/used-gear-workflow/uc?id=valid', filename: 'valid.jpg' },
         ]}
-        selectedUrls={['https://drive.google.com/uc?id=valid']}
+        selectedUrls={['/api/media/used-gear-workflow/uc?id=valid']}
         onSelectionChange={vi.fn()}
         validationStatus="error"
         validationError="Drive access unavailable."

@@ -7,7 +7,7 @@ import { uploadConfiguredAttachment, type AirtableConfiguredAttachmentSource } f
 import {
   type WorkflowImageArchiveResult,
   type WorkflowImageArchiveStage,
-} from '../../providers/googleDrive/client.js';
+} from '../../providers/media/workflowImageTypes.js';
 import { archiveWorkflowImages } from '../../providers/media/workflowImageArchive.js';
 
 interface AttachmentBody {

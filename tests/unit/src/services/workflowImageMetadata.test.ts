@@ -65,7 +65,7 @@ describe('workflowImageMetadata', () => {
     const metadata = parseWorkflowImageMetadata(JSON.stringify([
       {
         attachmentId: 'att-drive',
-        url: 'https://drive.google.com/uc?export=view&id=drive-photo',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=drive-photo',
         filename: 'photo-processed.jpg',
         alt: 'Drive photo',
         sortOrder: 1,
@@ -84,10 +84,10 @@ describe('workflowImageMetadata', () => {
     ]));
 
     expect(filterWorkflowImageMetadataByStage(metadata, 'photos').map((record) => record.url)).toEqual([
-      'https://drive.google.com/uc?export=view&id=drive-photo',
+      '/api/media/used-gear-workflow/uc?export=view&id=drive-photo',
     ]);
     expect(getIncludedWorkflowImageMetadata(metadata).map((record) => record.url)).toEqual([
-      'https://drive.google.com/uc?export=view&id=drive-photo',
+      '/api/media/used-gear-workflow/uc?export=view&id=drive-photo',
     ]);
   });
 
@@ -183,7 +183,7 @@ describe('workflowImageMetadata', () => {
     const initial = parseWorkflowImageMetadata(JSON.stringify([
       {
         attachmentId: 'att-1',
-        url: 'https://drive.google.com/uc?export=view&id=testing-a',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=testing-a',
         filename: 'testing-a.jpg',
         alt: 'Testing A',
         sortOrder: 1,
@@ -192,7 +192,7 @@ describe('workflowImageMetadata', () => {
       },
       {
         attachmentId: 'att-2',
-        url: 'https://drive.google.com/uc?export=view&id=photo-a',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=photo-a',
         filename: 'photo-a.jpg',
         alt: 'Photo A',
         sortOrder: 2,
@@ -201,7 +201,7 @@ describe('workflowImageMetadata', () => {
       },
       {
         attachmentId: 'att-3',
-        url: 'https://drive.google.com/uc?export=view&id=testing-b',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=testing-b',
         filename: 'testing-b.jpg',
         alt: 'Testing B',
         sortOrder: 3,
@@ -218,7 +218,7 @@ describe('workflowImageMetadata', () => {
     const replaced = replaceWorkflowImageMetadataStage(initial, 'testing', [
       {
         attachmentId: 'att-3',
-        url: 'https://drive.google.com/uc?export=view&id=testing-b',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=testing-b',
         filename: 'testing-b.jpg',
         alt: 'Updated Testing B',
         sortOrder: 1,
@@ -227,7 +227,7 @@ describe('workflowImageMetadata', () => {
       },
       {
         attachmentId: 'att-1',
-        url: 'https://drive.google.com/uc?export=view&id=testing-a',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=testing-a',
         filename: 'testing-a.jpg',
         alt: 'Updated Testing A',
         sortOrder: 2,
@@ -249,18 +249,18 @@ describe('workflowImageMetadata', () => {
     }));
 
     expect(filterWorkflowAttachmentsByStage([
-      { id: 'att-1', url: 'https://drive.google.com/uc?export=view&id=testing-a', filename: 'testing-a.jpg' },
-      { id: 'att-2', url: 'https://drive.google.com/uc?export=view&id=photo-a', filename: 'photo-a.jpg' },
-      { id: 'att-3', url: 'https://drive.google.com/uc?export=view&id=testing-b', filename: 'testing-b.jpg' },
+      { id: 'att-1', url: '/api/media/used-gear-workflow/uc?export=view&id=testing-a', filename: 'testing-a.jpg' },
+      { id: 'att-2', url: '/api/media/used-gear-workflow/uc?export=view&id=photo-a', filename: 'photo-a.jpg' },
+      { id: 'att-3', url: '/api/media/used-gear-workflow/uc?export=view&id=testing-b', filename: 'testing-b.jpg' },
     ], replaced, 'photos')).toEqual([
-      { id: 'att-2', url: 'https://drive.google.com/uc?export=view&id=photo-a', filename: 'photo-a.jpg' },
+      { id: 'att-2', url: '/api/media/used-gear-workflow/uc?export=view&id=photo-a', filename: 'photo-a.jpg' },
     ]);
   });
 
   it('filters stage attachments by url when attachment ids are missing', () => {
     const metadata = parseWorkflowImageMetadata(JSON.stringify([
       {
-        url: 'https://drive.google.com/uc?export=view&id=testing-no-id',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=testing-no-id',
         filename: 'testing-no-id.jpg',
         alt: 'Testing without id',
         sortOrder: 1,
@@ -268,7 +268,7 @@ describe('workflowImageMetadata', () => {
         includedInListing: true,
       },
       {
-        url: 'https://drive.google.com/uc?export=view&id=photos-no-id',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=photos-no-id',
         filename: 'photos-no-id.jpg',
         alt: 'Photos without id',
         sortOrder: 2,
@@ -278,10 +278,10 @@ describe('workflowImageMetadata', () => {
     ]));
 
     expect(filterWorkflowAttachmentsByStage([
-      { url: 'https://drive.google.com/uc?export=view&id=testing-no-id', filename: 'testing-no-id.jpg' },
-      { url: 'https://drive.google.com/uc?export=view&id=photos-no-id', filename: 'photos-no-id.jpg' },
+      { url: '/api/media/used-gear-workflow/uc?export=view&id=testing-no-id', filename: 'testing-no-id.jpg' },
+      { url: '/api/media/used-gear-workflow/uc?export=view&id=photos-no-id', filename: 'photos-no-id.jpg' },
     ], metadata, 'photos')).toEqual([
-      { url: 'https://drive.google.com/uc?export=view&id=photos-no-id', filename: 'photos-no-id.jpg' },
+      { url: '/api/media/used-gear-workflow/uc?export=view&id=photos-no-id', filename: 'photos-no-id.jpg' },
     ]);
   });
 
@@ -313,7 +313,7 @@ describe('workflowImageMetadata', () => {
       existingMetadata: [
         {
           attachmentId: 'att-1',
-          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
           filename: 'mit-miterminator-4-badge-detail-processed.jpg',
           alt: 'MITerminator badge detail',
           sortOrder: 1,
@@ -328,7 +328,7 @@ describe('workflowImageMetadata', () => {
     expect(merged).toEqual([
       {
         attachmentId: 'att-1',
-        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
         filename: 'mit-miterminator-4-badge-detail-processed.jpg',
         alt: 'MITerminator badge detail',
         sortOrder: 1,
@@ -379,7 +379,7 @@ describe('workflowImageMetadata', () => {
     const parsed = parseWorkflowImageMetadata(JSON.stringify([
       {
         attachmentId: 'att-1',
-        url: 'https://drive.google.com/uc?export=view&id=1WAjQWQjX_ntSK9bvGy9AeJyFL85xPVR_',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=1WAjQWQjX_ntSK9bvGy9AeJyFL85xPVR_',
         filename: 'testing--testing--rectv8setonjoog2c-marantz-2270-testing-1-processed.jpg',
         alt: 'Marantz 2270 testing processed 1',
         sortOrder: 1,

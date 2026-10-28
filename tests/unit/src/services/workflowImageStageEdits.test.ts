@@ -3,8 +3,8 @@ import { mergeWorkflowImageStageEdits } from '@/services/workflowImageStageEdits
 import { parseWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 
 const rows = [
-  { attachmentId: 'testing', url: 'https://drive.google.com/uc?id=testing', filename: 'testing.jpg', alt: 'Bench', sourceStage: 'testing', sortOrder: 1, includedInListing: true, annotation: 'keep testing' },
-  { attachmentId: 'photos', url: 'https://drive.google.com/uc?id=photos', filename: 'brand-model-amplifier.jpg', alt: 'Hero', sourceStage: 'photos', sortOrder: 2, includedInListing: true, annotation: 'keep photos' },
+  { attachmentId: 'testing', url: '/api/media/used-gear-workflow/uc?id=testing', filename: 'testing.jpg', alt: 'Bench', sourceStage: 'testing', sortOrder: 1, includedInListing: true, annotation: 'keep testing' },
+  { attachmentId: 'photos', url: '/api/media/used-gear-workflow/uc?id=photos', filename: 'brand-model-amplifier.jpg', alt: 'Hero', sourceStage: 'photos', sortOrder: 2, includedInListing: true, annotation: 'keep photos' },
 ];
 
 describe('mergeWorkflowImageStageEdits', () => {
@@ -25,7 +25,7 @@ describe('mergeWorkflowImageStageEdits', () => {
   it('keeps concurrent additions and unrelated edits on the same photo', () => {
     const original = parseWorkflowImageMetadata(rows);
     const draft = original.map((row) => ({ ...row, includedInListing: false }));
-    const added = { ...rows[1], attachmentId: 'new-photo', url: 'https://drive.google.com/uc?id=new', sortOrder: 3 };
+    const added = { ...rows[1], attachmentId: 'new-photo', url: '/api/media/used-gear-workflow/uc?id=new', sortOrder: 3 };
     const saved = [{ ...rows[0], alt: 'Newer bench caption' }, rows[1], added];
     const result = JSON.parse(mergeWorkflowImageStageEdits(saved, draft, 'testing', original)!);
     expect(result).toHaveLength(3);
@@ -58,7 +58,7 @@ describe('mergeWorkflowImageStageEdits', () => {
   });
 
   it('appends new stage images without discarding unrelated raw rows', () => {
-    const added = { ...parseWorkflowImageMetadata(rows)[0], attachmentId: 'new', url: 'https://drive.google.com/uc?id=new' };
+    const added = { ...parseWorkflowImageMetadata(rows)[0], attachmentId: 'new', url: '/api/media/used-gear-workflow/uc?id=new' };
     const result = JSON.parse(mergeWorkflowImageStageEdits(rows, [added], 'testing')!);
     expect(result.slice(0, 2)).toEqual(rows);
     expect(result[2]).toMatchObject({ attachmentId: 'new', sourceStage: 'testing', sortOrder: 3 });
@@ -84,7 +84,7 @@ describe('mergeWorkflowImageStageEdits', () => {
 
   it('appends after non-contiguous saved sort orders without changing existing order', () => {
     const saved = rows.map((row, index) => ({ ...row, sortOrder: (index + 1) * 10 }));
-    const added = { ...parseWorkflowImageMetadata(rows)[0], attachmentId: 'new', url: 'https://drive.google.com/uc?id=new' };
+    const added = { ...parseWorkflowImageMetadata(rows)[0], attachmentId: 'new', url: '/api/media/used-gear-workflow/uc?id=new' };
     const result = JSON.parse(mergeWorkflowImageStageEdits(saved, [added], 'testing')!);
     expect(result.slice(0, 2)).toEqual(saved);
     expect(result[2].sortOrder).toBe(21);

@@ -259,13 +259,13 @@ describe('app-api ebay', () => {
       new Response(JSON.stringify({ url: 'https://i.ebayimg.com/example.jpg' }), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
 
-    const result = await uploadImageUrlToEbayHostedPictures('https://drive.google.com/file/d/example/view', 2);
+    const result = await uploadImageUrlToEbayHostedPictures('/api/media/used-gear-workflow/file/d/example/view', 2);
 
     expect(result).toEqual({ url: 'https://i.ebayimg.com/example.jpg' });
     expect(fetchMock).toHaveBeenCalledWith(expectApiPath('/api/ebay/images'), expect.objectContaining({
       method: 'POST',
       body: JSON.stringify({
-        sourceUrl: 'https://drive.google.com/file/d/example/view',
+        sourceUrl: '/api/media/used-gear-workflow/file/d/example/view',
         index: 2,
       }),
     }));
@@ -274,11 +274,11 @@ describe('app-api ebay', () => {
   it('passes saved fingerprints to image preparation and returns reuse results', async () => {
     const cachedImage = { url: 'https://i.ebayimg.com/existing.jpg', sha256: 'a'.repeat(64) };
     fetchMock.mockResolvedValueOnce(Response.json({ ...cachedImage, reused: true }));
-    expect(await uploadImageUrlToEbayHostedPictures('https://drive.google.com/uc?id=photo', 1, cachedImage))
+    expect(await uploadImageUrlToEbayHostedPictures('/api/media/used-gear-workflow/uc?id=photo', 1, cachedImage))
       .toEqual({ ...cachedImage, reused: true });
     expect(fetchMock).toHaveBeenCalledWith(expectApiPath('/api/ebay/images'), expect.objectContaining({
       method: 'POST',
-      body: JSON.stringify({ sourceUrl: 'https://drive.google.com/uc?id=photo', index: 1, cachedImage }),
+      body: JSON.stringify({ sourceUrl: '/api/media/used-gear-workflow/uc?id=photo', index: 1, cachedImage }),
     }));
   });
 

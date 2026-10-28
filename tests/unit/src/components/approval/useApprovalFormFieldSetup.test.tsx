@@ -16,7 +16,7 @@ vi.mock('@/components/approval/useApprovalFormShopifySetup', () => ({
 
 describe('useApprovalFormFieldSetup listing image selection', () => {
   it('uses Google Drive metadata URLs instead of current Airtable attachment URLs', () => {
-    const driveUrl = 'https://drive.google.com/uc?export=view&id=drive-photo';
+    const driveUrl = '/api/media/used-gear-workflow/uc?export=view&id=drive-photo';
     const { result } = renderHook(() => useApprovalFormFieldSetup({
       recordId: 'rec-expired-listing-image-url',
       approvalChannel: 'combined',
@@ -83,7 +83,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
         'Shopify REST Images JSON': '[]',
         'Workflow Image Metadata JSON': JSON.stringify([
           {
-            url: 'https://drive.google.com/testing-1-processed.jpg',
+            url: '/api/media/used-gear-workflow/testing-1-processed.jpg',
             filename: 'testing-1-processed.jpg',
             sourceStage: 'testing',
             includedInListing: true,
@@ -127,21 +127,21 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
         'Shopify REST Images JSON': '',
         'Workflow Image Metadata JSON': JSON.stringify([
           {
-            url: 'https://drive.google.com/testing-1-processed.jpg',
+            url: '/api/media/used-gear-workflow/testing-1-processed.jpg',
             filename: 'testing-1-processed.jpg',
             sourceStage: 'testing',
             includedInListing: true,
             sortOrder: 1,
           },
           {
-            url: 'https://drive.google.com/photos-2-processed.jpg',
+            url: '/api/media/used-gear-workflow/photos-2-processed.jpg',
             filename: 'photos-2-processed.jpg',
             sourceStage: 'photos',
             includedInListing: false,
             sortOrder: 2,
           },
           {
-            url: 'https://drive.google.com/intake-1-processed.jpg',
+            url: '/api/media/used-gear-workflow/intake-1-processed.jpg',
             filename: 'intake-1-processed.jpg',
             sourceStage: 'intake',
             includedInListing: true,
@@ -159,14 +159,14 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
     }));
 
     expect(result.current.selectedWorkflowImageUrls).toEqual([
-      'https://drive.google.com/testing-1-processed.jpg',
+      '/api/media/used-gear-workflow/testing-1-processed.jpg',
     ]);
   });
 
   it('includes untagged non-original photos-stage images alongside explicitly processed photos', () => {
-    const processedUrl = 'https://drive.google.com/uc?export=view&id=processed';
-    const legacyPhotoUrl = 'https://drive.google.com/uc?export=view&id=legacy-photo';
-    const originalUrl = 'https://drive.google.com/uc?export=view&id=original';
+    const processedUrl = '/api/media/used-gear-workflow/uc?export=view&id=processed';
+    const legacyPhotoUrl = '/api/media/used-gear-workflow/uc?export=view&id=legacy-photo';
+    const originalUrl = '/api/media/used-gear-workflow/uc?export=view&id=original';
     const { result } = renderHook(() => useApprovalFormFieldSetup({
       recordId: 'rec-listing-images-legacy-processed',
       approvalChannel: 'combined',
@@ -221,8 +221,8 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
 
   it('trusts explicit workflow stages when legacy filenames have no processed marker', () => {
     const imageUrls = [
-      'https://drive.google.com/uc?export=view&id=example-one',
-      'https://drive.google.com/uc?export=view&id=example-two',
+      '/api/media/used-gear-workflow/uc?export=view&id=example-one',
+      '/api/media/used-gear-workflow/uc?export=view&id=example-two',
     ];
     const { result } = renderHook(() => useApprovalFormFieldSetup({
       recordId: 'rec-listing-images-generic-filename',
@@ -267,11 +267,11 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
       allFieldNames: ['Images', 'Workflow Image Metadata JSON'],
       writableFieldNames: ['Images'],
       formValues: {
-        Images: 'https://drive.google.com/photos-2-processed.jpg',
+        Images: '/api/media/used-gear-workflow/photos-2-processed.jpg',
         'Workflow Image Metadata JSON': JSON.stringify([
           {
             attachmentId: 'att-testing-1',
-            url: 'https://drive.google.com/testing-1-processed.jpg',
+            url: '/api/media/used-gear-workflow/testing-1-processed.jpg',
             filename: 'testing-1-processed.jpg',
             alt: '',
             sortOrder: 1,
@@ -282,13 +282,13 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
       },
       originalFieldValues: {
         Images: JSON.stringify([
-          { id: 'att-testing-1', url: 'https://drive.google.com/testing-1-processed.jpg', filename: 'testing-1-processed.jpg' },
-          { id: 'att-photos-2', url: 'https://drive.google.com/photos-2-processed.jpg', filename: 'photos-2-processed.jpg' },
+          { id: 'att-testing-1', url: '/api/media/used-gear-workflow/testing-1-processed.jpg', filename: 'testing-1-processed.jpg' },
+          { id: 'att-photos-2', url: '/api/media/used-gear-workflow/photos-2-processed.jpg', filename: 'photos-2-processed.jpg' },
         ]),
         'Workflow Image Metadata JSON': JSON.stringify([
           {
             attachmentId: 'att-testing-1',
-            url: 'https://drive.google.com/testing-1-processed.jpg',
+            url: '/api/media/used-gear-workflow/testing-1-processed.jpg',
             filename: 'testing-1-processed.jpg',
             alt: '',
             sortOrder: 1,
@@ -306,7 +306,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
     }));
 
     expect(result.current.selectedWorkflowImageUrls).toEqual([
-      'https://drive.google.com/photos-2-processed.jpg',
+      '/api/media/used-gear-workflow/photos-2-processed.jpg',
     ]);
   });
 
@@ -339,7 +339,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
         'Shopify REST Images JSON': '',
         'Workflow Image Metadata JSON': JSON.stringify([
           {
-            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
             filename: 'photo-1-processed.jpg',
             sourceStage: 'photos',
             includedInListing: true,
@@ -357,7 +357,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
     }));
 
     expect(result.current.selectedWorkflowImageUrls).toEqual([
-      'https://drive.google.com/uc?export=view&id=file-photo-1',
+      '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
     ]);
   });
 
@@ -385,7 +385,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
         'Shopify REST Images JSON': '',
         'Workflow Image Metadata JSON': JSON.stringify([
           {
-            url: 'https://drive.google.com/mit-miterminator-4-box-label-detail-processed.jpg',
+            url: '/api/media/used-gear-workflow/mit-miterminator-4-box-label-detail-processed.jpg',
             filename: 'mit-miterminator-4-box-label-detail-processed.jpg',
             sourceStage: 'photos',
             includedInListing: true,
@@ -397,7 +397,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
       originalFieldValues: {
         'Workflow Image Metadata JSON': JSON.stringify([
           {
-            url: 'https://drive.google.com/mit-miterminator-4-box-label-detail-processed.jpg',
+            url: '/api/media/used-gear-workflow/mit-miterminator-4-box-label-detail-processed.jpg',
             filename: 'mit-miterminator-4-box-label-detail-processed.jpg',
             sourceStage: 'photos',
             includedInListing: false,
@@ -413,7 +413,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
     }));
 
     expect(result.current.selectedWorkflowImageUrls).toEqual([
-      'https://drive.google.com/mit-miterminator-4-box-label-detail-processed.jpg',
+      '/api/media/used-gear-workflow/mit-miterminator-4-box-label-detail-processed.jpg',
     ]);
   });
 
@@ -440,14 +440,14 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
         'Shopify REST Images JSON': '',
         'Workflow Image Metadata JSON': JSON.stringify([
           {
-            url: 'https://drive.google.com/mit-miterminator-4-badge-detail.jpg',
+            url: '/api/media/used-gear-workflow/mit-miterminator-4-badge-detail.jpg',
             filename: 'mit-miterminator-4-badge-detail.jpg',
             sourceStage: 'photos',
             includedInListing: true,
             sortOrder: 1,
           },
           {
-            url: 'https://drive.google.com/mit-miterminator-4-badge-detail-processed.jpg',
+            url: '/api/media/used-gear-workflow/mit-miterminator-4-badge-detail-processed.jpg',
             filename: 'mit-miterminator-4-badge-detail-processed.jpg',
             sourceStage: 'photos',
             includedInListing: true,
@@ -465,7 +465,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
     }));
 
     expect(result.current.selectedWorkflowImageUrls).toEqual([
-      'https://drive.google.com/mit-miterminator-4-badge-detail-processed.jpg',
+      '/api/media/used-gear-workflow/mit-miterminator-4-badge-detail-processed.jpg',
     ]);
   });
 
@@ -480,11 +480,11 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
       formValues: {
         Images: JSON.stringify([
           {
-            url: 'https://drive.google.com/mit-miterminator-4-badge-detail.jpg',
+            url: '/api/media/used-gear-workflow/mit-miterminator-4-badge-detail.jpg',
             filename: 'mit-miterminator-4-badge-detail.jpg',
           },
           {
-            url: 'https://drive.google.com/mit-miterminator-4-badge-detail-processed.jpg',
+            url: '/api/media/used-gear-workflow/mit-miterminator-4-badge-detail-processed.jpg',
             filename: 'mit-miterminator-4-badge-detail-processed.jpg',
           },
         ]),
@@ -502,7 +502,7 @@ describe('useApprovalFormFieldSetup listing image selection', () => {
 
     expect(result.current.workflowImageAttachments).toEqual([
       {
-        url: 'https://drive.google.com/mit-miterminator-4-badge-detail-processed.jpg',
+        url: '/api/media/used-gear-workflow/mit-miterminator-4-badge-detail-processed.jpg',
         filename: 'mit-miterminator-4-badge-detail-processed.jpg',
       },
     ]);

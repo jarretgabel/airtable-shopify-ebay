@@ -69,7 +69,7 @@ describe('publish lifecycle writeback', () => {
     uploadMock.mockReset();
     formValuesMock.mockReset().mockReturnValue({});
     inspectMock.mockReset().mockResolvedValue({
-      validImageUrls: ['new-photo', 'old-photo', 'photo', 'good', 'bad'].map((id) => `https://drive.google.com/uc?id=${id}`),
+      validImageUrls: ['new-photo', 'old-photo', 'photo', 'good', 'bad'].map((id) => `/api/media/used-gear-workflow/uc?id=${id}`),
       invalidImageUrls: [],
     });
   });
@@ -81,7 +81,7 @@ describe('publish lifecycle writeback', () => {
       'eBay Offer Fulfillment Policy ID': 'standard',
       'Shipping Dims': '100lbs (27x24x14)',
       Description: 'Heavy amplifier',
-      'Workflow Image Metadata JSON': '[{"url":"https://drive.google.com/uc?id=photo","filename":"amplifier-processed.jpg","sourceStage":"photos","includedInListing":true}]',
+      'Workflow Image Metadata JSON': '[{"url":"/api/media/used-gear-workflow/uc?id=photo","filename":"amplifier-processed.jpg","sourceStage":"photos","includedInListing":true}]',
     };
     uploadMock.mockResolvedValue({ url: 'https://i.ebayimg.com/image.jpg', sha256: 'a'.repeat(64), reused: false });
     getRecordMock.mockResolvedValue({ id: 'rec-republish', fields: params.mergedDraftSourceFields });
@@ -143,7 +143,7 @@ describe('publish lifecycle writeback', () => {
     params.mergedDraftSourceFields = {
       'eBay Offer Fulfillment Policy ID': 'standard',
       Description: 'Heavy amplifier',
-      'Workflow Image Metadata JSON': '[{"url":"https://drive.google.com/uc?id=photo","filename":"amplifier-processed.jpg","sourceStage":"photos","includedInListing":true}]',
+      'Workflow Image Metadata JSON': '[{"url":"/api/media/used-gear-workflow/uc?id=photo","filename":"amplifier-processed.jpg","sourceStage":"photos","includedInListing":true}]',
     };
     uploadMock.mockResolvedValue({ url: 'https://i.ebayimg.com/image.jpg', sha256: 'a'.repeat(64), reused: false });
     getRecordMock.mockResolvedValue({ id: 'rec-republish', fields: params.mergedDraftSourceFields });
@@ -163,10 +163,10 @@ describe('publish lifecycle writeback', () => {
       const params = createParams();
       params.mergedDraftSourceFields = {
         'Workflow Image Metadata JSON': JSON.stringify([
-          { url: 'https://drive.google.com/uc?id=invalid', filename: 'invalid.jpg', sourceStage: 'photos', includedInListing: true },
+          { url: '/api/media/used-gear-workflow/uc?id=invalid', filename: 'invalid.jpg', sourceStage: 'photos', includedInListing: true },
         ]),
       };
-      inspectMock.mockResolvedValue({ validImageUrls: [], invalidImageUrls: ['https://drive.google.com/uc?id=invalid'] });
+      inspectMock.mockResolvedValue({ validImageUrls: [], invalidImageUrls: ['/api/media/used-gear-workflow/uc?id=invalid'] });
       const { result } = renderHook(() => useListingApprovalPublishActions(params));
       await act(async () => result.current.runCombinedPush(target));
       expect(publishMock).not.toHaveBeenCalled();
@@ -182,8 +182,8 @@ describe('publish lifecycle writeback', () => {
     const params = createParams();
     params.mergedDraftSourceFields = {
       'Workflow Image Metadata JSON': JSON.stringify([
-        { url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', includedInListing: true },
-        { url: 'https://drive.google.com/uc?id=invalid', sourceStage: 'photos', includedInListing: false },
+        { url: '/api/media/used-gear-workflow/uc?id=photo', sourceStage: 'photos', includedInListing: true },
+        { url: '/api/media/used-gear-workflow/uc?id=invalid', sourceStage: 'photos', includedInListing: false },
       ]),
     };
     const { result } = renderHook(() => useListingApprovalPublishActions(params));
@@ -202,7 +202,7 @@ describe('publish lifecycle writeback', () => {
     params.changedFieldNames = ['Workflow Image Metadata JSON'];
     params.mergedDraftSourceFields = {
       'Workflow Image Metadata JSON': JSON.stringify([
-        { url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', includedInListing: true },
+        { url: '/api/media/used-gear-workflow/uc?id=photo', sourceStage: 'photos', includedInListing: true },
       ]),
     };
     const save = vi.fn(async () => true);
@@ -284,9 +284,9 @@ describe('publish lifecycle writeback', () => {
     const existingCache = { url: 'https://i.ebayimg.com/old.jpg', sha256: 'a'.repeat(64) };
     const addedCache = { url: 'https://i.ebayimg.com/new.jpg', sha256: 'b'.repeat(64) };
     const metadata = [
-      { url: 'https://drive.google.com/uc?id=new-photo', filename: 'bel-canto-pre1-preamplifier-rear.jpg', alt: 'Bel Canto Pre1 preamplifier rear', sortOrder: 1, sourceStage: 'photos', includedInListing: true },
-      { url: 'https://drive.google.com/uc?id=old-photo', filename: 'bel-canto-pre1-preamplifier-front.jpg', alt: 'Bel Canto Pre1 preamplifier front', sortOrder: 2, sourceStage: 'photos', includedInListing: true, ebayHostedImageCache: existingCache },
-      { url: 'https://drive.google.com/uc?id=excluded-photo', sortOrder: 3, sourceStage: 'photos', includedInListing: false },
+      { url: '/api/media/used-gear-workflow/uc?id=new-photo', filename: 'bel-canto-pre1-preamplifier-rear.jpg', alt: 'Bel Canto Pre1 preamplifier rear', sortOrder: 1, sourceStage: 'photos', includedInListing: true },
+      { url: '/api/media/used-gear-workflow/uc?id=old-photo', filename: 'bel-canto-pre1-preamplifier-front.jpg', alt: 'Bel Canto Pre1 preamplifier front', sortOrder: 2, sourceStage: 'photos', includedInListing: true, ebayHostedImageCache: existingCache },
+      { url: '/api/media/used-gear-workflow/uc?id=excluded-photo', sortOrder: 3, sourceStage: 'photos', includedInListing: false },
     ];
     const fields = {
       'Workflow Status': 'Listed, eBay',
@@ -344,7 +344,7 @@ describe('publish lifecycle writeback', () => {
   it('does not publish if saving prepared image fingerprints fails', async () => {
     const fields = {
       Description: 'Bel Canto Pre1 preamplifier',
-      'Workflow Image Metadata JSON': JSON.stringify([{ url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', includedInListing: true }]),
+      'Workflow Image Metadata JSON': JSON.stringify([{ url: '/api/media/used-gear-workflow/uc?id=photo', sourceStage: 'photos', includedInListing: true }]),
     };
     const params = { ...createParams(), mergedDraftSourceFields: fields };
     getRecordMock.mockResolvedValue({ id: 'rec-republish', fields });
@@ -360,8 +360,8 @@ describe('publish lifecycle writeback', () => {
 
   it('saves successful image preparations even when another image fails', async () => {
     const metadata = [
-      { url: 'https://drive.google.com/uc?id=good', sourceStage: 'photos', includedInListing: true },
-      { url: 'https://drive.google.com/uc?id=bad', sourceStage: 'photos', includedInListing: true },
+      { url: '/api/media/used-gear-workflow/uc?id=good', sourceStage: 'photos', includedInListing: true },
+      { url: '/api/media/used-gear-workflow/uc?id=bad', sourceStage: 'photos', includedInListing: true },
     ];
     const fields = { Description: 'Bel Canto Pre1 preamplifier', 'Workflow Image Metadata JSON': JSON.stringify(metadata) };
     getRecordMock.mockResolvedValue({ id: 'rec-republish', fields });
@@ -386,7 +386,7 @@ describe('publish lifecycle writeback', () => {
   it('does not retry an uploaded image when its response is missing a fingerprint', async () => {
     const fields = {
       Description: 'Bel Canto Pre1 preamplifier',
-      'Workflow Image Metadata JSON': JSON.stringify([{ url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', includedInListing: true }]),
+      'Workflow Image Metadata JSON': JSON.stringify([{ url: '/api/media/used-gear-workflow/uc?id=photo', sourceStage: 'photos', includedInListing: true }]),
     };
     const params = { ...createParams(), mergedDraftSourceFields: fields };
     uploadMock.mockResolvedValue({ url: 'https://i.ebayimg.com/photo.jpg' });
@@ -401,11 +401,11 @@ describe('publish lifecycle writeback', () => {
   });
 
   it('preserves unsaved image edits made while preparing the eBay images', async () => {
-    const metadata = [{ url: 'https://drive.google.com/uc?id=photo', sourceStage: 'photos', includedInListing: true, alt: 'Original alt' }];
+    const metadata = [{ url: '/api/media/used-gear-workflow/uc?id=photo', sourceStage: 'photos', includedInListing: true, alt: 'Original alt' }];
     const fields = { Description: 'Bel Canto Pre1 preamplifier', 'Workflow Image Metadata JSON': JSON.stringify(metadata) };
     const draftMetadata = [
       { ...metadata[0], includedInListing: false, alt: 'Edited alt' },
-      { url: 'https://drive.google.com/uc?id=added-later', sourceStage: 'photos', includedInListing: true },
+      { url: '/api/media/used-gear-workflow/uc?id=added-later', sourceStage: 'photos', includedInListing: true },
     ];
     formValuesMock.mockReturnValue({ 'Workflow Image Metadata JSON': JSON.stringify(draftMetadata) });
     getRecordMock.mockResolvedValue({ id: 'rec-republish', fields });

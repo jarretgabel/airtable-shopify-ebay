@@ -52,14 +52,14 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-1',
-          url: 'https://drive.google.com/1.jpg',
+          url: '/api/media/used-gear-workflow/1.jpg',
           filename: '1-processed.jpg',
           sourceStage: 'photos',
           includedInListing: true,
         },
         {
           attachmentId: 'att-2',
-          url: 'https://drive.google.com/2.jpg',
+          url: '/api/media/used-gear-workflow/2.jpg',
           filename: '2-processed.jpg',
           sourceStage: 'photos',
           includedInListing: true,
@@ -79,7 +79,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       product: {
         title: 'eBay Product Title',
         description: 'eBay description',
-        imageUrls: ['https://drive.google.com/1.jpg', 'https://drive.google.com/2.jpg'],
+        imageUrls: ['/api/media/used-gear-workflow/1.jpg', '/api/media/used-gear-workflow/2.jpg'],
         brand: 'McIntosh',
         mpn: 'MA8900',
         aspects: { Brand: ['McIntosh'], Model: ['MA8900'], MPN: ['MA8900'] },
@@ -341,7 +341,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-2',
-          url: 'https://drive.google.com/meta-b.jpg',
+          url: '/api/media/used-gear-workflow/meta-b.jpg',
           filename: 'meta-b-processed.jpg',
           alt: 'Rear angle',
           sortOrder: 1,
@@ -350,7 +350,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         },
         {
           attachmentId: 'att-1',
-          url: 'https://drive.google.com/meta-a.jpg',
+          url: '/api/media/used-gear-workflow/meta-a.jpg',
           filename: 'meta-a-processed.jpg',
           alt: 'Front angle',
           sortOrder: 2,
@@ -363,7 +363,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-WORKFLOW-META',
       product: {
-        imageUrls: ['https://drive.google.com/meta-b.jpg', 'https://drive.google.com/meta-a.jpg'],
+        imageUrls: ['/api/media/used-gear-workflow/meta-b.jpg', '/api/media/used-gear-workflow/meta-a.jpg'],
       },
     });
   });
@@ -374,7 +374,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'att-photos',
-          url: 'https://drive.google.com/meta-photos.jpg',
+          url: '/api/media/used-gear-workflow/meta-photos.jpg',
           filename: 'meta-photos-processed.jpg',
           alt: 'Photos stage primary',
           sortOrder: 1,
@@ -383,7 +383,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
         },
         {
           attachmentId: 'att-testing',
-          url: 'https://drive.google.com/meta-testing.jpg',
+          url: '/api/media/used-gear-workflow/meta-testing.jpg',
           filename: 'meta-testing.jpg',
           alt: 'Testing stage reference',
           sortOrder: 2,
@@ -396,7 +396,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.inventoryItem).toMatchObject({
       sku: 'EBAY-SKU-WORKFLOW-INCLUSION',
       product: {
-        imageUrls: ['https://drive.google.com/meta-photos.jpg'],
+        imageUrls: ['/api/media/used-gear-workflow/meta-photos.jpg'],
       },
     });
   });
@@ -406,25 +406,25 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
       'eBay Inventory SKU': 'EBAY-SKU-PROCESSED-IMAGES',
       'Workflow Image Metadata JSON': JSON.stringify([
         {
-          url: 'https://drive.google.com/testing-original.jpg',
+          url: '/api/media/used-gear-workflow/testing-original.jpg',
           filename: 'testing-photo-1-original.jpg',
           sourceStage: 'testing',
           includedInListing: true,
         },
         {
-          url: 'https://drive.google.com/testing-processed.jpg',
+          url: '/api/media/used-gear-workflow/testing-processed.jpg',
           filename: 'testing-photo-1-processed.jpg',
           sourceStage: 'testing',
           includedInListing: true,
         },
         {
-          url: 'https://drive.google.com/photos-photo-1.jpg',
+          url: '/api/media/used-gear-workflow/photos-photo-1.jpg',
           filename: 'photos-photo-1.jpg',
           sourceStage: 'photos',
           includedInListing: true,
         },
         {
-          url: 'https://drive.google.com/intake-original.jpg',
+          url: '/api/media/used-gear-workflow/intake-original.jpg',
           filename: 'intake-photo-1-processed.jpg',
           sourceStage: 'intake',
           includedInListing: false,
@@ -435,8 +435,8 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     expect(payload.inventoryItem).toMatchObject({
       product: {
         imageUrls: [
-          'https://drive.google.com/testing-processed.jpg',
-          'https://drive.google.com/photos-photo-1.jpg',
+          '/api/media/used-gear-workflow/testing-processed.jpg',
+          '/api/media/used-gear-workflow/photos-photo-1.jpg',
         ],
       },
     });
@@ -594,9 +594,9 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
   it('collects image URLs from indexed image fields when JSON list is absent', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-7',
-      'eBay Inventory Product Image URL 1': 'https://drive.google.com/e1.jpg',
-      'eBay Inventory Product Image URL 2': 'https://drive.google.com/e2.jpg',
-      'Photo URLs (comma-separated)': 'https://drive.google.com/e2.jpg, https://drive.google.com/e3.jpg',
+      'eBay Inventory Product Image URL 1': '/api/media/used-gear-workflow/e1.jpg',
+      'eBay Inventory Product Image URL 2': '/api/media/used-gear-workflow/e2.jpg',
+      'Photo URLs (comma-separated)': '/api/media/used-gear-workflow/e2.jpg, /api/media/used-gear-workflow/e3.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({
@@ -735,7 +735,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-11',
       'eBay Inventory Product Image URLs JSON': '',
-      Images: 'https://drive.google.com/fallback-a.jpg, https://drive.google.com/fallback-b.jpg',
+      Images: '/api/media/used-gear-workflow/fallback-a.jpg, /api/media/used-gear-workflow/fallback-b.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({
@@ -748,7 +748,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-12',
       'eBay Inventory Product Image URLs JSON': {},
-      Images: 'https://drive.google.com/obj-fallback-a.jpg, https://drive.google.com/obj-fallback-b.jpg',
+      Images: '/api/media/used-gear-workflow/obj-fallback-a.jpg, /api/media/used-gear-workflow/obj-fallback-b.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({
@@ -760,7 +760,7 @@ describe('buildEbayDraftPayloadBundleFromApprovalFields', () => {
   it('maps Images (comma-separated) into eBay imageUrls', () => {
     const payload = buildEbayDraftPayloadBundleFromApprovalFields({
       'eBay Inventory SKU': 'EBAY-SKU-14',
-      'Images (comma-separated)': 'https://drive.google.com/cs-a.jpg, https://drive.google.com/cs-b.jpg',
+      'Images (comma-separated)': '/api/media/used-gear-workflow/cs-a.jpg, /api/media/used-gear-workflow/cs-b.jpg',
     });
 
     expect(payload.inventoryItem).toMatchObject({

@@ -33,8 +33,8 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       throw new HttpError(400, 'Unsupported Airtable attachment source', { service: 'airtable', code: 'AIRTABLE_SOURCE_NOT_ALLOWED', retryable: false });
     }
     const body = requireJsonBody<Body>(event, 'airtable', 'INVALID_AIRTABLE_REQUEST_BODY');
-    const media = process.env.IMAGE_ARCHIVE_BACKEND?.trim().toLowerCase() === 's3' ? getMediaStoreFromEnv() : null;
-    // Clients fall back to the base64 upload when direct upload is not on.
+    const media = getMediaStoreFromEnv();
+    // Clients fall back to the base64 upload when no media store is configured.
     if (!media) return jsonOk({ enabled: false }, { origin });
 
     const recordKey = body.folderKey?.trim() || recordId;

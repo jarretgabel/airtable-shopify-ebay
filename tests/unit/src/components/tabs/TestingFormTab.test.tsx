@@ -118,12 +118,12 @@ describe('TestingFormTab', () => {
         inclusionNotes: '',
       },
       stageContext: {
-        existingAttachments: [{ id: 'att-1', url: 'https://drive.google.com/uc?id=file-testing', filename: 'testing.jpg' }],
-        referenceAttachments: [{ id: 'att-intake', url: 'https://drive.google.com/uc?id=file-intake', filename: 'intake.jpg' }],
+        existingAttachments: [{ id: 'att-1', url: '/api/media/used-gear-workflow/uc?id=file-testing', filename: 'testing.jpg' }],
+        referenceAttachments: [{ id: 'att-intake', url: '/api/media/used-gear-workflow/uc?id=file-intake', filename: 'intake.jpg' }],
         imageMetadata: [
           {
             attachmentId: 'att-1',
-            url: 'https://drive.google.com/uc?id=file-testing',
+            url: '/api/media/used-gear-workflow/uc?id=file-testing',
             filename: 'testing.jpg',
             alt: 'Bench overview',
             sortOrder: 1,
@@ -132,7 +132,7 @@ describe('TestingFormTab', () => {
           },
           {
             attachmentId: 'att-2',
-            url: 'https://drive.google.com/uc?id=file-photo',
+            url: '/api/media/used-gear-workflow/uc?id=file-photo',
             filename: 'photo.jpg',
             alt: 'Final photo',
             sortOrder: 2,
@@ -246,7 +246,7 @@ describe('TestingFormTab', () => {
         imageMetadata: [
           expect.objectContaining({
             attachmentId: 'att-1',
-            url: 'https://drive.google.com/uc?id=file-testing',
+            url: '/api/media/used-gear-workflow/uc?id=file-testing',
             filename: 'testing.jpg',
             alt: 'Updated bench overview',
             sourceStage: 'testing',
@@ -254,7 +254,7 @@ describe('TestingFormTab', () => {
           }),
           expect.objectContaining({
             attachmentId: 'att-2',
-            url: 'https://drive.google.com/uc?id=file-photo',
+            url: '/api/media/used-gear-workflow/uc?id=file-photo',
             filename: 'photo.jpg',
             alt: 'Final photo',
             sourceStage: 'photos',

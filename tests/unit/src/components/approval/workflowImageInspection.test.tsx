@@ -6,8 +6,8 @@ import { inspectWorkflowImageMetadata, type InspectWorkflowImageMetadataResponse
 
 vi.mock('@/services/app-api/airtable', () => ({ inspectWorkflowImageMetadata: vi.fn() }));
 
-const valid = 'https://drive.google.com/uc?id=valid-photo';
-const invalid = 'https://drive.google.com/uc?id=invalid-photo';
+const valid = '/api/media/used-gear-workflow/uc?id=valid-photo';
+const invalid = '/api/media/used-gear-workflow/uc?id=invalid-photo';
 const props: ComponentProps<typeof ApprovalFormFieldsSupplementalEditors> = {
   recordId: 'rec-images',
   validateWorkflowImageFormats: true,
@@ -138,7 +138,7 @@ describe('automatic workflow image inspection', () => {
     await act(async () => { oldRequest.resolve({ validImageUrls: [], invalidImageUrls: [valid, invalid] }); });
     expect(screen.queryByText(/Unsupported image format/)).not.toBeInTheDocument();
     rerender(<ApprovalFormFieldsSupplementalEditors {...props} recordId="rec-other"
-      workflowImageAttachments={[...props.workflowImageAttachments, { url: 'https://drive.google.com/uc?id=new', filename: 'new.jpg' }]} />);
+      workflowImageAttachments={[...props.workflowImageAttachments, { url: '/api/media/used-gear-workflow/uc?id=new', filename: 'new.jpg' }]} />);
     expect(screen.getByText(/Image format not checked/)).toBeInTheDocument();
     expect(props.setFormValue).not.toHaveBeenCalled();
     expect(props.setDerivedFormValue).not.toHaveBeenCalled();

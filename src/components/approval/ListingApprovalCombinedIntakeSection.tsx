@@ -4,7 +4,7 @@ import { WorkflowReferenceImagesPanel } from '@/components/tabs/WorkflowReferenc
 import { parseKeyFeatureEntries } from '@/services/shopifyBodyHtml';
 import {
   filterWorkflowImageMetadataByStage,
-  isGoogleDriveImageUrl,
+  isArchivedWorkflowImageUrl,
   isOriginalWorkflowImage,
   isProcessedWorkflowImage,
   parseWorkflowImageMetadata,
@@ -195,7 +195,7 @@ export function ListingApprovalCombinedIntakeSection({
   const workflowImageMetadata = useMemo(() => {
     const metadataFieldName = findWorkflowImageMetadataFieldName(allOriginalFieldNames);
     return parseWorkflowImageMetadata(metadataFieldName ? (originalFieldValues[metadataFieldName] ?? '') : '')
-      .filter((record) => isGoogleDriveImageUrl(record.url));
+      .filter((record) => isArchivedWorkflowImageUrl(record.url));
   }, [allOriginalFieldNames, originalFieldValues]);
 
   const intakeImages = useMemo(() => {

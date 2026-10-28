@@ -3,13 +3,13 @@ import { mergeEbayImageCaches } from '@/services/ebayImageCache';
 import { parseWorkflowImageMetadata, serializeWorkflowImageMetadata, updateWorkflowImageAltText } from '@/services/workflowImageMetadata';
 
 const cache = { url: 'https://i.ebayimg.com/image.jpg', sha256: 'a'.repeat(64) };
-const sourceUrl = 'https://drive.google.com/uc?id=photo-1';
+const sourceUrl = '/api/media/used-gear-workflow/uc?id=photo-1';
 
 describe('eBay image reuse metadata', () => {
   it('merges cache data without changing order, inclusion, roles or unknown annotations', () => {
     const entries = [
       { url: sourceUrl, sortOrder: 2, includedInListing: false, imageRole: 'rear', annotation: 'keep me' },
-      { url: 'https://drive.google.com/uc?id=photo-2', sortOrder: 1, includedInListing: true },
+      { url: '/api/media/used-gear-workflow/uc?id=photo-2', sortOrder: 1, includedInListing: true },
     ];
     const result = mergeEbayImageCaches(JSON.stringify(entries), new Map([[sourceUrl, cache]]));
     expect(JSON.parse(result)).toEqual([{ ...entries[0], ebayHostedImageCache: cache }, entries[1]]);

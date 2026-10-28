@@ -4,19 +4,12 @@ import { WorkflowSnapshotPage } from '@/components/tabs/WorkflowSnapshotPage';
 
 const {
   loadUsedGearOperationalRecordContextMock,
-  getConfiguredWorkflowImagePreviewMock,
 } = vi.hoisted(() => ({
   loadUsedGearOperationalRecordContextMock: vi.fn(),
-  getConfiguredWorkflowImagePreviewMock: vi.fn(),
 }));
 
 vi.mock('@/services/usedGearQueue', () => ({
   loadUsedGearOperationalRecordContext: loadUsedGearOperationalRecordContextMock,
-}));
-
-vi.mock('@/services/app-api/airtable', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/services/app-api/airtable')>()),
-  getConfiguredWorkflowImagePreview: getConfiguredWorkflowImagePreviewMock,
 }));
 
 vi.mock('@/components/approval/ListingApprovalWorkflowSummary', () => ({
@@ -42,9 +35,6 @@ vi.mock('@/services/usedGearWorkflowLifecycle', () => ({
 describe('WorkflowSnapshotPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getConfiguredWorkflowImagePreviewMock.mockImplementation(async (_source: string, _recordId: string, fileId: string) => ({
-      dataUrl: `data:image/jpeg;base64,${fileId}`,
-    }));
     loadUsedGearOperationalRecordContextMock.mockResolvedValue({
       record: {
         id: 'rec-workflow-1',
@@ -68,7 +58,7 @@ describe('WorkflowSnapshotPage', () => {
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-testing',
-              url: 'https://drive.google.com/uc?export=view&id=testing-file',
+              url: '/api/media/used-gear-workflow/uc?export=view&id=testing-file',
               filename: 'testing-processed.jpg',
               alt: 'Bench shot',
               sortOrder: 1,
@@ -77,7 +67,7 @@ describe('WorkflowSnapshotPage', () => {
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://drive.google.com/uc?export=view&id=photo-file',
+              url: '/api/media/used-gear-workflow/uc?export=view&id=photo-file',
               filename: 'photo-processed.jpg',
               alt: 'Hero angle',
               sortOrder: 2,
@@ -116,19 +106,11 @@ describe('WorkflowSnapshotPage', () => {
     expect(await screen.findByText('Workflow timeline')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'McIntosh MC240 - workflow-1' })).toBeInTheDocument();
 
-    // Drive images load through the authenticated record preview API and render as data URLs.
     await waitFor(() => {
-      screen.getAllByAltText('testing-processed.jpg').forEach((image) => {
-        expect(image).toHaveAttribute('src', 'data:image/jpeg;base64,testing-file');
-      });
-      screen.getAllByAltText('photo-processed.jpg').forEach((image) => {
-        expect(image).toHaveAttribute('src', 'data:image/jpeg;base64,photo-file');
-      });
+      expect(screen.getAllByAltText('testing-processed.jpg').length).toBeGreaterThan(0);
+      expect(screen.getAllByAltText('photo-processed.jpg').length).toBeGreaterThan(0);
     });
-    expect(getConfiguredWorkflowImagePreviewMock).toHaveBeenCalledWith('used-gear-workflow', 'rec-workflow-1', 'testing-file');
-    expect(getConfiguredWorkflowImagePreviewMock).toHaveBeenCalledWith('used-gear-workflow', 'rec-workflow-1', 'photo-file');
     // Airtable-only attachments are never shown or requested.
     expect(screen.queryByAltText('airtable-only.jpg')).not.toBeInTheDocument();
-    expect(getConfiguredWorkflowImagePreviewMock.mock.calls.every(([, , fileId]) => ['testing-file', 'photo-file'].includes(fileId))).toBe(true);
   });
 });

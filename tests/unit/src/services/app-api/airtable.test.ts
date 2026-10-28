@@ -583,12 +583,12 @@ describe('app-api airtable', () => {
           original: {
             id: 'file-original',
             filename: 'testing-original.jpg',
-            url: 'https://drive.google.com/uc?export=view&id=file-original',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-original',
           },
           processed: {
             id: 'file-processed',
             filename: 'testing-processed.jpg',
-            url: 'https://drive.google.com/uc?export=view&id=file-processed',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
           },
         },
       }), {
@@ -628,12 +628,12 @@ describe('app-api airtable', () => {
         original: {
           id: 'file-original',
           filename: 'testing-original.jpg',
-          url: 'https://drive.google.com/uc?export=view&id=file-original',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-original',
         },
         processed: {
           id: 'file-processed',
           filename: 'testing-processed.jpg',
-          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
         },
       },
     });

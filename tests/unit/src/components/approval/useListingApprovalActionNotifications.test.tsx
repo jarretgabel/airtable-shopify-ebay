@@ -82,7 +82,7 @@ describe('approval action notifications', () => {
       fields: {
         ...record.fields,
         'Workflow Image Metadata JSON': JSON.stringify([{
-          url: 'https://drive.google.com/uc?id=image-1',
+          url: '/api/media/used-gear-workflow/uc?id=image-1',
           filename: 'image-1.jpg',
           alt: 'McIntosh MA6900',
           sortOrder: 1,
@@ -405,7 +405,7 @@ describe('approval action notifications', () => {
       mergedDraftSourceFields: {
         Name: 'McIntosh MA6900',
         'Workflow Image Metadata JSON': JSON.stringify([{
-          url: 'https://drive.google.com/uc?id=image-1',
+          url: '/api/media/used-gear-workflow/uc?id=image-1',
           filename: 'image-1.jpg',
           alt: 'McIntosh MA6900',
           sortOrder: 1,
@@ -514,7 +514,7 @@ describe('approval action notifications', () => {
       mergedDraftSourceFields: {
         Name: 'McIntosh MA6900',
         'Workflow Image Metadata JSON': JSON.stringify([{
-          url: 'https://drive.google.com/uc?id=image-1',
+          url: '/api/media/used-gear-workflow/uc?id=image-1',
           filename: 'image-1.jpg',
           alt: 'McIntosh MA6900',
           sortOrder: 1,
@@ -558,7 +558,7 @@ describe('approval action notifications', () => {
   });
 
   it('advances image progress and retries a transient eBay upload failure', async () => {
-    const imageUrls = Array.from({ length: 5 }, (_, index) => `https://drive.google.com/uc?export=view&id=image-${index + 1}`);
+    const imageUrls = Array.from({ length: 5 }, (_, index) => `/api/media/used-gear-workflow/uc?export=view&id=image-${index + 1}`);
     getConfiguredRecordMock.mockResolvedValue({
       ...record,
       fields: {
@@ -824,10 +824,10 @@ describe('approval action notifications', () => {
           { src: 'https://legacy.example/6.jpg', alt: '', position: 6 },
         ]),
         'Workflow Image Metadata JSON': JSON.stringify([
-          { url: 'https://drive.google.com/uc?export=view&id=approved-a', alt: 'A', sortOrder: 1, includedInListing: true },
-          { url: 'https://drive.google.com/uc?export=view&id=approved-b', alt: 'B', sortOrder: 2, includedInListing: true },
-          { url: 'https://drive.google.com/uc?export=view&id=approved-c', alt: 'C', sortOrder: 3, includedInListing: true },
-          { url: 'https://drive.google.com/uc?export=view&id=approved-d', alt: 'D', sortOrder: 4, includedInListing: false },
+          { url: '/api/media/used-gear-workflow/uc?export=view&id=approved-a', alt: 'A', sortOrder: 1, includedInListing: true },
+          { url: '/api/media/used-gear-workflow/uc?export=view&id=approved-b', alt: 'B', sortOrder: 2, includedInListing: true },
+          { url: '/api/media/used-gear-workflow/uc?export=view&id=approved-c', alt: 'C', sortOrder: 3, includedInListing: true },
+          { url: '/api/media/used-gear-workflow/uc?export=view&id=approved-d', alt: 'D', sortOrder: 4, includedInListing: false },
           { url: 'https://approved.example/not-drive.jpg', alt: 'E', sortOrder: 5, includedInListing: true },
         ]),
       },
@@ -848,9 +848,9 @@ describe('approval action notifications', () => {
 
     // Only included Google Drive images are sent; excluded and non-Drive rows never override the stale legacy JSON.
     expect(imageRows.map((row) => row.src)).toEqual([
-      'https://drive.google.com/uc?export=view&id=approved-a',
-      'https://drive.google.com/uc?export=view&id=approved-b',
-      'https://drive.google.com/uc?export=view&id=approved-c',
+      '/api/media/used-gear-workflow/uc?export=view&id=approved-a',
+      '/api/media/used-gear-workflow/uc?export=view&id=approved-b',
+      '/api/media/used-gear-workflow/uc?export=view&id=approved-c',
     ]);
   });
 

@@ -49,18 +49,18 @@ describe('photosForm', () => {
   it('loads the canonical photo library unchanged when unrelated archival attachments exist', async () => {
     const metadata = [
       {
-        attachmentId: 'drive-photo', url: 'https://drive.google.com/uc?id=drive-photo',
+        attachmentId: 'drive-photo', url: '/api/media/used-gear-workflow/uc?id=drive-photo',
         filename: 'bel-canto-pre-1-front-angle.jpg', alt: 'Bel Canto PRe1 preamplifier front angle',
         sortOrder: 1, sourceStage: 'photos', includedInListing: true,
         ebayHostedImageCache: { url: 'https://i.ebayimg.com/front.jpg', sha256: 'a'.repeat(64) },
       },
       {
-        attachmentId: 'drive-intake', url: 'https://drive.google.com/uc?id=drive-intake',
+        attachmentId: 'drive-intake', url: '/api/media/used-gear-workflow/uc?id=drive-intake',
         filename: 'bel-canto-pre-1-intake.jpg', alt: 'Bel Canto PRe1 preamplifier arrival reference',
         sortOrder: 2, sourceStage: 'intake', includedInListing: false,
       },
       {
-        attachmentId: 'drive-photo-rear', url: 'https://drive.google.com/uc?id=drive-photo-rear',
+        attachmentId: 'drive-photo-rear', url: '/api/media/used-gear-workflow/uc?id=drive-photo-rear',
         filename: 'bel-canto-pre-1-rear-panel.jpg', alt: 'Bel Canto PRe1 preamplifier rear panel',
         sortOrder: 3, sourceStage: 'photos', includedInListing: false,
       },
@@ -110,12 +110,12 @@ describe('photosForm', () => {
           'Inventory Notes': 'Keep reflection under control on the top cover.',
           'Testing Notes': 'Receiver passed tuner and phono checks.',
           Images: [
-            { id: 'att-1', url: 'https://drive.google.com/hero.jpg', filename: 'hero.jpg' },
+            { id: 'att-1', url: '/api/media/used-gear-workflow/hero.jpg', filename: 'hero.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-1',
-              url: 'https://drive.google.com/hero.jpg',
+              url: '/api/media/used-gear-workflow/hero.jpg',
               filename: 'hero.jpg',
               alt: 'Hero angle',
               sortOrder: 1,
@@ -144,14 +144,14 @@ describe('photosForm', () => {
         testingNotes: 'Receiver passed tuner and phono checks.',
         testingCosmeticNotes: 'Moderate test-stage wear.',
         existingAttachments: [
-          { id: 'att-1', url: 'https://drive.google.com/hero.jpg', filename: 'hero.jpg' },
+          { id: 'att-1', url: '/api/media/used-gear-workflow/hero.jpg', filename: 'hero.jpg' },
         ],
         intakeReferenceAttachments: [],
         testingReferenceAttachments: [],
         imageMetadata: [
           {
             attachmentId: 'att-1',
-            url: 'https://drive.google.com/hero.jpg',
+            url: '/api/media/used-gear-workflow/hero.jpg',
             filename: 'hero.jpg',
             alt: 'Hero angle',
             sortOrder: 1,
@@ -194,14 +194,14 @@ describe('photosForm', () => {
           'Component Type': ['Preamp'],
           Status: "Photo'd",
           Images: [
-            { id: 'att-intake', url: 'https://drive.google.com/intake.jpg', filename: 'intake.jpg' },
-            { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
-            { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
+            { id: 'att-intake', url: '/api/media/used-gear-workflow/intake.jpg', filename: 'intake.jpg' },
+            { id: 'att-testing', url: '/api/media/used-gear-workflow/testing.jpg', filename: 'testing.jpg' },
+            { id: 'att-photo', url: '/api/media/used-gear-workflow/photo.jpg', filename: 'photo.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-testing',
-              url: 'https://drive.google.com/testing.jpg',
+              url: '/api/media/used-gear-workflow/testing.jpg',
               filename: 'testing.jpg',
               alt: 'Bench view',
               sortOrder: 1,
@@ -210,7 +210,7 @@ describe('photosForm', () => {
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://drive.google.com/photo.jpg',
+              url: '/api/media/used-gear-workflow/photo.jpg',
               filename: 'photo.jpg',
               alt: 'Final hero',
               sortOrder: 2,
@@ -229,11 +229,11 @@ describe('photosForm', () => {
     expect(result.values.cost).toBe('1499.99');
 
     expect(result.stageContext.existingAttachments).toEqual([
-      { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
+      { id: 'att-photo', url: '/api/media/used-gear-workflow/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
     expect(result.stageContext.testingReferenceAttachments).toEqual([
-      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
+      { id: 'att-testing', url: '/api/media/used-gear-workflow/testing.jpg', filename: 'testing.jpg' },
     ]);
   });
 
@@ -322,12 +322,12 @@ describe('photosForm', () => {
         original: {
           id: 'file-original',
           filename: 'photos-original.jpg',
-          url: 'https://drive.google.com/uc?export=view&id=file-original',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-original',
         },
         processed: {
           id: 'file-processed',
           filename: 'photos-processed.jpg',
-          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
         },
       },
     });
@@ -386,12 +386,12 @@ describe('photosForm', () => {
         original: {
           id: 'file-original',
           filename: 'photos-original.jpg',
-          url: 'https://drive.google.com/uc?export=view&id=file-original',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-original',
         },
         processed: {
           id: 'file-processed',
           filename: 'photos-processed.jpg',
-          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
         },
       },
     });
@@ -408,7 +408,7 @@ describe('photosForm', () => {
     expect(JSON.parse(String(metadataPayload['Workflow Image Metadata JSON']))).toEqual([
       {
         attachmentId: 'file-processed',
-        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
         filename: 'photos-processed.jpg',
         alt: '',
         sortOrder: 1,
@@ -479,7 +479,7 @@ describe('photosForm', () => {
       imageMetadata: [
         {
           attachmentId: 'att-9',
-          url: 'https://drive.google.com/detail.jpg',
+          url: '/api/media/used-gear-workflow/detail.jpg',
           filename: 'detail.jpg',
           alt: 'Top cover detail',
           sortOrder: 1,
@@ -497,7 +497,7 @@ describe('photosForm', () => {
         'Workflow Image Metadata JSON': JSON.stringify([
           {
             attachmentId: 'att-9',
-            url: 'https://drive.google.com/detail.jpg',
+            url: '/api/media/used-gear-workflow/detail.jpg',
             filename: 'detail.jpg',
             alt: 'Top cover detail',
             sortOrder: 1,
@@ -540,7 +540,7 @@ describe('photosForm', () => {
       imageMetadata: [
         {
           attachmentId: 'att-10',
-          url: 'https://drive.google.com/detail.jpg',
+          url: '/api/media/used-gear-workflow/detail.jpg',
           filename: 'detail.jpg',
           alt: 'Top cover detail',
           sortOrder: 1,
@@ -567,7 +567,7 @@ describe('photosForm', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'file-processed',
-          url: 'https://drive.google.com/uc?export=view&id=file-processed',
+          url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
           filename: 'photos-processed.jpg',
           alt: 'Hero angle',
           sortOrder: 1,
@@ -582,14 +582,14 @@ describe('photosForm', () => {
     expect(result.stageContext.existingAttachments).toEqual([
       {
         id: 'file-processed',
-        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
         filename: 'photos-processed.jpg',
       },
     ]);
     expect(result.stageContext.imageMetadata).toEqual([
       expect.objectContaining({
         attachmentId: 'file-processed',
-        url: 'https://drive.google.com/uc?export=view&id=file-processed',
+        url: '/api/media/used-gear-workflow/uc?export=view&id=file-processed',
         filename: 'photos-processed.jpg',
         sourceStage: 'photos',
       }),
@@ -676,13 +676,13 @@ describe('photosForm', () => {
           'Component Type': ['Amplifier'],
           Status: "Photo'd",
           Images: [
-            { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
-            { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
+            { id: 'att-testing', url: '/api/media/used-gear-workflow/testing.jpg', filename: 'testing.jpg' },
+            { id: 'att-photo', url: '/api/media/used-gear-workflow/photo.jpg', filename: 'photo.jpg' },
           ],
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-testing',
-              url: 'https://drive.google.com/testing.jpg',
+              url: '/api/media/used-gear-workflow/testing.jpg',
               filename: 'testing.jpg',
               alt: 'Bench view',
               sortOrder: 1,
@@ -691,7 +691,7 @@ describe('photosForm', () => {
             },
             {
               attachmentId: 'att-photo',
-              url: 'https://drive.google.com/photo.jpg',
+              url: '/api/media/used-gear-workflow/photo.jpg',
               filename: 'photo.jpg',
               alt: 'Final hero',
               sortOrder: 2,
@@ -708,11 +708,11 @@ describe('photosForm', () => {
     const result = await loadPhotosFormValues('recPhotosStage');
 
     expect(result.stageContext.existingAttachments).toEqual([
-      { id: 'att-photo', url: 'https://drive.google.com/photo.jpg', filename: 'photo.jpg' },
+      { id: 'att-photo', url: '/api/media/used-gear-workflow/photo.jpg', filename: 'photo.jpg' },
     ]);
     expect(result.stageContext.intakeReferenceAttachments).toEqual([]);
     expect(result.stageContext.testingReferenceAttachments).toEqual([
-      { id: 'att-testing', url: 'https://drive.google.com/testing.jpg', filename: 'testing.jpg' },
+      { id: 'att-testing', url: '/api/media/used-gear-workflow/testing.jpg', filename: 'testing.jpg' },
     ]);
     expect(result.stageContext.imageMetadata).toHaveLength(2);
     expect(result.stageContext.imageMetadata.map((record) => record.sourceStage)).toEqual(['testing', 'photos']);

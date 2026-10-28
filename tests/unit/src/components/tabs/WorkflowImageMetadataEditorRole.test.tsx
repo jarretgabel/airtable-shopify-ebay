@@ -4,7 +4,6 @@ import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMeta
 import { buildImageAltText } from '@/services/imageNamingFormatter';
 import type { WorkflowImageMetadataRecord } from '@/services/workflowImageMetadata';
 
-vi.mock('@/services/app-api/airtable', () => ({ getConfiguredWorkflowImagePreview: vi.fn().mockResolvedValue({ dataUrl: 'data:image/jpeg;base64,/9j/2Q==' }) }));
 vi.mock('@/services/workflowImageRoles', async (importOriginal) => ({
   ...await importOriginal<typeof import('@/services/workflowImageRoles')>(),
   loadWorkflowImageRoleOptions: async () => [{ value: 'front', label: 'Front', role: 'front' }],

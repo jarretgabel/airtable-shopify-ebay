@@ -2,7 +2,7 @@ import { parseShopifyTagList, serializeShopifyTagsCsv } from '@/services/shopify
 import type { ShopifyProduct } from '@/types/shopify';
 import {
   getIncludedWorkflowImageMetadata,
-  isGoogleDriveImageUrl,
+  isArchivedWorkflowImageUrl,
   parseWorkflowImageMetadata,
 } from '@/services/workflowImageMetadata';
 import {
@@ -46,7 +46,7 @@ export function buildImages(fields: ApprovalFieldMap): ShopifyProduct['images'] 
         return { src, alt, position };
       })
       .filter((image): image is { src: string; alt: string; position: number } => (
-        image !== null && isGoogleDriveImageUrl(image.src)
+        image !== null && isArchivedWorkflowImageUrl(image.src)
       ));
 
     if (images.length > 0) return images;

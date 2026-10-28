@@ -1,12 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { detectSupportedImageMimeType } from '../../shared/imageFormat.js';
-import {
-  archiveWorkflowImagesToGoogleDrive,
-  downloadGoogleDriveFileHeader,
-  extractGoogleDriveFileId,
-  type WorkflowImageArchiveRequest,
-  type WorkflowImageArchiveResult,
-} from '../googleDrive/client.js';
+import type { WorkflowImageArchiveRequest, WorkflowImageArchiveResult } from './workflowImageTypes.js';
 import { extractWorkflowMediaKey, getMediaStoreFromEnv, type MediaStore } from './mediaStore.js';
 
 export const ARCHIVE_TABLE_PREFIX = 'used-gear-workflow';
@@ -37,7 +31,7 @@ function decodeImage(payload: { file: string }, variant: 'original' | 'processed
   return { bytes, contentType };
 }
 
-/** Same request and result shape as the Google Drive archive; keys are stable, so re-uploads replace the file. */
+/** Keys are stable, so re-uploads replace the file. */
 export async function archiveWorkflowImagesToS3(
   request: WorkflowImageArchiveRequest,
   media: MediaStore,
@@ -62,25 +56,28 @@ export async function archiveWorkflowImagesToS3(
   return { folderId: `${ARCHIVE_TABLE_PREFIX}/${folderKey}`, original: originalFile, processed: processedFile };
 }
 
-/** Drive unless IMAGE_ARCHIVE_BACKEND=s3 and a media bucket is configured, so deploying this changes nothing by itself. */
 export async function archiveWorkflowImages(request: WorkflowImageArchiveRequest): Promise<WorkflowImageArchiveResult> {
-  const media = process.env.IMAGE_ARCHIVE_BACKEND?.trim().toLowerCase() === 's3' ? getMediaStoreFromEnv() : null;
-  return media ? archiveWorkflowImagesToS3(request, media) : archiveWorkflowImagesToGoogleDrive(request);
+  const media = getMediaStoreFromEnv();
+  if (!media) {
+    throw new HttpError(503, 'Image storage is not configured.', {
+      service: 'media',
+      code: 'MEDIA_STORE_NOT_CONFIGURED',
+      retryable: false,
+    });
+  }
+  return archiveWorkflowImagesToS3(request, media);
 }
 
-/** Identifier used to validate an image: the Drive file id, or the storage key for hosted workflow images. */
+/** Storage key used to validate a hosted workflow image. */
 export function getWorkflowImageId(url: string): string {
-  return extractGoogleDriveFileId(url) || extractWorkflowMediaKey(url);
+  return extractWorkflowMediaKey(url);
 }
 
-/** Header bytes for either kind of image id. A missing hosted object yields empty bytes, so it fails the image check. */
+/** Header bytes for a hosted image key. A missing object yields empty bytes, so it fails the image check. */
 export async function downloadWorkflowImageHeader(
   imageId: string,
   media: MediaStore | null = getMediaStoreFromEnv(),
 ): Promise<{ bytes: Buffer; contentType: string | null }> {
-  if (imageId.startsWith(`${ARCHIVE_TABLE_PREFIX}/`)) {
-    const bytes = media ? await media.header(imageId) : null;
-    return { bytes: bytes ?? Buffer.alloc(0), contentType: null };
-  }
-  return downloadGoogleDriveFileHeader(imageId);
+  const bytes = media && imageId.startsWith(`${ARCHIVE_TABLE_PREFIX}/`) ? await media.header(imageId) : null;
+  return { bytes: bytes ?? Buffer.alloc(0), contentType: null };
 }

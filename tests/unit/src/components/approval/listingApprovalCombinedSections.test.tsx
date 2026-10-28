@@ -396,14 +396,14 @@ describe('combined approval sections', () => {
       'Workflow Image Metadata JSON': JSON.stringify([
         {
           attachmentId: 'drive-photo-1',
-          url: 'https://drive.google.com/uc?id=drive-photo-1',
+          url: '/api/media/used-gear-workflow/uc?id=drive-photo-1',
           filename: 'bel-canto-pre-1-side-view.jpg',
           sourceStage: 'photos',
           includedInListing: true,
         },
         {
           attachmentId: 'drive-photo-original',
-          url: 'https://drive.google.com/uc?id=drive-photo-original',
+          url: '/api/media/used-gear-workflow/uc?id=drive-photo-original',
           filename: 'bel-canto-pre-1-side-view-original.jpg',
           sourceStage: 'photos',
           includedInListing: true,

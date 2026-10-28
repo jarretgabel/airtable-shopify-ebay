@@ -1,7 +1,7 @@
 import { parseImageEditorRows, toCommaSeparatedImageValues, type ImageEditorRow } from '@/components/approval/approvalFormFieldsImageHelpers';
 import {
   getIncludedWorkflowImageMetadata,
-  isGoogleDriveImageUrl,
+  isArchivedWorkflowImageUrl,
   parseWorkflowImageMetadata,
   type WorkflowImageMetadataRecord,
 } from '@/services/workflowImageMetadata';
@@ -130,7 +130,7 @@ export function parseWorkflowImageAttachments(raw: unknown): WorkflowListingImag
   return values
     .map(coerceWorkflowAttachment)
     .filter((attachment): attachment is WorkflowListingImageAttachment => attachment !== null)
-    .filter((attachment) => isGoogleDriveImageUrl(attachment.url))
+    .filter((attachment) => isArchivedWorkflowImageUrl(attachment.url))
     .filter((attachment) => {
       const key = attachment.url.toLowerCase();
       if (seen.has(key)) return false;

@@ -189,24 +189,24 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     testingNotesTextareaEditorSpy.mockReset();
     const values = buildWorkflowListingImageSelectionValues({
       selectedUrls: [
-        'https://drive.google.com/uc?id=file-image-b',
-        'https://drive.google.com/uc?id=file-image-a',
+        '/api/media/used-gear-workflow/uc?id=file-image-b',
+        '/api/media/used-gear-workflow/uc?id=file-image-a',
       ],
       attachments: [
-        { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
-        { id: 'att-2', url: 'https://drive.google.com/uc?id=file-image-b', filename: 'image-b.jpg' },
+        { id: 'att-1', url: '/api/media/used-gear-workflow/uc?id=file-image-a', filename: 'image-a.jpg' },
+        { id: 'att-2', url: '/api/media/used-gear-workflow/uc?id=file-image-b', filename: 'image-b.jpg' },
       ],
       currentRows: [
-        { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
-        { src: 'https://drive.google.com/uc?id=file-image-b', alt: 'Rear view', position: 2 },
+        { src: '/api/media/used-gear-workflow/uc?id=file-image-a', alt: 'Front view', position: 1 },
+        { src: '/api/media/used-gear-workflow/uc?id=file-image-b', alt: 'Rear view', position: 2 },
       ],
     });
 
-    expect(values.imageValue).toBe('https://drive.google.com/uc?id=file-image-b, https://drive.google.com/uc?id=file-image-a');
+    expect(values.imageValue).toBe('/api/media/used-gear-workflow/uc?id=file-image-b, /api/media/used-gear-workflow/uc?id=file-image-a');
     expect(values.imageAltTextValue).toBe('Rear view, Front view');
     expect(values.shopifyImagePayloadValue).toBe(JSON.stringify([
-      { src: 'https://drive.google.com/uc?id=file-image-b', alt: 'Rear view', position: 1 },
-      { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 2 },
+      { src: '/api/media/used-gear-workflow/uc?id=file-image-b', alt: 'Rear view', position: 1 },
+      { src: '/api/media/used-gear-workflow/uc?id=file-image-a', alt: 'Front view', position: 2 },
     ]));
   });
 
@@ -224,15 +224,15 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField="Images Alt Text"
         shopifyImagePayloadFieldName="Shopify REST Images JSON"
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
-          { id: 'att-2', url: 'https://drive.google.com/uc?id=file-image-b', filename: 'image-b.jpg' },
+          { id: 'att-1', url: '/api/media/used-gear-workflow/uc?id=file-image-a', filename: 'image-a.jpg' },
+          { id: 'att-2', url: '/api/media/used-gear-workflow/uc?id=file-image-b', filename: 'image-b.jpg' },
         ]}
-        selectedWorkflowImageUrls={['https://drive.google.com/uc?id=file-image-a']}
+        selectedWorkflowImageUrls={['/api/media/used-gear-workflow/uc?id=file-image-a']}
         formValues={{
-          Images: 'https://drive.google.com/uc?id=file-image-a',
+          Images: '/api/media/used-gear-workflow/uc?id=file-image-a',
           'Images Alt Text': 'Front view',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
+            { src: '/api/media/used-gear-workflow/uc?id=file-image-a', alt: 'Front view', position: 1 },
           ]),
         }}
         setFormValue={setFormValue}
@@ -283,11 +283,11 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[1]);
 
-    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://drive.google.com/uc?id=file-image-a, https://drive.google.com/uc?id=file-image-b');
+    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', '/api/media/used-gear-workflow/uc?id=file-image-a, /api/media/used-gear-workflow/uc?id=file-image-b');
     expect(setFormValue).toHaveBeenNthCalledWith(2, 'Images Alt Text', 'Front view, ');
     expect(setFormValue).toHaveBeenNthCalledWith(3, 'Shopify REST Images JSON', JSON.stringify([
-      { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
-      { src: 'https://drive.google.com/uc?id=file-image-b', alt: '', position: 2 },
+      { src: '/api/media/used-gear-workflow/uc?id=file-image-a', alt: 'Front view', position: 1 },
+      { src: '/api/media/used-gear-workflow/uc?id=file-image-b', alt: '', position: 2 },
     ]));
   });
 
@@ -305,19 +305,19 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField="Images Alt Text"
         shopifyImagePayloadFieldName="Shopify REST Images JSON"
         workflowImageAttachments={[
-          { id: 'att-testing', url: 'https://drive.google.com/uc?id=file-testing-reference', filename: 'testing-reference.jpg' },
-          { id: 'att-photos', url: 'https://drive.google.com/uc?id=file-photos-hero', filename: 'photos-hero.jpg' },
+          { id: 'att-testing', url: '/api/media/used-gear-workflow/uc?id=file-testing-reference', filename: 'testing-reference.jpg' },
+          { id: 'att-photos', url: '/api/media/used-gear-workflow/uc?id=file-photos-hero', filename: 'photos-hero.jpg' },
         ]}
         selectedWorkflowImageUrls={[
-          'https://drive.google.com/uc?id=file-testing-reference',
-          'https://drive.google.com/uc?id=file-photos-hero',
+          '/api/media/used-gear-workflow/uc?id=file-testing-reference',
+          '/api/media/used-gear-workflow/uc?id=file-photos-hero',
         ]}
         formValues={{
-          Images: 'https://drive.google.com/uc?id=file-testing-reference, https://drive.google.com/uc?id=file-photos-hero',
+          Images: '/api/media/used-gear-workflow/uc?id=file-testing-reference, /api/media/used-gear-workflow/uc?id=file-photos-hero',
           'Images Alt Text': 'Testing reference, Photos hero',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://drive.google.com/uc?id=file-testing-reference', alt: 'Testing reference', position: 1 },
-            { src: 'https://drive.google.com/uc?id=file-photos-hero', alt: 'Photos hero', position: 2 },
+            { src: '/api/media/used-gear-workflow/uc?id=file-testing-reference', alt: 'Testing reference', position: 1 },
+            { src: '/api/media/used-gear-workflow/uc?id=file-photos-hero', alt: 'Photos hero', position: 2 },
           ]),
         }}
         setFormValue={setFormValue}
@@ -368,10 +368,10 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
 
-    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://drive.google.com/uc?id=file-photos-hero');
+    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', '/api/media/used-gear-workflow/uc?id=file-photos-hero');
     expect(setFormValue).toHaveBeenNthCalledWith(2, 'Images Alt Text', 'Photos hero');
     expect(setFormValue).toHaveBeenNthCalledWith(3, 'Shopify REST Images JSON', JSON.stringify([
-      { src: 'https://drive.google.com/uc?id=file-photos-hero', alt: 'Photos hero', position: 1 },
+      { src: '/api/media/used-gear-workflow/uc?id=file-photos-hero', alt: 'Photos hero', position: 1 },
     ]));
   });
 
@@ -389,15 +389,15 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField="Images Alt Text"
         shopifyImagePayloadFieldName="Shopify REST Images JSON"
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
-          { id: 'att-2', url: 'https://drive.google.com/uc?id=file-image-b', filename: 'image-b.jpg' },
+          { id: 'att-1', url: '/api/media/used-gear-workflow/uc?id=file-image-a', filename: 'image-a.jpg' },
+          { id: 'att-2', url: '/api/media/used-gear-workflow/uc?id=file-image-b', filename: 'image-b.jpg' },
         ]}
-        selectedWorkflowImageUrls={['https://drive.google.com/uc?id=file-image-a']}
+        selectedWorkflowImageUrls={['/api/media/used-gear-workflow/uc?id=file-image-a']}
         formValues={{
-          Images: 'https://drive.google.com/uc?id=file-image-a',
+          Images: '/api/media/used-gear-workflow/uc?id=file-image-a',
           'Images Alt Text': 'Front view',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
+            { src: '/api/media/used-gear-workflow/uc?id=file-image-a', alt: 'Front view', position: 1 },
           ]),
         }}
         setFormValue={setFormValue}
@@ -448,11 +448,11 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[1]);
 
-    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', 'https://drive.google.com/uc?id=file-image-a, https://drive.google.com/uc?id=file-image-b');
+    expect(setFormValue).toHaveBeenNthCalledWith(1, 'Images', '/api/media/used-gear-workflow/uc?id=file-image-a, /api/media/used-gear-workflow/uc?id=file-image-b');
     expect(setFormValue).toHaveBeenNthCalledWith(2, 'Images Alt Text', 'Front view, ');
     expect(setFormValue).toHaveBeenNthCalledWith(3, 'Shopify REST Images JSON', JSON.stringify([
-      { src: 'https://drive.google.com/uc?id=file-image-a', alt: 'Front view', position: 1 },
-      { src: 'https://drive.google.com/uc?id=file-image-b', alt: '', position: 2 },
+      { src: '/api/media/used-gear-workflow/uc?id=file-image-a', alt: 'Front view', position: 1 },
+      { src: '/api/media/used-gear-workflow/uc?id=file-image-b', alt: '', position: 2 },
     ]));
   });
 
@@ -473,30 +473,30 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         workflowImageAttachments={[
           {
             id: 'att-photo-1',
-            url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+            url: '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
             filename: 'mit-miterminator-4-badge-detail-processed.jpg',
           },
           {
             id: 'att-photo-2',
-            url: 'https://drive.google.com/uc?id=file-photo-2',
+            url: '/api/media/used-gear-workflow/uc?id=file-photo-2',
             filename: 'brand-model-amplifier-rear.jpg',
           },
         ]}
         selectedWorkflowImageUrls={[
-          'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600',
-          'https://drive.google.com/uc?id=file-photo-2',
+          '/api/media/used-gear-workflow/thumbnail?id=file-photo-1&sz=w1600',
+          '/api/media/used-gear-workflow/uc?id=file-photo-2',
         ]}
         formValues={{
-          Images: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600, https://drive.google.com/uc?id=file-photo-2',
+          Images: '/api/media/used-gear-workflow/thumbnail?id=file-photo-1&sz=w1600, /api/media/used-gear-workflow/uc?id=file-photo-2',
           'Images Alt Text': '',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://drive.google.com/thumbnail?id=file-photo-1&sz=w1600', alt: '', position: 1 },
-            { src: 'https://drive.google.com/uc?id=file-photo-2', alt: '', position: 2 },
+            { src: '/api/media/used-gear-workflow/thumbnail?id=file-photo-1&sz=w1600', alt: '', position: 1 },
+            { src: '/api/media/used-gear-workflow/uc?id=file-photo-2', alt: '', position: 2 },
           ]),
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-photo-1',
-              url: 'https://drive.google.com/uc?export=view&id=file-photo-1',
+              url: '/api/media/used-gear-workflow/uc?export=view&id=file-photo-1',
               filename: 'mit-miterminator-4-badge-detail-processed.jpg',
               alt: '',
               sortOrder: 1,
@@ -505,7 +505,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
             },
             {
               attachmentId: 'att-photo-2',
-              url: 'https://drive.google.com/uc?id=file-photo-2',
+              url: '/api/media/used-gear-workflow/uc?id=file-photo-2',
               filename: 'brand-model-amplifier-rear.jpg',
               alt: '',
               sortOrder: 2,
@@ -589,28 +589,28 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         workflowImageAttachments={[
           {
             id: 'att-photo-1',
-            url: 'https://drive.google.com/uc?id=file-photo-1',
+            url: '/api/media/used-gear-workflow/uc?id=file-photo-1',
             filename: 'photo-1-processed.jpg',
           },
           {
             id: 'att-photo-2',
-            url: 'https://drive.google.com/uc?id=file-photo-2',
+            url: '/api/media/used-gear-workflow/uc?id=file-photo-2',
             filename: 'photo-2-processed.jpg',
           },
         ]}
         selectedWorkflowImageUrls={[
-          'https://drive.google.com/uc?id=file-photo-1',
+          '/api/media/used-gear-workflow/uc?id=file-photo-1',
         ]}
         formValues={{
-          Images: 'https://drive.google.com/uc?id=file-photo-1',
+          Images: '/api/media/used-gear-workflow/uc?id=file-photo-1',
           'Images Alt Text': '',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://drive.google.com/uc?id=file-photo-1', alt: '', position: 1 },
+            { src: '/api/media/used-gear-workflow/uc?id=file-photo-1', alt: '', position: 1 },
           ]),
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-photo-1',
-              url: 'https://drive.google.com/uc?id=file-photo-1',
+              url: '/api/media/used-gear-workflow/uc?id=file-photo-1',
               filename: 'photo-1-processed.jpg',
               alt: '',
               sortOrder: 1,
@@ -671,7 +671,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
     expect(metadataCall).toBeDefined();
     const serializedMetadata = String(metadataCall?.[1] ?? '');
     expect(serializedMetadata).toContain('"attachmentId":"att-photo-2"');
-    expect(serializedMetadata).toContain('"url":"https://drive.google.com/uc?id=file-photo-2"');
+    expect(serializedMetadata).toContain('"url":"/api/media/used-gear-workflow/uc?id=file-photo-2"');
     expect(serializedMetadata).toContain('"includedInListing":true');
   });
 
@@ -692,28 +692,28 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         workflowImageAttachments={[
           {
             id: 'att-photo-1',
-            url: 'https://drive.google.com/uc?id=file-photo-1',
+            url: '/api/media/used-gear-workflow/uc?id=file-photo-1',
             filename: 'photo-1-processed.jpg',
           },
           {
             id: 'att-photo-2',
-            url: 'https://drive.google.com/uc?id=file-photo-2',
+            url: '/api/media/used-gear-workflow/uc?id=file-photo-2',
             filename: 'photo-2-processed.jpg',
           },
         ]}
         selectedWorkflowImageUrls={[
-          'https://drive.google.com/uc?id=file-photo-1',
+          '/api/media/used-gear-workflow/uc?id=file-photo-1',
         ]}
         formValues={{
-          Images: 'https://drive.google.com/uc?id=file-photo-1',
+          Images: '/api/media/used-gear-workflow/uc?id=file-photo-1',
           'Images Alt Text': '',
           'Shopify REST Images JSON': JSON.stringify([
-            { src: 'https://drive.google.com/uc?id=file-photo-1', alt: '', position: 1 },
+            { src: '/api/media/used-gear-workflow/uc?id=file-photo-1', alt: '', position: 1 },
           ]),
           'Workflow Image Metadata JSON': JSON.stringify([
             {
               attachmentId: 'att-photo-1',
-              url: 'https://drive.google.com/uc?id=file-photo-1',
+              url: '/api/media/used-gear-workflow/uc?id=file-photo-1',
               filename: 'photo-1-processed.jpg',
               alt: '',
               sortOrder: 1,
@@ -885,7 +885,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField={undefined}
         shopifyImagePayloadFieldName={undefined}
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
+          { id: 'att-1', url: '/api/media/used-gear-workflow/uc?id=file-image-a', filename: 'image-a.jpg' },
         ]}
         selectedWorkflowImageUrls={[]}
         formValues={{ Images: '' }}
@@ -956,7 +956,7 @@ describe('ApprovalFormFieldsSupplementalEditors', () => {
         imageAltTextSourceField={undefined}
         shopifyImagePayloadFieldName={undefined}
         workflowImageAttachments={[
-          { id: 'att-1', url: 'https://drive.google.com/uc?id=file-image-a', filename: 'image-a.jpg' },
+          { id: 'att-1', url: '/api/media/used-gear-workflow/uc?id=file-image-a', filename: 'image-a.jpg' },
         ]}
         selectedWorkflowImageUrls={[]}
         formValues={{

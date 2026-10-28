@@ -2,10 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhotosFormTab } from '@/components/tabs/PhotosFormTab';
 
-vi.mock('@/services/app-api/airtable', () => ({
-  getConfiguredWorkflowImagePreview: vi.fn(async () => ({ dataUrl: 'data:image/jpeg;base64,/9j/2Q==' })),
-}));
-
 vi.mock('@/components/tabs/FormImageUploadEditor', () => ({
   FormImageUploadEditor: ({
     onFilesChange,
@@ -103,13 +99,13 @@ describe('PhotosFormTab', () => {
         inventoryNotes: 'Capture the serial plate and top cover.',
         testingNotes: 'Passed tuner test.',
         testingCosmeticNotes: 'Light wear on the top cover edges.',
-        existingAttachments: [{ id: 'att-1', url: 'https://drive.google.com/uc?id=file-hero', filename: 'hero.jpg' }],
-        intakeReferenceAttachments: [{ id: 'att-3', url: 'https://drive.google.com/uc?export=view&id=file-intake', filename: 'intake.jpg' }],
-        testingReferenceAttachments: [{ id: 'att-2', url: 'https://drive.google.com/uc?id=file-testing', filename: 'testing.jpg' }],
+        existingAttachments: [{ id: 'att-1', url: '/api/media/used-gear-workflow/uc?id=file-hero', filename: 'hero.jpg' }],
+        intakeReferenceAttachments: [{ id: 'att-3', url: '/api/media/used-gear-workflow/uc?export=view&id=file-intake', filename: 'intake.jpg' }],
+        testingReferenceAttachments: [{ id: 'att-2', url: '/api/media/used-gear-workflow/uc?id=file-testing', filename: 'testing.jpg' }],
         imageMetadata: [
           {
             attachmentId: 'att-1',
-            url: 'https://drive.google.com/uc?id=file-hero',
+            url: '/api/media/used-gear-workflow/uc?id=file-hero',
             filename: 'hero.jpg',
             alt: 'Original hero shot',
             sortOrder: 1,
@@ -118,7 +114,7 @@ describe('PhotosFormTab', () => {
           },
           {
             attachmentId: 'att-2',
-            url: 'https://drive.google.com/uc?id=file-testing',
+            url: '/api/media/used-gear-workflow/uc?id=file-testing',
             filename: 'testing.jpg',
             alt: 'Bench proof',
             sortOrder: 2,
@@ -200,7 +196,7 @@ describe('PhotosFormTab', () => {
     expect(screen.getByText('intake.jpg')).toBeInTheDocument();
     expect(screen.getByText('testing.jpg')).toBeInTheDocument();
     expect(screen.queryByText('Customer Intake Reference')).not.toBeInTheDocument();
-    expect(await screen.findByAltText('intake.jpg')).toHaveAttribute('src', 'data:image/jpeg;base64,/9j/2Q==');
+    expect(await screen.findByAltText('intake.jpg')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Photos Complete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete photography' }));
@@ -234,7 +230,7 @@ describe('PhotosFormTab', () => {
         imageMetadata: [
           expect.objectContaining({
             attachmentId: 'att-1',
-            url: 'https://drive.google.com/uc?id=file-hero',
+            url: '/api/media/used-gear-workflow/uc?id=file-hero',
             filename: 'hero.jpg',
             alt: 'Updated hero shot',
             sourceStage: 'photos',
@@ -242,7 +238,7 @@ describe('PhotosFormTab', () => {
           }),
           expect.objectContaining({
             attachmentId: 'att-2',
-            url: 'https://drive.google.com/uc?id=file-testing',
+            url: '/api/media/used-gear-workflow/uc?id=file-testing',
             filename: 'testing.jpg',
             alt: 'Bench proof',
             sourceStage: 'testing',

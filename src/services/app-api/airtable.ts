@@ -230,25 +230,6 @@ export async function getConfiguredRecord(
   }
 }
 
-export interface ConfiguredWorkflowImagePreview {
-  dataUrl: string;
-}
-
-export async function getConfiguredWorkflowImagePreview(
-  source: AirtableConfiguredRecordsSource,
-  recordId: string,
-  imageId: string,
-): Promise<ConfiguredWorkflowImagePreview> {
-  const query = new URLSearchParams({ imageId });
-  try {
-    return await getJson<ConfiguredWorkflowImagePreview>(
-      `/api/airtable/configured-records/${encodeURIComponent(source)}/${encodeURIComponent(recordId)}?${query.toString()}`,
-    );
-  } catch (error) {
-    throw toConfiguredSourceError(error, source);
-  }
-}
-
 export async function getRecordsFromResolvedSource(
   tableReference: string | undefined,
   tableName: string | undefined,

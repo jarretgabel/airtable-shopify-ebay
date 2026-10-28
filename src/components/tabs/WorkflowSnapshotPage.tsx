@@ -394,7 +394,7 @@ export function WorkflowSnapshotPage({
               >
                 <WorkflowReferenceImagesPanel
                   title="Intake Images"
-                  description="Images submitted at intake via JotForm, archived to Google Drive."
+                  description="Images submitted at intake via JotForm."
                   images={stageImages.intakeImages}
                   recordSource="used-gear-workflow"
                   recordId={record.id}

@@ -215,13 +215,9 @@ function setAwsEnv() {
 
   process.env.GOOGLE_GMAIL_ACCESS_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_ACCESS_TOKEN');
   process.env.GOOGLE_GMAIL_FROM_EMAIL = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_FROM_EMAIL');
-  for (const name of ['IMAGE_ARCHIVE_BACKEND', 'MEDIA_BUCKET', 'MEDIA_PUBLIC_BASE_URL', 'AWS_REGION']) {
+  for (const name of ['MEDIA_BUCKET', 'MEDIA_PUBLIC_BASE_URL', 'AWS_REGION']) {
     if (getOptionalEnv(mergedEnv, name)) process.env[name] = getOptionalEnv(mergedEnv, name);
   }
-  process.env.GOOGLE_DRIVE_CLIENT_ID = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_DRIVE_CLIENT_ID');
-  process.env.GOOGLE_DRIVE_CLIENT_SECRET = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_DRIVE_CLIENT_SECRET');
-  process.env.GOOGLE_DRIVE_REFRESH_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_DRIVE_REFRESH_TOKEN');
-  process.env.GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_DRIVE_IMAGE_ARCHIVE_ROOT_FOLDER_ID');
   process.env.APP_AUTH_TOKEN_SECRET =
     getOptionalEnv(mergedEnv, 'APP_AUTH_TOKEN_SECRET')
     || getOptionalEnv(mergedEnv, 'VITE_APP_AUTH_TOKEN_SECRET')

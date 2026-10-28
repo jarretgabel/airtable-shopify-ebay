@@ -16,9 +16,9 @@ import { submitTestingForm } from '@/services/testingForm';
 import { submitPhotosForm } from '@/services/photosForm';
 
 const metadata = [
-  { url: 'https://drive.google.com/uc?id=intake', filename: 'intake.jpg', alt: 'Intake', sourceStage: 'intake', sortOrder: 1, includedInListing: false },
-  { url: 'https://drive.google.com/uc?id=testing', filename: 'testing.jpg', alt: 'Bench', sourceStage: 'testing', sortOrder: 2, includedInListing: false },
-  { url: 'https://drive.google.com/uc?id=photos', filename: 'brand-model-amplifier.jpg', alt: 'Hero', sourceStage: 'photos', sortOrder: 3, includedInListing: true, annotation: 'preserve', ebayHostedImageCache: { url: 'https://i.ebayimg.com/images/g/test/s-l1600.jpg', sha256: 'a'.repeat(64) } },
+  { url: '/api/media/used-gear-workflow/uc?id=intake', filename: 'intake.jpg', alt: 'Intake', sourceStage: 'intake', sortOrder: 1, includedInListing: false },
+  { url: '/api/media/used-gear-workflow/uc?id=testing', filename: 'testing.jpg', alt: 'Bench', sourceStage: 'testing', sortOrder: 2, includedInListing: false },
+  { url: '/api/media/used-gear-workflow/uc?id=photos', filename: 'brand-model-amplifier.jpg', alt: 'Hero', sourceStage: 'photos', sortOrder: 3, includedInListing: true, annotation: 'preserve', ebayHostedImageCache: { url: 'https://i.ebayimg.com/images/g/test/s-l1600.jpg', sha256: 'a'.repeat(64) } },
 ];
 
 describe.each(['testing', 'photos'] as const)('%s image preservation', (stage) => {
@@ -107,7 +107,7 @@ describe.each(['testing', 'photos'] as const)('%s image preservation', (stage) =
 
   it('appends an archived upload to fresh metadata without losing concurrent additions', async () => {
     const file = new File(['processed'], 'brand-model-front.jpg', { type: 'image/jpeg' });
-    const concurrent = { ...metadata[2], url: 'https://drive.google.com/uc?id=concurrent', sortOrder: 4, annotation: 'added during upload' };
+    const concurrent = { ...metadata[2], url: '/api/media/used-gear-workflow/uc?id=concurrent', sortOrder: 4, annotation: 'added during upload' };
     vi.mocked(uploadConfiguredAttachment).mockImplementation(async () => {
       vi.mocked(getConfiguredRecord).mockResolvedValue({
         id: 'recPreserve', createdTime: '', fields: {
@@ -117,8 +117,8 @@ describe.each(['testing', 'photos'] as const)('%s image preservation', (stage) =
       });
       return { uploaded: true, archive: {
         folderId: 'folder',
-        original: { id: 'original-upload', url: 'https://drive.google.com/uc?id=original-upload', filename: file.name },
-        processed: { id: 'new-upload', url: 'https://drive.google.com/uc?id=new-upload', filename: file.name },
+        original: { id: 'original-upload', url: '/api/media/used-gear-workflow/uc?id=original-upload', filename: file.name },
+        processed: { id: 'new-upload', url: '/api/media/used-gear-workflow/uc?id=new-upload', filename: file.name },
       } };
     });
     const original = parseWorkflowImageMetadata(metadata);

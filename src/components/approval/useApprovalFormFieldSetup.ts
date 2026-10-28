@@ -17,31 +17,12 @@ import {
 } from './workflowListingImageHelpers';
 import {
   getListingWorkflowImageMetadata,
-  isGoogleDriveImageUrl,
+  isArchivedWorkflowImageUrl,
   isProcessedWorkflowImage,
   parseWorkflowImageMetadata,
 } from '@/services/workflowImageMetadata';
 import { useApprovalFormEbaySetup } from './useApprovalFormEbaySetup';
 import { useApprovalFormShopifySetup } from './useApprovalFormShopifySetup';
-
-function getGoogleDriveFileId(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.toLowerCase() !== 'drive.google.com') return null;
-
-    const queryId = parsed.searchParams.get('id')?.trim();
-    if (queryId) return queryId;
-
-    const pathMatch = parsed.pathname.match(/\/d\/([^/]+)/);
-    return pathMatch?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function isGoogleDriveUrl(url: string): boolean {
-  return isGoogleDriveImageUrl(url);
-}
 
 function normalizeIdentityToken(value: string): string {
   return value
@@ -68,9 +49,6 @@ function getUrlBasename(url: string): string {
 }
 
 function getWorkflowAttachmentIdentity(attachment: { filename: string; url: string }): string {
-  const driveId = getGoogleDriveFileId(attachment.url);
-  if (driveId) return `gdrive:${driveId.toLowerCase()}`;
-
   const normalizedFilename = normalizeIdentityToken(attachment.filename);
   if (normalizedFilename && !isGenericImageIdentity(attachment.filename)) return `filename:${normalizedFilename}`;
 
@@ -210,7 +188,7 @@ export function useApprovalFormFieldSetup({
         );
 
       return parseWorkflowImageMetadata(metadataRaw)
-        .filter((record) => isGoogleDriveImageUrl(record.url));
+        .filter((record) => isArchivedWorkflowImageUrl(record.url));
     },
     [formValues, originalFieldValues, workflowImageMetadataFieldName],
   );
@@ -269,8 +247,8 @@ export function useApprovalFormFieldSetup({
           return;
         }
 
-        const shouldPromoteToDrive = isGoogleDriveUrl(attachment.url) && !isGoogleDriveUrl(existing.url);
-        if (shouldPromoteToDrive) {
+        const shouldPromoteToArchived = isArchivedWorkflowImageUrl(attachment.url) && !isArchivedWorkflowImageUrl(existing.url);
+        if (shouldPromoteToArchived) {
           dedupedByIdentity.set(identity, attachment);
         }
       });
@@ -309,7 +287,7 @@ export function useApprovalFormFieldSetup({
       imageUrlValue,
       imageAltTextValue,
       payloadValue,
-    ).filter((row) => isGoogleDriveImageUrl(row.src));
+    ).filter((row) => isArchivedWorkflowImageUrl(row.src));
     const explicitEmptySelection = payloadValue.trim() === '[]';
     const hasExplicitSelectionInput = explicitEmptySelection
       || imageUrlValue.trim().length > 0
