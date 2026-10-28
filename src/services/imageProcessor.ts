@@ -141,6 +141,8 @@ function roundPercent(value: number): number {
 function buildOutputFilename(originalName: string, outputFilename?: string): string {
   const trimmedOverride = (outputFilename ?? '').trim();
   if (trimmedOverride) {
+    // Names built by the workflow formatter are already compliant; the fallback would strip the role words.
+    if (/^[a-z0-9]+(-[a-z0-9]+)*\.jpg$/.test(trimmedOverride)) return trimmedOverride;
     return buildFallbackImageFilename(trimmedOverride);
   }
 
