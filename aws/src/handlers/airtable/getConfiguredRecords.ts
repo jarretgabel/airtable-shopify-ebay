@@ -3,6 +3,13 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getOptionalQueryParam, getRequestOrigin, jsonError, jsonOk, requireQueryParam } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
+import { APPROVAL_QUEUE_FIELDS } from '../../shared/approvalQueueFields.js';
+import {
+  filterCombinedActiveListingRecords,
+  filterCombinedNeedsFurtherWorkRecords,
+  filterCombinedReadyForPublishingRecords,
+  getCombinedListingsRequiredFieldNames,
+} from '../../shared/combinedListingsReadiness.js';
 import {
   getConfiguredRecords,
   getConfiguredRecordsSummary,
@@ -13,6 +20,8 @@ import {
 import type { ListingReadOptions } from '../../store/listingStore.js';
 import { resolveDataBackend } from '../../store/backend.js';
 import { getOrLoadConfiguredRecordsCache } from '../../providers/airtable/configuredRecordsCache.js';
+
+const LISTINGS_READINESS_MAX_RECORDS = 1000;
 
 const DEFAULT_APPROVAL_QUEUE_FIELDS = [
   'Workflow Status',
@@ -215,6 +224,26 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       const queueSummary = await getConfiguredRecordsSummary(source);
       logInfo('Fetched Airtable configured records summary', { source, ...queueSummary });
       return jsonOk(queueSummary, { origin });
+    }
+
+    if (summary === 'listings-readiness') {
+      if (source !== 'approval-combined') {
+        throw new HttpError(400, 'listings-readiness is only available for the combined listings source.', { service: 'airtable', code: 'AIRTABLE_SUMMARY_UNSUPPORTED', retryable: false });
+      }
+      // Same projection and rules the Listings page uses, so these totals match what its sections show.
+      const records = await getConfiguredRecords(source, {
+        fields: [...APPROVAL_QUEUE_FIELDS],
+        subset: 'listings-page',
+        maxRecords: LISTINGS_READINESS_MAX_RECORDS,
+      });
+      const requiredFieldNames = getCombinedListingsRequiredFieldNames(records);
+      const readinessSummary = {
+        total: records.length,
+        ready: filterCombinedReadyForPublishingRecords(records, requiredFieldNames).length,
+        needsWork: filterCombinedNeedsFurtherWorkRecords(records, requiredFieldNames).length,
+        listed: filterCombinedActiveListingRecords(records).length,
+      };
+      return jsonOk(readinessSummary, { origin });
     }
 
     const subset = validateSubset(getOptionalQueryParam(event, 'subset'));

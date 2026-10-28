@@ -8,7 +8,6 @@ import {
   EBAY_DESCRIPTION_FIELD_CANDIDATES,
   EBAY_DURATION_FIELD_CANDIDATES,
   EBAY_FORMAT_FIELD_CANDIDATES,
-  EBAY_PRICE_FIELD_CANDIDATES,
   EBAY_TESTING_NOTES_FIELD_CANDIDATES,
   EBAY_TITLE_FIELD_CANDIDATES,
   EBAY_VENDOR_FIELD_CANDIDATES,
@@ -83,25 +82,7 @@ export function isShopifyCategoryLikeFieldName(fieldName: string): boolean {
     || normalized === 'product category';
 }
 
-export function findEbayPriceFieldName(fieldNames: string[]): string {
-  const exact = fieldNames.find((name) =>
-    EBAY_PRICE_FIELD_CANDIDATES.some((candidate) => candidate.toLowerCase() === name.toLowerCase()),
-  );
-  if (exact) return exact;
-
-  const fuzzy = fieldNames.find((name) => {
-    const normalized = normalizeFieldLookupKey(name);
-    return normalized === 'ebayprice'
-      || normalized === 'ebayofferpricevalue'
-      || normalized === 'ebayofferauctionstartpricevalue'
-      || normalized.includes('buyitnowstartingbid')
-      || normalized.includes('buyitnowstartingprice')
-      || normalized.includes('startingbid')
-      || normalized.includes('startingprice');
-  });
-
-  return fuzzy ?? '';
-}
+export { findEbayPriceFieldName } from '@shared/listingFieldCandidates';
 
 export function findEbayBodyHtmlFieldName(fieldNames: string[]): string {
   const exact = fieldNames.find((name) =>

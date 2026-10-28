@@ -53,6 +53,8 @@ interface ApprovalQueueTableProps {
 	sortMode?: ApprovalQueueSortMode;
 	onSortModeChange?: (nextMode: ApprovalQueueSortMode) => void;
 	hasMoreRecords?: boolean;
+	/** Exact row count when the server knows it; avoids the "at least" wording. */
+	totalRecords?: number;
 	loadingNextPage?: boolean;
 	onRequestNextPage?: (nextPage: number, pageSize: number) => Promise<boolean> | boolean;
 }
@@ -145,6 +147,7 @@ export function ApprovalQueueTable({
 	sortMode,
 	onSortModeChange,
 	hasMoreRecords = false,
+	totalRecords,
 	loadingNextPage = false,
 	onRequestNextPage,
 }: ApprovalQueueTableProps) {
@@ -210,17 +213,18 @@ export function ApprovalQueueTable({
 	};
 
 	const pageSize = 30;
-	const totalPages = Math.max(1, Math.ceil(records.length / pageSize));
+	const knownTotal = totalRecords !== undefined ? Math.max(totalRecords, records.length) : undefined;
+	const totalPages = Math.max(1, Math.ceil((knownTotal ?? records.length) / pageSize));
 	useEffect(() => {
 		setPage((currentPage) => Math.min(currentPage, totalPages));
 	}, [totalPages]);
 	const pagedRecords = records.slice((page - 1) * pageSize, page * pageSize);
 	const isLoadingNextPage = loadingNextPage || requestingNextPage;
 	const canRequestMore = Boolean(onRequestNextPage) && hasMoreRecords;
-	const canGoNext = page < totalPages || canRequestMore;
+	const canGoNext = knownTotal !== undefined ? page < totalPages : (page < totalPages || canRequestMore);
 
 	const handleNextPage = async () => {
-		if (page < totalPages) {
+		if (page * pageSize < records.length) {
 			setPage((p) => p + 1);
 			return;
 		}
@@ -558,10 +562,10 @@ export function ApprovalQueueTable({
 				columns={columns}
 				getItemKey={(record) => record.id}
 			/>
-			{records.length > 0 && (totalPages > 1 || canRequestMore) ? (
+			{(records.length > 0 || (knownTotal ?? 0) > 0) && (totalPages > 1 || canRequestMore) ? (
 				<div className="mt-4 flex flex-wrap items-center justify-between gap-3">
 					<p className="text-sm text-[var(--muted)]">
-						Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, records.length)} of {hasMoreRecords ? `at least ${records.length}` : records.length}
+						Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, knownTotal ?? records.length)} of {knownTotal ?? (hasMoreRecords ? `at least ${records.length}` : records.length)}
 					</p>
 					<div className="flex items-center gap-2">
 						<button
@@ -573,7 +577,7 @@ export function ApprovalQueueTable({
 							← Prev
 						</button>
 						<span className="min-w-[6rem] text-center text-sm text-[var(--muted)]">
-							Page {page} of {hasMoreRecords ? `${totalPages}+` : totalPages}
+							Page {page} of {knownTotal === undefined && hasMoreRecords ? `${totalPages}+` : totalPages}
 						</span>
 						<button
 							type="button"

@@ -2,45 +2,16 @@ import ebayListingHeaaTemplate from '@/templates/ebay/ebay-listing-heaa.html?raw
 import ebayListingImpactSlateTemplate from '@/templates/ebay/ebay-listing-impact-slate.html?raw';
 import ebayListingImpactLuxeTemplate from '@/templates/ebay/ebay-listing-impact-luxe.html?raw';
 
-export const EBAY_TITLE_FIELD_CANDIDATES = [
-  'eBay Inventory Product Title',
-  'Item Title',
-  'Title',
-  'Name',
-] as const;
-
-export const EBAY_SKU_FIELD_CANDIDATES = [
-  'eBay Inventory SKU',
-  'SKU',
-] as const;
-
-export const EBAY_CONDITION_FIELD_CANDIDATES = [
-  '__Condition__',
-  'eBay Inventory Condition',
-  'Item Condition',
-  'Condition',
-] as const;
-
-export const EBAY_PRICE_FIELD_CANDIDATES = [
-  'Buy It Now Price',
-  'Buy It Now/Starting Bid Price',
-  'Buy It Now / Starting Bid Price',
-  'Starting Auction Price',
-  'eBay Price',
-  'Ebay Price',
-  'Buy It Now/Starting Price',
-  'Buy It Now / Starting Price',
-  'Buy It Now/Starting Bid',
-  'eBay Offer Price Value',
-  'eBay Offer Auction Start Price Value',
-  'ebay_offer_price_value',
-  'ebay_offer_auctionStartPrice_value',
-  'ebay_offer_pricingSummary_price_value',
-  'ebay_offer_pricingSummary_auctionStartPrice_value',
-  'Buy It Now USD',
-  'Starting Bid USD',
-  'Price',
-] as const;
+export {
+  EBAY_TITLE_FIELD_CANDIDATES,
+  EBAY_SKU_FIELD_CANDIDATES,
+  EBAY_CONDITION_FIELD_CANDIDATES,
+  EBAY_PRICE_FIELD_CANDIDATES,
+  EBAY_FORMAT_FIELD_CANDIDATES,
+  EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
+  EBAY_CATEGORIES_FIELD_CANDIDATES,
+  EBAY_DESCRIPTION_FIELD_CANDIDATES,
+} from '@shared/listingFieldCandidates';
 
 export const EBAY_VENDOR_FIELD_CANDIDATES = [
   'eBay Inventory Product Brand',
@@ -53,12 +24,6 @@ export const EBAY_QTY_FIELD_CANDIDATES = [
   'eBay Inventory Ship To Location Quantity',
   'Quantity',
   'Qty',
-] as const;
-
-export const EBAY_FORMAT_FIELD_CANDIDATES = [
-  'Ebay Listing Format',
-  'eBay Offer Format',
-  'Listing Format',
 ] as const;
 
 export const EBAY_DURATION_FIELD_CANDIDATES = [
@@ -94,19 +59,6 @@ export const EBAY_INTERNATIONAL_SHIPPING_FLAT_FEE_FIELD_CANDIDATES = [
   'International Shipping Flat Fee USD',
 ] as const;
 
-export const EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES = [
-  'eBay Offer Primary Category ID',
-  'eBay Offer PrimaryCategoryID',
-  'ebay_offer_primary_category_id',
-  'ebay_offer_primarycategoryid',
-  'eBay Offer Category ID',
-  'ebay_offer_category_id',
-  'Primary Category ID',
-  'primary_category_id',
-  'Primary Category',
-  'primary_category',
-] as const;
-
 export const EBAY_SECONDARY_CATEGORY_FIELD_CANDIDATES = [
   'eBay Offer Secondary Category ID',
   'ebay_offer_secondary_category_id',
@@ -126,18 +78,6 @@ export const EBAY_SECONDARY_CATEGORY_NAME_FIELD_CANDIDATES = [
   'secondary_category_name',
   'eBay Offer Secondary Category Name',
   'ebay_offer_secondary_category_name',
-] as const;
-
-export const EBAY_CATEGORIES_FIELD_CANDIDATES = [
-  'categories',
-  'Categories',
-] as const;
-
-export const EBAY_DESCRIPTION_FIELD_CANDIDATES = [
-  'Description',
-  'Item Description',
-  'eBay Inventory Product Description',
-  'ebay_inventory_product_description',
 ] as const;
 
 export const EBAY_BODY_HTML_FIELD_CANDIDATES = [

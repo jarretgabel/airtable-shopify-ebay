@@ -1,23 +1,11 @@
 import { TAB_DATA_TTLS, shouldReuseTabData } from '@/app/tabDataCache';
 import {
-  EBAY_CATEGORIES_FIELD_CANDIDATES,
   EBAY_BODY_HTML_FIELD_CANDIDATES,
   EBAY_BODY_ABOUT_FALLBACK_EDITOR_FIELD,
   EBAY_TEMPLATE_COPY_FIELD_NAME,
-  EBAY_CONDITION_FIELD_CANDIDATES,
-  EBAY_DESCRIPTION_FIELD_CANDIDATES,
-  EBAY_FORMAT_FIELD_CANDIDATES,
-  EBAY_PRICE_FIELD_CANDIDATES,
-  EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
-  EBAY_SKU_FIELD_CANDIDATES,
-  EBAY_TITLE_FIELD_CANDIDATES,
 } from '@/components/approval/listingApprovalEbayConstants';
-import {
-  SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES,
-  SHOPIFY_PRICE_FIELD_CANDIDATES,
-  SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
-  SHOPIFY_TITLE_FIELD_CANDIDATES,
-} from '@/components/approval/listingApprovalShopifyConstants';
+import { SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES } from '@/components/approval/listingApprovalShopifyConstants';
+import { APPROVAL_QUEUE_FIELDS } from '@shared/approvalQueueFields';
 import { getRecordsFromResolvedSource } from '@/services/app-api/airtable';
 import { resolveConfiguredRecordsSource } from '@/services/app-api/airtableSources';
 import { getInventoryItems, getOffersForInventorySkus } from '@/services/app-api/ebay';
@@ -74,60 +62,6 @@ const LISTING_FORMAT_OPTIONS_ERROR_RETRY_MS = 60_000;
 const COMBINED_LISTINGS_INITIAL_MAX_RECORDS = 40;
 const COMBINED_LISTINGS_MAX_RECORDS_CAP = 1000;
 
-// Keep queue reads lightweight so Lambda responses stay below payload limits.
-const APPROVAL_QUEUE_FIELDS = [
-  'Workflow Status',
-  'Shopify Approved',
-  'eBay Approved',
-  'Shopify REST Title',
-  'Shopify Title',
-  'Item Title',
-  'Title',
-  'eBay Title',
-  'Vendor',
-  'Shopify REST Variant 1 Price',
-  'Shopify Variant 1 Price',
-  'eBay Price',
-  'Buy It Now Price',
-  'Buy It Now/Starting Bid Price',
-  'Buy It Now / Starting Bid Price',
-  'Starting Auction Price',
-  'Ebay Price',
-  'Buy It Now/Starting Price',
-  'Buy It Now / Starting Price',
-  'Buy It Now/Starting Bid',
-  'Buy It Now USD',
-  'Starting Bid USD',
-  'Price',
-  'eBay Offer Price Value',
-  'eBay Offer Auction Start Price Value',
-  'Quantity',
-  'Qty',
-  'SKU',
-  'eBay Inventory SKU',
-  'Shopify Variant 1 SKU',
-  'Shopify SKU',
-  'Variant SKU',
-  'Shopify Status',
-  'Shopify REST Status',
-  'eBay Offer Status',
-  'eBay Format',
-  'eBay Offer Format',
-  'Listing Format',
-  ...SHOPIFY_TITLE_FIELD_CANDIDATES,
-  ...SHOPIFY_PRICE_FIELD_CANDIDATES,
-  ...SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES,
-  ...SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
-  ...EBAY_TITLE_FIELD_CANDIDATES,
-  ...EBAY_SKU_FIELD_CANDIDATES,
-  ...EBAY_CONDITION_FIELD_CANDIDATES.filter((fieldName) => fieldName !== '__Condition__'),
-  ...EBAY_PRICE_FIELD_CANDIDATES,
-  ...EBAY_CATEGORIES_FIELD_CANDIDATES,
-  ...EBAY_PRIMARY_CATEGORY_FIELD_CANDIDATES,
-  ...EBAY_DESCRIPTION_FIELD_CANDIDATES,
-  ...EBAY_FORMAT_FIELD_CANDIDATES,
-  'Ebay Categories',
-];
 
 function getApprovalSourceCacheKey(tableReference: string, tableName?: string): string {
   return `${tableReference}::${tableName ?? ''}`;

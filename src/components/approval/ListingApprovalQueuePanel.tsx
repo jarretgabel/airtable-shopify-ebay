@@ -18,7 +18,12 @@ import {
 import { errorSurfaceClass } from '@/components/tabs/uiClasses';
 import { isReadyForRequiredFields } from '@/components/approval/requiredFieldStatus';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
-import { getRecordsFromResolvedSource, updateRecordFromResolvedSource } from '@/services/app-api/airtable';
+import {
+  getCombinedListingsReadinessSummary,
+  getRecordsFromResolvedSource,
+  updateRecordFromResolvedSource,
+  type CombinedListingsReadinessSummary,
+} from '@/services/app-api/airtable';
 import { displayValue, useApprovalStore } from '@/stores/approvalStore';
 import { AirtableRecord } from '@/types/airtable';
 
@@ -417,6 +422,8 @@ export function ListingApprovalQueuePanel({
   const [combinedFetchLimit, setCombinedFetchLimit] = useState(COMBINED_QUEUE_INITIAL_FETCH_LIMIT);
   const [combinedLoadingMore, setCombinedLoadingMore] = useState(false);
   const [combinedExhausted, setCombinedExhausted] = useState(false);
+  const [readinessRefreshKey, setReadinessRefreshKey] = useState(0);
+  const [readinessSummary, setReadinessSummary] = useState<CombinedListingsReadinessSummary | null>(null);
   const [combinedWorkServerSearchRecords, setCombinedWorkServerSearchRecords] = useState<AirtableRecord[] | null>(null);
   const [combinedWorkServerSearchLoading, setCombinedWorkServerSearchLoading] = useState(false);
   const [combinedWorkServerSearchError, setCombinedWorkServerSearchError] = useState<string | null>(null);
@@ -703,14 +710,33 @@ export function ListingApprovalQueuePanel({
     ];
   }, [quickFilterCounts, records.length]);
 
+  // The server counts every listing row, so "more rows exist" is exact when the summary is available.
   const combinedHasMoreRecords = isCombinedApproval
     && !isCombinedWorkServerSearchEnabled
     && !combinedExhausted
-    && records.length >= combinedFetchLimit
-    && combinedFetchLimit < COMBINED_QUEUE_MAX_FETCH_LIMIT;
+    && combinedFetchLimit < COMBINED_QUEUE_MAX_FETCH_LIMIT
+    && (readinessSummary
+      ? records.length < Math.min(readinessSummary.total, COMBINED_QUEUE_MAX_FETCH_LIMIT)
+      : records.length >= combinedFetchLimit);
+  const combinedReadyTotal = readinessSummary && combinedHasMoreRecords && combinedReadySearchQuery.trim() === ''
+    ? readinessSummary.ready
+    : undefined;
+  const combinedWorkTotal = readinessSummary && combinedHasMoreRecords && combinedWorkWorkflowFilter === 'all'
+    ? readinessSummary.needsWork
+    : undefined;
+
+  useEffect(() => {
+    if (!isCombinedApproval) return;
+    let cancelled = false;
+    getCombinedListingsReadinessSummary()
+      .then((summary) => { if (!cancelled) setReadinessSummary(summary); })
+      .catch(() => { if (!cancelled) setReadinessSummary(null); });
+    return () => { cancelled = true; };
+  }, [isCombinedApproval, readinessRefreshKey]);
 
   const refreshQueue = () => {
     setCombinedExhausted(false);
+    setReadinessRefreshKey((key) => key + 1);
     trackWorkflowEvent('approval_queue_refreshed', {
       tableReference,
     });
@@ -728,14 +754,16 @@ export function ListingApprovalQueuePanel({
     }
 
     const minimumRequiredCount = nextPage * pageSize;
-    if (records.length >= minimumRequiredCount) {
+    if (!readinessSummary && records.length >= minimumRequiredCount) {
       return true;
     }
 
-    const nextLimit = Math.min(
-      COMBINED_QUEUE_MAX_FETCH_LIMIT,
-      Math.max(combinedFetchLimit + COMBINED_QUEUE_FETCH_STEP, minimumRequiredCount),
-    );
+    const nextLimit = readinessSummary
+      ? Math.min(COMBINED_QUEUE_MAX_FETCH_LIMIT, Math.max(readinessSummary.total, minimumRequiredCount))
+      : Math.min(
+        COMBINED_QUEUE_MAX_FETCH_LIMIT,
+        Math.max(combinedFetchLimit + COMBINED_QUEUE_FETCH_STEP, minimumRequiredCount),
+      );
 
     if (nextLimit <= combinedFetchLimit) {
       return false;
@@ -788,6 +816,44 @@ export function ListingApprovalQueuePanel({
     isCombinedWorkServerSearchEnabled,
     loadRecords,
     loading,
+    records.length,
+    tableName,
+    tableReference,
+  ]);
+
+  useEffect(() => {
+    // An empty-looking ready list with known rows still on the server: pull the rest in once.
+    if (!isCombinedApproval || !readinessSummary || loading || combinedLoadingMore || !combinedHasMoreRecords) {
+      return;
+    }
+    if (combinedReadyForPublishingRecords.length >= readinessSummary.ready) {
+      return;
+    }
+
+    const nextLimit = Math.min(COMBINED_QUEUE_MAX_FETCH_LIMIT, readinessSummary.total);
+    if (nextLimit <= combinedFetchLimit) {
+      return;
+    }
+
+    const previousCount = records.length;
+    setCombinedLoadingMore(true);
+    void loadRecords(tableReference, tableName ?? '', true, { combinedMaxRecords: nextLimit })
+      .then(() => {
+        setCombinedFetchLimit(nextLimit);
+        if (useApprovalStore.getState().records.length <= previousCount) setCombinedExhausted(true);
+      })
+      .finally(() => {
+        setCombinedLoadingMore(false);
+      });
+  }, [
+    combinedFetchLimit,
+    combinedHasMoreRecords,
+    combinedLoadingMore,
+    combinedReadyForPublishingRecords.length,
+    isCombinedApproval,
+    loadRecords,
+    loading,
+    readinessSummary,
     records.length,
     tableName,
     tableReference,
@@ -994,6 +1060,7 @@ export function ListingApprovalQueuePanel({
                     sortMode={combinedReadySortMode}
                     onSortModeChange={setCombinedReadySortMode}
                     hasMoreRecords={combinedHasMoreRecords}
+                    totalRecords={combinedReadyTotal}
                     loadingNextPage={combinedLoadingMore}
                     onRequestNextPage={requestMoreCombinedRecords}
                   />
@@ -1058,6 +1125,7 @@ export function ListingApprovalQueuePanel({
                     sortMode={combinedWorkSortMode}
                     onSortModeChange={setCombinedWorkSortMode}
                     hasMoreRecords={combinedHasMoreRecords}
+                    totalRecords={combinedWorkTotal}
                     loadingNextPage={combinedLoadingMore}
                     onRequestNextPage={requestMoreCombinedRecords}
                   />

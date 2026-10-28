@@ -201,6 +201,24 @@ export async function getConfiguredRecordsSummary(
   }
 }
 
+export interface CombinedListingsReadinessSummary {
+  total: number;
+  ready: number;
+  needsWork: number;
+  listed: number;
+}
+
+export async function getCombinedListingsReadinessSummary(): Promise<CombinedListingsReadinessSummary> {
+  try {
+    return await getJson<CombinedListingsReadinessSummary>('/api/airtable/configured-records', {
+      source: 'approval-combined',
+      summary: 'listings-readiness',
+    });
+  } catch (error) {
+    throw toConfiguredSourceError(error, 'approval-combined');
+  }
+}
+
 export async function getConfiguredRecord(
   source: AirtableConfiguredRecordsSource,
   recordId: string,

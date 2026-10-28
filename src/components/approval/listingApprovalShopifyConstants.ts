@@ -2,6 +2,13 @@ import type { ShopifyApprovalPreviewResult } from '@/services/app-api/shopify';
 import type { ShopifyUnifiedProductSetRequest } from '@/services/shopify';
 import { SHOPIFY_DEFAULT_VENDOR } from '@/services/shopifyTags';
 
+export {
+  SHOPIFY_TITLE_FIELD_CANDIDATES,
+  SHOPIFY_PRICE_FIELD_CANDIDATES,
+  SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES,
+  SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES,
+} from '@shared/listingFieldCandidates';
+
 export const EMPTY_SHOPIFY_FIELD_RESOLUTION: ShopifyApprovalPreviewResult['bodyHtmlResolution'] = {
   sourceFieldName: '',
   sourceType: 'none',
@@ -92,42 +99,6 @@ export const SHOPIFY_BODY_KEY_FEATURES_FIELD_CANDIDATES = [
   'shopify_rest_body_key_features',
 ] as const;
 
-export const SHOPIFY_TITLE_FIELD_CANDIDATES = [
-  'Shopify REST Title',
-  'Shopify Title',
-  'Item Title',
-  'Title',
-  'Name',
-  'shopify_rest_title',
-] as const;
-
-export const SHOPIFY_PRICE_FIELD_CANDIDATES = [
-  'Shopify Price',
-  'Shopify REST Variant 1 Price',
-  'Shopify Variant 1 Price',
-  'Shopify REST Variant 1 Compare At Price',
-  'Shopify Variant 1 Compare At Price',
-  'Variant-Compare-Price',
-  'Variant Compare Price',
-  'Price',
-  'shopify_rest_variant_1_price',
-  'shopify_rest_variant_1_compare_at_price',
-  'variant_compare_price',
-] as const;
-
-export const SHOPIFY_INVENTORY_QUANTITY_FIELD_CANDIDATES = [
-  'Shopify Inventory Quantity',
-  'Shopify REST Variant 1 Inventory Quantity',
-  'Shopify Variant 1 Inventory Quantity',
-  'Shopify Variant Quantity',
-  'Available Quantity',
-  'Available',
-  'Inventory Quantity',
-  'Quantity',
-  'Qty',
-  'Stock',
-] as const;
-
 export const SHOPIFY_VENDOR_FIELD_CANDIDATES = [
   'Shopify REST Vendor',
   'Shopify Vendor',
@@ -138,28 +109,6 @@ export const SHOPIFY_VENDOR_FIELD_CANDIDATES = [
   'shopify_rest_vendor',
   'shopify_vendor',
   'shopify_graphql_vendor',
-] as const;
-
-export const SHOPIFY_PRODUCT_CATEGORY_FIELD_CANDIDATES = [
-  'Shopify Type',
-  'Type',
-  'Product Type',
-  'Shopify REST Product Type',
-  'Shopify Product Type',
-  'Shopify GraphQL Product Type',
-  'Shopify REST Category',
-  'Shopify Category',
-  'Shopify Product Category',
-  'Shopify REST Product Category',
-  'Google Product Category',
-  'Product Category',
-  'Category',
-  'shopify_rest_product_type',
-  'shopify_product_type',
-  'shopify_product_category',
-  'shopify_rest_product_category',
-  'google_product_category',
-  'product_category',
 ] as const;
 
 export const SHOPIFY_TAXONOMY_ATTRIBUTES_FIELD_CANDIDATES = [
