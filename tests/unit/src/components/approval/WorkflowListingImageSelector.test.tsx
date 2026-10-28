@@ -47,7 +47,7 @@ describe('WorkflowListingImageSelector', () => {
     expect(screen.getAllByTestId('selected-listing-image-card')).toHaveLength(1);
     expect(screen.getByAltText('drive.jpg')).toHaveAttribute(
       'src',
-      'https://drive.google.com/thumbnail?id=drive-image&sz=w1600',
+      'https://drive.google.com/thumbnail?id=drive-image&sz=w400',
     );
     expect(screen.queryByAltText('airtable.jpg')).not.toBeInTheDocument();
     expect(document.querySelector('img[src*="airtableusercontent"]')).not.toBeInTheDocument();
