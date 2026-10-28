@@ -153,8 +153,8 @@ export function ListingApprovalSelectedRecordPanel({
       case 'Accepted - Arrived, Awaiting Missing Item': return 'Intake';
       case 'Testing In Progress': return 'Testing';
       case 'Photography In Progress': return 'Photography';
-      case 'Awaiting Pre-Listing Review': return 'Pre-Listing Review';
-      case 'Approved for Publish': return 'Approval';
+      case 'Awaiting Pre-Listing Review':
+      case 'Approved for Publish': return 'Ready to List';
       case 'Listed, Shopify': return 'Shopify Listing';
       case 'Listed, eBay': return 'eBay Listing';
       case 'Stale Listing, Shopify': return 'Shopify Listing (Stale)';

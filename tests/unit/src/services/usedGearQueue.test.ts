@@ -1233,8 +1233,7 @@ describe('usedGearQueue', () => {
       'used-gear-workflow',
       'rec1',
       expect.objectContaining({
-        'Workflow Status': 'Approved for Publish',
-        'Approved For Publish At': expect.any(String),
+        'Workflow Status': 'Awaiting Pre-Listing Review',
         'Shopify REST Published At': null,
         'Shopify REST Published Scope': null,
         'Shopify REST Product ID': null,
@@ -1294,7 +1293,7 @@ describe('usedGearQueue', () => {
     expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
       'used-gear-workflow',
       'rec1',
-      expect.objectContaining({ 'Workflow Status': 'Approved for Publish' }),
+      expect.objectContaining({ 'Workflow Status': 'Awaiting Pre-Listing Review' }),
       { typecast: true, timeoutMs: 45000 },
     );
   });

@@ -96,8 +96,9 @@ function addRoleWorkflowActionItems({
   const testingStageCount = workflowAnalytics.statusCounts['Testing In Progress'] ?? 0;
   const photographyStageCount = workflowAnalytics.statusCounts['Photography In Progress'] ?? 0;
   const downstreamStageCount = testingStageCount + photographyStageCount;
-  const listingReviewCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
-  const approvedForPublishCount = workflowAnalytics.statusCounts['Approved for Publish'];
+  // "Approved for Publish" is a legacy status that means the same as "Awaiting Pre-Listing Review".
+  const listingPhaseCount = (workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'] ?? 0)
+    + (workflowAnalytics.statusCounts['Approved for Publish'] ?? 0);
   const pendingReviewCount = workflowAnalytics.pendingReviewCount;
   const progressAlertCount = workflowAnalytics.age.progressAlertCount;
   const processingBlockerCount = awaitingSkuCount + awaitingMissingCount;
@@ -125,14 +126,13 @@ function addRoleWorkflowActionItems({
       });
     }
 
-    if (accessiblePages.includes('listings') && (listingReviewCount > 0 || approvedForPublishCount > 0)) {
-      const listingPhaseCount = listingReviewCount + approvedForPublishCount;
+    if (accessiblePages.includes('listings') && listingPhaseCount > 0) {
       items.push({
         key: 'workflow-listings-phase',
         label: `${listingPhaseCount} listing-phase row${listingPhaseCount === 1 ? '' : 's'}`,
         count: listingPhaseCount,
-        detail: `${listingReviewCount} listing review · ${approvedForPublishCount} approved for publish`,
-        severity: listingReviewCount > 0 ? 'critical' : 'warning',
+        detail: `${listingPhaseCount} ready to list`,
+        severity: 'warning',
         targetTab: 'listings',
       });
     }

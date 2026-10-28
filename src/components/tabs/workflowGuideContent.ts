@@ -76,7 +76,7 @@ export const WORKFLOW_ADVANCEMENT_RULES: GuideStep[] = [
   },
   {
     title: 'Listings to live listing status',
-    detail: 'A row should only move from Awaiting Pre-Listing Review to Approved for Publish when listing review is complete and title, price, description, and required signoffs are in place. It should only move into listed statuses after the publish action is completed.',
+    detail: 'A row stays Ready to List (stored as Awaiting Pre-Listing Review) until it is published. Publishing is available once the required Shopify and eBay fields are filled in. Older rows stored as Approved for Publish are treated the same way. It only moves into listed statuses after the publish action is completed.',
   },
   {
     title: 'Live listings to follow-through',
@@ -566,7 +566,7 @@ const PAGE_GUIDE_CARDS: PageGuideCard[] = [
       'Record detail workflow shell: final approve-for-publish work and listing-phase context once the item reaches Listings ownership.',
     ],
     workflows: [
-      'Use it for Awaiting Pre-Listing Review and Approved for Publish rows, and for quick verification of already-listed rows before handing active follow-through to Post-Publish. Listing review starts here, and sold-ready, shipped, and post-sale handling should stay out of Listings.',
+      'Use it for Ready to List rows, and for quick verification of already-listed rows before handing active follow-through to Post-Publish. Listing review starts here, and sold-ready, shipped, and post-sale handling should stay out of Listings.',
       'Confirm title, price, notes, signoffs, and publish decisions here before any channel-facing action. After publish, treat this page as record context, not the owning post-sale workflow surface.',
     ],
   },

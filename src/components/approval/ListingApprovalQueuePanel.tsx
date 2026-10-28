@@ -66,7 +66,7 @@ const COMBINED_QUEUE_SECTION_IDS: Record<CombinedQueueSectionKey, string> = {
   'ready-for-publishing': 'combined-listings-ready-for-publishing',
   'needs-further-work': 'combined-listings-needs-further-work',
 };
-const COMBINED_APPROVED_WORKFLOW_STATUSES = ['Approved for Publish', 'Listed, Shopify', 'Listed, eBay'];
+const COMBINED_APPROVED_WORKFLOW_STATUSES = ['Awaiting Pre-Listing Review', 'Approved for Publish', 'Listed, Shopify', 'Listed, eBay'];
 
 function isApprovedRecord(record: AirtableRecord, approvedFieldName: string): boolean {
   const raw = record.fields[approvedFieldName];

@@ -77,7 +77,7 @@ export function clearAirtableSourceCaches(): void {
   searchFieldMetadataCache.clear();
 }
 
-const READY_FOR_PUBLISHING_STATUSES = ['Approved for Publish'];
+const READY_FOR_PUBLISHING_STATUSES = ['Awaiting Pre-Listing Review', 'Approved for Publish'];
 const LISTINGS_PAGE_STATUSES = [
   'Awaiting Pre-Listing Review',
   'Approved for Publish',

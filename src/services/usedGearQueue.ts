@@ -1454,12 +1454,10 @@ export async function moveWorkflowBackToReadyForPublish(recordId: string): Promi
     throw new Error('Only active or stale listed operational rows can move back to ready for listing edits.');
   }
 
-  const approvedAt = new Date().toISOString();
   const record = await updateWorkflowRecordWithUnknownFieldFallback(
     recordId,
     {
-      [USED_GEAR_WORKFLOW_STATUS_FIELD]: APPROVED_FOR_PUBLISH_STATUS,
-      'Approved For Publish At': approvedAt,
+      [USED_GEAR_WORKFLOW_STATUS_FIELD]: AWAITING_PRE_LISTING_REVIEW_STATUS,
       'Listed At': null,
       'Stale Listing At': null,
       'Stale Recovery Status': null,

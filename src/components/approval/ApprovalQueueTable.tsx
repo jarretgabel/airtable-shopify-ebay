@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getWorkflowStatusDisplayLabel } from '@/services/usedGearWorkflow';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
 import { IntakeItemsMatrix, type IntakeItemsMatrixColumn } from '@/components/app/IntakeItemsMatrix';
 import { SortableColumnLabel } from '@/components/app/SortableColumnLabel';
@@ -101,16 +102,12 @@ function getWorkflowStatusCell(record: AirtableRecord, fieldName: string): strin
 }
 
 function workflowStatusClasses(status: string): string {
-	if (status === 'Approved for Publish') {
+	if (status === 'Approved for Publish' || status === 'Awaiting Pre-Listing Review') {
 		return 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200';
 	}
 
 	if (LISTED_WORKFLOW_STATUSES.has(status)) {
 		return 'border border-sky-400/35 bg-sky-500/20 text-sky-200';
-	}
-
-	if (status === 'Awaiting Pre-Listing Review') {
-		return 'border border-amber-400/35 bg-amber-500/20 text-amber-200';
 	}
 
 	return 'border border-slate-400/25 bg-slate-500/10 text-slate-300';
@@ -481,7 +478,7 @@ export function ApprovalQueueTable({
 					renderCell: (record: AirtableRecord) => {
 						const status = getWorkflowStatusCell(record, workflowStatusFieldName);
 						return status
-							? <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${workflowStatusClasses(status)}`}>{status}</span>
+							? <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${workflowStatusClasses(status)}`}>{getWorkflowStatusDisplayLabel(status)}</span>
 							: <span className="inline-flex rounded-full border border-slate-400/25 bg-slate-500/10 px-2 py-0.5 text-xs font-semibold text-slate-300">Not Set</span>;
 					},
 				} satisfies IntakeItemsMatrixColumn<AirtableRecord>]

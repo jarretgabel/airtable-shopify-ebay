@@ -243,17 +243,17 @@ function getWorkflowStatusPresentation(status: string): WorkflowStatusPresentati
       return {
         badgeClassName: 'border-cyan-400/35 bg-cyan-500/15 text-cyan-100',
         progressClassName: 'bg-gradient-to-r from-cyan-500 via-sky-400 to-blue-300',
-        statusLabel: 'Ready for listing QA',
-        statusDescription: 'Operational signoffs are complete. Listing content, pricing, and marketplace readiness need final review.',
-        nextTeamLabel: 'Listing QA required',
-        marketplaceLabels: [],
+        statusLabel: 'Ready to List',
+        statusDescription: 'Operational signoffs are complete. Fill in the required listing fields, then publish to Shopify, eBay, or both.',
+        nextTeamLabel: 'Complete and publish listing',
+        marketplaceLabels: ['Shopify', 'eBay'],
       };
     case 'Approved for Publish':
       return {
         badgeClassName: getStatusBadgeClassName(status),
         progressClassName: 'bg-gradient-to-r from-sky-500 via-cyan-400 to-emerald-300',
-        statusLabel: 'Publish-ready',
-        statusDescription: 'The item passed listing review and is ready to be pushed live to Shopify, eBay, or both.',
+        statusLabel: 'Ready to List',
+        statusDescription: 'Fill in the required listing fields, then publish to Shopify, eBay, or both.',
         nextTeamLabel: 'Publish listing',
         marketplaceLabels: ['Shopify', 'eBay'],
       };
@@ -378,7 +378,7 @@ function getTimelineCompletionGuidance(entryId: UsedGearWorkflowTimelineEntry['i
     case 'photography':
       return 'Use "Open Photos" to capture the photography signoff for this item after testing is complete.';
     case 'pre-listing':
-      return 'Review the listing in "Open Listings Approval", then click "Approve For Publish" when pricing and content are ready.';
+      return 'Complete the required listing fields in "Open Listings Approval", then publish to Shopify or eBay.';
     case 'approved':
       return 'Use "Open Listings Approval" to publish the listing to Shopify or eBay.';
     case 'listed':

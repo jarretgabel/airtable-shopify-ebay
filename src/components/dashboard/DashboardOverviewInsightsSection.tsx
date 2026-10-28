@@ -110,9 +110,9 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     + workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting SKU']
     + workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting Missing Item']
     + downstreamStageCount;
-  const listingReviewCount = workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'];
-  const approvedForPublishCount = workflowAnalytics.statusCounts['Approved for Publish'];
-  const listingPhaseCount = listingReviewCount + approvedForPublishCount;
+  // "Approved for Publish" is a legacy status that means the same as "Awaiting Pre-Listing Review".
+  const listingPhaseCount = (workflowAnalytics.statusCounts['Awaiting Pre-Listing Review'] ?? 0)
+    + (workflowAnalytics.statusCounts['Approved for Publish'] ?? 0);
   const progressAlertCount = workflowAnalytics.age.progressAlertCount;
   const awaitingArrivalCount = workflowAnalytics.statusCounts['Accepted - Awaiting Arrival'];
   const awaitingSkuCount = workflowAnalytics.statusCounts['Accepted - Arrived, Awaiting SKU'];
@@ -169,8 +169,8 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : listingPhaseCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{listingReviewCount}</strong> listing review &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvedForPublishCount}</strong> approved</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : listingReviewCount > 0 ? `${listingReviewCount} awaiting review` : approvedForPublishCount > 0 ? `${approvedForPublishCount} ready to list` : 'Clear'}
+          : <><strong className="font-semibold text-[var(--accent)]">{listingPhaseCount}</strong> ready to list</>}
+        trend={workflowUnavailableReason ? 'Unavailable' : listingPhaseCount > 0 ? `${listingPhaseCount} ready to list` : 'Clear'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : listingPhaseCount > 0 ? 'text-violet-300' : 'text-emerald-300'}
         unavailableReason={workflowUnavailableReason}
         onClick={() => onSelectTab('listings')}
@@ -245,7 +245,7 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
         value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : progressAlertCount.toLocaleString()}
         detail={workflowUnavailableReason
           ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{photographyStageCount}</strong> waiting on photos &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{approvedForPublishCount}</strong> already in Listings</>}
+          : <><strong className="font-semibold text-[var(--accent)]">{photographyStageCount}</strong> waiting on photos &nbsp;·&nbsp; <strong className="font-semibold text-[var(--accent)]">{listingPhaseCount}</strong> already in Listings</>}
         trend={workflowUnavailableReason ? 'Unavailable' : progressAlertCount > 0 ? 'Follow up needed' : 'Waiting on photo sets'}
         trendClass={workflowUnavailableReason ? 'text-amber-300' : progressAlertCount > 0 ? 'text-orange-300' : 'text-[var(--muted)]'}
         unavailableReason={workflowUnavailableReason}

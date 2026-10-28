@@ -72,6 +72,11 @@ function getTrimmedString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
+/** "Approved for Publish" is a legacy status; both it and "Awaiting Pre-Listing Review" mean ready to list. */
+export function getWorkflowStatusDisplayLabel(status: string): string {
+  return status === 'Awaiting Pre-Listing Review' || status === 'Approved for Publish' ? 'Ready to List' : status;
+}
+
 export function isUsedGearWorkflowStatus(value: string): value is UsedGearWorkflowStatus {
   return (USED_GEAR_WORKFLOW_STATUSES as readonly string[]).includes(value);
 }

@@ -80,7 +80,7 @@ describe('DashboardWorkflowCardGrid', () => {
     expect(screen.getByText('Used Gear Workflow Snapshot')).toBeInTheDocument();
     expect(screen.getByText('Operational Rows')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
-    expect(screen.getByText('Approved For Publish')).toBeInTheDocument();
+    expect(screen.getByText('Ready to List')).toBeInTheDocument();
     expect(screen.getByText('Shopify Live')).toBeInTheDocument();
     expect(screen.getByText('eBay Stale')).toBeInTheDocument();
     expect(screen.getByText('Post-Publish Ops')).toBeInTheDocument();

@@ -496,7 +496,7 @@ export function buildListingApprovalTabPanels({
         tableName,
         loadRecords,
         onMovedBackToReady: () => {
-          setDerivedFormValue('Workflow Status', 'Approved for Publish');
+          setDerivedFormValue('Workflow Status', 'Awaiting Pre-Listing Review');
           setDerivedFormValue('Listed At', '');
           setDerivedFormValue('Shopify REST Product ID', '');
           setDerivedFormValue('Shopify Product ID', '');

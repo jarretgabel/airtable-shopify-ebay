@@ -71,7 +71,7 @@ export function getPostPublishSectionId(bucket: UsedGearWorkflowPostPublishBucke
 function getPostPublishSectionEmptyGuidance(bucket: UsedGearWorkflowPostPublishBucket): string {
   switch (bucket) {
     case 'active-listing':
-      return 'Next action: publish the next Approved for Publish row in Listings, or move to Stale Listings when a live marketplace item needs follow-up.';
+      return 'Next action: publish the next Ready to List row in Listings, or move to Stale Listings when a live marketplace item needs follow-up.';
     case 'stale-listing':
       return 'Next action: keep working Active Listings until an item ages into stale follow-up, or mark a listed row stale when the relist/recovery workflow needs to begin.';
     case 'sold-ready':

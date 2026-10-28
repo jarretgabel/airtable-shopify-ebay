@@ -25,9 +25,15 @@ const STATUS_ROWS: Array<{ label: string; status: UsedGearWorkflowStatus }> = [
   { label: 'Awaiting Missing Item', status: 'Accepted - Arrived, Awaiting Missing Item' },
   { label: 'Testing', status: 'Testing In Progress' },
   { label: 'Photography', status: 'Photography In Progress' },
-  { label: 'Listing Review', status: 'Awaiting Pre-Listing Review' },
-  { label: 'Approved For Publish', status: 'Approved for Publish' },
+  { label: 'Ready to List', status: 'Awaiting Pre-Listing Review' },
 ];
+
+// "Approved for Publish" is a legacy status that now means the same as "Awaiting Pre-Listing Review".
+function getStatusRowValue(snapshot: UsedGearWorkflowAnalyticsSnapshot, status: UsedGearWorkflowStatus): number {
+  if (status === 'Unqualified') return snapshot.trashCount;
+  const count = snapshot.statusCounts[status] ?? 0;
+  return status === 'Awaiting Pre-Listing Review' ? count + (snapshot.statusCounts['Approved for Publish'] ?? 0) : count;
+}
 
 interface DashboardWorkflowAnalyticsSectionProps {
   loading: boolean;
@@ -164,7 +170,7 @@ export function DashboardWorkflowAnalyticsSection({
                       <MetricRow
                         key={row.status}
                         label={row.label}
-                        value={row.status === 'Unqualified' ? snapshot.trashCount : snapshot.statusCounts[row.status]}
+                        value={getStatusRowValue(snapshot, row.status)}
                       />
                     ))}
                   </div>
@@ -227,7 +233,7 @@ export function DashboardWorkflowAnalyticsSection({
                     <MetricRow
                       key={row.status}
                       label={row.label}
-                      value={row.status === 'Unqualified' ? snapshot.trashCount : snapshot.statusCounts[row.status]}
+                      value={getStatusRowValue(snapshot, row.status)}
                     />
                   ))}
                 </div>

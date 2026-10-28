@@ -319,7 +319,7 @@ export function ListingApprovalWorkflowOpsPanel({
     }
 
     const writableFields: Record<string, unknown> = {
-      'Workflow Status': 'Approved for Publish',
+      'Workflow Status': 'Awaiting Pre-Listing Review',
       'Shopify REST Product ID': null,
       'Shopify Product ID': null,
       'Shopify REST Published At': null,

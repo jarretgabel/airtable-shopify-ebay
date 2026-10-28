@@ -192,7 +192,7 @@ describe('ListingApprovalQueuePanel', () => {
     expect(within(workSection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Ready Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Awaiting Pre-Listing Review')).not.toBeInTheDocument();
-    expect(within(workSection as HTMLElement).getAllByText('Approved for Publish').length).toBeGreaterThan(1);
+    expect(within(workSection as HTMLElement).getAllByText('Ready to List').length).toBeGreaterThan(0);
     expect(within(workSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('ListingApprovalQueuePanel', () => {
 
     expect(readySection).not.toBeNull();
     expect(within(readySection as HTMLElement).getByText('Approved Publish Row')).toBeInTheDocument();
-    expect(within(readySection as HTMLElement).getAllByText('Approved for Publish').length).toBeGreaterThan(1);
+    expect(within(readySection as HTMLElement).getAllByText('Ready to List').length).toBeGreaterThan(0);
     expect(within(readySection as HTMLElement).queryByText('Sold Ready Row')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Shipped Row')).not.toBeInTheDocument();
   });
