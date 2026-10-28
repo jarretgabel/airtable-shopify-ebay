@@ -950,3 +950,14 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Saved-image editor: changing a role refreshes alt text (unless hand-edited) and previews the new filename; Save copies the S3 object to the new name (`rename` action on the direct-upload route). The old object is kept so published URLs keep working.
 - Image variants: new uploads also store 400 and 800 px JPEGs under `variants/w<width>/<key>`; `/api/media/<key>?w=400|800` redirects to the variant, else the original. Backfill (`generate-image-variants-cli`) processed 17,844 images, created 35,234 variants; 17 failed (non-image `intake--…--original.jpg` files), which keep serving the original.
 - Still open: remove the Drive fallback (14.11); base64 upload fallback does not refresh variants.
+
+## Workflow, Listings page and Shopify updates (2026-10-27)
+- Local dev uses the staging S3 media bucket. The Photography form's Remove button only drops the image metadata on save; it does not delete the S3 object. No cleanup script for now (decided).
+- Serial plate role keeps the `serial-number` filename and alt text (decided, no change).
+- Statuses: "Awaiting Pre-Listing Review" and "Approved for Publish" now show as one "Ready to List" state. The stored value stays "Awaiting Pre-Listing Review"; "Approved for Publish" is still read as a legacy equivalent. Publishing is gated by the Shopify and eBay required-field badges, not by status. The timeline has one "Ready to List" step, and `completePreListingReviewStage` is removed. Four staging rows (SKUs 11750, 11751, 11761, 11764) were converted to the new status; local DB and Airtable were not touched.
+- Listings page: the Workflow Status column is hidden when every row has the same status, and the needs-work filter offers Ready for Shopify, Ready for eBay and Not Ready for Either.
+- Pagination: the "Load more" button is replaced by Prev/Next. Exact totals come from `GET` configured-records with `summary=listings-readiness` (combined source only; returns total, ready, needsWork, listed from up to 1,000 `listings-page` rows). It uses the same readiness rules as the browser, which now live in `aws/src/shared/` (old `src/` paths are re-export shims). Rows still load in slices (40, then +80, capped at 1,000) and Next disables on the last page.
+- Shopify: the draft builder no longer adds a "Condition" product option or variant value (frontend and Lambda copies). Condition still goes to the `custom.condition` metafield and the Pre-Owned tag. Products published earlier keep their Condition option until it is removed in Shopify admin.
+- Frontend: a failed lazy-chunk load (stale tab after a deploy) triggers one automatic reload (guarded for 30 s), and the router has an error screen.
+- SKU stays assigned at the Parking Lot arrival step, not in manual intake (decided).
+- All of the above is deployed to staging (backend change sets and frontend). Not browser-tested yet on staging.
