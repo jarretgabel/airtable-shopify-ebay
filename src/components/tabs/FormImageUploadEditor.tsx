@@ -833,6 +833,7 @@ export function FormImageUploadEditor({
             const roleValidationError = requireImageRole
               ? getImageRoleValidationError(item.imageRole, item.customImageRole)
               : undefined;
+            const isCustomRoleSelected = getWorkflowImageRoleSelectValue(item.imageRole, item.customImageRole, imageRoleOptions) === 'custom';
 
             return (
             <article key={item.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
@@ -940,7 +941,7 @@ export function FormImageUploadEditor({
                     </div>
 
                     <div className="grid gap-4">
-                      <div className={`grid gap-4 ${item.imageRole === 'custom' ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
+                      <div className={`grid gap-4 ${isCustomRoleSelected ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
                         <label className="block">
                           <span className="text-sm font-semibold text-[var(--ink)]">
                             Image role
@@ -989,7 +990,7 @@ export function FormImageUploadEditor({
                           ) : null}
                         </label>
 
-                        {item.imageRole === 'custom' ? (
+                        {isCustomRoleSelected ? (
                           <div className="grid gap-2">
                             <label className="block">
                               <span className="text-sm font-semibold text-[var(--ink)]">Custom role</span>
