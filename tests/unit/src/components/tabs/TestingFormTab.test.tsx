@@ -224,6 +224,15 @@ describe('TestingFormTab', () => {
     expect(screen.getByText('intake.jpg')).toBeInTheDocument();
     expect(screen.queryByText('Customer Intake Reference')).not.toBeInTheDocument();
 
+    const initialLoad = await loadTestingFormValuesMock.mock.results[0].value;
+    const updatedMetadata = initialLoad.stageContext.imageMetadata.map((entry: { filename: string }) => (
+      entry.filename === 'testing.jpg' ? { ...entry, alt: 'Updated bench overview' } : entry
+    ));
+    loadTestingFormValuesMock.mockResolvedValueOnce({
+      ...initialLoad,
+      stageContext: { ...initialLoad.stageContext, imageMetadata: updatedMetadata },
+    });
+
     fireEvent.change(screen.getByLabelText('Alt text for testing.jpg'), { target: { value: 'Updated bench overview' } });
     fireEvent.click(screen.getByRole('button', { name: 'Testing Complete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete testing' }));

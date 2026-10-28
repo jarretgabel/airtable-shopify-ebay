@@ -211,6 +211,16 @@ describe('PhotosFormTab', () => {
     fireEvent.click(screen.getByLabelText('I checked and photographed Manual for this unit.'));
     fireEvent.click(screen.getByLabelText('I checked and photographed Power Cable for this unit.'));
     fireEvent.click(screen.getByLabelText('I checked and photographed Additional Items for this unit.'));
+    const initialLoad = await loadPhotosFormValuesMock.mock.results[0].value;
+    loadPhotosFormValuesMock.mockResolvedValueOnce({
+      ...initialLoad,
+      stageContext: {
+        ...initialLoad.stageContext,
+        imageMetadata: initialLoad.stageContext.imageMetadata.map((entry: { filename: string }) => (
+          entry.filename === 'hero.jpg' ? { ...entry, alt: 'Updated hero shot' } : entry
+        )),
+      },
+    });
     fireEvent.change(screen.getByLabelText('Alt text for hero.jpg'), { target: { value: 'Updated hero shot' } });
     fireEvent.click(screen.getByRole('button', { name: 'Photos Complete' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Yes, complete photography' }));
@@ -241,7 +251,7 @@ describe('PhotosFormTab', () => {
         ],
       }));
     });
-    await screen.findByText(/Photos fields updated for record/);
+    await screen.findByText(/Photography changes saved/);
     fireEvent.change(screen.getByLabelText('Alt text for hero.jpg'), { target: { value: 'Original hero shot' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Photos' }));
     await waitFor(() => {

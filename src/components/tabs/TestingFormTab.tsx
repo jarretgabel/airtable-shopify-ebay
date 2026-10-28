@@ -255,6 +255,15 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
       setOriginalAudiogonRating(formValues.audiogonRating);
       setStageContext((current) => ({ ...current, imageMetadata }));
       if (result.action === 'updated') {
+        if (recordId) {
+          try {
+            const refreshed = await loadTestingFormValues(recordId);
+            setStageContext(refreshed.stageContext);
+            setImageMetadata(refreshed.stageContext.imageMetadata);
+          } catch {
+            // keep the locally merged metadata if the refresh fails
+          }
+        }
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
         setImageUploadAssets([]);

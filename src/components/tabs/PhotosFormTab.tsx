@@ -279,6 +279,15 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
       setOriginalAudiogonRating(formValues.audiogonRating);
       setStageContext((current) => ({ ...current, imageMetadata }));
       if (result.action === 'updated') {
+        if (recordId) {
+          try {
+            const refreshed = await loadPhotosFormValues(recordId);
+            setStageContext(refreshed.stageContext);
+            setImageMetadata(refreshed.stageContext.imageMetadata);
+          } catch {
+            // keep the locally merged metadata if the refresh fails
+          }
+        }
         const nextValues = { ...formValues, imageFiles: [] };
         setFormValues(nextValues);
         setImageUploadAssets([]);
@@ -448,15 +457,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
           </div>
         ) : null}
 
-        {submitSuccess ? (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            {submitSuccess.action === 'updated'
-              ? <>Photos fields updated for record <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>
-              : <>Photos submission saved. Record ID: <strong>{submitSuccess.recordId}</strong>. SKU: <strong>{submitSuccess.sku}</strong>.</>}
-          </div>
-        ) : null}
-
-        <WorkflowFormSnapshotSection
+                <WorkflowFormSnapshotSection
           values={{
             cost: formValues.cost,
             sku: formValues.sku,
@@ -579,6 +580,21 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                 ))}
               </div>
             </div>
+          ) : null}
+
+          {submitSuccess ? (
+            <section
+              className="rounded-lg border border-emerald-400/35 bg-emerald-500/10 px-3 py-2"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="m-0 text-sm font-semibold text-emerald-200">
+                {submitSuccess.action === 'updated' ? 'Photography changes saved' : 'Photography submission saved'}
+              </p>
+              <p className="m-0 mt-1 text-xs text-emerald-200/90">
+                Photography details for <strong>{submitSuccess.sku}</strong> were saved.
+              </p>
+            </section>
           ) : null}
 
           <div className="flex justify-end">
