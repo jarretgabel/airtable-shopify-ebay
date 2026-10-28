@@ -961,3 +961,10 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - Frontend: a failed lazy-chunk load (stale tab after a deploy) triggers one automatic reload (guarded for 30 s), and the router has an error screen.
 - SKU stays assigned at the Parking Lot arrival step, not in manual intake (decided).
 - All of the above is deployed to staging (backend change sets and frontend). Not browser-tested yet on staging.
+
+## Google Drive fallback removed, local dev on staging (2026-10-27)
+- Local dev (`.env.local`, gitignored) now points at the staging database, Airtable base `apprsAm2FOohEmL2u` and the staging S3 media bucket. Edits and publishes made locally affect staging data and the real Shopify and eBay. The old `pg-test` stack is no longer used by local dev (not yet deleted).
+- Drive runtime fallback removed (part of 14.11): the Drive client, the Drive copy and scan scripts, the `GoogleDrive*` and `ImageArchiveBackend` template parameters and env vars, and the frontend Drive preview and URL handling. The image archive is S3-only and returns 503 `MEDIA_STORE_NOT_CONFIGURED` if no media store is set. The `driveArchive` request-body field name is kept for wire compatibility.
+- `legacyUrl` strings (Drive URLs) in `Workflow Image Metadata JSON` and `workflow_images.legacy_url` are kept as audit data.
+- Deployed to staging (change set modified 80 resources, no replacements; frontend deployed). Not yet browser-tested.
+- Still open in 14.11: remove the Airtable key, base config, outbox worker and Airtable-only code paths; rename `/api/airtable/*` routes last.
