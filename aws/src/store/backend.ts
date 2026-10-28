@@ -17,7 +17,7 @@ function parseBackend(value: string, label: string): DataBackend {
   });
 }
 
-/** DATA_BACKEND sets the default (airtable when unset); DATA_BACKEND_OVERRIDES is "source=backend,source=backend". */
+/** DATA_BACKEND sets the default (postgres when unset); DATA_BACKEND_OVERRIDES is "source=backend,source=backend". */
 export function resolveDataBackend(source: ListingSource, env: NodeJS.ProcessEnv = process.env): DataBackend {
   const overrides = env.DATA_BACKEND_OVERRIDES?.trim();
   if (overrides) {
@@ -30,5 +30,5 @@ export function resolveDataBackend(source: ListingSource, env: NodeJS.ProcessEnv
   }
 
   const fallback = env.DATA_BACKEND?.trim();
-  return fallback ? parseBackend(fallback, 'DATA_BACKEND') : 'airtable';
+  return fallback ? parseBackend(fallback, 'DATA_BACKEND') : 'postgres';
 }

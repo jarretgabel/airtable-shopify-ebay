@@ -5,8 +5,8 @@ import { resolveDataBackend } from './backend.js';
 import { getListingStore } from './index.js';
 import { airtableListingStore } from './airtableListingStore.js';
 
-test('backend defaults to airtable when nothing is set', () => {
-  assert.equal(resolveDataBackend('users', {}), 'airtable');
+test('backend defaults to postgres when nothing is set', () => {
+  assert.equal(resolveDataBackend('users', {}), 'postgres');
 });
 
 test('DATA_BACKEND sets the default for every source', () => {
@@ -28,10 +28,10 @@ test('invalid backend values fail loudly instead of silently using airtable', ()
   assert.throws(() => resolveDataBackend('users', { DATA_BACKEND: 'mongo' }), (error: unknown) => error instanceof HttpError && error.code === 'DATA_BACKEND_INVALID');
 });
 
-test('getListingStore returns the airtable store by default and a distinct store per backend', () => {
+test('getListingStore returns the airtable store when DATA_BACKEND=airtable and a distinct store per backend', () => {
   const saved = { backend: process.env.DATA_BACKEND, overrides: process.env.DATA_BACKEND_OVERRIDES };
   try {
-    delete process.env.DATA_BACKEND;
+    process.env.DATA_BACKEND = 'airtable';
     delete process.env.DATA_BACKEND_OVERRIDES;
     assert.equal(getListingStore('users'), airtableListingStore);
 

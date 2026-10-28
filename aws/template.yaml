@@ -53,7 +53,7 @@ Parameters:
     Default: ''
   DataBackend:
     Type: String
-    Default: airtable
+    Default: postgres
     AllowedValues:
       - airtable
       - dual
