@@ -23,8 +23,8 @@ describe('getListingApprovalActiveTimelineEntry', () => {
     });
 
     expect(getListingApprovalActiveTimelineEntry(timeline, 'Approved for Publish')).toMatchObject({
-      id: 'approved',
-      label: 'Approved For Publish',
+      id: 'ready-to-list',
+      label: 'Ready to List',
       status: 'completed',
     });
   });

@@ -8,7 +8,6 @@ import {
   assignWorkflowOwner,
   assignWorkflowOwnerBatch,
   clearWorkflowOwner,
-  completePreListingReviewStage,
   completeProcessingStage,
   distributeUsedGearPendingReviewTotal,
   groupUsedGearWorkflowRecords,
@@ -970,37 +969,6 @@ describe('usedGearQueue', () => {
     );
   });
 
-  it('completes listing review and advances to approved for publish', async () => {
-    mockGetConfiguredRecords.mockResolvedValue([
-      {
-        id: 'rec1',
-        createdTime: 'now',
-        fields: {
-          'Workflow Status': 'Awaiting Pre-Listing Review',
-          Price: '2199.00',
-        },
-      },
-    ]);
-    mockUpdateConfiguredRecord.mockResolvedValue({
-      id: 'rec1',
-      createdTime: 'now',
-      fields: { 'Workflow Status': 'Approved for Publish' },
-    });
-
-    await completePreListingReviewStage('rec1', 'Taylor Reviewer');
-
-    expect(mockUpdateConfiguredRecord).toHaveBeenCalledWith(
-      'used-gear-workflow',
-      'rec1',
-      expect.objectContaining({
-        'Workflow Status': 'Approved for Publish',
-        'Approved For Publish At': expect.any(String),
-        'Pre-Listing Reviewed By': 'Taylor Reviewer',
-      }),
-      { typecast: true },
-    );
-  });
-
   it('assigns workflow ownership on the authoritative row', async () => {
     mockUpdateConfiguredRecord.mockResolvedValue({
       id: 'rec1',
@@ -1725,24 +1693,6 @@ describe('usedGearQueue', () => {
 
     expect(records).toHaveLength(2);
     expect(mockUpdateConfiguredRecord).toHaveBeenCalledTimes(2);
-  });
-
-  it('blocks listing review approval when no listing price is captured', async () => {
-    mockGetConfiguredRecords.mockResolvedValue([
-      {
-        id: 'rec1',
-        createdTime: 'now',
-        fields: {
-          'Workflow Status': 'Awaiting Pre-Listing Review',
-        },
-      },
-    ]);
-
-    await expect(completePreListingReviewStage('rec1', 'Taylor Reviewer')).rejects.toThrow(
-      'Capture a listing price before approving the row for publish.',
-    );
-
-    expect(mockUpdateConfiguredRecord).not.toHaveBeenCalled();
   });
 
   it('summarizes workflow notification counts by queue stage', async () => {

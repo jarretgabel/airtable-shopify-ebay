@@ -21,7 +21,6 @@ import {
   type UsedGearWorkflowRestockDisposition,
   type UsedGearWorkflowStaleRecoveryStatus,
 } from '@/services/usedGearWorkflowLifecycle';
-import { assertUsedGearWorkflowReadyForPublish } from '@/services/usedGearWorkflowListingReadiness';
 import type { AirtableRecord } from '@/types/airtable';
 import { USED_GEAR_POST_PUBLISH_FIELDS, USED_GEAR_POST_PUBLISH_STATUSES } from '@contracts/usedGearPostPublish';
 
@@ -1304,37 +1303,6 @@ export async function completeProcessingStage(recordId: string, userName: string
       [fieldNames.signedBy]: normalizedUserName,
       [fieldNames.signedAt]: new Date().toISOString(),
       [USED_GEAR_WORKFLOW_STATUS_FIELD]: TESTING_IN_PROGRESS_STATUS,
-    },
-    { typecast: true },
-  );
-
-  return withWorkflow(record);
-}
-
-export async function completePreListingReviewStage(recordId: string, userName: string): Promise<AirtableRecord> {
-  const normalizedUserName = userName.trim();
-  if (!normalizedUserName) {
-    throw new Error('Listing review requires the current user name.');
-  }
-
-  const currentRecord = await loadUsedGearOperationalRecord(recordId);
-  const currentStatus = getUsedGearWorkflowStatus(currentRecord.fields);
-  if (currentStatus !== AWAITING_PRE_LISTING_REVIEW_STATUS) {
-    throw new Error('Listing review can only be completed when the row is awaiting listing review.');
-  }
-
-  assertUsedGearWorkflowReadyForPublish(currentRecord);
-
-  const fieldNames = getUsedGearWorkflowSignoffFieldNames('pre-listing');
-  const reviewedAt = new Date().toISOString();
-  const record = await updateConfiguredRecord(
-    'used-gear-workflow',
-    recordId,
-    {
-      [fieldNames.signedBy]: normalizedUserName,
-      [fieldNames.signedAt]: reviewedAt,
-      [USED_GEAR_WORKFLOW_STATUS_FIELD]: APPROVED_FOR_PUBLISH_STATUS,
-      'Approved For Publish At': reviewedAt,
     },
     { typecast: true },
   );

@@ -17,7 +17,7 @@ This document records the implemented publish writeback behavior from the combin
   - marketplace automation beyond the current publish result handling
 
 ## Workflow Preconditions
-- The row must already be in `Approved for Publish` before final publish is attempted.
+- The row should be Ready to List (stored as `Awaiting Pre-Listing Review`; legacy `Approved for Publish` is treated the same) with the required Shopify/eBay fields filled in. Publish is gated by those required fields, not by a separate approval step.
 - Pre-listing review must already have written:
   - `Pre-Listing Reviewed By`
   - `Pre-Listing Reviewed At`

@@ -93,9 +93,8 @@ function getPreferredTimelineEntryId(workflowStatus: string): UsedGearWorkflowTi
     case 'Photography In Progress':
       return 'photography';
     case 'Awaiting Pre-Listing Review':
-      return 'pre-listing';
     case 'Approved for Publish':
-      return 'approved';
+      return 'ready-to-list';
     case 'Listed, Shopify':
     case 'Listed, eBay':
     case 'Stale Listing, Shopify':

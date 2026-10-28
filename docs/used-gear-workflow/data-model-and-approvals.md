@@ -1,4 +1,6 @@
-## Data Model And Approvals
+#> Note: `Awaiting Pre-Listing Review` is displayed as "Ready to List"; `Approved for Publish` is a legacy equivalent and no longer written. There is no separate approval step.
+
+# Data Model And Approvals
 
 This document is the approval-focused companion to the master workflow plan.
 

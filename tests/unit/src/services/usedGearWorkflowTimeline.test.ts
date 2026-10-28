@@ -19,8 +19,7 @@ describe('buildUsedGearWorkflowTimeline', () => {
       'Processing Completed',
       'Testing In Progress',
       'Photography In Progress',
-      'Listing Review',
-      'Approved For Publish',
+      'Ready to List',
       'Listed',
       'Sold Ready To Ship',
       'Shipped',
@@ -46,8 +45,8 @@ describe('buildUsedGearWorkflowTimeline', () => {
     });
 
     expect(timeline[4]).toMatchObject({
-      id: 'pre-listing',
-      label: 'Listing Review',
+      id: 'ready-to-list',
+      label: 'Ready to List',
       status: 'completed',
       actor: 'Jordan Reviewer',
     });
