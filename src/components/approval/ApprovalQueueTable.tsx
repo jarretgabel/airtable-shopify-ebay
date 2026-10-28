@@ -281,6 +281,10 @@ export function ApprovalQueueTable({
 		/>
 	) : qtyColumnLabel;
 
+	// A column where every row shows the same label adds no information.
+	const hasSingleWorkflowStatus = Boolean(workflowStatusFieldName)
+		&& records.length > 0
+		&& new Set(records.map((record) => getWorkflowStatusDisplayLabel(getWorkflowStatusCell(record, workflowStatusFieldName) ?? ''))).size === 1;
 	const workflowStatusColumnLabel = onSortModeChange ? (
 		<SortableColumnLabel
 			label="Workflow Status"
@@ -470,7 +474,7 @@ export function ApprovalQueueTable({
 			},
 		} satisfies IntakeItemsMatrixColumn<AirtableRecord>)),
 		...(
-			workflowStatusFieldName
+			workflowStatusFieldName && !hasSingleWorkflowStatus
 				? [{
 					key: 'workflow-status',
 					label: workflowStatusColumnLabel,

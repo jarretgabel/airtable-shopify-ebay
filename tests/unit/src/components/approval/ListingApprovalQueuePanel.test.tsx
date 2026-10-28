@@ -154,7 +154,7 @@ describe('ListingApprovalQueuePanel', () => {
     expect(screen.getByLabelText('Combined listings sections')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ready for Publishing' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Needs Further Work' })).toBeInTheDocument();
-    expect(screen.getAllByText('Workflow Status').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Workflow Status')).not.toBeInTheDocument();
     expect(screen.queryByText('Approved')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Needs Fields/i })).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Refresh listing approval queue' })).toHaveLength(2);
@@ -192,7 +192,7 @@ describe('ListingApprovalQueuePanel', () => {
     expect(within(workSection as HTMLElement).queryByText('Already Listed')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Ready Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Awaiting Pre-Listing Review')).not.toBeInTheDocument();
-    expect(within(workSection as HTMLElement).getAllByText('Ready to List').length).toBeGreaterThan(0);
+    expect(within(workSection as HTMLElement).queryByText('Ready to List')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Shipped Listing')).not.toBeInTheDocument();
     expect(within(workSection as HTMLElement).queryByText('Sold Ready Listing')).not.toBeInTheDocument();
@@ -216,7 +216,7 @@ describe('ListingApprovalQueuePanel', () => {
 
     expect(readySection).not.toBeNull();
     expect(within(readySection as HTMLElement).getByText('Approved Publish Row')).toBeInTheDocument();
-    expect(within(readySection as HTMLElement).getAllByText('Ready to List').length).toBeGreaterThan(0);
+    expect(within(readySection as HTMLElement).queryByText('Ready to List')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Sold Ready Row')).not.toBeInTheDocument();
     expect(within(readySection as HTMLElement).queryByText('Shipped Row')).not.toBeInTheDocument();
   });
