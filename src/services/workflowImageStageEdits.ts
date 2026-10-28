@@ -38,6 +38,7 @@ export function mergeWorkflowImageStageEdits(
   nextMetadata: WorkflowImageMetadataRecord[],
   stage: WorkflowImageSourceStage,
   originalMetadata?: WorkflowImageMetadataRecord[],
+  options: { allowRemovals?: boolean } = {},
 ): string | undefined {
   const entries = readEntries(raw);
   const saved = parseWorkflowImageMetadata(entries);
@@ -83,26 +84,37 @@ export function mergeWorkflowImageStageEdits(
     }
     if (Object.keys(patch).length > 0) patches.set(key, patch);
   }
-  if (patches.size === 0 && additions.length === 0) return undefined;
+  // Only images the form loaded and the user then dropped; the stored files stay in place.
+  const removedKeys = new Set<string>();
+  // Without the originals the form loaded there is no proof the user dropped anything, so a stale empty draft removes nothing.
+  if (options.allowRemovals && originalMetadata) {
+    for (const original of originals) {
+      const key = imageKey(original);
+      const current = savedByKey.get(key);
+      if (original.sourceStage === stage && !nextKeys.has(key) && current?.sourceStage === stage) removedKeys.add(key);
+    }
+  }
+  if (patches.size === 0 && additions.length === 0 && removedKeys.size === 0) return undefined;
 
   const seen = new Set<string>();
-  const nextEntries = entries.map((entry) => {
+  const nextEntries = entries.flatMap((entry) => {
     const record = parseWorkflowImageMetadata([entry])[0];
-    if (!record) return entry;
+    if (!record) return [entry];
     const key = imageKey(record);
     if (seen.has(key)) {
       throw new WorkflowImageEditError('Saved photos contain duplicate identities. Reload and resolve them before editing photos.');
     }
     seen.add(key);
+    if (removedKeys.has(key)) return [];
     const patch = patches.get(key);
-    if (!patch) return entry;
+    if (!patch) return [entry];
     const nextEntry: Record<string, unknown> = { ...entry, ...patch, updatedAt: new Date().toISOString() };
     for (const field of EDITABLE_FIELDS) {
       if (field in patch) {
         for (const alias of FIELD_ALIASES[field]) delete nextEntry[alias];
       }
     }
-    return nextEntry;
+    return [nextEntry];
   });
   return JSON.stringify([...nextEntries, ...additions]);
 }

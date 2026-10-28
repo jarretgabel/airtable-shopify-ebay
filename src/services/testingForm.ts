@@ -500,7 +500,7 @@ export async function submitTestingForm(
       Tested: trimToUndefined(values.testingDate),
       Status: statusValue,
       [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: imageMetadata
-        ? mergeWorkflowImageStageEdits(rawImageMetadata, imageMetadata, 'testing', originalImageMetadata)
+        ? mergeWorkflowImageStageEdits(rawImageMetadata, imageMetadata, 'testing', originalImageMetadata, { allowRemovals: true })
         : undefined,
       ...(options.completeWorkflowStage ? buildWorkflowTestingFields(workflowRecord, actorName, testedAt) : {}),
     });

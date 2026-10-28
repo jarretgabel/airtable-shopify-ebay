@@ -544,6 +544,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                         recordId={recordId ?? undefined}
                         onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'photos', nextMetadata))}
                         allowReorder
+                        allowRemove
                         disabled={submitting}
                         title="Photography Images"
                         description="Manage saved photo-stage image alt text, ordering, and listing defaults here."

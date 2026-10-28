@@ -493,7 +493,7 @@ export async function submitPhotosForm(
         "Photo'd": trimToUndefined(values.photoDate),
         Status: statusValue,
         [WORKFLOW_IMAGE_METADATA_FIELD_NAME]: imageMetadata
-          ? mergeWorkflowImageStageEdits(rawImageMetadata, imageMetadata, 'photos', originalImageMetadata)
+          ? mergeWorkflowImageStageEdits(rawImageMetadata, imageMetadata, 'photos', originalImageMetadata, { allowRemovals: true })
           : undefined,
         ...(options.completeWorkflowStage ? buildWorkflowPhotographyFields(workflowRecord, actorName, photographedAt) : {}),
       });

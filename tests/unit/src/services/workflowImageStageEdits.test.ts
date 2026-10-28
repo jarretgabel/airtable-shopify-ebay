@@ -46,6 +46,17 @@ describe('mergeWorkflowImageStageEdits', () => {
     expect(mergeWorkflowImageStageEdits(rows, [original[1]], 'testing', original)).toBeUndefined();
   });
 
+  it('removes only the dropped stage image when removals are allowed', () => {
+    const original = parseWorkflowImageMetadata(rows);
+    const result = JSON.parse(mergeWorkflowImageStageEdits(rows, [], 'testing', original, { allowRemovals: true })!);
+    expect(result).toEqual([rows[1]]);
+  });
+
+  it('never removes images from other stages', () => {
+    const original = parseWorkflowImageMetadata(rows);
+    expect(mergeWorkflowImageStageEdits(rows, [original[0]], 'testing', original, { allowRemovals: true })).toBeUndefined();
+  });
+
   it('appends new stage images without discarding unrelated raw rows', () => {
     const added = { ...parseWorkflowImageMetadata(rows)[0], attachmentId: 'new', url: 'https://drive.google.com/uc?id=new' };
     const result = JSON.parse(mergeWorkflowImageStageEdits(rows, [added], 'testing')!);

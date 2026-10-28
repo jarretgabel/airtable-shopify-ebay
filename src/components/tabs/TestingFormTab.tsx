@@ -321,6 +321,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
               recordId={recordId ?? undefined}
               onChange={(nextMetadata) => setImageMetadata((current) => replaceWorkflowImageMetadataStage(current, 'testing', nextMetadata))}
               allowReorder
+              allowRemove
               disabled={submitting}
               title="Testing Images"
               description="Manage saved testing-stage image alt text, ordering, and listing defaults here."

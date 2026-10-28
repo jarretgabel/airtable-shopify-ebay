@@ -24,6 +24,8 @@ export interface WorkflowImageMetadataEditorProps {
   metadata: WorkflowImageMetadataRecord[];
   onChange: (nextMetadata: WorkflowImageMetadataRecord[]) => void;
   allowReorder?: boolean;
+  /** Shows a Remove button; the image leaves the record when the form is saved, its stored file is kept. */
+  allowRemove?: boolean;
   disabled?: boolean;
   title: string;
   description: string;
@@ -43,6 +45,7 @@ export function WorkflowImageMetadataEditor({
   metadata,
   onChange,
   allowReorder = false,
+  allowRemove = false,
   disabled = false,
   title,
   description,
@@ -181,7 +184,7 @@ export function WorkflowImageMetadataEditor({
                 data-testid="workflow-image-metadata-card"
                 className="grid gap-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
               >
-                <div className="overflow-hidden rounded-xl border border-[var(--line)] bg-slate-950/20">
+                <div className="overflow-hidden rounded-xl">
                   {isGoogleDriveImageUrl(record.url) ? (
                     <WorkflowReferenceImageCard
                       image={record}
@@ -315,6 +318,22 @@ export function WorkflowImageMetadataEditor({
                           Move later
                         </button>
                       </div>
+                    ) : null}
+
+                    {allowRemove ? (
+                      <button
+                        type="button"
+                        className="rounded-xl border border-rose-400/40 bg-[var(--bg)] px-3 py-2 text-xs font-semibold text-rose-200 transition hover:border-rose-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        onClick={() => {
+                          if (window.confirm(`Remove ${record.filename} from this item? It leaves the record when you save.`)) {
+                            onChange(sortedMetadata.filter((entry) => entry.url !== record.url));
+                          }
+                        }}
+                        disabled={disabled}
+                        aria-label={`Remove ${record.filename}`}
+                      >
+                        Remove
+                      </button>
                     ) : null}
                   </div>
                 </div>
