@@ -84,7 +84,9 @@ const ROUTES = [
   ['POST', '/api/airtable/configured-records/{source}', 'handlers/airtable/upsertConfiguredRecord.js', 'createHandler'],
   ['PATCH', '/api/airtable/configured-records/{source}/{recordId}', 'handlers/airtable/upsertConfiguredRecord.js', 'updateHandler'],
   ['DELETE', '/api/airtable/configured-records/{source}/{recordId}', 'handlers/airtable/deleteConfiguredRecord.js', 'handler'],
+  ['POST', '/api/airtable/configured-attachments/{source}/{recordId}/direct-upload/{action}', 'handlers/airtable/directWorkflowImageUpload.js', 'handler'],
   ['POST', '/api/airtable/configured-attachments/{source}/{recordId}/{fieldId}', 'handlers/airtable/uploadConfiguredAttachment.js', 'handler'],
+  ['GET', '/api/media/{key+}', 'handlers/media/getMedia.js', 'handler'],
   ['POST', '/api/ai/identify-equipment', 'handlers/ai/identifyEquipment.js', 'handler'],
   ['POST', '/api/ai/generate-description', 'handlers/ai/generateDescription.js', 'handler'],
   ['POST', '/api/gmail/send', 'handlers/gmail/send.js', 'handler'],
@@ -101,8 +103,9 @@ const ROUTES = [
 function compileRoute(routePath) {
   const pathParamNames = [];
   const pattern = routePath.replace(/\{([^}]+)\}/g, (_, name) => {
-    pathParamNames.push(name);
-    return '([^/]+)';
+    const isGreedy = name.endsWith('+');
+    pathParamNames.push(isGreedy ? name.slice(0, -1) : name);
+    return isGreedy ? '(.+)' : '([^/]+)';
   });
 
   return {
@@ -212,6 +215,9 @@ function setAwsEnv() {
 
   process.env.GOOGLE_GMAIL_ACCESS_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_ACCESS_TOKEN');
   process.env.GOOGLE_GMAIL_FROM_EMAIL = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_GMAIL_FROM_EMAIL');
+  for (const name of ['IMAGE_ARCHIVE_BACKEND', 'MEDIA_BUCKET', 'MEDIA_PUBLIC_BASE_URL', 'AWS_REGION']) {
+    if (getOptionalEnv(mergedEnv, name)) process.env[name] = getOptionalEnv(mergedEnv, name);
+  }
   process.env.GOOGLE_DRIVE_CLIENT_ID = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_DRIVE_CLIENT_ID');
   process.env.GOOGLE_DRIVE_CLIENT_SECRET = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_DRIVE_CLIENT_SECRET');
   process.env.GOOGLE_DRIVE_REFRESH_TOKEN = getOptionalEnv(mergedEnv, 'VITE_GOOGLE_DRIVE_REFRESH_TOKEN');
