@@ -34,13 +34,13 @@ function getGoogleDriveFileId(url: string): string | null {
   }
 }
 
-function getPreviewUrl(url: string): string {
+function getPreviewUrl(url: string, driveWidth = 1600): string {
   const fileId = getGoogleDriveFileId(url);
   if (!fileId) {
     return url;
   }
 
-  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`;
+  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w${driveWidth}`;
 }
 
 function applyPreviewFallback(
@@ -353,7 +353,7 @@ export function WorkflowListingImageSelector({
             loading="lazy"
             onError={(event) => applyPreviewFallback(event, attachment.url)}
             referrerPolicy="no-referrer"
-            src={getImageVariantUrl(getPreviewUrl(attachment.url), 400)}
+            src={getImageVariantUrl(getPreviewUrl(attachment.url, 400), 400)}
           />
           <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-slate-950/70 px-2 py-1 text-white">
             <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
