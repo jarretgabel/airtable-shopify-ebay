@@ -1,11 +1,14 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { RouterProvider, createBrowserRouter, useRouteError } from 'react-router-dom'
 import App from './App.tsx'
 import { AppFailureScreen } from './components/app/AppFailureScreen.tsx'
 import { getRuntimeHealthReport } from './config/runtimeHealth.ts'
 import { loadRuntimeConfig } from './config/runtimeConfig.ts'
 import './index.css'
+import { installChunkReloadHandlers, isChunkLoadError, reloadForChunkError } from './utils/chunkReload.ts'
+
+installChunkReloadHandlers();
 
 interface AppBootstrapErrorState {
   title: string;
@@ -30,6 +33,7 @@ class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBo
 
   componentDidCatch(error: Error) {
     console.error('[app] Unhandled render error.', error);
+    if (isChunkLoadError(error)) reloadForChunkError();
   }
 
   handleReload = () => {
@@ -83,10 +87,27 @@ function renderBootstrapFailure(errorState: AppBootstrapErrorState) {
   )
 }
 
+function RouteErrorScreen() {
+  const error = useRouteError()
+  React.useEffect(() => {
+    if (isChunkLoadError(error)) reloadForChunkError()
+  }, [error])
+  return (
+    <AppFailureScreen
+      title="Something went wrong"
+      message={isChunkLoadError(error) ? 'A new version of the app is available. Reloading…' : 'The page hit an unexpected error. Reload to try again.'}
+      details={error instanceof Error ? error.message : null}
+      actionLabel="Reload app"
+      onAction={() => window.location.reload()}
+    />
+  )
+}
+
 const router = createBrowserRouter([
   {
     path: '*',
     element: <App />,
+    errorElement: <RouteErrorScreen />,
   },
 ])
 
