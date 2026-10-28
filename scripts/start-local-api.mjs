@@ -282,7 +282,16 @@ function createWatcher(targetPath, onChange, watchers, watchedDirectories) {
   const stats = fs.statSync(targetPath);
 
   if (!stats.isDirectory()) {
+    // macOS reports reads of a watched file as changes; reloading re-reads it and loops, so only react to a new mtime.
+    let lastMtimeMs = stats.mtimeMs;
     const watcher = fs.watch(targetPath, () => {
+      try {
+        const { mtimeMs } = fs.statSync(targetPath);
+        if (mtimeMs === lastMtimeMs) return;
+        lastMtimeMs = mtimeMs;
+      } catch {
+        // File briefly missing during a save; reload anyway.
+      }
       onChange(targetPath);
     });
     watcher.on('error', (error) => {
