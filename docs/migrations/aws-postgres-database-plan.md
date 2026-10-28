@@ -974,6 +974,15 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 ## Plan: Shopify orders and invoices in the app (proposed 2026-10-28, not started)
 "Invoice" in Shopify means an order (plus its draft order, if you invoice by hand). Shopify does not offer a separate invoice API, so we store orders and render the invoice from them.
 
+**Update (2026-10-28): the invoices are in-store sales (Shopify POS or draft orders), not tied to an intake listing.** That changes the plan:
+- Orders are a standalone record. Line items often have no product, SKU or listing (accessories, new gear, services, custom lines). "Unmatched" is normal, never an error. `order_lines.listing_record_id` and `item_id` are nullable; matching to an intake item by SKU or product id is a bonus, not a requirement.
+- Store the sales channel (`source_name`: `pos`, `web`, draft, etc.), location, staff member, payment gateway/method (cash, card, split) and tax lines, since in-store invoices need them.
+- Webhooks: in-store sales are not guaranteed to hit the existing sold-marking logic. The order upsert runs first and independently. The sold/close handlers must skip lines with no matching listing and must not fail or retry because of them. Add `draft_orders/create|update` only if you invoice from draft orders.
+- Buyers: walk-in customers often have no email or phone, so a customer can be empty. Contacts need a nullable email (de-duplicate by email only when present, otherwise by Shopify customer id, otherwise leave the order without a contact). Use a separate `customers` table or a `type = buyer` on contacts; do not mix buyers into the seller de-duplication rule.
+- Invoice view: render from the order alone (lines, discounts, tax, tip, payments, store details). Print/PDF is the main output; no intake cost or profit unless a line matches an intake item.
+- Reports: revenue, tax and payment-method totals by day and location, split in-store versus online. Margin only for matched lines.
+- Backfill must include POS orders, which need `read_orders` and `read_all_orders`, and the POS channel must be allowed for the app.
+
 **What exists:** webhook subscriptions and the receiver for `orders-paid`, `orders-cancelled`, `refunds-create`, disputes and returns (`aws/src/handlers/shopify/receiveWebhook.ts`). They only mark the listing sold or close it. Orders are not stored. `contacts` exists for sellers only.
 
 **Steps** (each is one reviewable change; no deploy or migration without approval)
@@ -988,6 +997,6 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 9. Tests: unit tests for the mapper and webhook upsert, run on the throwaway `scratch_tests` DB.
 
 **Decisions needed**
-- Do you also use Shopify draft orders or the Shopify invoice email, or only normal checkout orders?
+- Are the in-store invoices made in Shopify POS, as draft orders, or from another tool (then they are not in Shopify at all)?
 - Should eBay orders be included later, so one Orders page covers both channels?
 - Do buyers go into the existing contacts table or a separate customers table?
