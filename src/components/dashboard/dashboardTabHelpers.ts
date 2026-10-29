@@ -41,6 +41,7 @@ export function buildDashboardSummaryMetrics(
 }
 
 export function buildDashboardSections({
+  includeOverview = true,
   showActionsSection,
   showInsightsSection,
   showSellersSection = false,
@@ -49,6 +50,7 @@ export function buildDashboardSections({
   showReportsSection = false,
   showCustomersSection = false,
 }: {
+  includeOverview?: boolean;
   showActionsSection: boolean;
   showInsightsSection: boolean;
   showSellersSection?: boolean;
@@ -57,7 +59,7 @@ export function buildDashboardSections({
   showReportsSection?: boolean;
   showCustomersSection?: boolean;
 }): DashboardSection[] {
-  const sections: DashboardSection[] = [{ id: 'overview', label: 'Overview' }];
+  const sections: DashboardSection[] = includeOverview ? [{ id: 'overview', label: 'Overview' }] : [];
 
   if (showActionsSection) {
     sections.push({ id: 'actions', label: 'Actions' });
@@ -76,3 +78,9 @@ export function buildDashboardSections({
   return sections;
 }
 
+
+export type DashboardView = 'overview' | 'sales' | 'people';
+
+export function resolveDashboardView(requested: string | null, available: DashboardView[]): DashboardView {
+  return available.find((view) => view === requested) ?? available[0] ?? 'overview';
+}

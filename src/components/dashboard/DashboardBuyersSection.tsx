@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react';
 import { dashboardAppApi } from '@/services/app-api';
-import type { BuyersSummary, DashboardDateRange } from '@/services/app-api/dashboard';
+import type { BuyerRow, BuyersSummary, DashboardDateRange } from '@/services/app-api/dashboard';
 import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { DashboardSectionPanel, DashboardSourceWarning, StatTile } from './dashboardPrimitives';
 
@@ -11,6 +11,12 @@ interface DashboardBuyersSectionProps {
 
 const loadDefaultBuyers = (filters: DashboardDateRange & { search?: string }) => dashboardAppApi.getBuyers(filters);
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+function summarizeItems(items: BuyerRow['items']): string {
+  const labels = items.map((item) => item.title || item.sku || '').filter(Boolean);
+  if (labels.length === 0) return '—';
+  return labels.length > 1 ? `${labels[0]} +${labels.length - 1} more` : labels[0];
+}
 
 export function DashboardBuyersSection({ showWarnings = false, loadBuyers = loadDefaultBuyers }: DashboardBuyersSectionProps) {
   const [summary, setSummary] = useState<BuyersSummary | null>(null);
@@ -63,7 +69,7 @@ export function DashboardBuyersSection({ showWarnings = false, loadBuyers = load
             <tr className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]">
               <th className="py-1 pr-3">Buyer</th>
               <th className="py-1 pr-3">Email</th>
-              <th className="py-1 pr-3">Items</th>
+              <th className="py-1 pr-3">Bought</th>
               <th className="py-1 pr-3">Spent</th>
               <th className="py-1">Last purchase</th>
             </tr>
@@ -74,7 +80,7 @@ export function DashboardBuyersSection({ showWarnings = false, loadBuyers = load
                 <tr className="cursor-pointer border-t border-[var(--line)]" onClick={() => setOpenKey(openKey === buyer.key ? null : buyer.key)}>
                   <td className="py-1.5 pr-3">{buyer.name ?? '—'}</td>
                   <td className="py-1.5 pr-3">{buyer.email ?? '—'}</td>
-                  <td className="py-1.5 pr-3">{buyer.itemCount}</td>
+                  <td className="py-1.5 pr-3">{summarizeItems(buyer.items)}</td>
                   <td className="py-1.5 pr-3">{currency.format(buyer.totalSpent)}</td>
                   <td className="py-1.5">{buyer.lastPurchase ?? '—'}</td>
                 </tr>
