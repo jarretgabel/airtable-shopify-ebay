@@ -1,26 +1,33 @@
 import { useEffect, useState } from 'react';
 import { dashboardAppApi } from '@/services/app-api';
-import type { SellersSummary } from '@/services/app-api/dashboard';
+import type { DashboardDateRange, SellersSummary } from '@/services/app-api/dashboard';
+import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { DashboardSectionPanel, DashboardSourceWarning, DashboardSubPanel, StatTile } from './dashboardPrimitives';
 
 interface DashboardSellersSectionProps {
   showWarnings?: boolean;
-  loadSummary?: () => Promise<SellersSummary>;
+  loadSummary?: (filters: DashboardDateRange & { search?: string }) => Promise<SellersSummary>;
 }
 
-const loadSellersSummary = () => dashboardAppApi.getSellersSummary();
+const loadSellersSummary = (filters: DashboardDateRange & { search?: string }) => dashboardAppApi.getSellersSummary(10, filters);
 
 export function DashboardSellersSection({ showWarnings = false, loadSummary = loadSellersSummary }: DashboardSellersSectionProps) {
   const [summary, setSummary] = useState<SellersSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    loadSummary()
-      .then((result) => { if (!cancelled) setSummary(result); })
-      .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : 'Could not load sellers.'); });
-    return () => { cancelled = true; };
-  }, [loadSummary]);
+    setError(null);
+    const timer = setTimeout(() => {
+      loadSummary({ search: search.trim(), from, to })
+        .then((result) => { if (!cancelled) setSummary(result); })
+        .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : 'Could not load sellers.'); });
+    }, search ? 300 : 0);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [loadSummary, search, from, to]);
 
   // The summary depends on the Postgres database, so quietly omit the card when it is unavailable.
   if (error) {
@@ -39,6 +46,14 @@ export function DashboardSellersSection({ showWarnings = false, loadSummary = lo
         <StatTile label="With items" value={summary.totals.sellersWithItems} />
         <StatTile label="Repeat sellers" value={summary.totals.repeatSellers} />
         <StatTile label="Mailing list" value={summary.totals.mailingListOptIns} />
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-[0.8rem] text-[var(--muted)]">
+        <input type="search" aria-label="Search sellers" placeholder="Search sellers by email, name or location" className={`${tabFormControlBaseClass} !w-auto min-w-[16rem] flex-1`} value={search} onChange={(event) => setSearch(event.target.value)} />
+        <span>Last arrival</span>
+        <input type="date" aria-label="Arrived from" className={`${tabFormControlBaseClass} !w-auto`} value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} />
+        <span>to</span>
+        <input type="date" aria-label="Arrived to" className={`${tabFormControlBaseClass} !w-auto`} value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} />
+        {search || from || to ? <button type="button" className="underline" onClick={() => { setSearch(''); setFrom(''); setTo(''); }}>Clear</button> : null}
       </div>
       <DashboardSubPanel title="Top sellers by items">
         <table className="w-full text-left text-[0.82rem] text-[var(--ink)]">

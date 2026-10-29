@@ -3,7 +3,7 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getPostgresPool } from '../../db/pool.js';
 import { getFinanceSummary } from '../../db/finance.js';
 import { HttpError, getStatusCode, toApiErrorBody } from '../../shared/errors.js';
-import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
+import { getOptionalQueryParam, getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError } from '../../shared/logging.js';
 
 export const FINANCE_ROLES = ['admin', 'owner', 'developer'];
@@ -19,7 +19,14 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         retryable: false,
       });
     }
-    return jsonOk(await getFinanceSummary(getPostgresPool()), { origin });
+    const from = getOptionalQueryParam(event, 'from');
+    const to = getOptionalQueryParam(event, 'to');
+    for (const value of [from, to]) {
+      if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        throw new HttpError(400, 'from and to must be YYYY-MM-DD dates.', { service: 'dashboard', code: 'INVALID_DATE', retryable: false });
+      }
+    }
+    return jsonOk(await getFinanceSummary(getPostgresPool(), { from, to }), { origin });
   } catch (error) {
     logError('Failed to load cost and earnings', error);
     return jsonError(getStatusCode(error), toApiErrorBody('dashboard', error, 'FINANCE_FAILED'), { origin });

@@ -13,8 +13,15 @@ export interface SellersSummary {
   topSellers: SellerSummaryRow[];
 }
 
-export function getSellersSummary(limit = 10): Promise<SellersSummary> {
-  return getJson<SellersSummary>('/api/dashboard/sellers-summary', { limit });
+export interface DashboardDateRange { from?: string; to?: string }
+
+export function getSellersSummary(limit = 10, filters: DashboardDateRange & { search?: string } = {}): Promise<SellersSummary> {
+  return getJson<SellersSummary>('/api/dashboard/sellers-summary', {
+    limit,
+    search: filters.search || undefined,
+    from: filters.from || undefined,
+    to: filters.to || undefined,
+  });
 }
 
 export interface RecordHistoryEntry {
@@ -46,8 +53,8 @@ export interface FinanceSummary {
   soldWithoutSalePrice: number;
 }
 
-export function getFinance(): Promise<FinanceSummary> {
-  return getJson<FinanceSummary>('/api/dashboard/finance');
+export function getFinance(range: DashboardDateRange = {}): Promise<FinanceSummary> {
+  return getJson<FinanceSummary>('/api/dashboard/finance', { from: range.from || undefined, to: range.to || undefined });
 }
 
 export type InteractionKind = 'email' | 'call' | 'text' | 'visit' | 'note' | 'other';

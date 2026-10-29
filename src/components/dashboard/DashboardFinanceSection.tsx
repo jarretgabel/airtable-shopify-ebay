@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { dashboardAppApi } from '@/services/app-api';
-import type { FinanceSummary } from '@/services/app-api/dashboard';
+import type { DashboardDateRange, FinanceSummary } from '@/services/app-api/dashboard';
+import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { DashboardSectionPanel, DashboardSourceWarning, DashboardSubPanel } from './dashboardPrimitives';
 
 interface DashboardFinanceSectionProps {
   showWarnings?: boolean;
-  loadFinance?: () => Promise<FinanceSummary>;
+  loadFinance?: (range: DashboardDateRange) => Promise<FinanceSummary>;
 }
 
-const loadDefaultFinance = () => dashboardAppApi.getFinance();
+const loadDefaultFinance = (range: DashboardDateRange) => dashboardAppApi.getFinance(range);
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
 function Stat({ label, value, detail }: { label: string; value: string; detail?: string }) {
@@ -24,14 +25,17 @@ function Stat({ label, value, detail }: { label: string; value: string; detail?:
 export function DashboardFinanceSection({ showWarnings = false, loadFinance = loadDefaultFinance }: DashboardFinanceSectionProps) {
   const [finance, setFinance] = useState<FinanceSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    loadFinance()
+    setError(null);
+    loadFinance({ from, to })
       .then((result) => { if (!cancelled) setFinance(result); })
       .catch((reason: unknown) => { if (!cancelled) setError(reason instanceof Error ? reason.message : 'Could not load cost and earnings.'); });
     return () => { cancelled = true; };
-  }, [loadFinance]);
+  }, [loadFinance, from, to]);
 
   if (error) {
     return showWarnings ? (
@@ -46,6 +50,14 @@ export function DashboardFinanceSection({ showWarnings = false, loadFinance = lo
 
   return (
     <DashboardSectionPanel id="finance" title="Cost & Earnings">
+      <div className="flex flex-wrap items-center gap-2 text-[0.8rem] text-[var(--muted)]">
+        <span>Sold between</span>
+        <input type="date" aria-label="Sold from" className={`${tabFormControlBaseClass} !w-auto`} value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} />
+        <span>and</span>
+        <input type="date" aria-label="Sold to" className={`${tabFormControlBaseClass} !w-auto`} value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} />
+        {from || to ? <button type="button" className="underline" onClick={() => { setFrom(''); setTo(''); }}>Clear</button> : null}
+        {from || to ? <span>Only items with a recorded sold date are included.</span> : null}
+      </div>
       <DashboardSubPanel title="Cost">
         <div className="grid gap-3 sm:grid-cols-2">
           <Stat label="Cost of inventory on hand" value={currency.format(costOnHand.cost)} detail={`${costOnHand.items} items`} />

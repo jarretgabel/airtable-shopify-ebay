@@ -801,7 +801,7 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
 
       // Sale side effects finished; advance the workflow like the manual Mark Sold button does.
       if (normalizedEvent.topic === 'ORDERS_PAID') {
-        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: getLineItemSalePrice(payload, firstProductId), channel: 'Shopify' }));
+        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: getLineItemSalePrice(payload, firstProductId), channel: 'Shopify', soldAt: normalizedEvent.occurredAt || new Date().toISOString() }));
         Object.assign(updateFields, buildSoldReadyFields(currentRecord.fields, normalizedEvent.occurredAt || new Date().toISOString()));
       }
 

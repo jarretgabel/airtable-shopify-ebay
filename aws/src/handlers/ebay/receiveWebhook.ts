@@ -402,7 +402,7 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
 
       // Sale side effects finished; advance the workflow like the manual Mark Sold button does.
       if (shouldTriggerCrossChannelClose(normalizedEvent)) {
-        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: normalizedEvent.salePrice, channel: 'eBay' }));
+        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: normalizedEvent.salePrice, channel: 'eBay', soldAt: normalizedEvent.occurredAt || new Date().toISOString() }));
         Object.assign(updateFields, buildSoldReadyFields(currentRecord.fields, normalizedEvent.occurredAt || new Date().toISOString()));
       }
 
