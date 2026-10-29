@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { canAccessCommerceDashboard, canAccessWorkflowDashboard, hasFullAccessRole, isDeveloperRole } from '@/auth/roleAccess';
+import { canAccessCommerceDashboard, canAccessWorkflowDashboard, canViewFinance, hasFullAccessRole, isDeveloperRole } from '@/auth/roleAccess';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
+import { DashboardFinanceSection } from '@/components/dashboard/DashboardFinanceSection';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
 import { getDashboardDegradedSources, hasDashboardPartialData } from '@/components/dashboard/dashboardSourceHealth';
 import { DashboardCustomersSection } from '@/components/dashboard/DashboardCustomersSection';
@@ -119,6 +120,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
         />
       ) : null}
       {hasFullAccessRole(workflow.currentUserRole) ? <DashboardSellersSection showWarnings={isDeveloper} /> : null}
+      {canViewFinance(workflow.currentUserRole) ? <DashboardFinanceSection showWarnings={isDeveloper} /> : null}
       {hasFullAccessRole(workflow.currentUserRole) ? <DashboardReportsSection showWarnings={isDeveloper} /> : null}
       {hasFullAccessRole(workflow.currentUserRole) ? <DashboardCustomersSection showWarnings={isDeveloper} /> : null}
     </AppPageLayout>

@@ -39,6 +39,17 @@ export function getReports(): Promise<ReportsSummary> {
   return getJson<ReportsSummary>('/api/dashboard/reports');
 }
 
+export interface FinanceSummary {
+  costOnHand: { items: number; cost: number };
+  sold: { items: number; cost: number };
+  earnings: { itemsWithSalePrice: number; revenue: number; cost: number; profit: number; marginPct: number | null };
+  soldWithoutSalePrice: number;
+}
+
+export function getFinance(): Promise<FinanceSummary> {
+  return getJson<FinanceSummary>('/api/dashboard/finance');
+}
+
 export type InteractionKind = 'email' | 'call' | 'text' | 'visit' | 'note' | 'other';
 
 export interface CrmContactRow { id: string; email: string; name: string | null; location: string | null; itemCount: number; openFollowUps: number }

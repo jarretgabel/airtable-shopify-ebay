@@ -21,6 +21,7 @@ const WATCH_TARGETS = [
 const ROUTES = [
   ['GET', '/api/dashboard/sellers-summary', 'handlers/dashboard/getSellersSummary.js', 'handler'],
   ['GET', '/api/dashboard/reports', 'handlers/dashboard/getReports.js', 'handler'],
+  ['GET', '/api/dashboard/finance', 'handlers/dashboard/getFinance.js', 'handler'],
   ['GET', '/api/dashboard/crm/contacts', 'handlers/crm/listContacts.js', 'handler'],
   ['GET', '/api/dashboard/crm/contacts/{contactId}', 'handlers/crm/getContact.js', 'handler'],
   ['POST', '/api/dashboard/crm/contacts/{contactId}/interactions', 'handlers/crm/addInteraction.js', 'handler'],

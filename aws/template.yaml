@@ -1304,6 +1304,21 @@ Resources:
             Method: GET
             Path: /api/dashboard/reports
 
+  DashboardFinanceFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/dashboard/getFinance.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/dashboard/finance
+
   CrmListContactsFunction:
     Type: AWS::Serverless::Function
     Metadata:

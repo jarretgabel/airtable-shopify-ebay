@@ -59,6 +59,11 @@ export function hasFullAccessRole(role: UserRole): boolean {
   return role === 'admin' || role === 'owner' || role === 'developer';
 }
 
+// Cost and earnings are narrower than full access: the owner role does not see them.
+export function canViewFinance(role: UserRole): boolean {
+  return role === 'admin' || role === 'developer';
+}
+
 export function isDeveloperRole(role: UserRole): boolean {
   return role === 'developer';
 }

@@ -14,6 +14,7 @@ export interface EbayNotificationPublicKey {
 export interface EbayOrderLineItem {
   legacyItemId?: string;
   sku?: string;
+  salePrice?: number;
 }
 
 export interface EbayNotificationEnvelope {
@@ -35,6 +36,7 @@ export interface MappedEbayOrderEvent {
   sku: string;
   orderId: string;
   occurredAt: string;
+  salePrice?: number;
 }
 
 export type MappedEbayNotification =
@@ -137,9 +139,20 @@ export async function mapEbayNotification(
   const occurredAt = trim(envelope.notification?.eventDate);
   // The notification already lists each line item's listing id; the Fulfillment API is only needed when it does not.
   const inlineItems = (data?.order?.orderLineItems ?? []).map((item) => ({ legacyItemId: trim(item.listingId), sku: '' }));
-  const lineItems = inlineItems.some((item) => item.legacyItemId) ? inlineItems : await dependencies.getOrderLineItems(orderId);
+  const hasInlineIds = inlineItems.some((item) => item.legacyItemId);
+  let lineItems: EbayOrderLineItem[];
+  if (hasInlineIds) {
+    // Inline items carry no price. Looking it up is best effort: a failure must not block the sale itself.
+    const priced = await dependencies.getOrderLineItems(orderId).catch((): EbayOrderLineItem[] => []);
+    lineItems = inlineItems.map((item) => {
+      const match = priced.find((candidate) => trim(candidate.legacyItemId) === item.legacyItemId);
+      return match?.salePrice !== undefined ? { ...item, salePrice: match.salePrice } : item;
+    });
+  } else {
+    lineItems = await dependencies.getOrderLineItems(orderId);
+  }
   const events = lineItems
-    .map((item) => ({ listingId: trim(item.legacyItemId), sku: trim(item.sku) }))
+    .map((item) => ({ listingId: trim(item.legacyItemId), sku: trim(item.sku), ...(item.salePrice !== undefined ? { salePrice: item.salePrice } : {}) }))
     .filter((item) => item.listingId || item.sku)
     .map((item): MappedEbayOrderEvent => ({ eventType: 'order.created', ...item, orderId, occurredAt }));
 

@@ -26,6 +26,13 @@ interface ListingApprovalSoldReadyPanelProps {
   ) => Promise<void>;
 }
 
+function formatSalePrice(value: unknown): string {
+  const amount = typeof value === 'number' ? value : Number(String(value ?? '').replace(/[$,]/g, ''));
+  return value !== undefined && value !== null && String(value).trim() !== '' && Number.isFinite(amount)
+    ? amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+    : 'Not recorded';
+}
+
 function getWorkflowStatusLabel(value: unknown): string {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : 'Unknown';
 }
@@ -221,6 +228,8 @@ export function ListingApprovalSoldReadyPanel({
         fields={[
           { label: 'Action Status', value: displayValue(actionStatus) },
           { label: 'Sold Ready', value: formatTimestamp(workflowRecord.fields['Sold Ready To Ship At']) },
+          { label: 'Sale Price', value: formatSalePrice(workflowRecord.fields['Sale Price']) },
+          { label: 'Sold Via', value: displayValue(workflowRecord.fields['Sold Via']) },
           { label: 'Shipped', value: formatTimestamp(workflowRecord.fields['Shipped At']) },
           { label: 'Ship Notes Updated', value: formatTimestamp(workflowRecord.fields['Shipment Follow-Through Updated At']) },
           { label: 'Shipping Method', value: displayValue(workflowRecord.fields['Shipping Method']) },

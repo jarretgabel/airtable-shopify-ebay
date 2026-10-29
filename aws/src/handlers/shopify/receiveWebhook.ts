@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import type { ShopifyWebhookSubscriptionKey, ShopifyWebhookTopic } from '../../providers/shopify/client.js';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
+import { buildSalePriceFields } from '../../shared/contracts/salePrice.js';
 import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { closeEbayListingWhenSoldOnShopify, retainShopifyProductWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
@@ -27,6 +28,9 @@ interface ShopifyOrderReference {
 interface ShopifyLineItem {
   product_id?: number | string;
   id?: number | string;
+  price?: number | string;
+  quantity?: number | string;
+  total_discount?: number | string;
 }
 
 interface ShopifyMoneyAmount {
@@ -268,6 +272,20 @@ function getFirstProductId(payload: ShopifyWebhookPayload): string {
 
   const productId = payload.line_items[0].product_id;
   return typeof productId === 'number' ? String(productId) : (productId?.trim() || '');
+}
+
+// Item price after line discounts, excluding tax and shipping.
+function getLineItemSalePrice(payload: ShopifyWebhookPayload, productId: string): number | null {
+  const item = (payload.line_items ?? []).find((candidate) => String(candidate.product_id ?? '').trim() === productId);
+  if (!item) {
+    return null;
+  }
+  const price = parseNumericValue(item.price);
+  if (price === null) {
+    return null;
+  }
+  const quantity = parseNumericValue(item.quantity) ?? 1;
+  return price * quantity - (parseNumericValue(item.total_discount) ?? 0);
 }
 
 function getFieldValue(fields: Record<string, unknown>, fieldNames: string[]): string {
@@ -783,6 +801,7 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
 
       // Sale side effects finished; advance the workflow like the manual Mark Sold button does.
       if (normalizedEvent.topic === 'ORDERS_PAID') {
+        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: getLineItemSalePrice(payload, firstProductId), channel: 'Shopify' }));
         Object.assign(updateFields, buildSoldReadyFields(currentRecord.fields, normalizedEvent.occurredAt || new Date().toISOString()));
       }
 

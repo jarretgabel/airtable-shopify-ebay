@@ -821,17 +821,21 @@ export async function getNotificationPublicKey(keyId: string): Promise<{ key: st
   return value;
 }
 
-export async function getOrderLineItems(orderId: string): Promise<Array<{ legacyItemId: string; sku: string }>> {
+export async function getOrderLineItems(orderId: string): Promise<Array<{ legacyItemId: string; sku: string; salePrice?: number }>> {
   const token = await getValidUserToken();
-  const order = await ebayJsonRequest<{ lineItems?: Array<{ legacyItemId?: string; sku?: string }> }>(
+  const order = await ebayJsonRequest<{ lineItems?: Array<{ legacyItemId?: string; sku?: string; lineItemCost?: { value?: string } }> }>(
     `/sell/fulfillment/v1/order/${encodeURIComponent(orderId)}`,
     token,
   );
 
-  return (order.lineItems ?? []).map((item) => ({
-    legacyItemId: cleanOptional(item.legacyItemId),
-    sku: cleanOptional(item.sku),
-  }));
+  return (order.lineItems ?? []).map((item) => {
+    const cost = Number(item.lineItemCost?.value);
+    return {
+      legacyItemId: cleanOptional(item.legacyItemId),
+      sku: cleanOptional(item.sku),
+      ...(Number.isFinite(cost) ? { salePrice: cost } : {}),
+    };
+  });
 }
 
 export async function deleteWebhookSubscription(subscriptionId: string, requestUrl?: string): Promise<void> {

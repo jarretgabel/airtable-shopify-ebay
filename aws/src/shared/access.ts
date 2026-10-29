@@ -8,6 +8,8 @@ import { requireSecret } from './secrets.js';
 
 interface RouteAccessRequirement {
   adminOnly?: boolean;
+  // Exact roles allowed, for data narrower than the full-access roles (for example cost and earnings).
+  roles?: string[];
   anyPage?: AppPage[];
 }
 
@@ -139,6 +141,14 @@ export async function requireRouteAccess(
 
   if (requirement.adminOnly) {
     requireAdmin(user);
+  }
+
+  if (requirement.roles && !requirement.roles.includes(user.role)) {
+    throw new HttpError(403, 'Your role cannot view this data.', {
+      service: 'auth',
+      code: 'AUTH_ROLE_FORBIDDEN',
+      retryable: false,
+    });
   }
 
   if (requirement.anyPage && requirement.anyPage.length > 0) {
