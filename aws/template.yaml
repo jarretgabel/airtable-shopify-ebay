@@ -611,6 +611,11 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/shopify/receiveWebhook.handler
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: ses:SendEmail
+              Resource: '*'
       Events:
         ApiEvent:
           Type: HttpApi
@@ -806,6 +811,11 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/ebay/receiveWebhook.handler
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: ses:SendEmail
+              Resource: '*'
       Events:
         ApiEvent:
           Type: HttpApi
@@ -821,6 +831,11 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/ebay/receiveNotification.handler
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: ses:SendEmail
+              Resource: '*'
       Events:
         ChallengeEvent:
           Type: HttpApi

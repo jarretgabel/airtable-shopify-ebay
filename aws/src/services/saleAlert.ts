@@ -1,4 +1,4 @@
-import { sendPlainTextEmail } from '../providers/gmail/client.js';
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { getOptionalSecret } from '../shared/secrets.js';
 import { logError } from '../shared/logging.js';
 
@@ -65,7 +65,12 @@ export async function sendSaleAlert(alert: SaleAlert): Promise<void> {
       appBaseUrl: getOptionalSecret('APP_BASE_URL') ?? '',
       shopDomain: getOptionalSecret('SHOPIFY_STORE_DOMAIN') ?? '',
     });
-    await sendPlainTextEmail(recipients, subject, body);
+    const addresses = recipients.split(',').map((value) => value.trim()).filter(Boolean);
+    await new SESv2Client({}).send(new SendEmailCommand({
+      FromEmailAddress: addresses[0],
+      Destination: { ToAddresses: addresses },
+      Content: { Simple: { Subject: { Data: subject }, Body: { Text: { Data: body } } } },
+    }));
   } catch (error) {
     logError('Sale alert email failed', error);
   }
