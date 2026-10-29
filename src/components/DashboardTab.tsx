@@ -3,6 +3,7 @@ import { canAccessCommerceDashboard, canAccessWorkflowDashboard, canViewFinance,
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
+import { DashboardBuyersSection } from '@/components/dashboard/DashboardBuyersSection';
 import { DashboardFinanceSection } from '@/components/dashboard/DashboardFinanceSection';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
 import { getDashboardDegradedSources, hasDashboardPartialData } from '@/components/dashboard/dashboardSourceHealth';
@@ -61,6 +62,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
       showInsightsSection,
       showSellersSection: hasFullAccessRole(workflow.currentUserRole),
       showFinanceSection: canViewFinance(workflow.currentUserRole),
+      showBuyersSection: canViewFinance(workflow.currentUserRole),
       showReportsSection: hasFullAccessRole(workflow.currentUserRole),
       showCustomersSection: hasFullAccessRole(workflow.currentUserRole),
     }),
@@ -128,6 +130,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
       ) : null}
       {hasFullAccessRole(workflow.currentUserRole) ? <DashboardSellersSection showWarnings={isDeveloper} /> : null}
       {canViewFinance(workflow.currentUserRole) ? <DashboardFinanceSection showWarnings={isDeveloper} /> : null}
+      {canViewFinance(workflow.currentUserRole) ? <DashboardBuyersSection showWarnings={isDeveloper} /> : null}
       {hasFullAccessRole(workflow.currentUserRole) ? <DashboardReportsSection showWarnings={isDeveloper} /> : null}
       {hasFullAccessRole(workflow.currentUserRole) ? <DashboardCustomersSection showWarnings={isDeveloper} /> : null}
     </AppPageLayout>

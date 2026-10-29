@@ -67,6 +67,7 @@ export type DashboardSectionId =
   | 'insights'
   | 'sellers'
   | 'finance'
+  | 'buyers'
   | 'reports'
   | 'customers'
   | 'inventory'

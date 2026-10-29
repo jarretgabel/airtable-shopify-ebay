@@ -53,6 +53,14 @@ export interface FinanceSummary {
   soldWithoutSalePrice: number;
 }
 
+export interface BuyerItem { recordId: string; sku: string | null; title: string | null; price: number | null; soldAt: string | null; soldVia: string | null; order: string | null }
+export interface BuyerRow { key: string; name: string | null; email: string | null; phone: string | null; shipTo: string | null; itemCount: number; totalSpent: number; lastPurchase: string | null; items: BuyerItem[] }
+export interface BuyersSummary { totals: { buyers: number; items: number; revenue: number }; buyers: BuyerRow[] }
+
+export function getBuyers(filters: DashboardDateRange & { search?: string } = {}): Promise<BuyersSummary> {
+  return getJson<BuyersSummary>('/api/dashboard/buyers', { search: filters.search || undefined, from: filters.from || undefined, to: filters.to || undefined });
+}
+
 export function getFinance(range: DashboardDateRange = {}): Promise<FinanceSummary> {
   return getJson<FinanceSummary>('/api/dashboard/finance', { from: range.from || undefined, to: range.to || undefined });
 }

@@ -45,6 +45,7 @@ export function buildDashboardSections({
   showInsightsSection,
   showSellersSection = false,
   showFinanceSection = false,
+  showBuyersSection = false,
   showReportsSection = false,
   showCustomersSection = false,
 }: {
@@ -52,6 +53,7 @@ export function buildDashboardSections({
   showInsightsSection: boolean;
   showSellersSection?: boolean;
   showFinanceSection?: boolean;
+  showBuyersSection?: boolean;
   showReportsSection?: boolean;
   showCustomersSection?: boolean;
 }): DashboardSection[] {
@@ -67,6 +69,7 @@ export function buildDashboardSections({
 
   if (showSellersSection) sections.push({ id: 'sellers', label: 'Sellers' });
   if (showFinanceSection) sections.push({ id: 'finance', label: 'Cost & Earnings' });
+  if (showBuyersSection) sections.push({ id: 'buyers', label: 'Buyers' });
   if (showReportsSection) sections.push({ id: 'reports', label: 'Reports' });
   if (showCustomersSection) sections.push({ id: 'customers', label: 'Customers' });
 
