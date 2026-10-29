@@ -971,6 +971,16 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - `pg-test` stack deleted (2026-10-27). Backups: RDS snapshot `pg-test-final-20261027`, and bucket copies in `s3://airtable-shopify-ebay-pg-test-archive-981750770208` (`media/` 1,885 objects, `backup/` 31 objects). Staging was not touched.
 - `DataBackend` / `DATA_BACKEND` now defaults to `postgres` (template and `backend.ts`); staging already set it explicitly. A stack that still needs Airtable must set `airtable` explicitly (the `airtable-shopify-ebay-dev` stack has no explicit value and was last updated in June). Staging Lambda logs over 7 days showed no `airtable.com` calls, read fallbacks or outbox activity.
 
+## Sale alerts, sale data and Cost & Earnings (2026-10-28, staging)
+
+- **Sale alert email:** `saleAlert.ts` sends through SES (sender and recipient from stack param `SaleAlertEmail`, links from `AppBaseUrl`). It fires for Shopify and eBay sale webhooks, with cross-channel results. Best effort: a failure is logged only. The identity must be verified in `us-east-1`.
+- **Sale data captured by the webhooks** (first value wins, written to the listing record): `Sale Price`, `Sold Via`, `Sold At` (date), `Buyer Name`, `Buyer Email`, `Buyer Phone`, `Buyer Ship To`, `Buyer Username` (eBay), `Sale Order`. Each needs a row in `airtable_fields` (inserted on staging). eBay price and buyer come from the Fulfillment API order lookup; Shopify buyer fields need protected customer data access and may be blank.
+- **Buyers are not in `contacts`** (contacts are sellers). A customers table belongs to the orders and invoices plan below.
+- **Cost & Earnings** (dashboard, admin/owner/developer only): `GET /api/dashboard/finance?from&to`. Cost is the intake `Cost`; earnings use `Sale Price`. The date range filters on `Sold At`; items without one are excluded from a dated range.
+- **Sellers** dashboard section gained search and a last-arrival date range. The dashboard nav lists every section.
+- **Backfill (staging, direct SQL):** Shopify 12022 and 12049 and eBay 11276 (all Shipped) have sale price, date and buyer. Other eBay SKU matches sit in non-sold statuses and were not written. Most Shopify orders have no SKU and cannot be matched.
+- **Open:** verify on the first real sale; mark the SES alert "not junk".
+
 ## Plan: Shopify orders and invoices in the app (proposed 2026-10-28, not started)
 "Invoice" in Shopify means an order (plus its draft order, if you invoice by hand). Shopify does not offer a separate invoice API, so we store orders and render the invoice from them.
 
