@@ -6,7 +6,7 @@ import { HttpError, getStatusCode, toApiErrorBody } from '../../shared/errors.js
 import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError } from '../../shared/logging.js';
 
-export const FINANCE_ROLES = ['admin', 'developer'];
+export const FINANCE_ROLES = ['admin', 'owner', 'developer'];
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
