@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
-import { buildSalePriceFields } from '../../shared/contracts/salePrice.js';
+import { buildSalePriceFields, parseSaleBuyer, type SaleBuyer } from '../../shared/contracts/salePrice.js';
 import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { retainShopifyProductWhenSoldOnEbay } from '../../services/crossChannelClose.js';
 import { sendSaleAlert } from '../../services/saleAlert.js';
@@ -22,6 +22,7 @@ interface EbayWebhookPayload {
   refundAmount?: number | string;
   refundReason?: string;
   salePrice?: number | string;
+  buyer?: unknown;
   reason?: string;
   note?: string;
   amount?: {
@@ -41,6 +42,7 @@ interface NormalizedEbayWebhookEvent {
   refundAmount: number | null;
   refundReason: string;
   salePrice: number | null;
+  buyer?: SaleBuyer;
 }
 
 interface EbayWebhookDependencies {
@@ -140,6 +142,7 @@ function normalizeWebhookEvent(payload: EbayWebhookPayload): NormalizedEbayWebho
     refundAmount: refundAmount !== null ? normalizeCurrencyAmount(refundAmount) : null,
     refundReason,
     salePrice: parseNumericValue(payload.salePrice),
+    buyer: parseSaleBuyer(payload.buyer),
   };
 }
 
@@ -402,7 +405,7 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
 
       // Sale side effects finished; advance the workflow like the manual Mark Sold button does.
       if (shouldTriggerCrossChannelClose(normalizedEvent)) {
-        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: normalizedEvent.salePrice, channel: 'eBay', soldAt: normalizedEvent.occurredAt || new Date().toISOString() }));
+        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: normalizedEvent.salePrice, channel: 'eBay', soldAt: normalizedEvent.occurredAt || new Date().toISOString(), buyer: normalizedEvent.buyer }));
         Object.assign(updateFields, buildSoldReadyFields(currentRecord.fields, normalizedEvent.occurredAt || new Date().toISOString()));
       }
 

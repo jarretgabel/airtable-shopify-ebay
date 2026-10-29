@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import type { ShopifyWebhookSubscriptionKey, ShopifyWebhookTopic } from '../../providers/shopify/client.js';
 import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
-import { buildSalePriceFields } from '../../shared/contracts/salePrice.js';
+import { buildSalePriceFields, formatShipTo, parseSaleBuyer, type SaleBuyer } from '../../shared/contracts/salePrice.js';
 import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { closeEbayListingWhenSoldOnShopify, retainShopifyProductWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
@@ -54,7 +54,26 @@ interface ShopifyRefundTransaction {
   status?: string;
 }
 
+interface ShopifyAddress {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  province_code?: string;
+  zip?: string;
+  country_code?: string;
+  phone?: string;
+}
+
 interface ShopifyWebhookPayload {
+  email?: string;
+  contact_email?: string;
+  phone?: string;
+  customer?: { first_name?: string; last_name?: string; email?: string; phone?: string };
+  shipping_address?: ShopifyAddress;
+  billing_address?: ShopifyAddress;
   id?: number | string;
   admin_graphql_api_id?: string;
   name?: string;
@@ -275,6 +294,18 @@ function getFirstProductId(payload: ShopifyWebhookPayload): string {
 }
 
 // Item price after line discounts, excluding tax and shipping.
+function getSaleBuyer(payload: ShopifyWebhookPayload): SaleBuyer | undefined {
+  const address = payload.shipping_address ?? payload.billing_address;
+  const customerName = [payload.customer?.first_name, payload.customer?.last_name].filter(Boolean).join(' ');
+  return parseSaleBuyer({
+    name: address?.name || [address?.first_name, address?.last_name].filter(Boolean).join(' ') || customerName,
+    email: payload.email || payload.contact_email || payload.customer?.email,
+    phone: payload.phone || payload.customer?.phone || address?.phone,
+    shipTo: formatShipTo([address?.address1, address?.address2, address?.city, address?.province_code, address?.zip, address?.country_code]),
+    orderRef: payload.name || (payload.id !== undefined ? String(payload.id) : undefined),
+  });
+}
+
 function getLineItemSalePrice(payload: ShopifyWebhookPayload, productId: string): number | null {
   const item = (payload.line_items ?? []).find((candidate) => String(candidate.product_id ?? '').trim() === productId);
   if (!item) {
@@ -801,7 +832,7 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
 
       // Sale side effects finished; advance the workflow like the manual Mark Sold button does.
       if (normalizedEvent.topic === 'ORDERS_PAID') {
-        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: getLineItemSalePrice(payload, firstProductId), channel: 'Shopify', soldAt: normalizedEvent.occurredAt || new Date().toISOString() }));
+        Object.assign(updateFields, buildSalePriceFields(currentRecord.fields, { price: getLineItemSalePrice(payload, firstProductId), channel: 'Shopify', soldAt: normalizedEvent.occurredAt || new Date().toISOString(), buyer: getSaleBuyer(payload) }));
         Object.assign(updateFields, buildSoldReadyFields(currentRecord.fields, normalizedEvent.occurredAt || new Date().toISOString()));
       }
 

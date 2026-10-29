@@ -1,3 +1,4 @@
+import { formatShipTo, parseSaleBuyer, type SaleBuyer } from '../../shared/contracts/salePrice.js';
 import { createHash } from 'node:crypto';
 import { HttpError } from '../../shared/errors.js';
 import { getEbayShippingPolicyWeightError } from '../../shared/contracts/ebayShippingPolicy.js';
@@ -821,12 +822,37 @@ export async function getNotificationPublicKey(keyId: string): Promise<{ key: st
   return value;
 }
 
-export async function getOrderLineItems(orderId: string): Promise<Array<{ legacyItemId: string; sku: string; salePrice?: number }>> {
+export async function getOrderLineItems(orderId: string): Promise<Array<{ legacyItemId: string; sku: string; salePrice?: number; buyer?: SaleBuyer }>> {
   const token = await getValidUserToken();
-  const order = await ebayJsonRequest<{ lineItems?: Array<{ legacyItemId?: string; sku?: string; lineItemCost?: { value?: string } }> }>(
+  const order = await ebayJsonRequest<{
+    legacyOrderId?: string;
+    buyer?: { username?: string };
+    fulfillmentStartInstructions?: Array<{
+      shippingStep?: {
+        shipTo?: {
+          fullName?: string;
+          email?: string;
+          primaryPhone?: { phoneNumber?: string };
+          contactAddress?: { addressLine1?: string; addressLine2?: string; city?: string; stateOrProvince?: string; postalCode?: string; countryCode?: string };
+        };
+      };
+    }>;
+    lineItems?: Array<{ legacyItemId?: string; sku?: string; lineItemCost?: { value?: string } }>;
+  }>(
     `/sell/fulfillment/v1/order/${encodeURIComponent(orderId)}`,
     token,
   );
+
+  const shipTo = order.fulfillmentStartInstructions?.[0]?.shippingStep?.shipTo;
+  const address = shipTo?.contactAddress;
+  const buyer = parseSaleBuyer({
+    name: shipTo?.fullName,
+    email: shipTo?.email,
+    phone: shipTo?.primaryPhone?.phoneNumber,
+    shipTo: formatShipTo([address?.addressLine1, address?.addressLine2, address?.city, address?.stateOrProvince, address?.postalCode, address?.countryCode]),
+    username: order.buyer?.username,
+    orderRef: order.legacyOrderId || orderId,
+  });
 
   return (order.lineItems ?? []).map((item) => {
     const cost = Number(item.lineItemCost?.value);
@@ -834,6 +860,7 @@ export async function getOrderLineItems(orderId: string): Promise<Array<{ legacy
       legacyItemId: cleanOptional(item.legacyItemId),
       sku: cleanOptional(item.sku),
       ...(Number.isFinite(cost) ? { salePrice: cost } : {}),
+      ...(buyer ? { buyer } : {}),
     };
   });
 }

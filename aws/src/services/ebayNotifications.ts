@@ -1,3 +1,4 @@
+import type { SaleBuyer } from '../shared/contracts/salePrice.js';
 import { createHash, createVerify } from 'node:crypto';
 import { HttpError } from '../shared/errors.js';
 
@@ -15,6 +16,7 @@ export interface EbayOrderLineItem {
   legacyItemId?: string;
   sku?: string;
   salePrice?: number;
+  buyer?: SaleBuyer;
 }
 
 export interface EbayNotificationEnvelope {
@@ -37,6 +39,7 @@ export interface MappedEbayOrderEvent {
   orderId: string;
   occurredAt: string;
   salePrice?: number;
+  buyer?: SaleBuyer;
 }
 
 export type MappedEbayNotification =
@@ -146,13 +149,13 @@ export async function mapEbayNotification(
     const priced = await dependencies.getOrderLineItems(orderId).catch((): EbayOrderLineItem[] => []);
     lineItems = inlineItems.map((item) => {
       const match = priced.find((candidate) => trim(candidate.legacyItemId) === item.legacyItemId);
-      return match?.salePrice !== undefined ? { ...item, salePrice: match.salePrice } : item;
+      return match ? { ...item, ...(match.salePrice !== undefined ? { salePrice: match.salePrice } : {}), ...(match.buyer ? { buyer: match.buyer } : {}) } : item;
     });
   } else {
     lineItems = await dependencies.getOrderLineItems(orderId);
   }
   const events = lineItems
-    .map((item) => ({ listingId: trim(item.legacyItemId), sku: trim(item.sku), ...(item.salePrice !== undefined ? { salePrice: item.salePrice } : {}) }))
+    .map((item) => ({ listingId: trim(item.legacyItemId), sku: trim(item.sku), ...(item.salePrice !== undefined ? { salePrice: item.salePrice } : {}), ...(item.buyer ? { buyer: item.buyer } : {}) }))
     .filter((item) => item.listingId || item.sku)
     .map((item): MappedEbayOrderEvent => ({ eventType: 'order.created', ...item, orderId, occurredAt }));
 
