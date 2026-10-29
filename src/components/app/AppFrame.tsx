@@ -12,6 +12,7 @@ export function AppFrame({
   postPublishTabs,
   inventoryProcessingTabs,
   postEbayTabs,
+  businessTabs,
   utilityTabs,
   exportDisabled,
   onExportCurrentPage,
@@ -69,6 +70,7 @@ export function AppFrame({
         postPublishTabs={postPublishTabs}
         inventoryProcessingTabs={inventoryProcessingTabs}
         postEbayTabs={postEbayTabs}
+        businessTabs={businessTabs}
         utilityTabs={utilityTabs}
         exportDisabled={exportDisabled}
         onExportCurrentPage={onExportCurrentPage}

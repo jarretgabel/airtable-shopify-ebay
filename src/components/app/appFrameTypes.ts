@@ -27,6 +27,7 @@ export interface AppFrameProps {
   postPublishTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
+  businessTabs?: AppTab[];
   utilityTabs: AppTab[];
   exportDisabled: boolean;
   onExportCurrentPage: () => void;
@@ -43,4 +44,4 @@ export interface AppFrameProps {
   children: ReactNode;
 }
 
-export type OpenDropdown = 'intake' | 'listings' | 'inventory-processing' | 'utilities' | 'notifications' | 'account' | 'mobile-nav' | null;
+export type OpenDropdown = 'intake' | 'listings' | 'inventory-processing' | 'business' | 'utilities' | 'notifications' | 'account' | 'mobile-nav' | null;

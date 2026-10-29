@@ -42,6 +42,7 @@ interface AppFrameHeaderNavigationProps {
   postPublishTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
+  businessTabs?: AppTab[];
   utilityTabs: AppTab[];
   exportDisabled: boolean;
   onExportCurrentPage: () => void;
@@ -58,6 +59,7 @@ export function AppFrameHeaderNavigation({
   postPublishTabs,
   inventoryProcessingTabs,
   postEbayTabs,
+  businessTabs = [],
   utilityTabs,
   exportDisabled,
   onExportCurrentPage,
@@ -69,13 +71,14 @@ export function AppFrameHeaderNavigation({
   const hasActiveIntakeTab = intakeTabs.some((tab) => tab.active);
   const hasActiveListingsTab = listingsTabs.some((tab) => tab.active);
   const hasActiveInventoryProcessingTab = inventoryProcessingTabs.some((tab) => tab.active);
+  const hasActiveBusinessTab = businessTabs.some((tab) => tab.active);
   const hasActiveUtilityTab = utilityTabs.some((tab) => tab.active);
   const hasUtilityActions = true;
   const intakeBadgeTotal = intakeTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const inventoryProcessingBadgeTotal = inventoryProcessingTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const utilityBadgeTotal = utilityTabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
   const sellingMobileTabs = [...listingsTabs, ...postPublishTabs, ...postEbayTabs];
-  const activeMobileTab = [...tabs, ...intakeTabs, ...inventoryProcessingTabs, ...sellingMobileTabs, ...utilityTabs].find((tab) => tab.active) ?? null;
+  const activeMobileTab = [...tabs, ...intakeTabs, ...inventoryProcessingTabs, ...sellingMobileTabs, ...businessTabs, ...utilityTabs].find((tab) => tab.active) ?? null;
   const intakeTabLookup = new Map(intakeTabs.map((tab) => [tab.key, tab]));
   const intakeSections: TabSection[] = [
     {
@@ -144,6 +147,7 @@ export function AppFrameHeaderNavigation({
     { title: 'Intake', tabs: intakeTabs },
     { title: 'Processing', tabs: inventoryProcessingTabs },
     { title: 'Selling', tabs: sellingMobileTabs },
+    { title: 'Business', tabs: businessTabs },
     { title: 'Utilities', tabs: utilityTabs },
   ].filter((section) => section.tabs.length > 0);
 
@@ -303,6 +307,29 @@ export function AppFrameHeaderNavigation({
                       );
                     })}
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {businessTabs.length > 0 && (
+            <div className="relative flex-shrink-0" data-export-ignore="true">
+              <DropdownTrigger
+                active={hasActiveBusinessTab}
+                expanded={openDropdown === 'business'}
+                label="Business"
+                menuId="business-menu"
+                onClick={() => onToggleDropdown('business')}
+                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'business', onToggleDropdown, onCloseDropdowns)}
+              />
+              {openDropdown === 'business' && (
+                <div
+                  id="business-menu"
+                  role="menu"
+                  aria-label="Business tabs"
+                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[220px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                >
+                  <DropdownTabList tabs={businessTabs} onSelect={handleSelectTab} autoFocusFirst />
                 </div>
               )}
             </div>

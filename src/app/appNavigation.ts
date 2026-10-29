@@ -21,6 +21,8 @@ export const INTAKE_TABS = ['manual-intake', 'create-intake-item', 'jotform', 'j
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
 export const INVENTORY_PROCESSING_TABS = ['testing-queue', 'photography-queue', 'testing', 'photos'] as const satisfies readonly Tab[];
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
+export const BUSINESS_TABS = ['sales', 'people'] as const satisfies readonly Tab[];
+export const BUSINESS_TAB_SET = new Set<Tab>(BUSINESS_TABS as readonly Tab[]);
 export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab'] as const satisfies readonly Tab[];
 export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
 

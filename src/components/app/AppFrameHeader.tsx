@@ -15,6 +15,7 @@ interface AppFrameHeaderProps {
   postPublishTabs: AppTab[];
   inventoryProcessingTabs: AppTab[];
   postEbayTabs: AppTab[];
+  businessTabs?: AppTab[];
   utilityTabs: AppTab[];
   exportDisabled: boolean;
   onExportCurrentPage: () => void;
@@ -40,6 +41,7 @@ export function AppFrameHeader({
   postPublishTabs,
   inventoryProcessingTabs,
   postEbayTabs,
+  businessTabs,
   utilityTabs,
   exportDisabled,
   onExportCurrentPage,
@@ -123,6 +125,7 @@ export function AppFrameHeader({
           postPublishTabs={postPublishTabs}
           inventoryProcessingTabs={inventoryProcessingTabs}
           postEbayTabs={postEbayTabs}
+          businessTabs={businessTabs}
           utilityTabs={utilityTabs}
           exportDisabled={exportDisabled}
           onExportCurrentPage={onExportCurrentPage}

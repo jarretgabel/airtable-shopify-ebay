@@ -126,7 +126,7 @@ export function AuthenticatedAppShell({
     currentUserName: currentUser.name,
     users,
   });
-  const { onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, listingsNavTabs, postPublishNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, utilityNavTabs } = useAppShellControls({
+  const { onRefresh, onExportCurrentPage, onExportAllPages, tabs, intakeNavTabs, listingsNavTabs, postPublishNavTabs, inventoryProcessingNavTabs, postEbayNavTabs, businessNavTabs, utilityNavTabs } = useAppShellControls({
     activeTab,
     visibleTabs,
     workflowInventoryBadgeCount: workflowNotificationSummary.workflowQueueBadgeCount,
@@ -263,6 +263,7 @@ export function AuthenticatedAppShell({
           postPublishTabs={postPublishNavTabs}
           inventoryProcessingTabs={inventoryProcessingNavTabs}
           postEbayTabs={postEbayNavTabs}
+          businessTabs={businessNavTabs}
           utilityTabs={utilityNavTabs}
           exportDisabled={exportingPdf}
           onExportCurrentPage={onExportCurrentPage}
