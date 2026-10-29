@@ -979,6 +979,8 @@ Order matters: each step unblocks the next. Every deploy goes through a change s
 - **Cost & Earnings** (dashboard, admin/owner/developer only): `GET /api/dashboard/finance?from&to`. Cost is the intake `Cost`; earnings use `Sale Price`. The date range filters on `Sold At`; items without one are excluded from a dated range.
 - **Sellers** dashboard section gained search and a last-arrival date range. The dashboard nav lists every section.
 - **Backfill (staging, direct SQL):** Shopify 12022 and 12049 and eBay 11276 (all Shipped) have sale price, date and buyer. Other eBay SKU matches sit in non-sold statuses and were not written. Most Shopify orders have no SKU and cannot be matched.
+- **Buyers** section: `GET /api/dashboard/buyers?search&from&to` (`aws/src/db/buyers.ts`), grouped by lower(email) else name, with a "Bought" column listing item titles. Same roles as Cost & Earnings (admin/owner/developer).
+- **Business pages (2026-10-28):** the dashboard was split out. Dashboard keeps Overview, Actions and Insights. **Sales** (`/sales`: Cost & Earnings, Buyers, Reports) and **People** (`/people`: Sellers, Customers) are real pages under a **Business** nav dropdown placed after Dashboard. They are in `APP_PAGES` (client and `aws/src/shared/appPages.ts`) and assigned only to admin, owner and developer.
 - **Open:** verify on the first real sale; mark the SES alert "not junk".
 
 ## Plan: Shopify orders and invoices in the app (proposed 2026-10-28, not started)

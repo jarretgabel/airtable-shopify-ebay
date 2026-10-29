@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import type { ReactNode } from 'react';
 import type { AppTab, OpenDropdown } from '@/components/app/appFrameTypes';
 import {
@@ -144,12 +145,35 @@ export function AppFrameHeaderNavigation({
   ].filter((section) => section.tabs.length > 0);
   const mobileSections: MobileNavSection[] = [
     { title: 'Main', tabs },
+    { title: 'Business', tabs: businessTabs },
     { title: 'Intake', tabs: intakeTabs },
     { title: 'Processing', tabs: inventoryProcessingTabs },
     { title: 'Selling', tabs: sellingMobileTabs },
-    { title: 'Business', tabs: businessTabs },
     { title: 'Utilities', tabs: utilityTabs },
   ].filter((section) => section.tabs.length > 0);
+
+  const businessDropdown = businessTabs.length > 0 ? (
+            <div className="relative flex-shrink-0" data-export-ignore="true">
+              <DropdownTrigger
+                active={hasActiveBusinessTab}
+                expanded={openDropdown === 'business'}
+                label="Business"
+                menuId="business-menu"
+                onClick={() => onToggleDropdown('business')}
+                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'business', onToggleDropdown, onCloseDropdowns)}
+              />
+              {openDropdown === 'business' && (
+                <div
+                  id="business-menu"
+                  role="menu"
+                  aria-label="Business tabs"
+                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[220px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
+                >
+                  <DropdownTabList tabs={businessTabs} onSelect={handleSelectTab} autoFocusFirst />
+                </div>
+              )}
+            </div>
+  ) : null;
 
   function handleSelectTab(tab: AppTab) {
     onCloseDropdowns();
@@ -232,7 +256,13 @@ export function AppFrameHeaderNavigation({
 
       <div className="relative mx-auto hidden w-full max-w-6xl md:flex md:flex-wrap md:items-end md:gap-1 md:px-5 xl:flex-nowrap xl:px-0">
         <div className="flex min-w-0 flex-wrap items-end gap-1 md:flex-1">
-          {tabs.map((tab) => <TabButton key={tab.key} tab={tab} />)}
+          {tabs.map((tab) => (
+            <Fragment key={tab.key}>
+              <TabButton tab={tab} />
+              {tab.key === 'dashboard' ? businessDropdown : null}
+            </Fragment>
+          ))}
+          {tabs.some((tab) => tab.key === 'dashboard') ? null : businessDropdown}
 
           {intakeTabs.length > 0 && (
             <div className="relative flex-shrink-0" data-export-ignore="true">
@@ -307,29 +337,6 @@ export function AppFrameHeaderNavigation({
                       );
                     })}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {businessTabs.length > 0 && (
-            <div className="relative flex-shrink-0" data-export-ignore="true">
-              <DropdownTrigger
-                active={hasActiveBusinessTab}
-                expanded={openDropdown === 'business'}
-                label="Business"
-                menuId="business-menu"
-                onClick={() => onToggleDropdown('business')}
-                onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'business', onToggleDropdown, onCloseDropdowns)}
-              />
-              {openDropdown === 'business' && (
-                <div
-                  id="business-menu"
-                  role="menu"
-                  aria-label="Business tabs"
-                  className="absolute left-0 top-[calc(100%+0.45rem)] z-[70] min-w-[220px] rounded-xl border border-[var(--line)] bg-[var(--panel)] p-1.5 shadow-[0_14px_28px_rgba(2,6,23,0.35)]"
-                >
-                  <DropdownTabList tabs={businessTabs} onSelect={handleSelectTab} autoFocusFirst />
                 </div>
               )}
             </div>
