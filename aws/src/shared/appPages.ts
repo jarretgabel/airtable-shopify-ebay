@@ -1,5 +1,7 @@
 export const APP_PAGES = [
   'dashboard',
+  'sales',
+  'people',
   'workflow-guide',
   'workflow-guide-editor',
   'manual-intake',

@@ -13,6 +13,8 @@ import type { AppTabContentProps } from '@/app/appTabContentTypes';
 import { ErrorSurface } from '@/components/app/StateSurfaces';
 
 const DashboardTab = lazy(async () => ({ default: (await import('@/components/DashboardTab')).DashboardTab }));
+const SalesTab = lazy(async () => ({ default: (await import('@/components/SalesTab')).SalesTab }));
+const PeopleTab = lazy(async () => ({ default: (await import('@/components/PeopleTab')).PeopleTab }));
 const ImageLab = lazy(async () => ({ default: (await import('@/components/ImageLab')).ImageLab }));
 const WorkflowGuideTab = lazy(async () => ({ default: (await import('@/components/tabs/WorkflowGuideTab')).WorkflowGuideTab }));
 const WorkflowGuideEditorTab = lazy(async () => ({ default: (await import('@/components/tabs/WorkflowGuideEditorTab')).WorkflowGuideEditorTab }));
@@ -178,6 +180,10 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
   switch (tab) {
     case 'dashboard':
       return 'dashboard';
+    case 'sales':
+      return 'sales';
+    case 'people':
+      return 'people';
     case 'workflow-guide':
       return 'user guide';
     case 'workflow-guide-editor':
@@ -454,6 +460,10 @@ export function AppTabContent({
         return <SettingsTab />;
       case 'notifications':
         return <NotificationsTab />;
+      case 'sales':
+        return <SalesTab currentUserRole={currentUserRole} />;
+      case 'people':
+        return <PeopleTab currentUserRole={currentUserRole} />;
       case 'dashboard': {
         const dashboardViewModel = buildDashboardTabViewModel({
           atLoading,

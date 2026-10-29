@@ -26,6 +26,8 @@ export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
 
 const NAV_LABELS: Partial<Record<Tab, string>> = {
   dashboard: 'Dashboard',
+  sales: 'Sales',
+  people: 'People',
   'workflow-guide': 'User Guide',
   'workflow-guide-editor': 'User Guide Admin',
   inventory: 'Workflow Hub',

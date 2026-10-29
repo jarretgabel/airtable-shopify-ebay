@@ -1,22 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
-import { canAccessCommerceDashboard, canAccessWorkflowDashboard, canViewFinance, hasFullAccessRole, isDeveloperRole } from '@/auth/roleAccess';
+import { useMemo } from 'react';
+import { canAccessCommerceDashboard, canAccessWorkflowDashboard, isDeveloperRole } from '@/auth/roleAccess';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { SectionPillNav } from '@/components/app/SectionPillNav';
 import { DashboardSectionNav } from '@/components/dashboard/DashboardSectionNav';
-import { DashboardBuyersSection } from '@/components/dashboard/DashboardBuyersSection';
-import { DashboardFinanceSection } from '@/components/dashboard/DashboardFinanceSection';
 import { DashboardOverviewSection, DashboardInsightsSection } from '@/components/dashboard/DashboardOverviewInsightsSection';
 import { getDashboardDegradedSources, hasDashboardPartialData } from '@/components/dashboard/dashboardSourceHealth';
-import { DashboardCustomersSection } from '@/components/dashboard/DashboardCustomersSection';
-import { DashboardReportsSection } from '@/components/dashboard/DashboardReportsSection';
-import { DashboardSellersSection } from '@/components/dashboard/DashboardSellersSection';
 import { DashboardActionsSection } from '@/components/dashboard/DashboardActionsSection';
 import { DashboardPartialDataNotice, DashboardSectionPanel } from '@/components/dashboard/dashboardPrimitives';
 import {
   buildDashboardSections,
-  resolveDashboardView,
-  type DashboardView,
 } from '@/components/dashboard/dashboardTabHelpers';
 import type { DashboardTabViewModel } from '@/app/appTabViewModels';
 import { useDashboardSectionTracking } from '@/components/dashboard/useDashboardSectionTracking';
@@ -59,51 +51,18 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   const ebayDataMissing = Boolean(ebaySource?.error) && !ebaySource?.hasData;
   const shopifyApprovalDataMissing = Boolean(shopifyApprovalSource?.error) && !shopifyApprovalSource?.hasData;
 
-  const fullAccess = hasFullAccessRole(workflow.currentUserRole);
-  const financeAccess = canViewFinance(workflow.currentUserRole);
-  const availableViews = useMemo<DashboardView[]>(
-    () => ['overview', ...(financeAccess ? (['sales'] as const) : []), ...(fullAccess ? (['people'] as const) : [])],
-    [financeAccess, fullAccess],
-  );
-  const [requestedView, setRequestedView] = useState<string | null>(() => new URLSearchParams(window.location.search).get('tab'));
-  const view = resolveDashboardView(requestedView, availableViews);
-  const selectView = useCallback((next: DashboardView) => {
-    setRequestedView(next);
-    const url = new URL(window.location.href);
-    if (next === 'overview') url.searchParams.delete('tab');
-    else url.searchParams.set('tab', next);
-    window.history.replaceState(window.history.state, '', url);
-  }, []);
-
   const sections = useMemo(
-    () => buildDashboardSections({
-      includeOverview: view === 'overview',
-      showActionsSection: view === 'overview' && showActionsSection,
-      showInsightsSection: view === 'overview' && showInsightsSection,
-      showSellersSection: view === 'people' && fullAccess,
-      showFinanceSection: view === 'sales' && financeAccess,
-      showBuyersSection: view === 'sales' && financeAccess,
-      showReportsSection: view === 'sales' && fullAccess,
-      showCustomersSection: view === 'people' && fullAccess,
-    }),
-    [view, showActionsSection, showInsightsSection, fullAccess, financeAccess],
+    () => buildDashboardSections({ showActionsSection, showInsightsSection }),
+    [showActionsSection, showInsightsSection],
   );
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
 
   return (
     <AppPageLayout className="[overflow-anchor:none]">
       <WorkflowPageHeader eyebrow="Overview" title="Dashboard" />
-      {availableViews.length > 1 ? (
-        <SectionPillNav
-          ariaLabel="Dashboard views"
-          items={availableViews.map((key) => ({ key, label: key === 'overview' ? 'Overview' : key === 'sales' ? 'Sales' : 'People' }))}
-          activeKey={view}
-          onSelect={selectView}
-        />
-      ) : null}
       <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
       {showPartialDataNotice && <DashboardPartialDataNotice degradedSources={degradedSources} />}
-      {view === 'overview' && showOverviewSection ? (
+      {showOverviewSection ? (
         <DashboardSectionPanel id="overview" title="Overview">
           <DashboardOverviewSection
             accessiblePages={workflow.accessiblePages}
@@ -115,7 +74,7 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           />
         </DashboardSectionPanel>
       ) : null}
-      {view === 'overview' && showActionsSection ? (
+      {showActionsSection ? (
         <DashboardActionsSection
           accessiblePages={workflow.accessiblePages}
           currentUserRole={workflow.currentUserRole}
@@ -149,18 +108,13 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
           onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
         />
       ) : null}
-      {view === 'overview' && showInsightsSection ? (
+      {showInsightsSection ? (
         <DashboardInsightsSection
           insights={filteredInsights}
           onSelectTab={actions.onSelectTab}
           onOpenInventoryPostPublishBucket={actions.onOpenInventoryPostPublishBucket}
         />
       ) : null}
-      {view === 'people' && fullAccess ? <DashboardSellersSection showWarnings={isDeveloper} /> : null}
-      {view === 'sales' && financeAccess ? <DashboardFinanceSection showWarnings={isDeveloper} /> : null}
-      {view === 'sales' && financeAccess ? <DashboardBuyersSection showWarnings={isDeveloper} /> : null}
-      {view === 'sales' && fullAccess ? <DashboardReportsSection showWarnings={isDeveloper} /> : null}
-      {view === 'people' && fullAccess ? <DashboardCustomersSection showWarnings={isDeveloper} /> : null}
     </AppPageLayout>
   );
 }

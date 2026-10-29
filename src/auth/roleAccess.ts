@@ -30,6 +30,8 @@ const TESTER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'testing-queue',
 const PHOTOGRAPHER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab'];
 const DEVELOPER_PAGES: AppPage[] = [
   'dashboard',
+  'sales',
+  'people',
   'workflow-guide',
   'workflow-guide-editor',
   'manual-intake',
@@ -71,6 +73,8 @@ export function isDeveloperRole(role: UserRole): boolean {
 export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   admin: [
     'dashboard',
+    'sales',
+    'people',
     'workflow-guide',
     'workflow-guide-editor',
     'manual-intake',
@@ -96,6 +100,8 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   ],
   owner: [
     'dashboard',
+    'sales',
+    'people',
     'workflow-guide',
     'workflow-guide-editor',
     'manual-intake',

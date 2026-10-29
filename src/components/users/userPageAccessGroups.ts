@@ -15,6 +15,12 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
     pages: ['dashboard', 'inventory', 'listings', 'shopify', 'market', 'imagelab', 'ebay'],
   },
   {
+    key: 'business',
+    title: 'Sales and People',
+    description: 'Cost and earnings, buyers, sellers and customers. Available to admin, owner and developer only.',
+    pages: ['sales', 'people'],
+  },
+  {
     key: 'intake',
     title: 'Used Gear Intake',
     description: 'Parking Lot and Trash Review are the intake workflow assignments and should be granted intentionally.',

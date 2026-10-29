@@ -78,9 +78,3 @@ export function buildDashboardSections({
   return sections;
 }
 
-
-export type DashboardView = 'overview' | 'sales' | 'people';
-
-export function resolveDashboardView(requested: string | null, available: DashboardView[]): DashboardView {
-  return available.find((view) => view === requested) ?? available[0] ?? 'overview';
-}
