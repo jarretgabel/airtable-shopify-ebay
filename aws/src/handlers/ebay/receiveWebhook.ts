@@ -2,6 +2,7 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
 import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.js';
 import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { retainShopifyProductWhenSoldOnEbay } from '../../services/crossChannelClose.js';
+import { sendSaleAlert } from '../../services/saleAlert.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
 import { getOptionalQueryParam, getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
@@ -355,10 +356,12 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
 
       // A sale's side effect must finish before the event is recorded as processed. Otherwise a retried delivery
       // would be skipped as a duplicate and a failed retention would never recover.
+      const alertResults: string[] = [];
       if (shouldTriggerCrossChannelClose(normalizedEvent)) {
         let retryableFailure = '';
         try {
           const retainResult = await retainShopifyProduct(recordId, { ...currentRecord.fields, ...updateFields });
+          alertResults.push(`Shopify retention: ${retainResult.success ? 'ok' : 'FAILED'} - ${retainResult.message}`);
 
           if (retainResult.success) {
             logInfo('Shopify product retention completed for eBay order event', {
@@ -407,6 +410,16 @@ export function createHandler(dependencies: EbayWebhookDependencies = {}) {
         sku: normalizedEvent.sku,
         updatedFieldNames: Object.keys(updateFields),
       });
+      if (normalizedEvent.eventType.startsWith('order.')) await sendSaleAlert({
+        channel: 'eBay',
+        action: normalizedEvent.eventType,
+        recordId,
+        fields: { ...currentRecord.fields, ...updateFields },
+        orderId: normalizedEvent.orderId,
+        ebayListingId: normalizedEvent.listingId,
+        results: alertResults,
+      });
+
       return jsonOk({
         received: true,
         skipped: false,

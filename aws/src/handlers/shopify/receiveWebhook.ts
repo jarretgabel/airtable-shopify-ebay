@@ -5,6 +5,7 @@ import { getConfiguredRecords, updateConfiguredRecord } from '../../store/index.
 import { buildSoldReadyFields } from '../../shared/contracts/soldReadyWorkflow.js';
 import { closeEbayListingWhenSoldOnShopify, retainShopifyProductWhenSoldOnShopify } from '../../services/crossChannelClose.js';
 import { getStatusCode, HttpError, toApiErrorBody } from '../../shared/errors.js';
+import { sendSaleAlert } from '../../services/saleAlert.js';
 import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
 import { requireSecret } from '../../shared/secrets.js';
@@ -591,6 +592,19 @@ function shouldProcessPathTopic(pathTopic: ShopifyWebhookPathTopic, payload: Sho
   return true;
 }
 
+const SHOPIFY_ACTION_LABELS: Record<string, string> = {
+  ORDERS_PAID: 'Sale (order paid)',
+  ORDERS_CANCELLED: 'Order cancelled',
+  REFUNDS_CREATE: 'Refund created',
+  DISPUTES_CREATE: 'Dispute opened',
+  DISPUTES_UPDATE: 'Dispute updated',
+  RETURNS_APPROVE: 'Return approved',
+};
+
+function describeShopifyAction(topic: string): string {
+  return SHOPIFY_ACTION_LABELS[topic] ?? topic;
+}
+
 export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
   const getSecret = dependencies.getWebhookSecret ?? getWebhookSecret;
   const verifySignature = dependencies.verifyWebhookSignature ?? ((event, rawBody) => {
@@ -641,6 +655,17 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
           ...normalizedEvent,
           firstProductId,
         });
+
+        if (normalizedEvent.topic === 'ORDERS_PAID') {
+          await sendSaleAlert({
+            channel: 'Shopify',
+            action: describeShopifyAction(normalizedEvent.topic),
+            orderId: normalizedEvent.orderId,
+            orderName: normalizedEvent.orderName,
+            shopifyProductId: firstProductId,
+            note: 'No matching listing record was found, so no other channel was changed.',
+          });
+        }
 
         return jsonOk({
           received: true,
@@ -705,6 +730,8 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
         currentRecord.fields,
       );
 
+      let saleResults: string[] = [];
+
       // A sale's marketplace side effects must finish before the event is recorded as processed. Otherwise a
       // retried delivery would be skipped as a duplicate and a failed withdrawal/retention would never recover.
       if (normalizedEvent.topic === 'ORDERS_PAID') {
@@ -714,10 +741,12 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
           { label: 'Shopify retention', run: () => retainShopifyProduct(matchedRecordId, saleFields, { productIdHint: firstProductId }) },
         ];
         const retryableFailures: string[] = [];
+        saleResults = [];
 
         for (const sideEffect of sideEffects) {
           try {
             const outcome = await sideEffect.run();
+            saleResults.push(`${sideEffect.label}: ${outcome.success ? 'ok' : 'FAILED'} - ${outcome.message}`);
             if (outcome.success) {
               infoLogger(`Cross-channel ${sideEffect.label} completed for Shopify sale`, {
                 recordId: matchedRecordId,
@@ -766,6 +795,17 @@ export function createHandler(dependencies: ShopifyWebhookDependencies = {}) {
         orderId: normalizedEvent.orderId,
         eventId: normalizedEvent.eventId,
         updatedFieldNames: Object.keys(updateFields),
+      });
+
+      await sendSaleAlert({
+        channel: 'Shopify',
+        action: describeShopifyAction(normalizedEvent.topic),
+        recordId: matchedRecordId,
+        fields: { ...currentRecord.fields, ...updateFields },
+        orderId: normalizedEvent.orderId,
+        orderName: normalizedEvent.orderName,
+        shopifyProductId: firstProductId,
+        results: saleResults,
       });
 
       return jsonOk({

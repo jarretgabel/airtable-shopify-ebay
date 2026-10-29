@@ -193,6 +193,12 @@ Parameters:
   AppAllowedOrigins:
     Type: CommaDelimitedList
     Default: http://127.0.0.1:3000,http://localhost:3000
+  SaleAlertEmail:
+    Type: String
+    Default: ''
+  AppBaseUrl:
+    Type: String
+    Default: ''
   AlarmTopicArn:
     Type: String
     Default: ''
@@ -311,6 +317,8 @@ Globals:
           - !Ref GoogleGmailAccessToken
           - ''
         GOOGLE_GMAIL_FROM_EMAIL: !Ref GoogleGmailFromEmail
+        SALE_ALERT_EMAIL: !Ref SaleAlertEmail
+        APP_BASE_URL: !Ref AppBaseUrl
         ANALYTICS_FORWARD_ENDPOINT: !Ref AnalyticsForwardEndpoint
         APP_AUTH_TOKEN_SECRET: !Ref AppAuthTokenSecret
         APP_AUTH_COOKIE_SECURE_MODE: !Ref AppAuthCookieSecureMode
