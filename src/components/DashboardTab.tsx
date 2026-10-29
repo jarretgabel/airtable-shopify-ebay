@@ -56,8 +56,15 @@ export function DashboardTab({ viewModel }: DashboardTabProps) {
   const shopifyApprovalDataMissing = Boolean(shopifyApprovalSource?.error) && !shopifyApprovalSource?.hasData;
 
   const sections = useMemo(
-    () => buildDashboardSections({ showActionsSection, showInsightsSection }),
-    [showActionsSection, showInsightsSection],
+    () => buildDashboardSections({
+      showActionsSection,
+      showInsightsSection,
+      showSellersSection: hasFullAccessRole(workflow.currentUserRole),
+      showFinanceSection: canViewFinance(workflow.currentUserRole),
+      showReportsSection: hasFullAccessRole(workflow.currentUserRole),
+      showCustomersSection: hasFullAccessRole(workflow.currentUserRole),
+    }),
+    [showActionsSection, showInsightsSection, workflow.currentUserRole],
   );
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
 

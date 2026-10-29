@@ -43,9 +43,17 @@ export function buildDashboardSummaryMetrics(
 export function buildDashboardSections({
   showActionsSection,
   showInsightsSection,
+  showSellersSection = false,
+  showFinanceSection = false,
+  showReportsSection = false,
+  showCustomersSection = false,
 }: {
   showActionsSection: boolean;
   showInsightsSection: boolean;
+  showSellersSection?: boolean;
+  showFinanceSection?: boolean;
+  showReportsSection?: boolean;
+  showCustomersSection?: boolean;
 }): DashboardSection[] {
   const sections: DashboardSection[] = [{ id: 'overview', label: 'Overview' }];
 
@@ -56,6 +64,11 @@ export function buildDashboardSections({
   if (showInsightsSection) {
     sections.push({ id: 'insights', label: 'Insights' });
   }
+
+  if (showSellersSection) sections.push({ id: 'sellers', label: 'Sellers' });
+  if (showFinanceSection) sections.push({ id: 'finance', label: 'Cost & Earnings' });
+  if (showReportsSection) sections.push({ id: 'reports', label: 'Reports' });
+  if (showCustomersSection) sections.push({ id: 'customers', label: 'Customers' });
 
   return sections;
 }
