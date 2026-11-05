@@ -48,10 +48,11 @@ test('mergeItemSummaries reports a record present in both tables once', async ()
   const { mergeItemSummaries } = await import('../../../../../../aws/src/providers/ai/assistant/tools.js');
   const merged = mergeItemSummaries(
     [{ id: 'rec1', link: '/workflow-hub/rec1', 'Workflow Status': 'Testing In Progress' }],
-    [{ id: 'rec1', link: '/listings/rec1', 'Workflow Status': 'Approved for Publish' }, { id: 'rec2', link: '/listings/rec2' }],
+    [{ id: 'rec1', link: '/listings/rec1', 'Workflow Status': 'Approved for Publish', publishReadiness: { state: 'ready to publish' } }, { id: 'rec2', link: '/listings/rec2' }],
   );
   assert.equal(merged.length, 2);
   assert.equal(merged[0].listingLink, '/listings/rec1');
   assert.equal(merged[0].listingStatus, 'Approved for Publish');
+  assert.deepEqual(merged[0].publishReadiness, { state: 'ready to publish' });
   assert.equal(merged[1].id, 'rec2');
 });

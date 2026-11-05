@@ -1,3 +1,14 @@
+import {
+  getCombinedListingsRequiredFieldNames,
+  getRecordFieldText,
+  isCombinedRecordAlreadyListed,
+  isCombinedRecordReadyForPublishing,
+  isCombinedRecordVisibleOnListingsPage,
+  normalizeCombinedWorkflowStatus,
+  type CombinedListingsRequiredFieldNames,
+} from '../../../shared/combinedListingsReadiness.js';
+import { getMissingRequiredFieldNames } from '../../../shared/requiredFieldStatus.js';
+import { APPROVAL_QUEUE_FIELDS } from '../../../shared/approvalQueueFields.js';
 import { logError } from '../../../shared/logging.js';
 import { getPostgresPool } from '../../../db/pool.js';
 import { getContactDetail, listContacts } from '../../../db/crm.js';
@@ -192,9 +203,51 @@ export function mergeItemSummaries(workflow: ItemSummary[], listings: ItemSummar
     const listing = listingById.get(item.id);
     if (!listing) return item;
     listingById.delete(item.id);
-    return { ...item, listingLink: listing.link, listingStatus: listing['Workflow Status'] };
+    return { ...item, listingLink: listing.link, listingStatus: listing['Workflow Status'], ...(listing.publishReadiness ? { publishReadiness: listing.publishReadiness } : {}) };
   });
   return [...merged, ...listingById.values()];
+}
+
+const READINESS_SAMPLE = 1000;
+const READINESS_CACHE_MS = 10 * 60 * 1000;
+let requiredNamesCache: { at: number; names: CombinedListingsRequiredFieldNames } | null = null;
+
+async function getRequiredNames(): Promise<CombinedListingsRequiredFieldNames> {
+  if (requiredNamesCache && Date.now() - requiredNamesCache.at < READINESS_CACHE_MS) return requiredNamesCache.names;
+  // Same projection and subset as the listings-readiness summary, so required field names match the Listings page.
+  const sample = await getConfiguredRecords(LISTING_SOURCE, { fields: [...APPROVAL_QUEUE_FIELDS], subset: 'listings-page', maxRecords: READINESS_SAMPLE });
+  const names = getCombinedListingsRequiredFieldNames(sample);
+  requiredNamesCache = { at: Date.now(), names };
+  return names;
+}
+
+/** What is left before a listing can be published, using the same rules as the Ready for Publishing list. */
+export async function describePublishReadiness(record: AirtableRecord): Promise<Record<string, unknown> | undefined> {
+  try {
+    const names = await getRequiredNames();
+    const status = normalizeCombinedWorkflowStatus(record);
+    if (isCombinedRecordAlreadyListed(record)) return { state: 'already listed' };
+    if (!isCombinedRecordVisibleOnListingsPage(record)) return undefined;
+    const sku = getRecordFieldText(record, ['SKU', 'eBay Inventory SKU', 'Shopify Variant 1 SKU', 'Shopify SKU', 'Variant SKU']);
+    const shopifyMissing = getMissingRequiredFieldNames(record.fields, names.shopifyRequiredFieldNames);
+    const ebayMissing = getMissingRequiredFieldNames(record.fields, names.ebayRequiredFieldNames);
+    const ready = isCombinedRecordReadyForPublishing(record, names.combinedRequiredFieldNames, names.shopifyRequiredFieldNames, names.ebayRequiredFieldNames);
+    return {
+      state: ready ? 'ready to publish' : 'not ready to publish',
+      workflowStatus: status,
+      ...(sku ? {} : { missingSku: true }),
+      ...(shopifyMissing.length > 0 ? { shopifyMissingFields: shopifyMissing } : {}),
+      ...(ebayMissing.length > 0 ? { ebayMissingFields: ebayMissing } : {}),
+    };
+  } catch (error) {
+    logError('Assistant readiness check failed', error);
+    return undefined;
+  }
+}
+
+async function withReadiness<T extends { id: string }>(summary: T, record: AirtableRecord): Promise<T & { publishReadiness?: Record<string, unknown> }> {
+  const publishReadiness = await describePublishReadiness(record);
+  return publishReadiness ? { ...summary, publishReadiness } : summary;
 }
 
 const QUERY_NOISE = new Set(['sku', 'skus', 'item', 'items', 'listing', 'listings', 'number', 'no', 'id', 'the', 'for', 'of', '#']);
@@ -241,7 +294,7 @@ export async function runAssistantTool(
         (!status || record.fields['Workflow Status'] === status) && (!query || matchesQuery(record, scope, query)));
       const items = mergeItemSummaries(
         matches.map((record) => summarize(scope, record)),
-        listings.map((record) => summarizeListing(scope, record)),
+        await Promise.all(listings.slice(0, limit).map((record) => withReadiness(summarizeListing(scope, record), record))),
       );
       return { total: items.length, items: items.slice(0, limit) };
     }
@@ -259,7 +312,8 @@ export async function runAssistantTool(
       }
       if (canViewListings(scope)) {
         try {
-          return summarizeListing(scope, await getConfiguredRecord(LISTING_SOURCE, recordId));
+          const listing = await getConfiguredRecord(LISTING_SOURCE, recordId);
+          return await withReadiness(summarizeListing(scope, listing), listing);
         } catch {
           // fall through
         }
