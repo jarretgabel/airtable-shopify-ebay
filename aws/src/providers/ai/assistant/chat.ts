@@ -120,7 +120,7 @@ export async function runAssistantChat(
         logError(`Assistant tool ${use.name} failed`, error);
         content = JSON.stringify({ error: 'The lookup failed with a system error. Tell the user it failed; do not say the item does not exist.' });
       }
-      logInfo('Assistant tool call', { tool: use.name, input: JSON.stringify(use.input ?? {}).slice(0, 200), result: content.slice(0, 200), statuses: scope.statuses === null ? 'all' : scope.statuses.join('|') });
+      logInfo('Assistant tool call', { tool: use.name, resultChars: content.length, failed: content.startsWith('{"error"') });
       results.push({ type: 'tool_result', tool_use_id: use.id, content: content.slice(0, 20000) });
     }
     messages.push({ role: 'user', content: results });
