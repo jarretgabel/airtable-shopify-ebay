@@ -64,3 +64,54 @@ export function recordAssistantTokens(userId: string, tokens: number, now = Date
 export function resetAssistantLimitsForTests(): void {
   usageByUser.clear();
 }
+
+interface SharedPool {
+  query: (text: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
+}
+
+async function defaultPool(): Promise<SharedPool | null> {
+  if (!process.env.DATABASE_URL) return null;
+  const { getPostgresPool } = await import('../../../db/pool.js');
+  return getPostgresPool();
+}
+
+/**
+ * Enforces the same limits using Postgres so they hold across Lambda instances and cold starts.
+ * Returns the usage row id (to attach tokens later), or null when the database is unavailable,
+ * in which case the in-memory guard alone applies.
+ */
+export async function enforceSharedAssistantLimits(userId: string, pool?: SharedPool | null): Promise<number | null> {
+  const limits = getAssistantLimits();
+  try {
+    const db = pool === undefined ? await defaultPool() : pool;
+    if (!db) return null;
+    const { rows } = await db.query(
+      `SELECT count(*) FILTER (WHERE at > now() - interval '1 minute')::int AS recent,
+              coalesce(sum(tokens), 0)::bigint AS tokens
+         FROM assistant_usage WHERE user_id = $1 AND at > now() - interval '24 hours'`,
+      [userId],
+    );
+    if (Number(rows[0]?.recent ?? 0) >= limits.requestsPerMinute) {
+      throw tooMany('You are sending messages too quickly. Please wait a moment.', 'AI_ASSISTANT_RATE_LIMITED');
+    }
+    if (Number(rows[0]?.tokens ?? 0) >= limits.dailyTokens) {
+      throw tooMany('You have reached the assistant daily usage limit. Try again tomorrow.', 'AI_ASSISTANT_DAILY_LIMIT');
+    }
+    const inserted = await db.query('INSERT INTO assistant_usage (user_id) VALUES ($1) RETURNING id', [userId]);
+    await db.query(`DELETE FROM assistant_usage WHERE user_id = $1 AND at < now() - interval '2 days'`, [userId]);
+    return Number(inserted.rows[0]?.id);
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    return null;
+  }
+}
+
+export async function recordSharedAssistantTokens(usageId: number | null, tokens: number, pool?: SharedPool | null): Promise<void> {
+  if (usageId === null || tokens <= 0) return;
+  try {
+    const db = pool === undefined ? await defaultPool() : pool;
+    await db?.query('UPDATE assistant_usage SET tokens = $2 WHERE id = $1', [usageId, Math.round(tokens)]);
+  } catch {
+    // In-memory accounting still applies.
+  }
+}

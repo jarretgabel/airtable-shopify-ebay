@@ -33,3 +33,12 @@ test('listing and post-publish fields follow page access', () => {
   const processor = resolveAssistantScope({ role: 'processor', allowedPages: ['inventory', 'listings'] });
   assert.deepEqual(pickVisibleFields(processor, { 'Shopify Price': 9, 'Shipped At': 'x', 'Refund Amount': 5 }), { 'Shopify Price': 9 });
 });
+
+test('pickVisibleFields flattens { text } values but leaves other objects alone', async () => {
+  const { pickVisibleFields, resolveAssistantScope } = await import('../../../../../../aws/src/providers/ai/assistant/scope.js');
+  const scope = resolveAssistantScope({ role: 'admin', allowedPages: ['inventory'] } as never);
+  const out = pickVisibleFields(scope, { SKU: { text: '11750', state: 'generated' }, Make: 'Bel Canto', Model: [{ url: 'x' }] });
+  assert.equal(out.SKU, '11750');
+  assert.equal(out.Make, 'Bel Canto');
+  assert.deepEqual(out.Model, [{ url: 'x' }]);
+});

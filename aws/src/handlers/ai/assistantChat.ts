@@ -3,7 +3,7 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { enforceAssistantLimits, recordAssistantTokens } from '../../providers/ai/assistant/limits.js';
+import { enforceAssistantLimits, enforceSharedAssistantLimits, recordAssistantTokens, recordSharedAssistantTokens } from '../../providers/ai/assistant/limits.js';
 import { runAssistantChat, sanitizeMessages } from '../../providers/ai/assistant/chat.js';
 import { buildDraft } from '../../providers/ai/assistant/intake.js';
 import type { AssistantDraft, DraftKind } from '../../shared/contracts/intakeDraft.js';
@@ -26,6 +26,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   try {
     const user = await requireRouteAccess(event);
     enforceAssistantLimits(user.userId);
+    const usageId = await enforceSharedAssistantLimits(user.userId);
     const body = requireJsonBody<{ messages?: unknown; currentPath?: unknown; draft?: unknown }>(event, 'ai', 'INVALID_AI_REQUEST_BODY');
     const messages = sanitizeMessages(body.messages);
     if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
@@ -37,6 +38,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const { usage, ...response } = result;
     if (usage) {
       recordAssistantTokens(user.userId, usage.inputTokens + usage.outputTokens);
+      await recordSharedAssistantTokens(usageId, usage.inputTokens + usage.outputTokens);
       // Metadata only: message content is never logged.
       logInfo('Assistant chat', { userId: user.userId, role: user.role, ...usage, draftKind: response.draft?.kind ?? null, durationMs: Date.now() - startedAt });
     }

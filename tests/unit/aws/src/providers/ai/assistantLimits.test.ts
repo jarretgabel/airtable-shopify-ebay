@@ -22,3 +22,21 @@ test('blocks a user after the daily token cap and resets the next day', () => {
   assert.throws(() => enforceAssistantLimits('a', 70_000), /daily usage limit/);
   enforceAssistantLimits('a', 1000 + 24 * 60 * 60 * 1000);
 });
+
+test('shared limits count usage rows in the database and fail open when it is unavailable', async () => {
+  const { enforceSharedAssistantLimits, recordSharedAssistantTokens } = await import('../../../../../../aws/src/providers/ai/assistant/limits.js');
+  const calls: string[] = [];
+  const makePool = (recent: number, tokens: number) => ({
+    query: async (text: string) => {
+      calls.push(text.slice(0, 6));
+      return { rows: [text.startsWith('SELECT') ? { recent, tokens } : { id: 7 }] };
+    },
+  });
+  assert.equal(await enforceSharedAssistantLimits('a', makePool(0, 0)), 7);
+  await assert.rejects(enforceSharedAssistantLimits('a', makePool(2, 0)), /too quickly/);
+  await assert.rejects(enforceSharedAssistantLimits('a', makePool(0, 100)), /daily usage limit/);
+  assert.equal(await enforceSharedAssistantLimits('a', { query: async () => { throw new Error('down'); } }), null);
+  assert.equal(await enforceSharedAssistantLimits('a', null), null);
+  await recordSharedAssistantTokens(7, 50, makePool(0, 0));
+  assert.ok(calls.includes('UPDATE'));
+});

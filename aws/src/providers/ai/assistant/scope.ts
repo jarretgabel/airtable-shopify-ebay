@@ -77,12 +77,23 @@ export function isProgressOnlyScope(scope: AssistantScope): boolean {
     && scope.statuses.every((status) => (USED_GEAR_PROGRESS_STATUS_VALUES as readonly string[]).includes(status));
 }
 
+/** Some fields (such as SKU) are stored as { text } objects; the model and search should see plain text. */
+export function flattenTextValue(value: unknown): unknown {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const keys = Object.keys(value);
+    const text = (value as { text?: unknown }).text;
+    if (keys.every((key) => key === 'text' || key === 'state') && (typeof text === 'string' || typeof text === 'number')) return String(text);
+  }
+  return value;
+}
+
 export function pickVisibleFields(scope: AssistantScope, fields: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const name of scope.fields) {
     const value = fields[name];
     if (value === undefined || value === null || value === '') continue;
-    out[name] = typeof value === 'string' && value.length > 400 ? `${value.slice(0, 400)}…` : value;
+    const plain = flattenTextValue(value);
+    out[name] = typeof plain === 'string' && plain.length > 400 ? `${plain.slice(0, 400)}…` : plain;
   }
   return out;
 }

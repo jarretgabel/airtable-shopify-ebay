@@ -406,7 +406,7 @@ export function AuthenticatedAppShell({
             currentSlug={market.currentSlug}
           />
         </AppFrame>
-        {!showRequiredPasswordModal && <AssistantChat userId={String(currentUser.id)} />}
+        {!showRequiredPasswordModal && <AssistantChat userId={String(currentUser.id)} role={currentUser.role} />}
       </div>
 
       {showRequiredPasswordModal && (

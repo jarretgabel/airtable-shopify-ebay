@@ -3,9 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { aiAppApi } from '@/services/app-api';
 import { IntakeDraftCard } from '@/components/assistant/IntakeDraftCard';
 import { StageDraftCard } from '@/components/assistant/StageDraftCard';
+import { getAssistantSuggestions } from '@/components/assistant/assistantSuggestions';
+import type { UserRole } from '@/stores/auth/authTypes';
 import { useAssistantStore, type AssistantMessage as Message } from '@/stores/assistantStore';
 
-const SUGGESTIONS = ['What items are in testing?', 'What items need photos?', 'How many items are at each stage?'];
 
 const INLINE_PATTERN = /\[([^\]]+)\]\((\/[^)\s]*)\)|\*\*([^*]+)\*\*|`([^`]+)`/g;
 
@@ -55,7 +56,7 @@ function renderMarkdown(text: string): ReactNode {
   return <div className="space-y-2">{blocks}</div>;
 }
 
-export function AssistantChat({ userId }: { userId: string }) {
+export function AssistantChat({ userId, role }: { userId: string; role?: UserRole }) {
   const location = useLocation();
   const claim = useAssistantStore((state) => state.claim);
   const open = useAssistantStore((state) => state.open);
@@ -146,7 +147,7 @@ export function AssistantChat({ userId }: { userId: string }) {
       <header className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
         <h2 className="m-0 text-sm font-semibold">Assistant</h2>
         <div className="flex gap-3 text-xs">
-          <button type="button" onClick={() => { setMessages([]); setDraft(null); setError(null); }} className="text-slate-300 hover:text-white">Clear</button>
+          <button type="button" onClick={() => { setMessages([]); setDraft(null); setError(null); }} className="text-slate-300 hover:text-white">New chat</button>
           <button type="button" onClick={() => setOpen(false)} aria-label="Close assistant" className="text-slate-300 hover:text-white">Close</button>
         </div>
       </header>
@@ -154,7 +155,7 @@ export function AssistantChat({ userId }: { userId: string }) {
         {messages.length === 0 && (
           <div className="space-y-2">
             <p className="m-0 text-slate-300">Ask about items, intake status, specs, or the workflow.</p>
-            {SUGGESTIONS.map((suggestion) => (
+            {getAssistantSuggestions(role).map((suggestion) => (
               <button
                 key={suggestion}
                 type="button"
