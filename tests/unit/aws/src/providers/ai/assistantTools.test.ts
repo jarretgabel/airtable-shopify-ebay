@@ -63,3 +63,10 @@ test('displayStatus shows the merged Ready to List label', async () => {
   assert.equal(displayStatus('Approved for Publish'), 'Ready to List');
   assert.equal(displayStatus('Testing In Progress'), 'Testing In Progress');
 });
+
+test('expandStatusFilter covers every stored Ready to List status', async () => {
+  const { expandStatusFilter } = await import('../../../../../../aws/src/providers/ai/assistant/tools.js');
+  assert.deepEqual(expandStatusFilter('Ready to List').sort(), ['Approved for Publish', 'Awaiting Pre-Listing Review']);
+  assert.deepEqual(expandStatusFilter('Testing In Progress'), ['Testing In Progress']);
+  assert.deepEqual(expandStatusFilter(''), []);
+});

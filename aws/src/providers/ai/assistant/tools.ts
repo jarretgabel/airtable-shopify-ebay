@@ -196,6 +196,13 @@ export function displayStatus(status: unknown): string {
   return STATUS_LABELS[text] ?? text;
 }
 
+/** A status filter can cover several stored statuses ("Ready to List" is stored two ways). */
+export function expandStatusFilter(status: string): string[] {
+  if (!status) return [];
+  if (displayStatus(status) === 'Ready to List' || status.toLowerCase() === 'ready to list') return Object.keys(STATUS_LABELS);
+  return [status];
+}
+
 function withStatusLabel<T extends Record<string, unknown>>(item: T): T & { statusLabel?: string } {
   const status = item['Workflow Status'];
   return status !== undefined && displayStatus(status) !== String(status) ? { ...item, statusLabel: displayStatus(status) } : item;
@@ -303,12 +310,14 @@ export async function runAssistantTool(
     case 'search_items': {
       const query = typeof input.query === 'string' ? cleanSearchQuery(input.query.trim()) : '';
       const requestedStatus = typeof input.status === 'string' ? input.status.trim() : '';
-      const status = requestedStatus.toLowerCase() === 'ready to list' ? 'Awaiting Pre-Listing Review' : requestedStatus;
+      const statuses = expandStatusFilter(requestedStatus);
+      const matchesFilters = (record: AirtableRecord) =>
+        (statuses.length === 0 || statuses.includes(String(record.fields['Workflow Status']))) && (!query || matchesQuery(record, scope, query));
       const limit = Math.min(Math.max(Number(input.limit) || 10, 1), MAX_RESULTS);
-      const matches = (await loadVisibleRecords(scope, { query, status })).filter((record) =>
-        (!status || record.fields['Workflow Status'] === status) && (!query || matchesQuery(record, scope, query)));
-      const listings = (await loadListingRecords(scope, { query, status })).filter((record) =>
-        (!status || record.fields['Workflow Status'] === status) && (!query || matchesQuery(record, scope, query)));
+      const loadAll = async (load: typeof loadVisibleRecords) =>
+        (await Promise.all((statuses.length > 0 ? statuses : ['']).map((status) => load(scope, { query, status })))).flat().filter(matchesFilters);
+      const matches = await loadAll(loadVisibleRecords);
+      const listings = await loadAll(loadListingRecords);
       const items = mergeItemSummaries(
         matches.map((record) => summarize(scope, record)),
         await Promise.all(listings.slice(0, limit).map((record) => withReadiness(summarizeListing(scope, record), record))),
