@@ -17,6 +17,8 @@ export interface AssistantScope {
   fields: string[];
   pages: string[];
   canViewFinance: boolean;
+  /** Seller and customer data: full-access roles and processors. */
+  canViewCustomers: boolean;
 }
 
 export const BASE_FIELDS = [
@@ -63,8 +65,10 @@ export function resolveAssistantScope(user: AssistantUser): AssistantScope {
   const fields = [...BASE_FIELDS];
   if (fullAccess || pages.has('listings')) fields.push(...LISTING_FIELDS);
   if (fullAccess || pages.has('post-publish')) fields.push(...POST_PUBLISH_FIELDS);
-  if (fullAccess) fields.push(...FINANCE_FIELDS, ...SELLER_FIELDS);
-  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess };
+  const canViewCustomers = fullAccess || user.role === 'processor';
+  if (fullAccess) fields.push(...FINANCE_FIELDS);
+  if (canViewCustomers) fields.push(...SELLER_FIELDS);
+  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess, canViewCustomers };
 }
 
 export function isStatusVisible(scope: AssistantScope, status: unknown): boolean {

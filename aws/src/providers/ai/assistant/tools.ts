@@ -13,6 +13,9 @@ import { logError } from '../../../shared/logging.js';
 import { getPostgresPool } from '../../../db/pool.js';
 import { getContactDetail, listContacts } from '../../../db/crm.js';
 import { getSellerHistory } from '../../../db/sellerHistory.js';
+import { getFinanceSummary } from '../../../db/finance.js';
+import { getBuyersSummary } from '../../../db/buyers.js';
+import { getReportsSummary } from '../../../db/reports.js';
 import { getConfiguredRecord, getConfiguredRecords } from '../../../store/index.js';
 import type { AirtableRecord } from '../../airtable/client.js';
 import { INTAKE_DRAFT_FIELDS, PHOTOS_DRAFT_FIELDS, TESTING_DRAFT_FIELDS, type AssistantDraft, type DraftKind } from '../../../shared/contracts/intakeDraft.js';
@@ -63,7 +66,7 @@ const ITEM_AND_DOC_TOOLS = [
   },
 ] as const;
 
-// Customer and seller data is personal data: full-access roles only, matching the /api/dashboard and CRM routes.
+// Customer and seller data is personal data: full-access roles and processors only.
 const CUSTOMER_TOOLS = [
   {
     name: 'search_customers',
@@ -79,6 +82,25 @@ const CUSTOMER_TOOLS = [
     name: 'get_seller_history',
     description: 'Get a seller\'s full history by email: items sold to us, amounts paid and refunded, interactions, open follow-ups and inquiries.',
     input_schema: { type: 'object', properties: { email: { type: 'string' } }, required: ['email'] },
+  },
+] as const;
+
+// Sales, cost and earnings: admin, owner and developer only, like the Sales page and /api/dashboard finance routes.
+const FINANCE_TOOLS = [
+  {
+    name: 'get_finance_summary',
+    description: 'Cost on hand, sold items, revenue, cost, profit and margin. Optional from/to (YYYY-MM-DD) limit sold items by sold date; omit both for all time. Earnings only cover items with a recorded sale price.',
+    input_schema: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' } } },
+  },
+  {
+    name: 'get_buyers',
+    description: 'Buyers (people who purchased) with items bought, total spent and last purchase. Optional search by name/email and from/to (YYYY-MM-DD) sold-date range. Returns totals plus up to 20 top buyers.',
+    input_schema: { type: 'object', properties: { search: { type: 'string' }, from: { type: 'string' }, to: { type: 'string' } } },
+  },
+  {
+    name: 'get_reports',
+    description: 'Inventory counts by status, average days spent in each stage, and shipped items by brand.',
+    input_schema: { type: 'object', properties: {} },
   },
 ] as const;
 
@@ -120,7 +142,8 @@ export function canDraftIntake(scope: AssistantScope): boolean {
 export function getAssistantToolDefinitions(scope: AssistantScope) {
   return [
     ...ITEM_AND_DOC_TOOLS,
-    ...(scope.fullAccess ? CUSTOMER_TOOLS : []),
+    ...(scope.canViewCustomers ? CUSTOMER_TOOLS : []),
+    ...(scope.canViewFinance ? FINANCE_TOOLS : []),
     ...(canDraftIntake(scope) ? [INTAKE_TOOL] : []),
     ...(canDraftAnyStage(scope) ? [STAGE_TOOL] : []),
   ];
@@ -131,9 +154,30 @@ export interface AssistantToolContext {
 }
 
 function requireCustomerAccess(scope: AssistantScope): string | null {
-  if (!scope.fullAccess) return 'You do not have access to customer data.';
+  if (!scope.canViewCustomers) return 'You do not have access to customer data.';
   if (!process.env.DATABASE_URL?.trim()) return 'Customer data needs the Postgres database, which is not configured.';
   return null;
+}
+
+function requireFinanceAccess(scope: AssistantScope): string | null {
+  if (!scope.canViewFinance) return 'You do not have access to sales or financial data.';
+  if (!process.env.DATABASE_URL?.trim()) return 'Sales data needs the Postgres database, which is not configured.';
+  return null;
+}
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+function dateInput(value: unknown): string | null | 'invalid' {
+  if (value === undefined || value === null || value === '') return null;
+  return typeof value === 'string' && DATE_ONLY.test(value.trim()) ? value.trim() : 'invalid';
+}
+
+/** Amounts paid to sellers are financial data; processors see seller history without them. */
+function stripSellerAmounts<T extends { totals?: unknown; items?: unknown }>(scope: AssistantScope, history: T): T {
+  if (scope.canViewFinance) return history;
+  const { paidAmount: _paid, refundAmount: _refund, ...totals } = (history.totals ?? {}) as Record<string, unknown>;
+  const items = ((history.items ?? []) as Array<Record<string, unknown>>).map(({ paidAmount: _p, ...rest }) => rest);
+  return { ...history, totals, items };
 }
 
 function withItemLinks<T extends { recordId?: string | null; airtableRecordId?: string | null }>(scope: AssistantScope, items: T[]) {
@@ -404,7 +448,22 @@ export async function runAssistantTool(
       const email = typeof input.email === 'string' ? input.email.trim().slice(0, 200) : '';
       if (!email) return { error: 'Email is required.' };
       const history = await getSellerHistory(getPostgresPool(), email);
-      return history ? { ...history, items: withItemLinks(scope, history.items) } : { error: 'No seller found for that email.' };
+      return history ? { ...stripSellerAmounts(scope, history), items: withItemLinks(scope, stripSellerAmounts(scope, history).items) } : { error: 'No seller found for that email.' };
+    }
+    case 'get_finance_summary':
+    case 'get_buyers':
+    case 'get_reports': {
+      const denied = requireFinanceAccess(scope);
+      if (denied) return { error: denied };
+      const pool = getPostgresPool();
+      if (name === 'get_reports') return await getReportsSummary(pool);
+      const from = dateInput(input.from);
+      const to = dateInput(input.to);
+      if (from === 'invalid' || to === 'invalid') return { error: 'from and to must be YYYY-MM-DD dates.' };
+      if (name === 'get_finance_summary') return await getFinanceSummary(pool, { from, to });
+      const search = typeof input.search === 'string' ? input.search.trim().slice(0, 200) : '';
+      const summary = await getBuyersSummary(pool, { search, from, to, limit: 20 });
+      return { ...summary, buyers: summary.buyers.map((buyer) => ({ ...buyer, items: buyer.items.slice(0, 5) })) };
     }
     default:
       return { error: `Unknown tool ${name}.` };

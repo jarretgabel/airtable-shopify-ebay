@@ -6,14 +6,14 @@ import { resolveAssistantScope } from '../../../../../../aws/src/providers/ai/as
 const names = (role: 'admin' | 'processor' | 'tester', pages: string[]) =>
   getAssistantToolDefinitions(resolveAssistantScope({ role, allowedPages: pages })).map((tool) => tool.name);
 
-test('customer tools are offered to full-access roles only', () => {
+test('customer tools are offered to full-access roles and processors only', () => {
   assert.ok(names('admin', ['dashboard']).includes('get_seller_history'));
-  assert.ok(!names('processor', ['inventory', 'listings']).includes('search_customers'));
+  assert.ok(names('processor', ['inventory', 'listings']).includes('search_customers'));
   assert.ok(!names('tester', ['testing']).includes('get_customer'));
 });
 
-test('customer tools refuse non-full-access callers even if invoked', async () => {
-  const scope = resolveAssistantScope({ role: 'processor', allowedPages: ['inventory'] });
+test('customer tools refuse testers and photographers even if invoked', async () => {
+  const scope = resolveAssistantScope({ role: 'tester', allowedPages: ['testing'] });
   assert.deepEqual(await runAssistantTool(scope, 'search_customers', { query: 'a' }), { error: 'You do not have access to customer data.' });
   assert.deepEqual(await runAssistantTool(scope, 'get_seller_history', { email: 'a@b.c' }), { error: 'You do not have access to customer data.' });
 });
@@ -69,4 +69,23 @@ test('expandStatusFilter covers every stored Ready to List status', async () => 
   assert.deepEqual(expandStatusFilter('Ready to List').sort(), ['Approved for Publish', 'Awaiting Pre-Listing Review']);
   assert.deepEqual(expandStatusFilter('Testing In Progress'), ['Testing In Progress']);
   assert.deepEqual(expandStatusFilter(''), []);
+});
+
+test('finance tools are offered to admin only, never processors or stage roles', () => {
+  assert.ok(names('admin', ['dashboard']).includes('get_finance_summary'));
+  assert.ok(names('admin', ['dashboard']).includes('get_buyers'));
+  assert.ok(!names('processor', ['inventory']).includes('get_finance_summary'));
+  assert.ok(!names('tester', ['testing']).includes('get_reports'));
+});
+
+test('finance tools refuse roles without finance access', async () => {
+  const scope = resolveAssistantScope({ role: 'processor', allowedPages: ['inventory'] });
+  const result = await runAssistantTool(scope, 'get_finance_summary', {}) as { error?: string };
+  assert.match(result.error ?? '', /do not have access/);
+});
+
+test('processors can read seller fields but not cost', () => {
+  const scope = resolveAssistantScope({ role: 'processor', allowedPages: ['inventory'] });
+  assert.ok(scope.fields.includes('Seller Email'));
+  assert.ok(!scope.fields.includes('Cost'));
 });
