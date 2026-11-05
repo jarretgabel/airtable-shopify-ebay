@@ -29,7 +29,7 @@ export const BASE_FIELDS = [
 ];
 export const LISTING_FIELDS = [
   'Item Title', 'Title', 'Shopify Title', 'Shopify REST Title', 'eBay Title', 'eBay Inventory Product Title', 'Vendor',
-  'Shopify Approved', 'eBay Approved', 'Ebay Approved', 'Ebay Listing Format', 'Description', 'Shopify Type', 'Shopify Collections', 'Shopify Tags',
+  'Ebay Listing Format', 'Description', 'Shopify Type', 'Shopify Collections', 'Shopify Tags',
   'Approved For Publish At', 'Awaiting Pre-Listing Review At', 'Pre-Listing Reviewed At', 'Pre-Listing Reviewed By', 'eBay Listing ID', 'eBay Published At', 'Shopify Status', 'Shopify REST Status', 'eBay Offer Status', 'eBay Format', 'Listing Format',
   'Shopify Price', 'Shopify REST Variant 1 Price', 'Shopify Variant 1 Price', 'eBay Price', 'Ebay Price', 'Buy It Now Price',
   'Starting Auction Price', 'Quantity', 'Qty', 'eBay Inventory SKU', 'Shopify REST Variant 1 SKU', 'Condition',
