@@ -33,7 +33,7 @@ const ITEM_AND_DOC_TOOLS = [
       type: 'object',
       properties: {
         query: { type: 'string', description: 'Free-text match on make, model, SKU, serial number or notes.' },
-        status: { type: 'string', description: 'Exact Workflow Status, e.g. "Testing In Progress" or "Photography In Progress".' },
+        status: { type: 'string', description: 'Exact Workflow Status, e.g. "Testing In Progress", "Photography In Progress" or "Ready to List".' },
         limit: { type: 'integer', minimum: 1, maximum: MAX_RESULTS },
       },
     },
@@ -185,13 +185,29 @@ async function loadListingRecords(
   }
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  'Awaiting Pre-Listing Review': 'Ready to List',
+  'Approved for Publish': 'Ready to List',
+};
+
+/** The app shows these stored statuses as "Ready to List"; the assistant should use the same name. */
+export function displayStatus(status: unknown): string {
+  const text = String(status ?? '');
+  return STATUS_LABELS[text] ?? text;
+}
+
+function withStatusLabel<T extends Record<string, unknown>>(item: T): T & { statusLabel?: string } {
+  const status = item['Workflow Status'];
+  return status !== undefined && displayStatus(status) !== String(status) ? { ...item, statusLabel: displayStatus(status) } : item;
+}
+
 function summarizeListing(scope: AssistantScope, record: AirtableRecord) {
-  return { id: record.id, kind: 'listing', link: `/listings/${record.id}`, ...pickVisibleFields(scope, record.fields) };
+  return withStatusLabel({ id: record.id, kind: 'listing', link: `/listings/${record.id}`, ...pickVisibleFields(scope, record.fields) });
 }
 
 function summarize(scope: AssistantScope, record: AirtableRecord) {
   const link = resolveItemLink(scope, record.id, record.fields['Workflow Status']);
-  return { id: record.id, ...(link ? { link } : {}), ...pickVisibleFields(scope, record.fields) };
+  return withStatusLabel({ id: record.id, ...(link ? { link } : {}), ...pickVisibleFields(scope, record.fields) });
 }
 
 type ItemSummary = { id: string; link?: string; [field: string]: unknown };
@@ -234,7 +250,7 @@ export async function describePublishReadiness(record: AirtableRecord): Promise<
     const ready = isCombinedRecordReadyForPublishing(record, names.combinedRequiredFieldNames, names.shopifyRequiredFieldNames, names.ebayRequiredFieldNames);
     return {
       state: ready ? 'ready to publish' : 'not ready to publish',
-      workflowStatus: status,
+      workflowStatus: displayStatus(status),
       ...(sku ? {} : { missingSku: true }),
       ...(shopifyMissing.length > 0 ? { shopifyMissingFields: shopifyMissing } : {}),
       ...(ebayMissing.length > 0 ? { ebayMissingFields: ebayMissing } : {}),
@@ -286,7 +302,8 @@ export async function runAssistantTool(
   switch (name) {
     case 'search_items': {
       const query = typeof input.query === 'string' ? cleanSearchQuery(input.query.trim()) : '';
-      const status = typeof input.status === 'string' ? input.status.trim() : '';
+      const requestedStatus = typeof input.status === 'string' ? input.status.trim() : '';
+      const status = requestedStatus.toLowerCase() === 'ready to list' ? 'Awaiting Pre-Listing Review' : requestedStatus;
       const limit = Math.min(Math.max(Number(input.limit) || 10, 1), MAX_RESULTS);
       const matches = (await loadVisibleRecords(scope, { query, status })).filter((record) =>
         (!status || record.fields['Workflow Status'] === status) && (!query || matchesQuery(record, scope, query)));
@@ -323,12 +340,12 @@ export async function runAssistantTool(
     case 'stage_counts': {
       const counts: Record<string, number> = {};
       for (const record of await loadVisibleRecords(scope, { fields: ['Workflow Status'], maxRecords: COUNT_SCAN })) {
-        const status = String(record.fields['Workflow Status'] ?? 'Unknown');
+        const status = displayStatus(record.fields['Workflow Status'] ?? 'Unknown');
         counts[status] = (counts[status] ?? 0) + 1;
       }
       const listingCounts: Record<string, number> = {};
       for (const record of await loadListingRecords(scope, { fields: ['Workflow Status'], maxRecords: COUNT_SCAN })) {
-        const status = String(record.fields['Workflow Status'] ?? 'Unknown');
+        const status = displayStatus(record.fields['Workflow Status'] ?? 'Unknown');
         listingCounts[status] = (listingCounts[status] ?? 0) + 1;
       }
       return canViewListings(scope) ? { workflow: counts, listings: listingCounts } : counts;

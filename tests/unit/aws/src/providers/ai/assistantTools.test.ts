@@ -56,3 +56,10 @@ test('mergeItemSummaries reports a record present in both tables once', async ()
   assert.deepEqual(merged[0].publishReadiness, { state: 'ready to publish' });
   assert.equal(merged[1].id, 'rec2');
 });
+
+test('displayStatus shows the merged Ready to List label', async () => {
+  const { displayStatus } = await import('../../../../../../aws/src/providers/ai/assistant/tools.js');
+  assert.equal(displayStatus('Awaiting Pre-Listing Review'), 'Ready to List');
+  assert.equal(displayStatus('Approved for Publish'), 'Ready to List');
+  assert.equal(displayStatus('Testing In Progress'), 'Testing In Progress');
+});
