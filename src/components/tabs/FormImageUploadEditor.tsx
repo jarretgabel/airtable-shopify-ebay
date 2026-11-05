@@ -69,6 +69,9 @@ export interface FormImageUploadEditorProps {
   namingContext?: ImageNamingContext;
   requireImageRole?: boolean;
   afterUploadContent?: ReactNode;
+  /** Files handed in from outside (for example dropped on the assistant); each batch is added once and then reported consumed. */
+  incomingFiles?: File[];
+  onIncomingFilesConsumed?: () => void;
 }
 
 interface EnlargedPreviewState {
@@ -265,6 +268,8 @@ export function FormImageUploadEditor({
   namingContext,
   requireImageRole = false,
   afterUploadContent,
+  incomingFiles,
+  onIncomingFilesConsumed,
 }: FormImageUploadEditorProps) {
   const [defaultSettings, setDefaultSettings] = useState<FormImageProcessingDefaults>(() => loadFormImageProcessingDefaults());
   const [items, setItems] = useState<EditableUploadItem[]>([]);
@@ -364,6 +369,16 @@ export function FormImageUploadEditor({
       });
     }
   };
+
+  const addFilesRef = useRef(addFiles);
+  addFilesRef.current = addFiles;
+  const consumedRef = useRef(onIncomingFilesConsumed);
+  consumedRef.current = onIncomingFilesConsumed;
+  useEffect(() => {
+    if (!incomingFiles || incomingFiles.length === 0) return;
+    addFilesRef.current(incomingFiles);
+    consumedRef.current?.();
+  }, [incomingFiles]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     addFiles(Array.from(event.target.files ?? []));

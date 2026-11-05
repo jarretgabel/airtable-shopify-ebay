@@ -22,6 +22,7 @@ import { WorkflowImageMetadataEditor } from '@/components/tabs/WorkflowImageMeta
 import { AudiogonRatingSelect } from '@/components/tabs/AudiogonRatingSelect';
 import type { FormImageProcessingSummary } from '@/components/tabs/FormImageUploadEditor';
 import type { FormImageUploadAsset } from '@/services/formImageUploads';
+import { validateTestingForm } from '@/components/tabs/testing/testingFormValidation';
 import { isImageRoleComplete } from '@/services/imageNamingFormatter';
 import { filterWorkflowImageMetadataByStage, replaceWorkflowImageMetadataStage } from '@/services/workflowImageMetadata';
 import {
@@ -90,18 +91,6 @@ const EDITABLE_TESTING_FIELD_NAMES: Array<keyof TestingFormValues> = [
 ];
 
 type TestingSubmitIntent = 'save' | 'complete';
-
-function validateForm(values: TestingFormValues): string | null {
-  if (!values.sku.trim()) return 'SKU is required.';
-  if (!values.make.trim()) return 'Make is required.';
-  if (!values.model.trim()) return 'Model is required.';
-  if (!values.componentType.trim()) return 'Component Type is required.';
-  if (!values.testingNotes.trim()) return 'Testing Notes is required.';
-  if (!values.testingTimeMinutes.trim()) return 'Testing Time is required.';
-  if (!values.serviceTimeMinutes.trim()) return 'Service Time is required.';
-  if (!values.testingDate.trim()) return 'Testing Date is required.';
-  return null;
-}
 
 function getFieldLayoutClass(definition: TestingFormFieldDefinition): string {
   if (definition.name === 'testingDate') {
@@ -222,7 +211,7 @@ export function TestingFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' 
     setSubmitError(null);
     setSubmitSuccess(null);
 
-    const validationError = submitIntent === 'complete' ? validateForm(formValues) : null;
+    const validationError = submitIntent === 'complete' ? validateTestingForm(formValues) : null;
     if (validationError) {
       setSubmitError(validationError);
       return;

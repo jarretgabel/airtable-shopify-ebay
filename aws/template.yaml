@@ -1213,6 +1213,23 @@ Resources:
             Method: POST
             Path: /api/ai/identify-equipment
 
+  AssistantChatFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ai/assistantChat.handler
+      Timeout: 60
+      ReservedConcurrentExecutions: 5
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/assistant/chat
+
   AiGenerateDescriptionFunction:
     Type: AWS::Serverless::Function
     Metadata:

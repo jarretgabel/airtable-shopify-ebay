@@ -10,6 +10,7 @@ import { useEbayListingNotifications } from '@/app/useEbayListingNotifications';
 import { useUsedGearWorkflowNotifications } from '@/app/useUsedGearWorkflowNotifications';
 import { displayValue, hasValue, recordTitle } from '@/app/appNavigation';
 import { AppFrame } from '@/components/app/AppFrame';
+import { AssistantChat } from '@/components/assistant/AssistantChat';
 import { RequiredPasswordChangeModal } from '@/components/auth/RequiredPasswordChangeModal';
 import { isDeveloperRole } from '@/auth/roleAccess';
 import type { AppPage } from '@/auth/pages';
@@ -405,6 +406,7 @@ export function AuthenticatedAppShell({
             currentSlug={market.currentSlug}
           />
         </AppFrame>
+        {!showRequiredPasswordModal && <AssistantChat userId={String(currentUser.id)} />}
       </div>
 
       {showRequiredPasswordModal && (

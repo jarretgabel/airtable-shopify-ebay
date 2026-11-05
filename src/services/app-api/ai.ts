@@ -207,3 +207,32 @@ export function getAIProvider(): AIProviderStatus {
 
   return { provider: 'backend', key: '' };
 }
+export interface AssistantChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface AssistantIntakeDraft {
+  kind?: 'intake' | 'testing' | 'photos';
+  recordId?: string;
+  values: Record<string, string>;
+  missing: string[];
+  invalid: Array<{ field: string; message: string; allowedOptions?: string[] }>;
+}
+
+export interface AssistantChatResponse {
+  reply: string;
+  draft?: AssistantIntakeDraft;
+}
+
+export async function sendAssistantMessage(
+  messages: AssistantChatMessage[],
+  currentPath?: string,
+  draft?: AssistantIntakeDraft | null,
+): Promise<AssistantChatResponse> {
+  try {
+    return await postJson<AssistantChatResponse>('/api/assistant/chat', { messages, currentPath, draft: draft ?? undefined }, { timeoutMs: 65000 });
+  } catch (error) {
+    throw toAiError(error);
+  }
+}

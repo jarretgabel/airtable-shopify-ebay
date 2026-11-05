@@ -106,6 +106,11 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
     return { anyPage: ['inventory'] };
   }
 
+  // Any signed-in user; the assistant scopes its own data by role.
+  if (path.startsWith('/api/assistant/')) {
+    return {};
+  }
+
   if (path.startsWith('/api/ai/')) {
     return { anyPage: ['imagelab'] };
   }
