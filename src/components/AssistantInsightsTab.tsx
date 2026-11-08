@@ -5,14 +5,12 @@ import { DashboardSectionPanel, StatTile } from '@/components/dashboard/dashboar
 import { assistantInsightsAppApi } from '@/services/app-api';
 import type { AssistantInsights } from '@/services/app-api/assistantInsights';
 
-const dateTime = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 const number = new Intl.NumberFormat('en-US');
 const money = (value: number) => `$${value.toFixed(value < 1 ? 3 : 2)}`;
 
 export function AssistantInsightsTab() {
   const [insights, setInsights] = useState<AssistantInsights | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<number | null>(null);
 
   useEffect(() => {
     assistantInsightsAppApi.getAssistantInsights().then(setInsights).catch((reason: unknown) => {
@@ -67,29 +65,6 @@ export function AssistantInsightsTab() {
                 </table>
               </div>
             </div>
-          </DashboardSectionPanel>
-
-          <DashboardSectionPanel id="assistant-feedback" title="Feedback">
-            <p className="m-0 text-[0.75rem] text-[var(--muted)]">Thumbs-down answers are listed first. Open one to see the question, the answer and which lookups it used.</p>
-            {insights.feedback.recent.length === 0 ? <p className="m-0 text-sm text-[var(--muted)]">No feedback yet.</p> : (
-              <ul className="m-0 list-none space-y-2 p-0 text-[0.85rem]">
-                {insights.feedback.recent.map((item) => (
-                  <li key={item.id} className="border-t border-[var(--line)] pt-2">
-                    <button type="button" className="w-full text-left" onClick={() => setOpenId(openId === item.id ? null : item.id)}>
-                      {item.rating === 'down' ? '👎' : '👍'} {item.question || '(no question recorded)'}
-                      <span className="text-[var(--muted)]"> · {item.role ?? 'unknown'} · {dateTime.format(new Date(item.at))}</span>
-                    </button>
-                    {openId === item.id ? (
-                      <div className="mt-1 space-y-1 text-[var(--muted)]">
-                        <p className="m-0 whitespace-pre-wrap">{item.answer}</p>
-                        <p className="m-0">Lookups used: {item.tools.length ? item.tools.join(', ') : 'none'}</p>
-                        {item.comment ? <p className="m-0">Comment: {item.comment}</p> : null}
-                      </div>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
           </DashboardSectionPanel>
         </>
       ) : error ? null : <p className="m-0 text-sm text-[var(--muted)]">Loading…</p>}

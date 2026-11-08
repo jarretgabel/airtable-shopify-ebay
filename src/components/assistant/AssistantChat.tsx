@@ -101,18 +101,6 @@ export function AssistantChat({ userId, role }: { userId: string; role?: UserRol
     }
   }
 
-  async function rate(index: number, rating: 'up' | 'down') {
-    const message = messages[index];
-    if (!message || message.rating) return;
-    const question = [...messages.slice(0, index)].reverse().find((item) => item.role === 'user')?.content ?? '';
-    setMessages(messages.map((item, i) => (i === index ? { ...item, rating } : item)));
-    try {
-      await aiAppApi.sendAssistantFeedback({ rating, question, answer: message.content, tools: message.tools ?? [] });
-    } catch {
-      // Feedback is best effort; the rating stays on screen.
-    }
-  }
-
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     void send(input);
@@ -184,17 +172,6 @@ export function AssistantChat({ userId, role }: { userId: string; role?: UserRol
             <div className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-xl px-3 py-2 text-left ${message.role === 'user' ? 'bg-sky-700' : 'bg-slate-800'}`}>
               {message.role === 'assistant' ? renderMarkdown(message.content) : message.content}
             </div>
-            {message.role === 'assistant' && message.tools && (
-              <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
-                {message.rating ? <span>Thanks for the feedback</span> : (
-                  <>
-                    <span>Helpful?</span>
-                    <button type="button" aria-label="Good answer" onClick={() => void rate(index, 'up')} className="rounded px-1.5 py-0.5 hover:bg-slate-800">👍</button>
-                    <button type="button" aria-label="Bad answer" onClick={() => void rate(index, 'down')} className="rounded px-1.5 py-0.5 hover:bg-slate-800">👎</button>
-                  </>
-                )}
-              </div>
-            )}
           </div>
         ))}
         {stageDraft && (
