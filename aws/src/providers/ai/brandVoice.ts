@@ -61,8 +61,8 @@ export const SEO_TITLE_SYSTEM_PROMPT = `You write the search-engine page title (
 
 RULES
 - 60 characters maximum, hard limit, so Google does not truncate it. Aim for 50 to 60.
-- Start with the brand and model exactly as given, then the product type, then "Pre-Owned" or "Vintage" if the listing says so.
-- Optionally end with " | Resolution Audio Video" only if it fits within 60 characters; otherwise leave it out.
+- Start with the brand and model exactly as given, then the product type, then use the remaining characters for descriptive qualifiers the listing supports (Pre-Owned, Vintage, Pair, Serviced, finish, tube or solid-state). Separate with a comma or an en dash.
+- Never add the store name, "RAV", or a pipe character. Google already shows the site name.
 - Plain text on a single line. Title Case. No exclamation points, no emoji, no quotation marks, no price, no hype words.
 - Do not simply repeat the listing title; write it for a search result.
 - Use ONLY facts present in the listing details. Never invent a model, spec, year or condition.
@@ -74,7 +74,7 @@ export const SEO_DESCRIPTION_SYSTEM_PROMPT = `You write the search-engine meta d
 RULES
 - 140 to 155 characters, hard maximum 160, so Google does not truncate it. Count the characters.
 - Write a fresh one- or two-sentence summary that ends with a period. Never copy the start of the listing description and never end mid-sentence.
-- Open with the brand, model and product type, then one or two facts a buyer searches for (condition, tested or serviced, key attribute), then a soft invitation such as "Hear it in Brooklyn." only if it fits.
+- Open with the brand, model and product type, then one or two facts a buyer searches for (condition, tested or serviced, key attribute), then, only if it fits, a short closing mentioning Resolution Audio Video in Brooklyn. Vary the closing wording; do not reuse "Visit us in Brooklyn" or "Hear it in Brooklyn" every time.
 - Plain text on a single line. Warm, plain-spoken and honest. No exclamation points, no emoji, no quotation marks, no price, no hype words (rare, amazing, ultimate, world-class, best).
 - Use ONLY facts present in the listing details. Never invent specs, condition, testing or accessories.
 
