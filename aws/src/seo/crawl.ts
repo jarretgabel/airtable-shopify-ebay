@@ -26,6 +26,8 @@ export interface AuditOptions {
   fetcher?: Fetcher;
   /** Pause between a worker's requests, and the base for retry backoff. Tests set this to 0. */
   delayMs?: number;
+  /** A run row already created by the caller (startAudit). When set, the active-run check and startRun are skipped. */
+  runId?: number;
 }
 
 async function timedFetch(fetcher: Fetcher, url: string) {
@@ -112,7 +114,7 @@ async function fetchOptionalText(fetcher: Fetcher, url: string): Promise<{ ok: b
   }
 }
 
-/** Crawls the storefront from its sitemap, scores every page and stores the result. Returns the run id, or null when a run is already active. */
+/** Crawls the storefront from its sitemap, scores every page and stores the result. Returns the run id, or null when no run id was supplied and a run is already active. */
 export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Promise<number | null> {
   const siteUrl = options.siteUrl ?? process.env.SEO_SITE_URL?.trim() ?? DEFAULT_SITE_URL;
   const fetcher: Fetcher = options.fetcher ?? ((url, init) => fetch(url, init));
@@ -121,8 +123,11 @@ export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Pr
   const delayMs = options.delayMs ?? 300;
   const deadline = options.deadline ?? Date.now() + 13 * 60_000;
 
-  if (await hasActiveRun(db)) return null;
-  const runId = await startRun(db);
+  let runId = options.runId;
+  if (runId === undefined) {
+    if (await hasActiveRun(db)) return null;
+    runId = await startRun(db);
+  }
   try {
     const [robots, llms, entries] = await Promise.all([
       fetchOptionalText(fetcher, new URL('/robots.txt', siteUrl).toString()),

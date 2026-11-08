@@ -8,8 +8,8 @@ import { getOptionalSecret } from '../../shared/secrets.js';
 export type SeoTaskEvent = { task?: 'audit' | 'citations'; runId?: number };
 
 /** The crawl, then a PageSpeed sample of a few pages (its own time budget, never fails the audit). */
-export async function runAuditWithPageSpeed(db: Queryable): Promise<number | null> {
-  const runId = await runSeoAudit(db);
+export async function runAuditWithPageSpeed(db: Queryable, existingRunId?: number): Promise<number | null> {
+  const runId = await runSeoAudit(db, { runId: existingRunId });
   if (runId !== null) await runPageSpeedSample(db, { apiKey: getOptionalSecret('PAGESPEED_API_KEY') });
   return runId;
 }
@@ -21,5 +21,5 @@ export async function handler(event: SeoTaskEvent = {}): Promise<{ runId: number
     await runCitationCheck(pool, event.runId);
     return { runId: event.runId };
   }
-  return { runId: await runAuditWithPageSpeed(pool) };
+  return { runId: await runAuditWithPageSpeed(pool, typeof event?.runId === 'number' ? event.runId : undefined) };
 }

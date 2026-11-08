@@ -2,12 +2,28 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { requireRouteAccess } from '../../shared/access.js';
 import { getPostgresPool } from '../../db/pool.js';
-import { hasActiveRun } from '../../db/seo.js';
+import type { Queryable } from '../../db/sellersSummary.js';
+import { finishRun, hasActiveRun, startRun } from '../../db/seo.js';
 import { hasActiveCitationRun, runCitationCheck, startCitationRun } from '../../seo/citations.js';
 import { HttpError, getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { runAuditWithPageSpeed } from './runAudit.js';
 import { logError } from '../../shared/logging.js';
+
+type Dispatch = (payload: Record<string, unknown>, local: () => Promise<unknown>) => Promise<void>;
+
+/** Creates the run row before dispatching so the dashboard sees a running audit on its first poll. Returns false when one is already running. */
+export async function startAuditRun(pool: Queryable, dispatch: Dispatch): Promise<boolean> {
+  if (await hasActiveRun(pool)) return false;
+  const runId = await startRun(pool);
+  try {
+    await dispatch({ task: 'audit', runId }, () => runAuditWithPageSpeed(pool, runId));
+  } catch (error) {
+    await finishRun(pool, runId, { status: 'failed', siteChecks: [], error: 'Audit could not be dispatched' }).catch(() => undefined);
+    throw error;
+  }
+  return true;
+}
 
 function parseTask(event: APIGatewayProxyEventV2): 'audit' | 'citations' {
   try {
@@ -29,7 +45,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const pool = getPostgresPool();
     const task = parseTask(event);
     const functionName = process.env.SEO_AUDIT_FUNCTION_NAME?.trim();
-    const dispatch = async (payload: Record<string, unknown>, local: () => Promise<unknown>) => {
+    const dispatch: Dispatch = async (payload, local) => {
       if (functionName) {
         await new LambdaClient({}).send(new InvokeCommand({ FunctionName: functionName, InvocationType: 'Event', Payload: JSON.stringify(payload) }));
       } else {
@@ -42,8 +58,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       const runId = await startCitationRun(pool);
       await dispatch({ task: 'citations', runId }, () => runCitationCheck(pool, runId));
     } else {
-      if (await hasActiveRun(pool)) return jsonOk({ started: false, reason: 'An audit is already running.' }, { origin });
-      await dispatch({ task: 'audit' }, () => runAuditWithPageSpeed(pool));
+      if (!await startAuditRun(pool, dispatch)) return jsonOk({ started: false, reason: 'An audit is already running.' }, { origin });
     }
     return jsonOk({ started: true }, { origin });
   } catch (error) {

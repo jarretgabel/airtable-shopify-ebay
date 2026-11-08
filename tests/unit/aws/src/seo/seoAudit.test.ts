@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { classifyUrl, extractSignals } from '../../../../../aws/src/seo/htmlSignals.js';
 import { failedPageScores, scorePage } from '../../../../../aws/src/seo/scoring.js';
 import { blockedAiCrawlers, buildSiteChecks } from '../../../../../aws/src/seo/siteChecks.js';
+import { startAuditRun } from '../../../../../aws/src/handlers/seo/startAudit.js';
 import { discoverPages, parseSitemap, runSeoAudit, type Fetcher } from '../../../../../aws/src/seo/crawl.js';
 
 const GOOD_PRODUCT = `<!doctype html><html lang="en"><head>
@@ -136,6 +137,21 @@ test('runSeoAudit does nothing while another run is active', async () => {
   assert.equal(await runSeoAudit(db, { siteUrl: 'https://x.com', fetcher: fakeFetch }), null);
 });
 
+test('runSeoAudit uses a supplied runId without checking for or creating a run', async () => {
+  const calls: string[] = [];
+  const db = {
+    query: async (sql: string) => {
+      calls.push(sql);
+      if (/avg\(seo_score\)/.test(sql)) return { rows: [{ pages: 3, seo: 50, aio: 40 }] };
+      return { rows: [] };
+    },
+  };
+  const runId = await runSeoAudit(db, { siteUrl: 'https://x.com', fetcher: fakeFetch, concurrency: 2, delayMs: 0, runId: 42 });
+  assert.equal(runId, 42);
+  assert.ok(!calls.some((sql) => /INSERT INTO seo_audit_runs/.test(sql) || /SELECT 1 FROM seo_audit_runs/.test(sql)));
+  assert.ok(calls.some((sql) => /UPDATE seo_audit_runs SET status = \$2/.test(sql)));
+});
+
 test('runSeoAudit retries 429 responses (honouring Retry-After) before scoring a page', async () => {
   let hits = 0;
   const flaky: Fetcher = async (url, init) => {
@@ -156,4 +172,37 @@ test('runSeoAudit retries 429 responses (honouring Retry-After) before scoring a
   const page = stored.find((row) => row.url === 'https://x.com/products/a');
   assert.equal(page?.status, 200);
   assert.ok(Number(page?.seo) > 80);
+});
+
+test('startAuditRun creates the run row before dispatching and passes its id', async () => {
+  const order: string[] = [];
+  const db = {
+    query: async (sql: string) => {
+      if (/INSERT INTO seo_audit_runs/.test(sql)) { order.push('insert'); return { rows: [{ id: 9 }] }; }
+      return { rows: [] };
+    },
+  };
+  const started = await startAuditRun(db, async (payload) => { order.push(`dispatch:${JSON.stringify(payload)}`); });
+  assert.equal(started, true);
+  assert.deepEqual(order, ['insert', 'dispatch:{"task":"audit","runId":9}']);
+});
+
+test('startAuditRun does not dispatch while a run is active', async () => {
+  const db = { query: async (sql: string) => ({ rows: /SELECT 1 FROM seo_audit_runs/.test(sql) ? [{ '?column?': 1 }] : [] }) };
+  let dispatched = false;
+  assert.equal(await startAuditRun(db, async () => { dispatched = true; }), false);
+  assert.equal(dispatched, false);
+});
+
+test('startAuditRun marks the run failed when dispatch throws', async () => {
+  const calls: Array<{ sql: string; values: unknown[] }> = [];
+  const db = {
+    query: async (sql: string, values: unknown[] = []) => {
+      calls.push({ sql, values });
+      return { rows: /INSERT INTO seo_audit_runs/.test(sql) ? [{ id: 5 }] : [] };
+    },
+  };
+  await assert.rejects(startAuditRun(db, async () => { throw new Error('invoke denied'); }), /invoke denied/);
+  const finish = calls.find((call) => /UPDATE seo_audit_runs SET status = \$2/.test(call.sql));
+  assert.equal(finish?.values[1], 'failed');
 });
