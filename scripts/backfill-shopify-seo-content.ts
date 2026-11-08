@@ -16,6 +16,10 @@ const usesOnlyOriginalWords = (candidate: string, original: string) => {
   const allowed = new Set(words(original));
   return words(candidate).every((w) => allowed.has(w));
 };
+// Hand-written titles where the generated one was wrong for the page.
+const TITLE_OVERRIDES: Record<string, string> = {
+  '/pages/services': 'Smart Home Automation: Lighting, Shades, Music & Video',
+};
 const REFUSAL = /\b(I need|I can't|I cannot|Please provide|Let me)\b/i;
 const domain = process.env.VITE_SHOPIFY_STORE_DOMAIN;
 const token = process.env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN;
@@ -90,6 +94,7 @@ async function main() {
         try { const t = await generateContentSeoTitle(facts, current); if (inRange(t, SEO_TITLE_RANGE) && !REFUSAL.test(t) && usesOnlyOriginalWords(t, current)) title = t; } catch (e) { console.error(`AI title failed for ${path}: ${(e as Error).message}`); }
       }
     }
+    if (need.has('title-length') && TITLE_OVERRIDES[path]) title = TITLE_OVERRIDES[path];
     let description = oldDescription;
     if (need.has('description-length')) {
       try { const d = await generateContentSeoDescription(facts, oldDescription); if (inRange(d, SEO_DESCRIPTION_RANGE) && !REFUSAL.test(d)) description = d; } catch (e) { console.error(`AI description failed for ${path}: ${(e as Error).message}`); }
