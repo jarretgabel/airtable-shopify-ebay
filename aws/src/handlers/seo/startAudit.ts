@@ -8,7 +8,6 @@ import { HttpError, getStatusCode, toApiErrorBody } from '../../shared/errors.js
 import { getRequestOrigin, jsonError, jsonOk } from '../../shared/http.js';
 import { runAuditWithPageSpeed } from './runAudit.js';
 import { logError } from '../../shared/logging.js';
-import { SEO_ROLES } from './getSummary.js';
 
 function parseTask(event: APIGatewayProxyEventV2): 'audit' | 'citations' {
   try {
@@ -23,7 +22,7 @@ function parseTask(event: APIGatewayProxyEventV2): 'audit' | 'citations' {
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
   try {
-    await requireRouteAccess(event, { roles: SEO_ROLES });
+    await requireRouteAccess(event, { anyPage: ['seo'] });
     if (!process.env.DATABASE_URL?.trim()) {
       throw new HttpError(503, 'The SEO dashboard needs the Postgres database, which is not configured.', { service: 'seo', code: 'POSTGRES_NOT_CONFIGURED', retryable: false });
     }
