@@ -110,6 +110,8 @@ if (step === 'auth') {
     'read_locations',
     'read_metaobjects',
     'read_metaobject_definitions',
+    'read_content',
+    'write_content',
   ].join(',');
   const state = Math.random().toString(36).substring(7);
 

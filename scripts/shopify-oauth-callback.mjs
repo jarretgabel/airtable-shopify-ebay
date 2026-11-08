@@ -28,6 +28,8 @@ const SCOPES = [
   'read_locations',
   'read_metaobjects',
   'read_metaobject_definitions',
+  'read_content',
+  'write_content',
 ].join(',');
 const STATE = Math.random().toString(36).substring(2, 10);
 
