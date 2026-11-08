@@ -53,6 +53,7 @@ It prints average and by-type scores, pages affected per check (fixed or WORSE),
 - Collections: product cards and collection banners (0 of 2 on `/collections/accessories`). Pages: project pages with 0 of 10 images (section image blocks, `element.image.liquid`, `lazy-img.liquid`). Home: 9 of 19.
 - Decorative images get `alt=""` explicitly. The audit counts `alt=""` as missing, so check how `htmlSignals.ts` counts them. We may need to treat explicit empty alt as decorative (a scoring fix on our side) rather than giving everything fake alt text.
 - Product images should use alt like "Brand Model product-type detail" (matches our listing image alt standard).
+- **Update (checked live on the Accuphase A-300 page):** the scorer now counts `alt=""` as decorative, and the main product photos already render alt (stored Shopify alt, with the theme falling back to the product title). The only `<img>` elements with no `alt` attribute are the two product photos in the **product gallery modal / zoom lightbox** (`product-gallery-modal__media...`). Fix the modal template to output `alt="{{ image.alt | default: product.title | escape }}"`. Updating Shopify alt text in bulk will not raise scores by itself; the missing alts are theme markup. Re-check other page types (collection, home, blog) for `<img>` without `alt` the same way (`document.querySelectorAll('img:not([alt])')`).
 - Verify: pick 5 URLs across types, count `<img>` without `alt`.
 
 ### WP3 - Structured data (items 3, 15, 17)
