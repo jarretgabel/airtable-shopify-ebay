@@ -1,3 +1,4 @@
+import { SEO_TITLE_FIELD, fillSeoValuesOnSave } from '@/services/seoOnSave';
 import { updateRecordFromResolvedSource } from '@/services/app-api/airtable';
 import { logServiceInfo } from '@/services/logger';
 import {
@@ -817,6 +818,12 @@ export function createSaveRecordAction(set: ApprovalStoreSet, get: ApprovalStore
           ? resolveApprovedValue(currentApprovedValue, approvedFieldKind)
           : currentApprovedValue,
       };
+
+      const hasSeoFields = actualFieldLookup.has(SEO_TITLE_FIELD.toLowerCase())
+        || Object.prototype.hasOwnProperty.call(selectedRecord.fields, SEO_TITLE_FIELD);
+      if (mode === 'full' && hasSeoFields) {
+        Object.assign(nextValues, await fillSeoValuesOnSave(nextValues));
+      }
 
       const conditionValue = nextValues[CONDITION_FIELD]?.trim();
       const initialConditionValue = initialFormValues[CONDITION_FIELD]?.trim();
