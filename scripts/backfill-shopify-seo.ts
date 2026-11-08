@@ -65,9 +65,8 @@ async function main() {
       rows.push([p.id.split('/').pop()!, p.title, p.seo.title ?? '', newTitle, currentDescription, newDescription].map(csvCell).join(','));
       console.log(`${apply ? 'SET ' : 'DRY '} ${p.title}\n   title: ${newTitle || '(unchanged)'} [${newTitle.length}]\n   desc : ${newDescription || '(unchanged)'} [${newDescription.length}]`);
       if (!apply) continue;
-      const seo: Record<string, string> = {};
-      if (newTitle) seo.title = newTitle;
-      if (newDescription) seo.description = newDescription;
+      // productUpdate replaces the whole seo object, so unchanged fields must be sent back as they are.
+      const seo = { title: newTitle || p.seo.title || '', description: newDescription || p.seo.description || '' };
       try {
         const res: { productUpdate: { userErrors: Array<{ message: string }> } } = await gql(
           'mutation($input:ProductInput!){productUpdate(input:$input){userErrors{message}}}',
