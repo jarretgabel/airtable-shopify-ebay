@@ -4,6 +4,7 @@ import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionPanel, DashboardSubPanel, StatTile } from '@/components/dashboard/dashboardPrimitives';
 import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { seoAppApi } from '@/services/app-api';
+import { CitationPanel, PageSpeedPanel } from '@/components/SeoInsightPanels';
 import { recommendationFor } from '@/components/seoRecommendations';
 import type { SeoPageRow, SeoSummary } from '@/services/app-api/seo';
 
@@ -71,6 +72,7 @@ export function SeoTab() {
   const [summary, setSummary] = useState<SeoSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [startingCitations, setStartingCitations] = useState(false);
   const [type, setType] = useState('all');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('seoScore');
@@ -87,10 +89,10 @@ export function SeoTab() {
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
-    if (!summary?.running) return undefined;
+    if (!summary?.running && !summary?.citations.running) return undefined;
     const timer = setInterval(() => { void load(); }, POLL_MS);
     return () => clearInterval(timer);
-  }, [summary?.running, load]);
+  }, [summary?.running, summary?.citations.running, load]);
 
   const runAudit = async () => {
     setStarting(true);
@@ -102,6 +104,19 @@ export function SeoTab() {
       setError(reason instanceof Error ? reason.message : 'Could not start the audit.');
     } finally {
       setStarting(false);
+    }
+  };
+
+  const runCitations = async () => {
+    setStartingCitations(true);
+    try {
+      const result = await seoAppApi.startSeoAudit('citations');
+      if (!result.started && result.reason) setError(result.reason);
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Could not start the AI answer check.');
+    } finally {
+      setStartingCitations(false);
     }
   };
 
@@ -180,6 +195,9 @@ export function SeoTab() {
           </div>
         </DashboardSectionPanel>
       ) : null}
+
+      {summary ? <PageSpeedPanel rows={summary.pageSpeed} /> : null}
+      {summary ? <CitationPanel citations={summary.citations} busy={startingCitations} onRun={() => { void runCitations(); }} /> : null}
 
       {run ? (
         <DashboardSectionPanel id="seo-pages" title="Pages">

@@ -93,6 +93,8 @@ const ROUTES = [
   ['GET', '/api/media/{key+}', 'handlers/media/getMedia.js', 'handler'],
   ['POST', '/api/ai/identify-equipment', 'handlers/ai/identifyEquipment.js', 'handler'],
   ['POST', '/api/assistant/chat', 'handlers/ai/assistantChat.js', 'handler'],
+  ['POST', '/api/assistant/feedback', 'handlers/ai/assistantFeedback.js', 'handler'],
+  ['GET', '/api/assistant/insights', 'handlers/ai/assistantInsights.js', 'handler'],
   ['POST', '/api/ai/generate-description', 'handlers/ai/generateDescription.js', 'handler'],
   ['POST', '/api/gmail/send', 'handlers/gmail/send.js', 'handler'],
   ['POST', '/api/analytics/events', 'handlers/analytics/postEvent.js', 'handler'],

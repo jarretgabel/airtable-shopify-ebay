@@ -5,6 +5,9 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 export interface AssistantMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Tools the answer used; only present on answers from the model, which can be rated. */
+  tools?: string[];
+  rating?: 'up' | 'down';
 }
 
 export const ASSISTANT_IDLE_RESET_MS = 30 * 60 * 1000;

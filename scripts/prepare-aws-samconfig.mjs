@@ -74,6 +74,7 @@ const replacements = [
   ['OpenAiApiKey', getOptionalEnv('VITE_OPENAI_API_KEY')],
   ['AnthropicApiKey', getOptionalEnv('ANTHROPIC_API_KEY')],
   ['AnthropicModel', getOptionalEnv('ANTHROPIC_MODEL')],
+  ['PageSpeedApiKey', getOptionalEnv('PAGESPEED_API_KEY')],
   ['GoogleGmailAccessToken', getOptionalEnv('VITE_GOOGLE_GMAIL_ACCESS_TOKEN')],
   ['EbayEnv', getOptionalEnv('VITE_EBAY_ENV')],
   ['EbayClientId', getOptionalEnv('VITE_EBAY_CLIENT_ID')],

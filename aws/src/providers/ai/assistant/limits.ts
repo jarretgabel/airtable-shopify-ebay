@@ -80,7 +80,7 @@ async function defaultPool(): Promise<SharedPool | null> {
  * Returns the usage row id (to attach tokens later), or null when the database is unavailable,
  * in which case the in-memory guard alone applies.
  */
-export async function enforceSharedAssistantLimits(userId: string, pool?: SharedPool | null): Promise<number | null> {
+export async function enforceSharedAssistantLimits(userId: string, pool?: SharedPool | null, role?: string): Promise<number | null> {
   const limits = getAssistantLimits();
   try {
     const db = pool === undefined ? await defaultPool() : pool;
@@ -97,8 +97,9 @@ export async function enforceSharedAssistantLimits(userId: string, pool?: Shared
     if (Number(rows[0]?.tokens ?? 0) >= limits.dailyTokens) {
       throw tooMany('You have reached the assistant daily usage limit. Try again tomorrow.', 'AI_ASSISTANT_DAILY_LIMIT');
     }
-    const inserted = await db.query('INSERT INTO assistant_usage (user_id) VALUES ($1) RETURNING id', [userId]);
-    await db.query(`DELETE FROM assistant_usage WHERE user_id = $1 AND at < now() - interval '2 days'`, [userId]);
+    const inserted = await db.query('INSERT INTO assistant_usage (user_id, role) VALUES ($1, $2) RETURNING id', [userId, role ?? null]);
+    // Kept long enough for the usage view; the limits only look at the last 24 hours.
+    await db.query(`DELETE FROM assistant_usage WHERE user_id = $1 AND at < now() - interval '45 days'`, [userId]);
     return Number(inserted.rows[0]?.id);
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -106,11 +107,16 @@ export async function enforceSharedAssistantLimits(userId: string, pool?: Shared
   }
 }
 
-export async function recordSharedAssistantTokens(usageId: number | null, tokens: number, pool?: SharedPool | null): Promise<void> {
+export async function recordSharedAssistantTokens(
+  usageId: number | null,
+  tokens: number,
+  pool?: SharedPool | null,
+  detail?: { inputTokens: number; outputTokens: number },
+): Promise<void> {
   if (usageId === null || tokens <= 0) return;
   try {
     const db = pool === undefined ? await defaultPool() : pool;
-    await db?.query('UPDATE assistant_usage SET tokens = $2 WHERE id = $1', [usageId, Math.round(tokens)]);
+    await db?.query('UPDATE assistant_usage SET tokens = $2, input_tokens = $3, output_tokens = $4 WHERE id = $1', [usageId, Math.round(tokens), Math.round(detail?.inputTokens ?? 0), Math.round(detail?.outputTokens ?? 0)]);
   } catch {
     // In-memory accounting still applies.
   }

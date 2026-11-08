@@ -168,6 +168,10 @@ Parameters:
   AnthropicModel:
     Type: String
     Default: ''
+  PageSpeedApiKey:
+    Type: String
+    NoEcho: true
+    Default: ''
   GoogleGmailAccessToken:
     Type: String
     NoEcho: true
@@ -1230,6 +1234,36 @@ Resources:
             Method: POST
             Path: /api/assistant/chat
 
+  AssistantFeedbackFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ai/assistantFeedback.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/assistant/feedback
+
+  AssistantInsightsFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/ai/assistantInsights.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/assistant/insights
+
   AiGenerateDescriptionFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -1366,6 +1400,9 @@ Resources:
       Handler: src/handlers/seo/runAudit.handler
       Timeout: 900
       MemorySize: 512
+      Environment:
+        Variables:
+          PAGESPEED_API_KEY: !Ref PageSpeedApiKey
       Events:
         Weekly:
           Type: Schedule

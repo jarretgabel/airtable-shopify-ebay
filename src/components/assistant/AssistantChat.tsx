@@ -93,11 +93,23 @@ export function AssistantChat({ userId, role }: { userId: string; role?: UserRol
     try {
       const result = await aiAppApi.sendAssistantMessage(next, location.pathname, draft);
       if (result.draft) setDraft(result.draft);
-      setMessages([...next, { role: 'assistant', content: result.reply }]);
+      setMessages([...next, { role: 'assistant', content: result.reply, tools: result.tools ?? [] }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The assistant is unavailable.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function rate(index: number, rating: 'up' | 'down') {
+    const message = messages[index];
+    if (!message || message.rating) return;
+    const question = [...messages.slice(0, index)].reverse().find((item) => item.role === 'user')?.content ?? '';
+    setMessages(messages.map((item, i) => (i === index ? { ...item, rating } : item)));
+    try {
+      await aiAppApi.sendAssistantFeedback({ rating, question, answer: message.content, tools: message.tools ?? [] });
+    } catch {
+      // Feedback is best effort; the rating stays on screen.
     }
   }
 
@@ -137,7 +149,7 @@ export function AssistantChat({ userId, role }: { userId: string; role?: UserRol
         if (stageDraft) addPendingFiles(images);
         else setError('To attach images, first ask me to start a testing or photography update for an item.');
       }}
-      className={`fixed bottom-5 right-5 z-40 flex h-[32rem] max-h-[80vh] ${stageDraft ? 'w-[30rem]' : 'w-[22rem]'} max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 shadow-2xl`}
+      className={`fixed inset-x-2 bottom-2 z-40 flex h-[min(32rem,calc(100dvh-1rem))] flex-col sm:inset-x-auto sm:bottom-5 sm:right-5 sm:h-[32rem] sm:max-h-[80vh] ${stageDraft ? 'sm:w-[30rem]' : 'sm:w-[22rem]'} sm:max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 shadow-2xl`}
     >
       {dragActive && (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-sky-900/80 text-sm font-semibold text-white">
@@ -172,6 +184,17 @@ export function AssistantChat({ userId, role }: { userId: string; role?: UserRol
             <div className={`inline-block max-w-full whitespace-pre-wrap break-words rounded-xl px-3 py-2 text-left ${message.role === 'user' ? 'bg-sky-700' : 'bg-slate-800'}`}>
               {message.role === 'assistant' ? renderMarkdown(message.content) : message.content}
             </div>
+            {message.role === 'assistant' && message.tools && (
+              <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                {message.rating ? <span>Thanks for the feedback</span> : (
+                  <>
+                    <span>Helpful?</span>
+                    <button type="button" aria-label="Good answer" onClick={() => void rate(index, 'up')} className="rounded px-1.5 py-0.5 hover:bg-slate-800">👍</button>
+                    <button type="button" aria-label="Bad answer" onClick={() => void rate(index, 'down')} className="rounded px-1.5 py-0.5 hover:bg-slate-800">👎</button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         ))}
         {stageDraft && (
@@ -207,7 +230,7 @@ export function AssistantChat({ userId, role }: { userId: string; role?: UserRol
           placeholder="Ask a question…"
           aria-label="Message"
           maxLength={4000}
-          className="min-w-0 flex-1 rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-base sm:text-sm"
         />
         <button type="submit" disabled={busy || !input.trim()} className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold disabled:opacity-50">Send</button>
       </form>

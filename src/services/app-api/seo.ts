@@ -21,6 +21,29 @@ export interface SeoPageRow {
   checkedAt: string;
 }
 
+export interface SeoPageSpeedRow {
+  url: string;
+  performance: number | null;
+  accessibility: number | null;
+  bestPractices: number | null;
+  seo: number | null;
+  lcpMs: number | null;
+  fcpMs: number | null;
+  tbtMs: number | null;
+  cls: number | null;
+  error: string | null;
+  checkedAt: string;
+}
+
+export interface SeoCitationCheck { question: string; mentioned: boolean; cited: boolean; sources: string[]; answer: string; error: string | null }
+
+export interface SeoCitationSummary {
+  running: boolean;
+  latestRun: { id: number; finishedAt: string | null; status: string; questionCount: number; mentionedCount: number; citedCount: number; error: string | null } | null;
+  checks: SeoCitationCheck[];
+  history: Array<{ finishedAt: string; questionCount: number; mentionedCount: number; citedCount: number }>;
+}
+
 export interface SeoSummary {
   latestRun: {
     id: number;
@@ -38,12 +61,14 @@ export interface SeoSummary {
   topIssues: Array<{ id: string; kind: string; label: string; pages: number; pointsLost: number }>;
   pages: SeoPageRow[];
   pagesTruncated: boolean;
+  pageSpeed: SeoPageSpeedRow[];
+  citations: SeoCitationSummary;
 }
 
 export function getSeoSummary(): Promise<SeoSummary> {
   return getJson<SeoSummary>('/api/seo/summary');
 }
 
-export function startSeoAudit(): Promise<{ started: boolean; reason?: string }> {
-  return postJson<{ started: boolean; reason?: string }>('/api/seo/audit', {});
+export function startSeoAudit(task: 'audit' | 'citations' = 'audit'): Promise<{ started: boolean; reason?: string }> {
+  return postJson<{ started: boolean; reason?: string }>('/api/seo/audit', { task });
 }

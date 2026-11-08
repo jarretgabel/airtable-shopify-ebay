@@ -107,7 +107,8 @@
     "test:watch": "vitest",
     "sync-drive-images": "tsx scripts/sync_drive_images_to_airtable.ts",
     "assistant:check-fields": "node --env-file=.env.local --import tsx scripts/check-assistant-fields.ts",
-    "assistant:search": "node --env-file=.env.local --import tsx scripts/check-assistant-search.ts"
+    "assistant:search": "node --env-file=.env.local --import tsx scripts/check-assistant-search.ts",
+    "assistant:eval": "node --env-file=.env.local --import tsx scripts/assistant-eval.ts"
   },
   "dependencies": {
     "axios": "^1.6.0",

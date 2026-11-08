@@ -2,6 +2,7 @@ export const APP_PAGES = [
   'dashboard',
   'sales',
   'seo',
+  'assistant-insights',
   'people',
   'workflow-guide',
   'workflow-guide-editor',
@@ -36,7 +37,7 @@ export function hasFullAccessRole(role: UserRole): boolean {
 }
 
 const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
-  admin: APP_PAGES.filter((page) => page !== 'market' && page !== 'seo'),
+  admin: APP_PAGES.filter((page) => page !== 'market' && page !== 'seo' && page !== 'assistant-insights'),
   owner: [...APP_PAGES],
   developer: [...APP_PAGES],
   processor: [

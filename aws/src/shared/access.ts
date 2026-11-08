@@ -106,6 +106,10 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
     return { anyPage: ['inventory'] };
   }
 
+  if (path === '/api/assistant/insights') {
+    return { roles: ['owner', 'developer'] };
+  }
+
   // Any signed-in user; the assistant scopes its own data by role.
   if (path.startsWith('/api/assistant/')) {
     return {};

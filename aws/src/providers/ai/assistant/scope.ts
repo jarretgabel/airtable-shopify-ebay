@@ -19,6 +19,8 @@ export interface AssistantScope {
   canViewFinance: boolean;
   /** Seller and customer data: full-access roles and processors. */
   canViewCustomers: boolean;
+  /** SEO & AI dashboard: whoever has the SEO page. */
+  canViewSeo: boolean;
 }
 
 export const BASE_FIELDS = [
@@ -68,7 +70,7 @@ export function resolveAssistantScope(user: AssistantUser): AssistantScope {
   const canViewCustomers = fullAccess || user.role === 'processor';
   if (fullAccess) fields.push(...FINANCE_FIELDS);
   if (canViewCustomers) fields.push(...SELLER_FIELDS);
-  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess, canViewCustomers };
+  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess, canViewCustomers, canViewSeo: pages.has('seo') };
 }
 
 export function isStatusVisible(scope: AssistantScope, status: unknown): boolean {

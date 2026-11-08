@@ -26,7 +26,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
   try {
     const user = await requireRouteAccess(event);
     enforceAssistantLimits(user.userId);
-    const usageId = await enforceSharedAssistantLimits(user.userId);
+    const usageId = await enforceSharedAssistantLimits(user.userId, undefined, user.role);
     const body = requireJsonBody<{ messages?: unknown; currentPath?: unknown; draft?: unknown }>(event, 'ai', 'INVALID_AI_REQUEST_BODY');
     const messages = sanitizeMessages(body.messages);
     if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
@@ -38,11 +38,11 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     const { usage, ...response } = result;
     if (usage) {
       recordAssistantTokens(user.userId, usage.inputTokens + usage.outputTokens);
-      await recordSharedAssistantTokens(usageId, usage.inputTokens + usage.outputTokens);
+      await recordSharedAssistantTokens(usageId, usage.inputTokens + usage.outputTokens, undefined, usage);
       // Metadata only: message content is never logged.
       logInfo('Assistant chat', { userId: user.userId, role: user.role, ...usage, draftKind: response.draft?.kind ?? null, durationMs: Date.now() - startedAt });
     }
-    return jsonOk(response, { origin });
+    return jsonOk({ ...response, tools: usage ? [...new Set(usage.tools)] : [] }, { origin });
   } catch (error) {
     logError('Assistant chat failed', error);
     return jsonError(getStatusCode(error), toApiErrorBody('ai', error, 'AI_ASSISTANT_FAILED'), { origin });

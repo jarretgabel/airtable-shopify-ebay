@@ -82,6 +82,7 @@ const payload = {
   AiGenerateDescriptionFunction: {
     ...(getOptionalEnv('ANTHROPIC_API_KEY') ? { ANTHROPIC_API_KEY: getOptionalEnv('ANTHROPIC_API_KEY') } : {}),
     ...(getOptionalEnv('ANTHROPIC_MODEL') ? { ANTHROPIC_MODEL: getOptionalEnv('ANTHROPIC_MODEL') } : {}),
+    ...(getOptionalEnv('PAGESPEED_API_KEY') ? { PAGESPEED_API_KEY: getOptionalEnv('PAGESPEED_API_KEY') } : {}),
   },
   GmailSendFunction: {
     ...(getOptionalEnv('VITE_GOOGLE_GMAIL_ACCESS_TOKEN') ? { GOOGLE_GMAIL_ACCESS_TOKEN: getOptionalEnv('VITE_GOOGLE_GMAIL_ACCESS_TOKEN') } : {}),

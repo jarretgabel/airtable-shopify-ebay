@@ -174,6 +174,8 @@
 ### SEO & AI Search Dashboard
 - The `seo` page (`/seo`, owner and developer only; `/api/seo/*` enforces the same roles) shows SEO and AI-search (AIO) scores for the public storefront. `SeoAuditRunFunction` crawls the Shopify sitemap weekly (Mondays 09:00 UTC) or on demand via `POST /api/seo/audit` (invokes the run function asynchronously; the local API runs it in-process), scores each page and stores results in `seo_pages` / `seo_audit_runs` (migration 0015). `GET /api/seo/summary` feeds the dashboard.
 - Scores are our own 0-100 checklists (`aws/src/seo/scoring.ts`), not search-engine data. Real rankings, impressions and clicks need a Google Search Console sync, which is not built yet. `SEO_SITE_URL` and `SEO_AUDIT_MAX_PAGES` override the crawled site and page cap.
+- Migration 0016 adds PageSpeed (`seo_pagespeed`, sampled weekly after the audit; needs a free `PAGESPEED_API_KEY`, otherwise Google returns 429 and the panel shows a quota note) and AI-citation checks (`seo_citation_runs/checks`, `POST /api/seo/audit {task:'citations'}`, Anthropic web search over 9 buyer questions). Owners and developers can ask the assistant via the `get_seo_insights` tool (gated on the `seo` page).
+- Assistant feedback (`POST /api/assistant/feedback`, thumbs in chat) and usage/cost (`GET /api/assistant/insights`, `assistant-insights` page, owner and developer) use `assistant_feedback` and `assistant_usage`. Cost rates: `ASSISTANT_COST_INPUT_PER_MTOK` / `ASSISTANT_COST_OUTPUT_PER_MTOK`. Quality set: `npm run assistant:eval` (real Anthropic calls).
 
 ### Activity & Logging
 - Real-time logging of sync events, filterable by platform, date, and status.

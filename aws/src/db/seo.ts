@@ -30,6 +30,36 @@ export interface SeoRunSummary {
   siteChecks: SiteCheck[];
 }
 
+export interface SeoPageSpeedRow {
+  url: string;
+  performance: number | null;
+  accessibility: number | null;
+  bestPractices: number | null;
+  seo: number | null;
+  lcpMs: number | null;
+  fcpMs: number | null;
+  tbtMs: number | null;
+  cls: number | null;
+  error: string | null;
+  checkedAt: string;
+}
+
+export interface SeoCitationCheck {
+  question: string;
+  mentioned: boolean;
+  cited: boolean;
+  sources: string[];
+  answer: string;
+  error: string | null;
+}
+
+export interface SeoCitationSummary {
+  running: boolean;
+  latestRun: { id: number; finishedAt: string | null; status: string; questionCount: number; mentionedCount: number; citedCount: number; error: string | null } | null;
+  checks: SeoCitationCheck[];
+  history: Array<{ finishedAt: string; questionCount: number; mentionedCount: number; citedCount: number }>;
+}
+
 export interface SeoSummary {
   latestRun: SeoRunSummary | null;
   running: boolean;
@@ -38,6 +68,8 @@ export interface SeoSummary {
   topIssues: Array<{ id: string; kind: string; label: string; pages: number; pointsLost: number }>;
   pages: Array<SeoPageRecord & { checkedAt: string }>;
   pagesTruncated: boolean;
+  pageSpeed: SeoPageSpeedRow[];
+  citations: SeoCitationSummary;
 }
 
 export const SEO_PAGES_MAX_ROWS = 500;
@@ -107,7 +139,68 @@ function toRun(row: Record<string, unknown>): SeoRunSummary {
   };
 }
 
-export async function getSeoSummary(db: Queryable, filters: { pageType?: string | null } = {}): Promise<SeoSummary> {
+export async function getPageSpeed(db: Queryable): Promise<SeoPageSpeedRow[]> {
+  const result = await db.query(`SELECT * FROM seo_pagespeed WHERE strategy = 'mobile' ORDER BY performance ASC NULLS LAST, url`);
+  return result.rows.map((row) => ({
+    url: String(row.url),
+    performance: num(row.performance),
+    accessibility: num(row.accessibility),
+    bestPractices: num(row.best_practices),
+    seo: num(row.seo),
+    lcpMs: num(row.lcp_ms),
+    fcpMs: num(row.fcp_ms),
+    tbtMs: num(row.tbt_ms),
+    cls: num(row.cls),
+    error: (row.error as string | null) ?? null,
+    checkedAt: iso(row.checked_at) ?? '',
+  }));
+}
+
+export async function getCitationSummary(db: Queryable): Promise<SeoCitationSummary> {
+  const active = await db.query(`SELECT 1 FROM seo_citation_runs WHERE status = 'running' AND started_at > now() - interval '20 minutes' LIMIT 1`);
+  const latest = await db.query(`SELECT * FROM seo_citation_runs WHERE status IN ('completed', 'failed') ORDER BY id DESC LIMIT 1`);
+  const history = await db.query(
+    `SELECT finished_at, question_count, mentioned_count, cited_count FROM (
+       SELECT * FROM seo_citation_runs WHERE status = 'completed' ORDER BY id DESC LIMIT 12
+     ) recent ORDER BY id`,
+  );
+  const run = latest.rows[0];
+  const checks = run ? await db.query(`SELECT question, mentioned, cited, sources, answer, error FROM seo_citation_checks WHERE run_id = $1 ORDER BY id`, [run.id]) : { rows: [] };
+  return {
+    running: active.rows.length > 0,
+    latestRun: run ? { id: Number(run.id), finishedAt: iso(run.finished_at), status: String(run.status), questionCount: Number(run.question_count), mentionedCount: Number(run.mentioned_count), citedCount: Number(run.cited_count), error: (run.error as string | null) ?? null } : null,
+    checks: checks.rows.map((row) => ({ question: String(row.question), mentioned: Boolean(row.mentioned), cited: Boolean(row.cited), sources: (row.sources as string[]) ?? [], answer: String(row.answer ?? ''), error: (row.error as string | null) ?? null })),
+    history: history.rows.map((row) => ({ finishedAt: iso(row.finished_at) ?? '', questionCount: Number(row.question_count), mentionedCount: Number(row.mentioned_count), citedCount: Number(row.cited_count) })),
+  };
+}
+
+export interface AssistantSeoQuery {
+  pageType?: string | null;
+  urlContains?: string | null;
+  sortBy?: 'seo' | 'aio' | 'combined';
+  limit?: number;
+}
+
+/** Lowest-scoring pages first, for the assistant's SEO questions. */
+export async function queryPagesForAssistant(db: Queryable, query: AssistantSeoQuery) {
+  const order = query.sortBy === 'seo' ? 'seo_score' : query.sortBy === 'aio' ? 'aio_score' : '(seo_score + aio_score)';
+  const result = await db.query(
+    `SELECT url, page_type, seo_score, aio_score, word_count, issues FROM seo_pages
+     WHERE status_code = 200 AND ($1::text IS NULL OR page_type = $1) AND ($2::text IS NULL OR url ILIKE '%' || $2 || '%')
+     ORDER BY ${order}, url LIMIT $3`,
+    [query.pageType || null, query.urlContains || null, Math.min(Math.max(query.limit ?? 10, 1), 25)],
+  );
+  return result.rows.map((row) => ({
+    url: String(row.url),
+    pageType: String(row.page_type),
+    seoScore: Number(row.seo_score ?? 0),
+    aioScore: Number(row.aio_score ?? 0),
+    wordCount: num(row.word_count),
+    topImprovements: ((row.issues as AuditIssue[]) ?? []).slice(0, 4).map((issue) => ({ kind: issue.kind, id: issue.id, label: issue.label, pointsGain: issue.lost, detail: issue.detail })),
+  }));
+}
+
+export async function getSeoSummary(db: Queryable, filters: { pageType?: string | null; includePages?: boolean } = {}): Promise<SeoSummary> {
   const latest = await db.query(`SELECT * FROM seo_audit_runs WHERE status IN ('completed', 'partial') ORDER BY id DESC LIMIT 1`);
   const active = await db.query(`SELECT 1 FROM seo_audit_runs WHERE status = 'running' AND started_at > now() - ($1 || ' minutes')::interval LIMIT 1`, [String(STALE_RUN_MINUTES)]);
   const trend = await db.query(
@@ -124,7 +217,7 @@ export async function getSeoSummary(db: Queryable, filters: { pageType?: string 
      GROUP BY 1, 2 ORDER BY lost DESC LIMIT 12`,
   );
   const type = filters.pageType?.trim() || null;
-  const pages = await db.query(
+  const pages = filters.includePages === false ? { rows: [] } : await db.query(
     `SELECT url, page_type, status_code, response_ms, title, meta_description, h1, canonical, word_count, schema_types, seo_score, aio_score, issues, last_modified, checked_at
      FROM seo_pages WHERE ($1::text IS NULL OR page_type = $1) ORDER BY (seo_score + aio_score), url LIMIT $2`,
     [type, SEO_PAGES_MAX_ROWS + 1],
@@ -155,5 +248,7 @@ export async function getSeoSummary(db: Queryable, filters: { pageType?: string 
       checkedAt: iso(row.checked_at) ?? '',
     })),
     pagesTruncated: truncated,
+    pageSpeed: await getPageSpeed(db),
+    citations: await getCitationSummary(db),
   };
 }

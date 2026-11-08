@@ -222,6 +222,7 @@ export interface AssistantIntakeDraft {
 
 export interface AssistantChatResponse {
   reply: string;
+  tools?: string[];
   draft?: AssistantIntakeDraft;
 }
 
@@ -231,7 +232,15 @@ export async function sendAssistantMessage(
   draft?: AssistantIntakeDraft | null,
 ): Promise<AssistantChatResponse> {
   try {
-    return await postJson<AssistantChatResponse>('/api/assistant/chat', { messages, currentPath, draft: draft ?? undefined }, { timeoutMs: 65000 });
+    return await postJson<AssistantChatResponse>('/api/assistant/chat', { messages: messages.map(({ role, content }) => ({ role, content })), currentPath, draft: draft ?? undefined }, { timeoutMs: 65000 });
+  } catch (error) {
+    throw toAiError(error);
+  }
+}
+
+export async function sendAssistantFeedback(feedback: { rating: 'up' | 'down'; question: string; answer: string; tools: string[]; comment?: string }): Promise<void> {
+  try {
+    await postJson<{ saved: boolean }>('/api/assistant/feedback', feedback);
   } catch (error) {
     throw toAiError(error);
   }

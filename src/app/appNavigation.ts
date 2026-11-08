@@ -21,7 +21,7 @@ export const INTAKE_TABS = ['manual-intake', 'create-intake-item', 'jotform', 'j
 export const INTAKE_TAB_SET = new Set<Tab>(INTAKE_TABS as readonly Tab[]);
 export const INVENTORY_PROCESSING_TABS = ['testing-queue', 'photography-queue', 'testing', 'photos'] as const satisfies readonly Tab[];
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
-export const BUSINESS_TABS = ['sales', 'seo', 'people'] as const satisfies readonly Tab[];
+export const BUSINESS_TABS = ['sales', 'seo', 'assistant-insights', 'people'] as const satisfies readonly Tab[];
 export const BUSINESS_TAB_SET = new Set<Tab>(BUSINESS_TABS as readonly Tab[]);
 export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab'] as const satisfies readonly Tab[];
 export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
@@ -30,6 +30,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   dashboard: 'Dashboard',
   sales: 'Sales',
   seo: 'SEO & AI',
+  'assistant-insights': 'Assistant',
   people: 'People',
   'workflow-guide': 'User Guide',
   'workflow-guide-editor': 'User Guide Admin',

@@ -16,6 +16,7 @@ import { getSellerHistory } from '../../../db/sellerHistory.js';
 import { getFinanceSummary } from '../../../db/finance.js';
 import { getBuyersSummary } from '../../../db/buyers.js';
 import { getReportsSummary } from '../../../db/reports.js';
+import { getSeoSummary, queryPagesForAssistant } from '../../../db/seo.js';
 import { getConfiguredRecord, getConfiguredRecords } from '../../../store/index.js';
 import type { AirtableRecord } from '../../airtable/client.js';
 import { INTAKE_DRAFT_FIELDS, PHOTOS_DRAFT_FIELDS, TESTING_DRAFT_FIELDS, type AssistantDraft, type DraftKind } from '../../../shared/contracts/intakeDraft.js';
@@ -104,6 +105,22 @@ const FINANCE_TOOLS = [
   },
 ] as const;
 
+const SEO_TOOLS = [
+  {
+    name: 'get_seo_insights',
+    description: 'SEO and AI-search (AIO) audit of resolutionavnyc.com: overall scores, site checks, scores by page type, biggest improvement opportunities, PageSpeed samples and AI-citation checks, plus the lowest-scoring pages with their top improvements. Optional filters narrow the page list. Scores are our own 0-100 checklists, not Google rankings.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        page_type: { type: 'string', enum: ['product', 'collection', 'blog', 'page', 'home'] },
+        url_contains: { type: 'string', description: 'Part of a page URL, e.g. "mcintosh"' },
+        sort_by: { type: 'string', enum: ['seo', 'aio', 'combined'], description: 'Which score to rank the lowest pages by' },
+        limit: { type: 'number', description: 'Pages to return, 1-25 (default 10)' },
+      },
+    },
+  },
+] as const;
+
 const INTAKE_TOOL = {
   name: 'propose_intake_item',
   description: 'Prepare (not save) a new inventory intake item as a draft for the user to review and confirm. Always send every known field, including values from earlier drafts. Returns the cleaned draft, missing required fields and invalid values. Select fields must match existing options exactly.',
@@ -144,6 +161,7 @@ export function getAssistantToolDefinitions(scope: AssistantScope) {
     ...ITEM_AND_DOC_TOOLS,
     ...(scope.canViewCustomers ? CUSTOMER_TOOLS : []),
     ...(scope.canViewFinance ? FINANCE_TOOLS : []),
+    ...(scope.canViewSeo ? SEO_TOOLS : []),
     ...(canDraftIntake(scope) ? [INTAKE_TOOL] : []),
     ...(canDraftAnyStage(scope) ? [STAGE_TOOL] : []),
   ];
@@ -450,6 +468,11 @@ export async function runAssistantTool(
       const history = await getSellerHistory(getPostgresPool(), email);
       return history ? { ...stripSellerAmounts(scope, history), items: withItemLinks(scope, stripSellerAmounts(scope, history).items) } : { error: 'No seller found for that email.' };
     }
+    case 'get_seo_insights': {
+      if (!scope.canViewSeo) return { error: 'You do not have access to the SEO dashboard.' };
+      if (!process.env.DATABASE_URL?.trim()) return { error: 'SEO data needs the Postgres database, which is not configured.' };
+      return await getSeoInsights(input);
+    }
     case 'get_finance_summary':
     case 'get_buyers':
     case 'get_reports': {
@@ -468,4 +491,39 @@ export async function runAssistantTool(
     default:
       return { error: `Unknown tool ${name}.` };
   }
+}
+
+const SEO_PAGE_TYPES = new Set(['product', 'collection', 'blog', 'page', 'home']);
+
+async function getSeoInsights(input: Record<string, unknown>) {
+  const pool = getPostgresPool();
+  const summary = await getSeoSummary(pool, { includePages: false });
+  if (!summary.latestRun) return { error: 'No SEO audit has run yet. An owner or developer can start one from the SEO & AI page.' };
+  const pageType = typeof input.page_type === 'string' && SEO_PAGE_TYPES.has(input.page_type) ? input.page_type : null;
+  const sortBy = input.sort_by === 'seo' || input.sort_by === 'aio' ? input.sort_by : 'combined';
+  const pages = await queryPagesForAssistant(pool, {
+    pageType,
+    urlContains: typeof input.url_contains === 'string' ? input.url_contains.trim().slice(0, 100) : null,
+    sortBy,
+    limit: typeof input.limit === 'number' ? input.limit : 10,
+  });
+  const { latestRun, citations } = summary;
+  return {
+    lastAuditAt: latestRun.finishedAt,
+    pagesAudited: latestRun.pageCount,
+    avgSeoScore: latestRun.avgSeoScore,
+    avgAioScore: latestRun.avgAioScore,
+    failedSiteChecks: latestRun.siteChecks.filter((check) => !check.pass).map((check) => ({ label: check.label, detail: check.detail })),
+    byType: summary.byType,
+    biggestOpportunities: summary.topIssues.slice(0, 8),
+    pageSpeedMobile: summary.pageSpeed.filter((row) => row.performance !== null).slice(0, 6).map(({ url, performance, lcpMs, cls, tbtMs }) => ({ url, performance, lcpMs, cls, tbtMs })),
+    aiCitations: citations.latestRun ? {
+      checkedAt: citations.latestRun.finishedAt,
+      questions: citations.latestRun.questionCount,
+      siteNamed: citations.latestRun.mentionedCount,
+      siteCited: citations.latestRun.citedCount,
+      notNamedFor: citations.checks.filter((check) => !check.mentioned && !check.error).map((check) => check.question),
+    } : null,
+    lowestPages: pages,
+  };
 }
