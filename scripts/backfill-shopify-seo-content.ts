@@ -10,6 +10,12 @@ const apply = args.includes('--apply');
 const argValue = (name: string, fallback: string) => { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : fallback; };
 const snapshotPath = argValue('--snapshot', 'docs/seo-snapshots/2026-11-08-seo-backfill.json');
 const csvPath = argValue('--csv', 'docs/seo-snapshots/seo-content-dryrun.csv');
+const words = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+// A shortened title may only use words the original title already had.
+const usesOnlyOriginalWords = (candidate: string, original: string) => {
+  const allowed = new Set(words(original));
+  return words(candidate).every((w) => allowed.has(w));
+};
 const SUFFIX = ' | Resolution Audio Video';
 const REFUSAL = /\b(I need|I can't|I cannot|Please provide|Let me)\b/i;
 const domain = process.env.VITE_SHOPIFY_STORE_DOMAIN;
@@ -77,7 +83,7 @@ async function main() {
       const current = oldTitle || node.title;
       if (current.length < SEO_TITLE_RANGE.min && inRange(`${current}${SUFFIX}`, SEO_TITLE_RANGE)) title = `${current}${SUFFIX}`;
       else {
-        try { const t = await generateContentSeoTitle(facts, current); if (inRange(t, SEO_TITLE_RANGE) && !REFUSAL.test(t)) title = t; } catch (e) { console.error(`AI title failed for ${path}: ${(e as Error).message}`); }
+        try { const t = await generateContentSeoTitle(facts, current); if (inRange(t, SEO_TITLE_RANGE) && !REFUSAL.test(t) && usesOnlyOriginalWords(t, current)) title = t; } catch (e) { console.error(`AI title failed for ${path}: ${(e as Error).message}`); }
       }
     }
     let description = oldDescription;

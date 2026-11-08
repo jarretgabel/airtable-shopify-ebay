@@ -95,9 +95,9 @@ export const SEO_CONTENT_TITLE_SYSTEM_PROMPT = `You write the search-engine page
 
 RULES
 - 30 to 60 characters, hard maximum 60. Aim for 45 to 60.
-- Keep the meaning and the key words of the current title; shorten or tighten it rather than rewriting the topic. Keep brand and model names exactly as given.
+- Shorten the current title by removing words and punctuation only. Use only words that already appear in the current title, in the same order where possible. Never add, replace or reword anything, and never add product descriptors. Keep brand and model names exactly as given.
 - Plain text on a single line. Title Case. No exclamation points, no emoji, no quotation marks, no pipe character, no store name.
-- Use ONLY the supplied title and text. Always produce a title; never ask questions or explain.
+- Always produce a title; never ask questions or explain.
 
 Return only the title text, nothing else.`;
 
