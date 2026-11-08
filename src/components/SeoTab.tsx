@@ -4,6 +4,7 @@ import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionPanel, DashboardSubPanel, StatTile } from '@/components/dashboard/dashboardPrimitives';
 import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { seoAppApi } from '@/services/app-api';
+import { recommendationFor } from '@/components/seoRecommendations';
 import type { SeoPageRow, SeoSummary } from '@/services/app-api/seo';
 
 type SortKey = 'seoScore' | 'aioScore' | 'url';
@@ -45,14 +46,19 @@ function PageRow({ page, open, onToggle }: { page: SeoPageRow; open: boolean; on
               Title: {page.title ?? 'none'} · H1: {page.h1 ?? 'none'} · {page.wordCount ?? 0} words · HTTP {page.statusCode ?? 'error'}
               {page.responseMs !== null ? ` · ${page.responseMs} ms` : ''} · Schema: {page.schemaTypes.join(', ') || 'none'}
             </p>
-            {page.issues.length === 0 ? <p className="m-0 mt-2">No issues found.</p> : (
-              <ul className="m-0 mt-2 list-disc pl-5">
-                {page.issues.map((issue) => (
-                  <li key={`${issue.kind}-${issue.id}`}>
-                    <span className="font-semibold uppercase">{issue.kind}</span> −{issue.lost}: {issue.label}{issue.detail ? ` (${issue.detail})` : ''}
-                  </li>
-                ))}
-              </ul>
+            {page.issues.length === 0 ? <p className="m-0 mt-2">Nothing to improve. This page meets every check.</p> : (
+              <>
+                <p className="m-0 mt-3 font-semibold">Ways to improve (largest score gain first)</p>
+                <ul className="m-0 mt-1 list-none space-y-2 p-0">
+                  {page.issues.map((issue) => (
+                    <li key={`${issue.kind}-${issue.id}`}>
+                      <span className="font-semibold uppercase">{issue.kind}</span> +{issue.lost} pts: {issue.label}{issue.detail ? <span className="text-[var(--muted)]"> ({issue.detail})</span> : null}
+                      <br />
+                      <span className="text-[var(--muted)]">Fix: {recommendationFor(issue)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
           </td>
         </tr>
@@ -147,7 +153,7 @@ export function SeoTab() {
             <DashboardSubPanel title="Biggest opportunities">
               <ul className="m-0 list-none space-y-1.5 p-0 text-[0.85rem]">
                 {summary?.topIssues.map((issue) => (
-                  <li key={`${issue.kind}-${issue.id}`}><span className="font-semibold uppercase">{issue.kind}</span> {issue.label} <span className="text-[var(--muted)]">· {issue.pages} pages</span></li>
+                  <li key={`${issue.kind}-${issue.id}`}><span className="font-semibold uppercase">{issue.kind}</span> {issue.label} <span className="text-[var(--muted)]">· {issue.pages} pages</span><br /><span className="text-[var(--muted)]">Fix: {recommendationFor({ ...issue, kind: issue.kind as 'seo' | 'aio', lost: issue.pointsLost })}</span></li>
                 ))}
               </ul>
             </DashboardSubPanel>
@@ -192,7 +198,7 @@ export function SeoTab() {
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[0.82rem] text-[var(--ink)]">
-              <thead><tr className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]"><th className="py-1 pr-3">Page</th><th className="py-1 pr-3">Type</th><th className="py-1 pr-3">SEO</th><th className="py-1 pr-3">AI</th><th className="py-1 pr-3">Issues</th><th className="py-1 pr-3" /></tr></thead>
+              <thead><tr className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]"><th className="py-1 pr-3">Page</th><th className="py-1 pr-3">Type</th><th className="py-1 pr-3">SEO</th><th className="py-1 pr-3">AI</th><th className="py-1 pr-3">To improve</th><th className="py-1 pr-3" /></tr></thead>
               <tbody>
                 {pages.slice(0, 200).map((page) => (
                   <PageRow key={page.url} page={page} open={openUrl === page.url} onToggle={() => setOpenUrl(openUrl === page.url ? null : page.url)} />
