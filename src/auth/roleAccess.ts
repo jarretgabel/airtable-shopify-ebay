@@ -3,6 +3,7 @@ import type { UserRole } from '@/stores/auth/authTypes';
 
 const PROCESSOR_PAGES: AppPage[] = [
   'dashboard',
+  'seo',
   'workflow-guide',
   'manual-intake',
   'create-intake-item',
@@ -76,6 +77,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   admin: [
     'dashboard',
     'sales',
+    'seo',
     'people',
     'workflow-guide',
     'workflow-guide-editor',

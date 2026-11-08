@@ -133,7 +133,7 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
   }
 
   if (path.startsWith('/api/seo/')) {
-    return { roles: ['owner', 'developer'] };
+    return { anyPage: ['seo'] };
   }
 
   if (path.startsWith('/api/analytics/')) {

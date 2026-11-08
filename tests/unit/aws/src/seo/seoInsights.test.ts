@@ -93,8 +93,8 @@ test('assistant cost estimate uses token rates, overridable by env', () => {
 test('the SEO tool follows the SEO page, and refuses anyone without it', async () => {
   const names = (role: 'owner' | 'processor' | 'admin', pages: string[]) => getAssistantToolDefinitions(resolveAssistantScope({ role, allowedPages: pages } as never)).map((tool) => tool.name);
   assert.ok(names('owner', ['inventory', 'seo']).includes('get_seo_insights'));
+  assert.ok(names('admin', ['dashboard', 'seo']).includes('get_seo_insights'));
   assert.ok(!names('processor', ['inventory']).includes('get_seo_insights'));
-  assert.ok(!names('admin', ['dashboard']).includes('get_seo_insights'));
   const scope = resolveAssistantScope({ role: 'processor', allowedPages: ['inventory'] } as never);
   assert.deepEqual(await runAssistantTool(scope, 'get_seo_insights', {}), { error: 'You do not have access to the SEO dashboard.' });
 });
