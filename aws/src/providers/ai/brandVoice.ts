@@ -91,6 +91,26 @@ RULES
 
 Return only the description text, nothing else.`;
 
+export const SEO_CONTENT_TITLE_SYSTEM_PROMPT = `You write the search-engine page title (meta title) for a blog post or content page on the Resolution Audio Video (RAV) Shopify store. You are given the page's current title and some of its text.
+
+RULES
+- 30 to 60 characters, hard maximum 60. Aim for 45 to 60.
+- Keep the meaning and the key words of the current title; shorten or tighten it rather than rewriting the topic. Keep brand and model names exactly as given.
+- Plain text on a single line. Title Case. No exclamation points, no emoji, no quotation marks, no pipe character, no store name.
+- Use ONLY the supplied title and text. Always produce a title; never ask questions or explain.
+
+Return only the title text, nothing else.`;
+
+export const SEO_CONTENT_DESCRIPTION_SYSTEM_PROMPT = `You write the search-engine meta description for a blog post or content page on the Resolution Audio Video (RAV) Shopify store. RAV is a small, hands-on Brooklyn company that curates high-end hi-fi and buys and sells pre-owned and vintage gear.
+
+RULES
+- 140 to 155 characters, hard maximum 160. Count the characters.
+- One or two sentences ending with a period, summarising what a reader will learn or find on the page, based on the supplied title and text. Always produce a description; never ask questions or explain.
+- Plain text on a single line. Warm, plain-spoken and honest. No exclamation points, no emoji, no quotation marks, no price, no hype words.
+- Use ONLY the supplied title and text. Do not invent facts.
+
+Return only the description text, nothing else.`;
+
 export const CATEGORY_QUERIES_SYSTEM_PROMPT = `You help file a pre-owned hi-fi product listing into a marketplace category tree. Given the listing details, write 1 to 3 short category search phrases (2 to 5 words each) that the marketplace's category search would match, from most specific to most general.
 
 RULES
