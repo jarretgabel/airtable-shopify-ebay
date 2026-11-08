@@ -14,6 +14,13 @@ import {
 } from '@/services/workflowImageMetadata';
 
 describe('workflowImageMetadata', () => {
+  it('drops pipeline words from generated alt text', () => {
+    const [record] = parseWorkflowImageMetadata(JSON.stringify([
+      { url: 'https://cdn.example.com/mit-miterminator-2-top-view-2-processed.jpg', filename: 'mit-miterminator-2-top-view-2-processed.jpg', alt: '' },
+    ]));
+    expect(record.alt).toBe('Mit Miterminator 2 Top View 2');
+  });
+
   it('parses and compacts workflow image metadata records', () => {
     const parsed = parseWorkflowImageMetadata(JSON.stringify([
       {
@@ -388,6 +395,6 @@ describe('workflowImageMetadata', () => {
       },
     ]));
 
-    expect(parsed[0]?.alt).toBe('Testing Testing Marantz 2270 Testing 1 Processed');
+    expect(parsed[0]?.alt).toBe('Marantz 2270 1');
   });
 });

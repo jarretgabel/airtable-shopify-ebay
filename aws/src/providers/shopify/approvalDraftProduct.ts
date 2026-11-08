@@ -315,12 +315,19 @@ function sanitizeVariants(variants: ShopifyProductVariant[] | undefined): Shopif
   });
 }
 
-function sanitizeImages(images: ShopifyProduct['images'] | undefined): ShopifyProduct['images'] | undefined {
+// Shopify must never receive a blank alt; fall back to the product title.
+function fallbackImageAlt(title: string | undefined, index: number): string {
+  const base = title?.trim();
+  if (!base || base === 'Untitled Listing') return '';
+  return index === 0 ? base : `${base} - image ${index + 1}`;
+}
+
+function sanitizeImages(images: ShopifyProduct['images'] | undefined, title?: string): ShopifyProduct['images'] | undefined {
   if (!images || images.length === 0) return undefined;
   const sanitized = images.map((image, index) => ({
     src: image?.src?.trim() ?? '',
     filename: typeof image?.filename === 'string' ? image.filename.trim() : undefined,
-    alt: typeof image?.alt === 'string' ? image.alt.trim() : '',
+    alt: (typeof image?.alt === 'string' ? image.alt.trim() : '') || fallbackImageAlt(title, index),
     position: typeof image?.position === 'number' ? image.position : index + 1,
   })).filter((image) => image.src.length > 0);
   return sanitized.length > 0 ? sanitized : undefined;
@@ -357,7 +364,7 @@ function sanitizeProductPayload(product: ShopifyProduct): ShopifyProduct {
     template_suffix: 'used-products',
     variants: normalizedVariants,
     options,
-    images: sanitizeImages(product.images),
+    images: sanitizeImages(product.images, product.title),
     metafields: metafields && metafields.length > 0 ? metafields : undefined,
   };
 }
@@ -366,7 +373,7 @@ export function buildShopifyDraftProductFromApprovalFields(fields: ApprovalField
   const condition = getConditionFromFields(fields);
   const options = sanitizeOptions(buildOptions(fields));
   const variants = sanitizeVariants(buildVariants(fields, options ?? []));
-  const images = sanitizeImages(buildImages(fields));
+  const images = buildImages(fields);
   const metafields = buildMetafields(fields);
   const candidate: ShopifyProduct = {
     title: getField(fields, ['Shopify REST Title', 'Shopify Title', 'Shopify GraphQL Title', 'Item Title', 'Title', 'Name', 'shopify_rest_title']) || 'Untitled Listing',

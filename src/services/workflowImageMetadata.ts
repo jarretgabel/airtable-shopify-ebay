@@ -187,7 +187,14 @@ function buildWorkflowAltFromFilename(filename: string, url: string): string {
     return '';
   }
 
-  return rawTokens.slice(0, 10).map((token) => formatWorkflowAltToken(token)).join(' ');
+  return stripWorkflowAltNoise(rawTokens.slice(0, 10).map((token) => formatWorkflowAltToken(token)).join(' '));
+}
+
+const WORKFLOW_ALT_NOISE_TOKENS = new Set(['processed', 'workflow', 'intake', 'testing', 'photos']);
+
+// Pipeline stage words in generated or legacy alt text are file-handling noise, not a description.
+function stripWorkflowAltNoise(alt: string): string {
+  return alt.split(/\s+/).filter((token) => token && !WORKFLOW_ALT_NOISE_TOKENS.has(token.toLowerCase())).join(' ');
 }
 
 function resolveWorkflowAltText(rawAlt: string, filename: string, url: string): string {
@@ -197,7 +204,7 @@ function resolveWorkflowAltText(rawAlt: string, filename: string, url: string): 
   }
 
   if (isLegacyWorkflowAltText(rawAlt)) {
-    return fallbackAlt || rawAlt;
+    return fallbackAlt || stripWorkflowAltNoise(rawAlt);
   }
 
   const fallbackWordCount = fallbackAlt.split(/\s+/).filter(Boolean).length;

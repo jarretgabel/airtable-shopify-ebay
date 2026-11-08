@@ -151,3 +151,15 @@ test('Shopify body renders key features saved in the shared Key Features (Key, V
   assert.match(product.body_html ?? '', /Tube Complement<\/th><td>4x EL34/);
   assert.match(product.body_html ?? '', /Serial Number<\/th><td>SN123/);
 });
+
+test('blank image alt falls back to the product title, and existing alt is kept', () => {
+  const product = buildShopifyDraftProductFromApprovalFields({
+    Title: 'McIntosh MC275 Tube Amplifier',
+    'Shopify REST Images JSON': JSON.stringify([
+      { src: 'https://cdn.example.com/a.jpg', alt: '' },
+      { src: 'https://cdn.example.com/b.jpg', alt: '' },
+      { src: 'https://cdn.example.com/c.jpg', alt: 'McIntosh MC275 rear panel' },
+    ]),
+  });
+  assert.deepEqual(product.images?.map((image) => image.alt), ['McIntosh MC275 Tube Amplifier', 'McIntosh MC275 Tube Amplifier - image 2', 'McIntosh MC275 rear panel']);
+});
