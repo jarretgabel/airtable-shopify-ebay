@@ -97,7 +97,7 @@ const replacements = [
   ['EbayNotificationVerificationToken', getOptionalEnv('EBAY_NOTIFICATION_VERIFICATION_TOKEN') || getOptionalEnv('VITE_EBAY_NOTIFICATION_VERIFICATION_TOKEN')],
 ];
 
-const sectionPattern = new RegExp(`(\\[${deployEnv}\\.deploy\\.parameters\\][\\s\\S]*?parameter_overrides = ")([^\"]*)(")`);
+const sectionPattern = new RegExp(`(\\[${deployEnv}\\.deploy\\.parameters\\][\\s\\S]*?parameter_overrides = ")((?:[^"\\\\]|\\\\.)*)(")`);
 const input = fs.readFileSync(samconfigPath, 'utf8');
 const match = input.match(sectionPattern);
 
