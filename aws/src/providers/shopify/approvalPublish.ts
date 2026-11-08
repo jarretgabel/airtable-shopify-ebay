@@ -1,4 +1,5 @@
 import type { AirtableConfiguredRecordsSource } from '../airtable/sources.js';
+import { fillSeoFieldsForPublish } from './seoFill.js';
 import { getConfiguredRecord, updateConfiguredRecord } from '../../store/index.js';
 import type { ShopifyApprovalPublishResult, ShopifyApprovalPreviewResult as ShopifyApprovalPreview } from '../../shared/contracts/shopifyApproval.js';
 import { logInfo } from '../../shared/logging.js';
@@ -395,8 +396,17 @@ export async function publishApprovalListingToShopify({
     ...(preview?.effectiveProduct ?? buildShopifyDraftProductFromApprovalFields(fields)),
     status: 'active' as const,
   };
+  const seoFill = await fillSeoFieldsForPublish(fields);
+  if (seoFill.seoTitle || seoFill.seoDescription) {
+    const replaced = new Set([seoFill.seoTitle ? 'title_tag' : '', seoFill.seoDescription ? 'description_tag' : '']);
+    product.metafields = [
+      ...(product.metafields ?? []).filter((metafield) => !(metafield.namespace === 'global' && replaced.has(metafield.key))),
+      ...(seoFill.seoTitle ? [{ namespace: 'global', key: 'title_tag', type: 'single_line_text_field', value: seoFill.seoTitle }] : []),
+      ...(seoFill.seoDescription ? [{ namespace: 'global', key: 'description_tag', type: 'single_line_text_field', value: seoFill.seoDescription }] : []),
+    ];
+  }
   const collectionIds = preview?.collectionIds ?? buildShopifyCollectionIdsFromApprovalFields(fields);
-  const warnings = [...(preview?.categoryResolution.status === 'error' && preview.categoryResolution.error
+  const warnings = [...seoFill.warnings, ...(preview?.categoryResolution.status === 'error' && preview.categoryResolution.error
     ? [`${preview.categoryResolution.error} Continuing without category assignment.`]
     : [])];
   const fallbackCategory = preview?.resolvedCategoryId
