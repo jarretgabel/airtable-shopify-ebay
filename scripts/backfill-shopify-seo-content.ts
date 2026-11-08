@@ -2,7 +2,7 @@
 // They are stored in the global.title_tag / global.description_tag metafields, so the visible title and body are untouched.
 // Usage: node --env-file=.env.local --import tsx scripts/backfill-shopify-seo-content.ts [--apply] [--snapshot path] [--csv path]
 import fs from 'node:fs';
-import { generateContentSeoDescription, generateContentSeoTitle } from '../aws/src/providers/ai/client.js';
+import { generateContentSeoDescription, generateContentSeoExpandedTitle, generateContentSeoTitle } from '../aws/src/providers/ai/client.js';
 import { SEO_DESCRIPTION_RANGE, SEO_TITLE_RANGE } from '../aws/src/providers/shopify/seoFill.js';
 
 const args = process.argv.slice(2);
@@ -16,7 +16,6 @@ const usesOnlyOriginalWords = (candidate: string, original: string) => {
   const allowed = new Set(words(original));
   return words(candidate).every((w) => allowed.has(w));
 };
-const SUFFIX = ' | Resolution Audio Video';
 const REFUSAL = /\b(I need|I can't|I cannot|Please provide|Let me)\b/i;
 const domain = process.env.VITE_SHOPIFY_STORE_DOMAIN;
 const token = process.env.VITE_SHOPIFY_OAUTH_ACCESS_TOKEN;
@@ -81,8 +80,13 @@ async function main() {
     let title = oldTitle;
     if (need.has('title-length')) {
       const current = oldTitle || node.title;
-      if (current.length < SEO_TITLE_RANGE.min && inRange(`${current}${SUFFIX}`, SEO_TITLE_RANGE)) title = `${current}${SUFFIX}`;
-      else {
+      if (current.length < SEO_TITLE_RANGE.min) {
+        // Too short: add descriptive words from the page text, keeping every word of the current title.
+        try {
+          const t = await generateContentSeoExpandedTitle(facts, current);
+          if (inRange(t, SEO_TITLE_RANGE) && !REFUSAL.test(t) && usesOnlyOriginalWords(current, t)) title = t;
+        } catch (e) { console.error(`AI title failed for ${path}: ${(e as Error).message}`); }
+      } else {
         try { const t = await generateContentSeoTitle(facts, current); if (inRange(t, SEO_TITLE_RANGE) && !REFUSAL.test(t) && usesOnlyOriginalWords(t, current)) title = t; } catch (e) { console.error(`AI title failed for ${path}: ${(e as Error).message}`); }
       }
     }

@@ -101,6 +101,17 @@ RULES
 
 Return only the title text, nothing else.`;
 
+export const SEO_CONTENT_EXPAND_TITLE_SYSTEM_PROMPT = `You write the search-engine page title (meta title) for a blog post or content page on the Resolution Audio Video (RAV) Shopify store, when the current title is too short to be useful in search results. RAV is a small, hands-on Brooklyn company that curates high-end hi-fi and buys and sells pre-owned and vintage gear.
+
+RULES
+- 30 to 60 characters, hard maximum 60. Aim for 40 to 60.
+- Keep every word of the current title, then add a few words that say what the page is, based on the supplied text (for example that it is a press feature or article about Resolution Audio Video, or what the page covers).
+- Use ONLY facts in the supplied text. Never invent publications, products or claims.
+- Plain text on a single line. Title Case. No exclamation points, no emoji, no quotation marks, no pipe character. Do not append the store name as a suffix; mention it only if it reads naturally, for example "Featured in Elle Decor".
+- Always produce a title; never ask questions or explain.
+
+Return only the title text, nothing else.`;
+
 export const SEO_CONTENT_DESCRIPTION_SYSTEM_PROMPT = `You write the search-engine meta description for a blog post or content page on the Resolution Audio Video (RAV) Shopify store. RAV is a small, hands-on Brooklyn company that curates high-end hi-fi and buys and sells pre-owned and vintage gear.
 
 RULES

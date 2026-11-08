@@ -1,6 +1,6 @@
 import { HttpError } from '../../shared/errors.js';
 import { getOptionalSecret } from '../../shared/secrets.js';
-import { CATEGORY_PICK_SYSTEM_PROMPT, COLLECTIONS_PICK_SYSTEM_PROMPT, TAGS_PICK_SYSTEM_PROMPT, CATEGORY_QUERIES_SYSTEM_PROMPT, DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, SEO_COLLECTION_DESCRIPTION_SYSTEM_PROMPT, SEO_CONTENT_DESCRIPTION_SYSTEM_PROMPT, SEO_CONTENT_TITLE_SYSTEM_PROMPT, SEO_DESCRIPTION_SYSTEM_PROMPT, SEO_TITLE_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
+import { CATEGORY_PICK_SYSTEM_PROMPT, COLLECTIONS_PICK_SYSTEM_PROMPT, TAGS_PICK_SYSTEM_PROMPT, CATEGORY_QUERIES_SYSTEM_PROMPT, DESCRIPTION_SYSTEM_PROMPT, KEY_FEATURES_SYSTEM_PROMPT, KEY_FEATURES_WEB_SEARCH_ADDENDUM, SEO_COLLECTION_DESCRIPTION_SYSTEM_PROMPT, SEO_CONTENT_DESCRIPTION_SYSTEM_PROMPT, SEO_CONTENT_EXPAND_TITLE_SYSTEM_PROMPT, SEO_CONTENT_TITLE_SYSTEM_PROMPT, SEO_DESCRIPTION_SYSTEM_PROMPT, SEO_TITLE_SYSTEM_PROMPT, TITLE_SYSTEM_PROMPT } from './brandVoice.js';
 
 const SYSTEM_PROMPT = `You are an expert authenticator and cataloguer of high-end audiophile / home theater equipment for Resolution AV, a luxury used HiFi dealership in New York City.
 
@@ -430,6 +430,10 @@ export function generateCollectionSeoDescription(fields: Record<string, string>,
 
 export function generateContentSeoTitle(fields: Record<string, string>, existing = ''): Promise<string> {
   return generateSeoText(SEO_CONTENT_TITLE_SYSTEM_PROMPT, MAX_SEO_TITLE_LENGTH, 'SEO title', fields, existing);
+}
+
+export function generateContentSeoExpandedTitle(fields: Record<string, string>, existing = ''): Promise<string> {
+  return generateSeoText(SEO_CONTENT_EXPAND_TITLE_SYSTEM_PROMPT, MAX_SEO_TITLE_LENGTH, 'SEO title', fields, existing);
 }
 
 export function generateContentSeoDescription(fields: Record<string, string>, existing = ''): Promise<string> {
