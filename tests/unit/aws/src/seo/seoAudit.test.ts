@@ -25,6 +25,20 @@ test('classifyUrl recognises Shopify page types', () => {
   assert.equal(classifyUrl('https://x.com/pages/about'), 'page');
 });
 
+test('extractSignals counts empty alt as decorative, ignores noscript duplicates and data-alt', () => {
+  const html = `<html><body><main>
+<img src="a.jpg" alt="Front">
+<img src="b.jpg" alt="">
+<img src="c.jpg" alt>
+<img src="d.jpg" data-alt="not an alt">
+<img src="e.jpg">
+<img src="lazy.jpg" alt="Lazy"><noscript><img src="lazy.jpg"><img src="x.jpg" alt=""></noscript>
+</main></body></html>`;
+  const s = extractSignals(html, 'https://example.com/');
+  assert.equal(s.imageCount, 6);
+  assert.equal(s.imagesWithAlt, 4);
+});
+
 test('extractSignals reads head tags, JSON-LD and main content only', () => {
   const s = extractSignals(GOOD_PRODUCT, 'https://example.com/products/mc275');
   assert.equal(s.title, 'McIntosh MC275 Tube Amplifier | Resolution AV');

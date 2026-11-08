@@ -59,6 +59,11 @@ function attr(tag: string, name: string): string | null {
   return match ? decodeEntities(match[2] ?? match[3] ?? match[4] ?? '') : null;
 }
 
+// True when the tag carries the attribute at all, so a bare or empty alt (a decorative image) counts.
+function hasAttr(tag: string, name: string): boolean {
+  return new RegExp(`[\\s"'/]${name}(?=[\\s=/>])`, 'i').test(tag.replace(/^<\w+/, ' '));
+}
+
 function metaContent(html: string, key: 'name' | 'property', value: string): string | null {
   for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
     if (attr(tag, key)?.toLowerCase() === value) return clean(attr(tag, 'content'));
@@ -139,7 +144,7 @@ export function extractSignals(html: string, pageUrl: string): PageSignals {
   const allHeadings = [1, 2, 3, 4].flatMap(headings);
 
   const images = main.match(/<img\b[^>]*>/gi) ?? [];
-  const imagesWithAlt = images.filter((tag) => (attr(tag, 'alt') ?? '').trim() !== '').length;
+  const imagesWithAlt = images.filter((tag) => hasAttr(tag, 'alt')).length;
 
   let internalLinks = 0;
   for (const tag of main.match(/<a\b[^>]*>/gi) ?? []) {
