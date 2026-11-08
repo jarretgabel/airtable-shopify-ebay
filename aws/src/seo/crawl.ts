@@ -40,6 +40,7 @@ async function timedFetch(fetcher: Fetcher, url: string) {
 
 const RETRYABLE = new Set([429, 502, 503, 504]);
 const MAX_ATTEMPTS = 4;
+const RATE_LIMIT_COOLDOWN_MS = 5_000;
 const MAX_RETRY_WAIT_MS = 10_000;
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -133,6 +134,7 @@ export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Pr
     let timedOut = false;
     const homeUrl = new URL('/', siteUrl).toString();
 
+    const requeued = new Set<string>();
     const worker = async () => {
       for (let entry = queue.shift(); entry; entry = queue.shift()) {
         if (Date.now() > deadline) {
@@ -145,6 +147,13 @@ export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Pr
           const response = await fetchPage(fetcher, entry.url, delayMs || 0);
           const responseMs = Date.now() - started;
           const html = response.ok ? await response.text() : '';
+          if (response.status === 429 && !requeued.has(entry.url)) {
+            // Still rate-limited after retries: cool down and try once more at the end of the queue.
+            requeued.add(entry.url);
+            queue.push(entry);
+            if (delayMs > 0) await sleep(RATE_LIMIT_COOLDOWN_MS);
+            continue;
+          }
           if (!response.ok || !/<html|<head|<body/i.test(html)) {
             const failed = failedPageScores(response.status, response.ok ? 'Response was not an HTML page' : `HTTP ${response.status}`);
             await upsertPage(db, runId, { url: entry.url, pageType, statusCode: response.status, responseMs, title: null, metaDescription: null, h1: null, canonical: null, wordCount: null, schemaTypes: [], lastModified: entry.lastModified, ...failed });
