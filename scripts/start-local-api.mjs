@@ -22,6 +22,8 @@ const ROUTES = [
   ['GET', '/api/dashboard/sellers-summary', 'handlers/dashboard/getSellersSummary.js', 'handler'],
   ['GET', '/api/dashboard/reports', 'handlers/dashboard/getReports.js', 'handler'],
   ['GET', '/api/dashboard/finance', 'handlers/dashboard/getFinance.js', 'handler'],
+  ['GET', '/api/seo/summary', 'handlers/seo/getSummary.js', 'handler'],
+  ['POST', '/api/seo/audit', 'handlers/seo/startAudit.js', 'handler'],
   ['GET', '/api/dashboard/buyers', 'handlers/dashboard/getBuyers.js', 'handler'],
   ['GET', '/api/dashboard/crm/contacts', 'handlers/crm/listContacts.js', 'handler'],
   ['GET', '/api/dashboard/crm/contacts/{contactId}', 'handlers/crm/getContact.js', 'handler'],

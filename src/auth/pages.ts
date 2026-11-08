@@ -1,6 +1,7 @@
 export const APP_PAGES = [
   'dashboard',
   'sales',
+  'seo',
   'people',
   'workflow-guide',
   'workflow-guide-editor',
@@ -38,6 +39,7 @@ export interface PageDefinition {
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
   sales: { label: 'Sales', path: '/sales' },
+  seo: { label: 'SEO & AI', path: '/seo' },
   people: { label: 'People', path: '/people' },
   'workflow-guide': { label: 'User Guide', path: '/workflow-guide' },
   'workflow-guide-editor': { label: 'User Guide Admin', path: '/workflow-guide/edit', adminOnly: true },

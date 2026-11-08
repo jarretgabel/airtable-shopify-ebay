@@ -4,6 +4,7 @@ export * as aiAppApi from './ai';
 export * as approvalAppApi from './approval';
 export * as dashboardAppApi from './dashboard';
 export * as gmailAppApi from './gmail';
+export * as seoAppApi from './seo';
 export * as shopifyAppApi from './shopify';
 export * as ebayAppApi from './ebay';
 export * as hifisharkAppApi from './hifishark';

@@ -171,6 +171,10 @@
 - Shopify/eBay listing forms are structurally aligned; channel-specific differences isolated in helpers.
 - ApprovalQueueTable suppresses channel-irrelevant columns by passing `''` as the field name prop.
 
+### SEO & AI Search Dashboard
+- The `seo` page (`/seo`, owner and developer only; `/api/seo/*` enforces the same roles) shows SEO and AI-search (AIO) scores for the public storefront. `SeoAuditRunFunction` crawls the Shopify sitemap weekly (Mondays 09:00 UTC) or on demand via `POST /api/seo/audit` (invokes the run function asynchronously; the local API runs it in-process), scores each page and stores results in `seo_pages` / `seo_audit_runs` (migration 0015). `GET /api/seo/summary` feeds the dashboard.
+- Scores are our own 0-100 checklists (`aws/src/seo/scoring.ts`), not search-engine data. Real rankings, impressions and clicks need a Google Search Console sync, which is not built yet. `SEO_SITE_URL` and `SEO_AUDIT_MAX_PAGES` override the crawled site and page cap.
+
 ### Activity & Logging
 - Real-time logging of sync events, filterable by platform, date, and status.
 - Activity timeline and statistics panel for operational visibility.

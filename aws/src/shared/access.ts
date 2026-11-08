@@ -128,6 +128,10 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
     return { adminOnly: true };
   }
 
+  if (path.startsWith('/api/seo/')) {
+    return { roles: ['owner', 'developer'] };
+  }
+
   if (path.startsWith('/api/analytics/')) {
     return {};
   }

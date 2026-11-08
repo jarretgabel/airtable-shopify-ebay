@@ -31,6 +31,7 @@ const PHOTOGRAPHER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'photograp
 const DEVELOPER_PAGES: AppPage[] = [
   'dashboard',
   'sales',
+  'seo',
   'people',
   'workflow-guide',
   'workflow-guide-editor',
@@ -101,6 +102,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   owner: [
     'dashboard',
     'sales',
+    'seo',
     'people',
     'workflow-guide',
     'workflow-guide-editor',

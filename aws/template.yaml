@@ -1321,6 +1321,57 @@ Resources:
             Method: GET
             Path: /api/dashboard/reports
 
+  SeoGetSummaryFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/seo/getSummary.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: GET
+            Path: /api/seo/summary
+
+  SeoStartAuditFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/seo/startAudit.handler
+      Environment:
+        Variables:
+          SEO_AUDIT_FUNCTION_NAME: !Ref SeoAuditRunFunction
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref SeoAuditRunFunction
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AppHttpApi
+            Method: POST
+            Path: /api/seo/audit
+
+  SeoAuditRunFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/seo/runAudit.handler
+      Timeout: 900
+      MemorySize: 512
+      Events:
+        Weekly:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 9 ? * MON *)
+
   DashboardFinanceFunction:
     Type: AWS::Serverless::Function
     Metadata:

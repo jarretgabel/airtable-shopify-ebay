@@ -16,9 +16,9 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
   },
   {
     key: 'business',
-    title: 'Sales and People',
-    description: 'Cost and earnings, buyers, sellers and customers. Available to admin, owner and developer only.',
-    pages: ['sales', 'people'],
+    title: 'Sales, SEO and People',
+    description: 'Cost and earnings, buyers, sellers and customers (admin, owner and developer), and the SEO & AI dashboard (owner and developer only).',
+    pages: ['sales', 'seo', 'people'],
   },
   {
     key: 'intake',
