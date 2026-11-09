@@ -70,7 +70,7 @@ export function resolveAssistantScope(user: AssistantUser): AssistantScope {
   const canViewCustomers = fullAccess || user.role === 'processor';
   if (fullAccess) fields.push(...FINANCE_FIELDS);
   if (canViewCustomers) fields.push(...SELLER_FIELDS);
-  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess, canViewCustomers, canViewSeo: pages.has('seo') };
+  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess, canViewCustomers, canViewSeo: pages.has('seo') || pages.has('seo-stereobuyers') };
 }
 
 export function isStatusVisible(scope: AssistantScope, status: unknown): boolean {

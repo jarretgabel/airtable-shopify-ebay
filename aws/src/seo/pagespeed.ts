@@ -1,6 +1,6 @@
 import type { Queryable } from '../db/sellersSummary.js';
 import { logError, logInfo } from '../shared/logging.js';
-import { DEFAULT_SITE_URL } from './crawl.js';
+import { DEFAULT_SEO_SITE, seoSiteUrl, type SeoSiteId } from './sites.js';
 
 const ENDPOINT = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
 const REQUEST_TIMEOUT_MS = 70_000;
@@ -70,15 +70,15 @@ async function fetchPageSpeed(fetcher: JsonFetcher, pageUrl: string, apiKey?: st
 }
 
 /** Home page plus a few pages of each type; the pick rotates weekly so coverage widens over time. */
-export async function pickSamplePages(db: Queryable, siteUrl: string): Promise<string[]> {
+export async function pickSamplePages(db: Queryable, siteUrl: string, site: SeoSiteId = DEFAULT_SEO_SITE): Promise<string[]> {
   const home = new URL('/', siteUrl).toString();
   const week = String(Math.floor(Date.now() / (7 * 86_400_000)));
   const { rows } = await db.query(
     `SELECT url FROM (
        SELECT url, row_number() OVER (PARTITION BY page_type ORDER BY md5(url || $1)) AS n
-       FROM seo_pages WHERE status_code = 200 AND page_type <> 'home'
+       FROM seo_pages WHERE site = $3 AND status_code = 200 AND page_type <> 'home'
      ) ranked WHERE n <= $2 ORDER BY url`,
-    [week, PER_TYPE_SAMPLE],
+    [week, PER_TYPE_SAMPLE, site],
   );
   return [home, ...rows.map((row) => String(row.url))];
 }
@@ -104,6 +104,7 @@ async function savePageSpeed(db: Queryable, url: string, result: PageSpeedResult
 
 export interface PageSpeedOptions {
   siteUrl?: string;
+  site?: SeoSiteId;
   fetcher?: JsonFetcher;
   apiKey?: string | null;
   /** Epoch ms after which no new page is started. */
@@ -113,14 +114,15 @@ export interface PageSpeedOptions {
 
 /** Runs sequentially: PageSpeed is slow and its shared quota rejects bursts. Never throws; failures are stored per page. */
 export async function runPageSpeedSample(db: Queryable, options: PageSpeedOptions = {}): Promise<{ checked: number; failed: number }> {
-  const siteUrl = options.siteUrl ?? DEFAULT_SITE_URL;
+  const site = options.site ?? DEFAULT_SEO_SITE;
+  const siteUrl = options.siteUrl ?? seoSiteUrl(site);
   const fetcher = options.fetcher ?? ((url, init) => fetch(url, init));
   const deadline = options.deadline ?? Date.now() + 8 * 60_000;
   const delayMs = options.delayMs ?? 1500;
   let checked = 0;
   let failed = 0;
   try {
-    for (const url of await pickSamplePages(db, siteUrl)) {
+    for (const url of await pickSamplePages(db, siteUrl, site)) {
       if (Date.now() + REQUEST_TIMEOUT_MS > deadline) break;
       try {
         await savePageSpeed(db, url, await fetchPageSpeed(fetcher, url, options.apiKey), null);

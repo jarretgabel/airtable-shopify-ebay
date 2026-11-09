@@ -1,4 +1,4 @@
-export type PageType = 'home' | 'product' | 'collection' | 'blog' | 'page' | 'other';
+export type PageType = 'home' | 'product' | 'collection' | 'blog' | 'page' | 'equipment' | 'other';
 
 export interface PageSignals {
   title: string | null;

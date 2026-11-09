@@ -65,10 +65,12 @@ export interface SeoSummary {
   citations: SeoCitationSummary;
 }
 
-export function getSeoSummary(): Promise<SeoSummary> {
-  return getJson<SeoSummary>('/api/seo/summary');
+export type SeoSiteId = 'resolutionav' | 'stereobuyers';
+
+export function getSeoSummary(site: SeoSiteId = 'resolutionav'): Promise<SeoSummary> {
+  return getJson<SeoSummary>(`/api/seo/summary?site=${site}`);
 }
 
-export function startSeoAudit(task: 'audit' | 'citations' = 'audit'): Promise<{ started: boolean; reason?: string }> {
-  return postJson<{ started: boolean; reason?: string }>('/api/seo/audit', { task });
+export function startSeoAudit(task: 'audit' | 'citations' = 'audit', site: SeoSiteId = 'resolutionav'): Promise<{ started: boolean; reason?: string }> {
+  return postJson<{ started: boolean; reason?: string }>('/api/seo/audit', { task, site });
 }

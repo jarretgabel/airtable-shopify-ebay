@@ -1,5 +1,6 @@
 // Usage:
 //   npm run seo:snapshot -- save [label]      saves docs/seo-snapshots/<date>-<label>.json from the current audit data
+//   SEO_SNAPSHOT_SITE=stereobuyers npm run seo:snapshot -- save [label]   (default site: resolutionav)
 //   npm run seo:snapshot -- compare <before.json> [after.json]   (after defaults to the current data)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,9 +15,10 @@ const DIR = path.resolve('docs/seo-snapshots');
 async function load(label: string): Promise<Snapshot> {
   const pool = getPostgresPool();
   try {
-    const run = (await pool.query("SELECT id, finished_at, page_count, avg_seo_score, avg_aio_score, site_checks FROM seo_audit_runs WHERE status = 'completed' ORDER BY id DESC LIMIT 1")).rows[0] ?? null;
-    const pages = (await pool.query('SELECT url, page_type, status_code, seo_score, aio_score, issues, title, meta_description, word_count FROM seo_pages ORDER BY url')).rows as PageRow[];
-    const pageSpeed = (await pool.query('SELECT url, strategy, performance, accessibility, best_practices, seo, lcp_ms, cls, tbt_ms, error, checked_at FROM seo_pagespeed ORDER BY url')).rows;
+    const site = process.env.SEO_SNAPSHOT_SITE?.trim() || 'resolutionav';
+    const run = (await pool.query("SELECT id, finished_at, page_count, avg_seo_score, avg_aio_score, site_checks FROM seo_audit_runs WHERE site = $1 AND status = 'completed' ORDER BY id DESC LIMIT 1", [site])).rows[0] ?? null;
+    const pages = (await pool.query('SELECT url, page_type, status_code, seo_score, aio_score, issues, title, meta_description, word_count FROM seo_pages WHERE site = $1 ORDER BY url', [site])).rows as PageRow[];
+    const pageSpeed = (await pool.query('SELECT url, strategy, performance, accessibility, best_practices, seo, lcp_ms, cls, tbt_ms, error, checked_at FROM seo_pagespeed WHERE url IN (SELECT url FROM seo_pages WHERE site = $1) ORDER BY url', [site])).rows;
     return { takenAt: new Date().toISOString(), label, run, pages, pageSpeed };
   } finally {
     await pool.end();

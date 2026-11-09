@@ -1,24 +1,13 @@
 import type { Queryable } from '../db/sellersSummary.js';
 import { getOptionalSecret } from '../shared/secrets.js';
 import { logError, logInfo } from '../shared/logging.js';
+import { DEFAULT_SEO_SITE, parseSeoSite, SEO_SITES, type SeoSite, type SeoSiteId } from './sites.js';
 
 const DEFAULT_MODEL = 'claude-haiku-4-5';
-const SITE_DOMAIN = 'resolutionavnyc.com';
-const BRAND_PATTERN = /resolution\s*a\.?v\b|resolutionavnyc/i;
 const MAX_SOURCES = 8;
 
 /** Buyer-style questions an AI assistant might be asked; the last one checks plain brand awareness. */
-export const CITATION_QUESTIONS = [
-  'Where can I buy pre-owned high-end audio equipment in New York City?',
-  'What are the best places to buy used McIntosh amplifiers?',
-  'Is there a trusted dealer for vintage tube amplifiers in NYC?',
-  'Where can I sell my used hi-fi equipment in New York?',
-  'Where can I buy used turntables from a reputable dealer?',
-  'Which dealers sell pre-owned Bowers & Wilkins speakers?',
-  'Who does hi-fi equipment repair and servicing in New York City?',
-  'Where can I find used high-end headphones and DACs?',
-  'What is Resolution AV in New York?',
-];
+export const CITATION_QUESTIONS = SEO_SITES.resolutionav.citationQuestions;
 
 export interface CitationResult {
   question: string;
@@ -47,7 +36,7 @@ const hostOf = (url: string): string | null => {
 };
 
 /** Reads one web-search answer: the text, whether the brand is named, and which sites were cited. */
-export function parseCitationAnswer(question: string, blocks: AnswerBlock[]): CitationResult {
+export function parseCitationAnswer(question: string, blocks: AnswerBlock[], site: SeoSite = SEO_SITES[DEFAULT_SEO_SITE]): CitationResult {
   const answer = blocks.filter((block) => block.type === 'text').map((block) => block.text ?? '').join('').trim();
   const urls: string[] = [];
   for (const block of blocks) {
@@ -57,12 +46,12 @@ export function parseCitationAnswer(question: string, blocks: AnswerBlock[]): Ci
     }
   }
   const hosts = [...new Set(urls.map(hostOf).filter((host): host is string => !!host))];
-  const cited = hosts.some((host) => host === SITE_DOMAIN || host.endsWith(`.${SITE_DOMAIN}`));
-  const sources = [...hosts].sort((a, b) => Number(b.endsWith(SITE_DOMAIN)) - Number(a.endsWith(SITE_DOMAIN))).slice(0, MAX_SOURCES);
-  return { question, mentioned: BRAND_PATTERN.test(answer), cited, sources, answer: answer.slice(0, 1500), error: null };
+  const cited = hosts.some((host) => host === site.domain || host.endsWith(`.${site.domain}`));
+  const sources = [...hosts].sort((a, b) => Number(b.endsWith(site.domain)) - Number(a.endsWith(site.domain))).slice(0, MAX_SOURCES);
+  return { question, mentioned: site.brandPattern.test(answer), cited, sources, answer: answer.slice(0, 1500), error: null };
 }
 
-async function askWithSearch(question: string, apiKey: string, model: string, fetcher: CitationFetcher): Promise<CitationResult> {
+async function askWithSearch(question: string, apiKey: string, model: string, fetcher: CitationFetcher, site: SeoSite): Promise<CitationResult> {
   const response = await fetcher('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -79,7 +68,7 @@ async function askWithSearch(question: string, apiKey: string, model: string, fe
     throw new Error(`Anthropic API error ${response.status}${hint}`);
   }
   const body = await response.json() as { content?: AnswerBlock[] };
-  return parseCitationAnswer(question, body.content ?? []);
+  return parseCitationAnswer(question, body.content ?? [], site);
 }
 
 export interface CitationOptions {
@@ -87,16 +76,17 @@ export interface CitationOptions {
   apiKey?: string | null;
   model?: string;
   questions?: string[];
+  site?: SeoSiteId;
 }
 
-export async function startCitationRun(db: Queryable): Promise<number> {
-  const result = await db.query(`INSERT INTO seo_citation_runs (status) VALUES ('running') RETURNING id`);
+export async function startCitationRun(db: Queryable, site: SeoSiteId = DEFAULT_SEO_SITE): Promise<number> {
+  const result = await db.query(`INSERT INTO seo_citation_runs (status, site) VALUES ('running', $1) RETURNING id`, [site]);
   return Number(result.rows[0].id);
 }
 
-export async function hasActiveCitationRun(db: Queryable): Promise<boolean> {
+export async function hasActiveCitationRun(db: Queryable, site: SeoSiteId = DEFAULT_SEO_SITE): Promise<boolean> {
   await db.query(`UPDATE seo_citation_runs SET status = 'failed', finished_at = now(), error = 'Run did not finish' WHERE status = 'running' AND started_at < now() - interval '20 minutes'`);
-  const result = await db.query(`SELECT 1 FROM seo_citation_runs WHERE status = 'running' LIMIT 1`);
+  const result = await db.query(`SELECT 1 FROM seo_citation_runs WHERE status = 'running' AND site = $1 LIMIT 1`, [site]);
   return result.rows.length > 0;
 }
 
@@ -105,7 +95,9 @@ export async function runCitationCheck(db: Queryable, runId: number, options: Ci
   const apiKey = options.apiKey ?? getOptionalSecret('ANTHROPIC_API_KEY');
   const model = options.model ?? getOptionalSecret('ANTHROPIC_MODEL') ?? DEFAULT_MODEL;
   const fetcher = options.fetcher ?? ((url, init) => fetch(url, init));
-  const questions = options.questions ?? CITATION_QUESTIONS;
+  const siteId = options.site ?? parseSeoSite((await db.query(`SELECT site FROM seo_citation_runs WHERE id = $1`, [runId])).rows[0]?.site);
+  const site = SEO_SITES[siteId];
+  const questions = options.questions ?? site.citationQuestions;
   let mentioned = 0;
   let cited = 0;
   let failures = 0;
@@ -116,7 +108,7 @@ export async function runCitationCheck(db: Queryable, runId: number, options: Ci
       let result: CitationResult;
       attempted += 1;
       try {
-        result = await askWithSearch(question, apiKey, model, fetcher);
+        result = await askWithSearch(question, apiKey, model, fetcher, site);
       } catch (error) {
         failures += 1;
         result = { question, mentioned: false, cited: false, sources: [], answer: '', error: error instanceof Error ? error.message : 'Check failed' };

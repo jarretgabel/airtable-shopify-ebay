@@ -2,6 +2,7 @@ export const APP_PAGES = [
   'dashboard',
   'sales',
   'seo',
+  'seo-stereobuyers',
   'assistant-insights',
   'people',
   'workflow-guide',
@@ -40,7 +41,8 @@ export interface PageDefinition {
 export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   dashboard: { label: 'Dashboard', path: '/dashboard' },
   sales: { label: 'Sales', path: '/sales' },
-  seo: { label: 'SEO & AI', path: '/seo' },
+  seo: { label: 'SEO: Resolution AV', path: '/seo' },
+  'seo-stereobuyers': { label: 'SEO: Stereobuyers', path: '/seo-stereobuyers' },
   'assistant-insights': { label: 'Assistant', path: '/assistant-insights' },
   people: { label: 'People', path: '/people' },
   'workflow-guide': { label: 'User Guide', path: '/workflow-guide' },

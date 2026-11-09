@@ -1,12 +1,13 @@
 import type { Queryable } from '../db/sellersSummary.js';
 import { finishRun, hasActiveRun, startRun, upsertPage } from '../db/seo.js';
 import { logError, logInfo } from '../shared/logging.js';
-import { classifyUrl, extractSignals } from './htmlSignals.js';
+import { extractSignals } from './htmlSignals.js';
 import { failedPageScores, scorePage } from './scoring.js';
 import { buildSiteChecks } from './siteChecks.js';
+import { DEFAULT_SEO_SITE, SEO_SITES, seoSiteUrl, type SeoSiteId } from './sites.js';
 
-export const DEFAULT_SITE_URL = 'https://resolutionavnyc.com';
-const USER_AGENT = 'ResolutionAV-SEO-Audit/1.0 (self-audit of resolutionavnyc.com)';
+export const DEFAULT_SITE_URL = SEO_SITES.resolutionav.url;
+const USER_AGENT = 'ResolutionAV-SEO-Audit/1.0 (self-audit of our own websites)';
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_SITEMAP_DEPTH = 2;
 const SKIP_EXTENSION = /\.(xml|json|txt|md|pdf|jpe?g|png|gif|webp|svg|css|js)(\?|$)/i;
@@ -19,6 +20,7 @@ export interface SitemapEntry {
 }
 
 export interface AuditOptions {
+  site?: SeoSiteId;
   siteUrl?: string;
   maxPages?: number;
   concurrency?: number;
@@ -72,7 +74,8 @@ export function parseSitemap(xml: string): { sitemaps: string[]; pages: SitemapE
 }
 
 export async function discoverPages(siteUrl: string, fetcher: Fetcher): Promise<SitemapEntry[]> {
-  const host = new URL(siteUrl).host;
+  const sameHost = (value: string) => value.replace(/^www\./, '');
+  const host = sameHost(new URL(siteUrl).host);
   const seen = new Set<string>();
   const found = new Map<string, SitemapEntry>();
 
@@ -85,7 +88,7 @@ export async function discoverPages(siteUrl: string, fetcher: Fetcher): Promise<
       const { sitemaps, pages } = parseSitemap(await response.text());
       for (const page of pages) {
         try {
-          if (new URL(page.url).host === host && !SKIP_EXTENSION.test(page.url)) found.set(page.url, page);
+          if (sameHost(new URL(page.url).host) === host && !SKIP_EXTENSION.test(page.url)) found.set(page.url, page);
         } catch {
           // Ignore malformed sitemap URLs.
         }
@@ -116,7 +119,8 @@ async function fetchOptionalText(fetcher: Fetcher, url: string): Promise<{ ok: b
 
 /** Crawls the storefront from its sitemap, scores every page and stores the result. Returns the run id, or null when no run id was supplied and a run is already active. */
 export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Promise<number | null> {
-  const siteUrl = options.siteUrl ?? process.env.SEO_SITE_URL?.trim() ?? DEFAULT_SITE_URL;
+  const site = SEO_SITES[options.site ?? DEFAULT_SEO_SITE];
+  const siteUrl = options.siteUrl ?? seoSiteUrl(site.id);
   const fetcher: Fetcher = options.fetcher ?? ((url, init) => fetch(url, init));
   const maxPages = options.maxPages ?? (Number(process.env.SEO_AUDIT_MAX_PAGES) || 2000);
   const concurrency = options.concurrency ?? 3;
@@ -125,8 +129,8 @@ export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Pr
 
   let runId = options.runId;
   if (runId === undefined) {
-    if (await hasActiveRun(db)) return null;
-    runId = await startRun(db);
+    if (await hasActiveRun(db, site.id)) return null;
+    runId = await startRun(db, site.id);
   }
   try {
     const [robots, llms, entries] = await Promise.all([
@@ -146,7 +150,7 @@ export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Pr
           timedOut = true;
           return;
         }
-        const pageType = classifyUrl(entry.url);
+        const pageType = site.classify(entry.url);
         const started = Date.now();
         try {
           const response = await fetchPage(fetcher, entry.url, delayMs || 0);
@@ -161,7 +165,7 @@ export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Pr
           }
           if (!response.ok || !/<html|<head|<body/i.test(html)) {
             const failed = failedPageScores(response.status, response.ok ? 'Response was not an HTML page' : `HTTP ${response.status}`);
-            await upsertPage(db, runId, { url: entry.url, pageType, statusCode: response.status, responseMs, title: null, metaDescription: null, h1: null, canonical: null, wordCount: null, schemaTypes: [], lastModified: entry.lastModified, ...failed });
+            await upsertPage(db, runId, { url: entry.url, pageType, statusCode: response.status, responseMs, title: null, metaDescription: null, h1: null, canonical: null, wordCount: null, schemaTypes: [], lastModified: entry.lastModified, ...failed }, site.id);
             continue;
           }
           const signals = extractSignals(html, entry.url);
@@ -171,10 +175,10 @@ export async function runSeoAudit(db: Queryable, options: AuditOptions = {}): Pr
           await upsertPage(db, runId, {
             url: entry.url, pageType, statusCode: response.status, responseMs, title: signals.title, metaDescription: signals.metaDescription,
             h1: signals.h1s[0] ?? null, canonical: signals.canonical, wordCount: signals.wordCount, schemaTypes: signals.schemaTypes, lastModified, ...scores,
-          });
+          }, site.id);
         } catch (error) {
           const failed = failedPageScores(0, error instanceof Error ? error.message : 'Fetch failed');
-          await upsertPage(db, runId, { url: entry.url, pageType, statusCode: null, responseMs: null, title: null, metaDescription: null, h1: null, canonical: null, wordCount: null, schemaTypes: [], lastModified: entry.lastModified, ...failed });
+          await upsertPage(db, runId, { url: entry.url, pageType, statusCode: null, responseMs: null, title: null, metaDescription: null, h1: null, canonical: null, wordCount: null, schemaTypes: [], lastModified: entry.lastModified, ...failed }, site.id);
         }
         if (delayMs > 0) await sleep(delayMs);
       }

@@ -186,6 +186,8 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'sales';
     case 'seo':
       return 'SEO dashboard';
+    case 'seo-stereobuyers':
+      return 'Stereobuyers SEO dashboard';
     case 'assistant-insights':
       return 'assistant usage';
     case 'people':
@@ -469,7 +471,9 @@ export function AppTabContent({
       case 'sales':
         return <SalesTab currentUserRole={currentUserRole} />;
       case 'seo':
-        return <SeoTab />;
+        return <SeoTab site="resolutionav" />;
+      case 'seo-stereobuyers':
+        return <SeoTab site="stereobuyers" />;
       case 'assistant-insights':
         return <AssistantInsightsTab />;
       case 'people':

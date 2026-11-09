@@ -60,14 +60,14 @@ export function PageSpeedPanel({ rows }: { rows: SeoPageSpeedRow[] }) {
   );
 }
 
-export function CitationPanel({ citations, busy, onRun }: { citations: SeoCitationSummary; busy: boolean; onRun: () => void }) {
+export function CitationPanel({ domain, citations, busy, onRun }: { domain: string; citations: SeoCitationSummary; busy: boolean; onRun: () => void }) {
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
   const run = citations.latestRun;
   const running = busy || citations.running;
   return (
     <DashboardSectionPanel id="seo-citations" title="AI answer check">
       <p className="m-0 text-[0.75rem] text-[var(--muted)]">
-        Asks Claude (with web search) buyer-style questions and checks whether resolutionavnyc.com is named or cited in the answer. A spot check, not a ranking: answers vary run to run. Each run uses web searches, so it only runs when you ask.
+        Asks Claude (with web search) buyer-style questions and checks whether {domain} is named or cited in the answer. A spot check, not a ranking: answers vary run to run. Each run uses web searches, so it only runs when you ask.
       </p>
       <div className="flex flex-wrap items-center gap-3 text-[0.8rem] text-[var(--muted)]">
         <button type="button" className={buttonClass} disabled={running} onClick={onRun}>{running ? 'Checking…' : 'Run AI answer check'}</button>

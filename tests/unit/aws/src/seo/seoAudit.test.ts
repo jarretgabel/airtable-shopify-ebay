@@ -184,7 +184,7 @@ test('startAuditRun creates the run row before dispatching and passes its id', a
   };
   const started = await startAuditRun(db, async (payload) => { order.push(`dispatch:${JSON.stringify(payload)}`); });
   assert.equal(started, true);
-  assert.deepEqual(order, ['insert', 'dispatch:{"task":"audit","runId":9}']);
+  assert.deepEqual(order, ['insert', 'dispatch:{"task":"audit","runId":9,"site":"resolutionav"}']);
 });
 
 test('startAuditRun does not dispatch while a run is active', async () => {
@@ -205,4 +205,35 @@ test('startAuditRun marks the run failed when dispatch throws', async () => {
   await assert.rejects(startAuditRun(db, async () => { throw new Error('invoke denied'); }), /invoke denied/);
   const finish = calls.find((call) => /UPDATE seo_audit_runs SET status = \$2/.test(call.sql));
   assert.equal(finish?.values[1], 'failed');
+});
+
+test('stereobuyers pages are classified by folder and the site resolves from input', async () => {
+  const { SEO_SITES, parseSeoSite } = await import('../../../../../aws/src/seo/sites.js');
+  const classify = SEO_SITES.stereobuyers.classify;
+  assert.equal(classify('https://stereobuyers.com/'), 'home');
+  assert.equal(classify('https://stereobuyers.com/stereo-equipment-and-components-we-buy/vtl/st-150.html'), 'equipment');
+  assert.equal(classify('https://stereobuyers.com/2015/10/09/process.html'), 'page');
+  assert.equal(parseSeoSite('stereobuyers'), 'stereobuyers');
+  assert.equal(parseSeoSite('unknown'), 'resolutionav');
+});
+
+test('startAuditRun creates and dispatches a run for the requested site', async () => {
+  const seen: unknown[][] = [];
+  const db = { query: async (sql: string, values: unknown[] = []) => {
+    seen.push([sql, ...values]);
+    if (/INSERT INTO seo_audit_runs/.test(sql)) return { rows: [{ id: 4 }] };
+    return { rows: [] };
+  } };
+  const payloads: unknown[] = [];
+  assert.equal(await startAuditRun(db, async (payload) => { payloads.push(payload); }, 'stereobuyers'), true);
+  assert.deepEqual(payloads, [{ task: 'audit', runId: 4, site: 'stereobuyers' }]);
+  assert.ok(seen.some((call) => /INSERT INTO seo_audit_runs/.test(String(call[0])) && call[1] === 'stereobuyers'));
+});
+
+test('discoverPages treats www and the bare domain as the same site', async () => {
+  const { discoverPages } = await import('../../../../../aws/src/seo/crawl.js');
+  const xml = '<urlset><url><loc>https://stereobuyers.com/a.html</loc></url><url><loc>https://other.com/b.html</loc></url></urlset>';
+  const fetcher = async () => ({ ok: true, status: 200, headers: new Headers(), text: async () => xml });
+  const pages = await discoverPages('https://www.stereobuyers.com', fetcher);
+  assert.deepEqual(pages.map((page) => page.url).sort(), ['https://stereobuyers.com/a.html', 'https://www.stereobuyers.com/'].sort());
 });

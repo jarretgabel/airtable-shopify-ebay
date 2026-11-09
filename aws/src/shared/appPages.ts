@@ -2,6 +2,7 @@ export const APP_PAGES = [
   'dashboard',
   'sales',
   'seo',
+  'seo-stereobuyers',
   'assistant-insights',
   'people',
   'workflow-guide',
@@ -43,6 +44,7 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   processor: [
     'dashboard',
     'seo',
+    'seo-stereobuyers',
     'workflow-guide',
     'manual-intake',
     'create-intake-item',

@@ -6,7 +6,7 @@ import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { seoAppApi } from '@/services/app-api';
 import { CitationPanel, PageSpeedPanel } from '@/components/SeoInsightPanels';
 import { recommendationFor } from '@/components/seoRecommendations';
-import type { SeoPageRow, SeoSummary } from '@/services/app-api/seo';
+import type { SeoPageRow, SeoSiteId, SeoSummary } from '@/services/app-api/seo';
 
 type SortKey = 'seoScore' | 'aioScore' | 'url';
 
@@ -68,7 +68,13 @@ function PageRow({ page, open, onToggle }: { page: SeoPageRow; open: boolean; on
   );
 }
 
-export function SeoTab() {
+const SITE_LABELS: Record<SeoSiteId, { name: string; domain: string }> = {
+  resolutionav: { name: 'Resolution AV', domain: 'resolutionavnyc.com' },
+  stereobuyers: { name: 'Stereobuyers', domain: 'stereobuyers.com' },
+};
+
+export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
+  const siteLabel = SITE_LABELS[site];
   const [summary, setSummary] = useState<SeoSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -80,14 +86,14 @@ export function SeoTab() {
 
   const load = useCallback(async () => {
     try {
-      setSummary(await seoAppApi.getSeoSummary());
+      setSummary(await seoAppApi.getSeoSummary(site));
       setError(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not load the SEO dashboard.');
     }
-  }, []);
+  }, [site]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { setSummary(null); void load(); }, [load]);
   useEffect(() => {
     if (!summary?.running && !summary?.citations.running) return undefined;
     const timer = setInterval(() => { void load(); }, POLL_MS);
@@ -97,7 +103,7 @@ export function SeoTab() {
   const runAudit = async () => {
     setStarting(true);
     try {
-      const result = await seoAppApi.startSeoAudit();
+      const result = await seoAppApi.startSeoAudit('audit', site);
       if (!result.started && result.reason) setError(result.reason);
       await load();
     } catch (reason) {
@@ -110,7 +116,7 @@ export function SeoTab() {
   const runCitations = async () => {
     setStartingCitations(true);
     try {
-      const result = await seoAppApi.startSeoAudit('citations');
+      const result = await seoAppApi.startSeoAudit('citations', site);
       if (!result.started && result.reason) setError(result.reason);
       await load();
     } catch (reason) {
@@ -132,7 +138,7 @@ export function SeoTab() {
 
   return (
     <AppPageLayout className="[overflow-anchor:none]">
-      <WorkflowPageHeader eyebrow="Business" title="SEO & AI Search" />
+      <WorkflowPageHeader eyebrow="Business" title={`SEO & AI Search: ${siteLabel.name}`} detail={`Audit of ${siteLabel.domain}.`} />
       <DashboardSectionPanel id="seo-overview" title="Overview">
         <div className="flex flex-wrap items-center gap-3 text-[0.8rem] text-[var(--muted)]">
           <button type="button" className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] disabled:opacity-60" disabled={busy} onClick={() => { void runAudit(); }}>
@@ -197,7 +203,7 @@ export function SeoTab() {
       ) : null}
 
       {summary ? <PageSpeedPanel rows={summary.pageSpeed} /> : null}
-      {summary ? <CitationPanel citations={summary.citations} busy={startingCitations} onRun={() => { void runCitations(); }} /> : null}
+      {summary ? <CitationPanel domain={siteLabel.domain} citations={summary.citations} busy={startingCitations} onRun={() => { void runCitations(); }} /> : null}
 
       {run ? (
         <DashboardSectionPanel id="seo-pages" title="Pages">

@@ -17,6 +17,7 @@ import { getFinanceSummary } from '../../../db/finance.js';
 import { getBuyersSummary } from '../../../db/buyers.js';
 import { getReportsSummary } from '../../../db/reports.js';
 import { getSeoSummary, queryPagesForAssistant } from '../../../db/seo.js';
+import { SEO_SITE_IDS, SEO_SITES } from '../../../seo/sites.js';
 import { getConfiguredRecord, getConfiguredRecords } from '../../../store/index.js';
 import type { AirtableRecord } from '../../airtable/client.js';
 import { INTAKE_DRAFT_FIELDS, PHOTOS_DRAFT_FIELDS, TESTING_DRAFT_FIELDS, type AssistantDraft, type DraftKind } from '../../../shared/contracts/intakeDraft.js';
@@ -108,11 +109,12 @@ const FINANCE_TOOLS = [
 const SEO_TOOLS = [
   {
     name: 'get_seo_insights',
-    description: 'SEO and AI-search (AIO) audit of resolutionavnyc.com: overall scores, site checks, scores by page type, biggest improvement opportunities, PageSpeed samples and AI-citation checks, plus the lowest-scoring pages with their top improvements. Optional filters narrow the page list. Scores are our own 0-100 checklists, not Google rankings.',
+    description: 'SEO and AI-search (AIO) audit of one of our websites (resolutionavnyc.com by default, or stereobuyers.com): overall scores, site checks, scores by page type, biggest improvement opportunities, PageSpeed samples and AI-citation checks, plus the lowest-scoring pages with their top improvements. Optional filters narrow the page list. Scores are our own 0-100 checklists, not Google rankings.',
     input_schema: {
       type: 'object',
       properties: {
-        page_type: { type: 'string', enum: ['product', 'collection', 'blog', 'page', 'home'] },
+        site: { type: 'string', enum: ['resolutionav', 'stereobuyers'], description: 'Which website; defaults to resolutionav' },
+        page_type: { type: 'string', enum: ['product', 'collection', 'blog', 'page', 'equipment', 'home'] },
         url_contains: { type: 'string', description: 'Part of a page URL, e.g. "mcintosh"' },
         sort_by: { type: 'string', enum: ['seo', 'aio', 'combined'], description: 'Which score to rank the lowest pages by' },
         limit: { type: 'number', description: 'Pages to return, 1-25 (default 10)' },
@@ -471,7 +473,7 @@ export async function runAssistantTool(
     case 'get_seo_insights': {
       if (!scope.canViewSeo) return { error: 'You do not have access to the SEO dashboard.' };
       if (!process.env.DATABASE_URL?.trim()) return { error: 'SEO data needs the Postgres database, which is not configured.' };
-      return await getSeoInsights(input);
+      return await getSeoInsights(input, scope);
     }
     case 'get_finance_summary':
     case 'get_buyers':
@@ -493,15 +495,19 @@ export async function runAssistantTool(
   }
 }
 
-const SEO_PAGE_TYPES = new Set(['product', 'collection', 'blog', 'page', 'home']);
+const SEO_PAGE_TYPES = new Set(['product', 'collection', 'blog', 'page', 'equipment', 'home']);
 
-async function getSeoInsights(input: Record<string, unknown>) {
+async function getSeoInsights(input: Record<string, unknown>, scope: { pages: readonly string[] }) {
+  const allowed = SEO_SITE_IDS.filter((id) => scope.pages.includes(SEO_SITES[id].page));
+  const requested = SEO_SITE_IDS.find((id) => id === input.site) ?? allowed[0];
+  if (!requested || !allowed.includes(requested)) return { error: 'You do not have access to that website\'s SEO dashboard.' };
   const pool = getPostgresPool();
-  const summary = await getSeoSummary(pool, { includePages: false });
+  const summary = await getSeoSummary(pool, { includePages: false, site: requested });
   if (!summary.latestRun) return { error: 'No SEO audit has run yet. An owner or developer can start one from the SEO & AI page.' };
   const pageType = typeof input.page_type === 'string' && SEO_PAGE_TYPES.has(input.page_type) ? input.page_type : null;
   const sortBy = input.sort_by === 'seo' || input.sort_by === 'aio' ? input.sort_by : 'combined';
   const pages = await queryPagesForAssistant(pool, {
+    site: requested,
     pageType,
     urlContains: typeof input.url_contains === 'string' ? input.url_contains.trim().slice(0, 100) : null,
     sortBy,
@@ -509,6 +515,7 @@ async function getSeoInsights(input: Record<string, unknown>) {
   });
   const { latestRun, citations } = summary;
   return {
+    site: requested,
     lastAuditAt: latestRun.finishedAt,
     pagesAudited: latestRun.pageCount,
     avgSeoScore: latestRun.avgSeoScore,

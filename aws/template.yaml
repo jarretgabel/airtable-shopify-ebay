@@ -1408,6 +1408,11 @@ Resources:
           Type: Schedule
           Properties:
             Schedule: cron(0 9 ? * MON *)
+        WeeklyStereobuyers:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 10 ? * MON *)
+            Input: '{"site":"stereobuyers"}'
 
   DashboardFinanceFunction:
     Type: AWS::Serverless::Function
