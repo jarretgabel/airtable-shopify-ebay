@@ -60,7 +60,7 @@ export function PageSpeedPanel({ rows }: { rows: SeoPageSpeedRow[] }) {
   );
 }
 
-export function CitationPanel({ domain, citations, busy, onRun }: { domain: string; citations: SeoCitationSummary; busy: boolean; onRun: () => void }) {
+export function CitationPanel({ domain, citations, busy, auditRunning = false, onRun }: { domain: string; citations: SeoCitationSummary; busy: boolean; auditRunning?: boolean; onRun: () => void }) {
   const [openQuestion, setOpenQuestion] = useState<string | null>(null);
   const run = citations.latestRun;
   const running = busy || citations.running;
@@ -70,7 +70,8 @@ export function CitationPanel({ domain, citations, busy, onRun }: { domain: stri
         Asks Claude (with web search) buyer-style questions and checks whether {domain} is named or cited in the answer. A spot check, not a ranking: answers vary run to run. Each run uses web searches, so it only runs when you ask.
       </p>
       <div className="flex flex-wrap items-center gap-3 text-[0.8rem] text-[var(--muted)]">
-        <button type="button" className={buttonClass} disabled={running} onClick={onRun}>{running ? 'Checking…' : 'Run AI answer check'}</button>
+        <button type="button" className={buttonClass} disabled={running || auditRunning} onClick={onRun}>{running ? 'Checking…' : 'Run AI answer check'}</button>
+        {auditRunning && !running ? <span>Available when the audit finishes.</span> : null}
         {run ? <span>Last check {run.finishedAt ? dateTime.format(new Date(run.finishedAt)) : ''}</span> : <span>No check has run yet.</span>}
       </div>
       {run?.status === 'failed' ? <p role="alert" className="m-0 text-sm text-red-500">The last check failed: {run.error ?? citations.checks[0]?.error ?? 'unknown error'}</p> : null}

@@ -204,7 +204,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
 
       {summary ? <SearchConsolePanel data={summary.searchConsole} domain={siteLabel.domain} /> : null}
       {summary ? <PageSpeedPanel rows={summary.pageSpeed} /> : null}
-      {summary ? <CitationPanel domain={siteLabel.domain} citations={summary.citations} busy={startingCitations} onRun={() => { void runCitations(); }} /> : null}
+      {summary ? <CitationPanel domain={siteLabel.domain} citations={summary.citations} busy={startingCitations} auditRunning={busy} onRun={() => { void runCitations(); }} /> : null}
 
       {run ? (
         <DashboardSectionPanel id="seo-pages" title="Pages">
