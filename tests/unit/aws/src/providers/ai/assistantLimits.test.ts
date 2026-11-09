@@ -40,3 +40,13 @@ test('shared limits count usage rows in the database and fail open when it is un
   await recordSharedAssistantTokens(7, 50, makePool(0, 0));
   assert.ok(calls.includes('UPDATE'));
 });
+
+test('question log stores trimmed text, keeps it on failure, and ignores missing rows', async () => {
+  const { recordSharedAssistantQuestion } = await import('../../../../../../aws/src/providers/ai/assistant/limits.js');
+  const seen: unknown[][] = [];
+  const pool = { query: async (_text: string, params?: unknown[]) => { seen.push(params ?? []); return { rows: [] }; } };
+  await recordSharedAssistantQuestion(5, '  what is left to test?  ', false, pool);
+  await recordSharedAssistantQuestion(5, '', true, pool);
+  await recordSharedAssistantQuestion(null, 'ignored', false, pool);
+  assert.deepEqual(seen, [[5, 'what is left to test?', false], [5, null, true]]);
+});

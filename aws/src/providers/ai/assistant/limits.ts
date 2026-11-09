@@ -98,8 +98,8 @@ export async function enforceSharedAssistantLimits(userId: string, pool?: Shared
       throw tooMany('You have reached the assistant daily usage limit. Try again tomorrow.', 'AI_ASSISTANT_DAILY_LIMIT');
     }
     const inserted = await db.query('INSERT INTO assistant_usage (user_id, role) VALUES ($1, $2) RETURNING id', [userId, role ?? null]);
-    // Kept long enough for the usage view; the limits only look at the last 24 hours.
-    await db.query(`DELETE FROM assistant_usage WHERE user_id = $1 AND at < now() - interval '45 days'`, [userId]);
+    // Kept 90 days for the usage and question log; the limits only look at the last 24 hours.
+    await db.query(`DELETE FROM assistant_usage WHERE user_id = $1 AND at < now() - interval '90 days'`, [userId]);
     return Number(inserted.rows[0]?.id);
   } catch (error) {
     if (error instanceof HttpError) throw error;
@@ -111,13 +111,24 @@ export async function recordSharedAssistantTokens(
   usageId: number | null,
   tokens: number,
   pool?: SharedPool | null,
-  detail?: { inputTokens: number; outputTokens: number },
+  detail?: { inputTokens: number; outputTokens: number; tools?: string[] },
 ): Promise<void> {
   if (usageId === null || tokens <= 0) return;
   try {
     const db = pool === undefined ? await defaultPool() : pool;
-    await db?.query('UPDATE assistant_usage SET tokens = $2, input_tokens = $3, output_tokens = $4 WHERE id = $1', [usageId, Math.round(tokens), Math.round(detail?.inputTokens ?? 0), Math.round(detail?.outputTokens ?? 0)]);
+    await db?.query('UPDATE assistant_usage SET tokens = $2, input_tokens = $3, output_tokens = $4, tools = $5 WHERE id = $1', [usageId, Math.round(tokens), Math.round(detail?.inputTokens ?? 0), Math.round(detail?.outputTokens ?? 0), JSON.stringify([...new Set(detail?.tools ?? [])])]);
   } catch {
     // In-memory accounting still applies.
+  }
+}
+
+/** Stores the question text for the dashboard's question log. Best effort; never blocks the chat. */
+export async function recordSharedAssistantQuestion(usageId: number | null, question: string, failed = false, pool?: SharedPool | null): Promise<void> {
+  if (usageId === null) return;
+  try {
+    const db = pool === undefined ? await defaultPool() : pool;
+    await db?.query('UPDATE assistant_usage SET question = coalesce($2, question), failed = $3 WHERE id = $1', [usageId, question.trim().slice(0, 500) || null, failed]);
+  } catch {
+    // The log is optional.
   }
 }

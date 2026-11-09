@@ -237,3 +237,5 @@
 - `.github/copilot-instructions.md` (engineering and review rules)
 
 This file is a living reference. Update as new patterns, rules, or workflows are added.
+
+- Assistant question log (migration 0020): `assistant_usage` also stores each question's text (500 chars max), the tools used and a `failed` flag, kept 90 days. The `assistant-insights` page shows the recent questions with a role filter; the thumbs-up/down feedback view was removed (the `assistant_feedback` table and `/api/assistant/feedback` endpoint remain unused).

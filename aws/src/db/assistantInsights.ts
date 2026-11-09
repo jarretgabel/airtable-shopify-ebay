@@ -23,11 +23,7 @@ export interface AssistantInsights {
   daily: Array<{ day: string; requests: number; inputTokens: number; outputTokens: number; estimatedCostUsd: number }>;
   byRole: Array<{ role: string; requests: number; tokens: number; estimatedCostUsd: number }>;
   topUsers: Array<{ userId: string; role: string; requests: number; tokens: number }>;
-  feedback: {
-    up: number;
-    down: number;
-    recent: Array<{ id: number; rating: string; role: string | null; question: string; answer: string; comment: string | null; tools: string[]; at: string }>;
-  };
+  questions: Array<{ id: number; role: string | null; question: string; tools: string[]; failed: boolean; at: string }>;
 }
 
 export interface CostRates {
@@ -64,12 +60,10 @@ export async function getAssistantInsights(db: Queryable, rates: CostRates, days
      FROM assistant_usage WHERE at > now() - ($1 || ' days')::interval GROUP BY user_id ORDER BY tokens DESC LIMIT 10`,
     [window],
   );
-  const counts = await db.query(
-    `SELECT rating, count(*)::int AS n FROM assistant_feedback WHERE at > now() - ($1 || ' days')::interval GROUP BY rating`,
-    [window],
-  );
   const recent = await db.query(
-    `SELECT id, rating, role, question, answer, comment, tools, at FROM assistant_feedback ORDER BY (rating = 'down') DESC, at DESC LIMIT 25`,
+    `SELECT id, role, question, tools, failed, at FROM assistant_usage
+     WHERE question IS NOT NULL AND at > now() - ($1 || ' days')::interval ORDER BY at DESC LIMIT 200`,
+    [window],
   );
 
   const dailyRows = daily.rows.map((row) => {
@@ -82,7 +76,6 @@ export async function getAssistantInsights(db: Queryable, rates: CostRates, days
     { requests: 0, inputTokens: 0, outputTokens: 0, estimatedCostUsd: 0 },
   );
   totals.estimatedCostUsd = estimateCost(totals.inputTokens, totals.outputTokens, rates);
-  const count = (rating: string) => Number(counts.rows.find((row) => row.rating === rating)?.n ?? 0);
 
   return {
     days,
@@ -90,10 +83,6 @@ export async function getAssistantInsights(db: Queryable, rates: CostRates, days
     daily: dailyRows,
     byRole: byRole.rows.map((row) => ({ role: String(row.role), requests: Number(row.requests), tokens: Number(row.input) + Number(row.output), estimatedCostUsd: estimateCost(Number(row.input), Number(row.output), rates) })),
     topUsers: users.rows.map((row) => ({ userId: String(row.user_id), role: String(row.role ?? 'unknown'), requests: Number(row.requests), tokens: Number(row.tokens) })),
-    feedback: {
-      up: count('up'),
-      down: count('down'),
-      recent: recent.rows.map((row) => ({ id: Number(row.id), rating: String(row.rating), role: (row.role as string | null) ?? null, question: String(row.question ?? ''), answer: String(row.answer ?? ''), comment: (row.comment as string | null) ?? null, tools: (row.tools as string[]) ?? [], at: new Date(row.at as string).toISOString() })),
-    },
+    questions: recent.rows.map((row) => ({ id: Number(row.id), role: (row.role as string | null) ?? null, question: String(row.question), tools: (row.tools as string[]) ?? [], failed: row.failed === true, at: new Date(row.at as string).toISOString() })),
   };
 }

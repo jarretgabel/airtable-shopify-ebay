@@ -3,7 +3,7 @@ import { requireRouteAccess } from '../../shared/access.js';
 import { getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError, logInfo } from '../../shared/logging.js';
-import { enforceAssistantLimits, enforceSharedAssistantLimits, recordAssistantTokens, recordSharedAssistantTokens } from '../../providers/ai/assistant/limits.js';
+import { enforceAssistantLimits, enforceSharedAssistantLimits, recordAssistantTokens, recordSharedAssistantQuestion, recordSharedAssistantTokens } from '../../providers/ai/assistant/limits.js';
 import { runAssistantChat, sanitizeMessages } from '../../providers/ai/assistant/chat.js';
 import { buildDraft } from '../../providers/ai/assistant/intake.js';
 import type { AssistantDraft, DraftKind } from '../../shared/contracts/intakeDraft.js';
@@ -23,15 +23,17 @@ async function rebuildDraft(raw: unknown, scope: ReturnType<typeof resolveAssist
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
   const startedAt = Date.now();
+  let usageId: number | null = null;
   try {
     const user = await requireRouteAccess(event);
     enforceAssistantLimits(user.userId);
-    const usageId = await enforceSharedAssistantLimits(user.userId, undefined, user.role);
+    usageId = await enforceSharedAssistantLimits(user.userId, undefined, user.role);
     const body = requireJsonBody<{ messages?: unknown; currentPath?: unknown; draft?: unknown }>(event, 'ai', 'INVALID_AI_REQUEST_BODY');
     const messages = sanitizeMessages(body.messages);
     if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
       return jsonError(400, { message: 'A user message is required', service: 'ai', code: 'MISSING_ASSISTANT_MESSAGE', retryable: false }, { origin });
     }
+    await recordSharedAssistantQuestion(usageId, messages[messages.length - 1].content);
     const scope = resolveAssistantScope(user);
     const currentDraft = await rebuildDraft(body.draft, scope);
     const result = await runAssistantChat(scope, messages, sanitizeCurrentPath(body.currentPath), currentDraft);
@@ -45,6 +47,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     return jsonOk({ ...response, tools: usage ? [...new Set(usage.tools)] : [] }, { origin });
   } catch (error) {
     logError('Assistant chat failed', error);
+    await recordSharedAssistantQuestion(usageId, '', true);
     return jsonError(getStatusCode(error), toApiErrorBody('ai', error, 'AI_ASSISTANT_FAILED'), { origin });
   }
 }
