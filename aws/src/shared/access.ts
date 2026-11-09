@@ -107,7 +107,7 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
   }
 
   if (path === '/api/assistant/insights') {
-    return { roles: ['owner', 'developer'] };
+    return { roles: ['admin', 'owner', 'developer'] };
   }
 
   // Any signed-in user; the assistant scopes its own data by role.

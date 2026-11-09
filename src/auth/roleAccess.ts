@@ -81,6 +81,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'sales',
     'seo',
     'seo-stereobuyers',
+    'assistant-insights',
     'people',
     'workflow-guide',
     'workflow-guide-editor',

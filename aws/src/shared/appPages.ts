@@ -38,7 +38,7 @@ export function hasFullAccessRole(role: UserRole): boolean {
 }
 
 const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
-  admin: APP_PAGES.filter((page) => page !== 'market' && page !== 'assistant-insights'),
+  admin: APP_PAGES.filter((page) => page !== 'market'),
   owner: [...APP_PAGES],
   developer: [...APP_PAGES],
   processor: [

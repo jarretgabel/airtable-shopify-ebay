@@ -9,7 +9,7 @@ import { logError } from '../../shared/logging.js';
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
   const origin = getRequestOrigin(event);
   try {
-    await requireRouteAccess(event, { roles: ['owner', 'developer'] });
+    await requireRouteAccess(event, { roles: ['admin', 'owner', 'developer'] });
     if (!process.env.DATABASE_URL?.trim()) {
       throw new HttpError(503, 'Assistant usage needs the Postgres database, which is not configured.', { service: 'ai', code: 'POSTGRES_NOT_CONFIGURED', retryable: false });
     }
