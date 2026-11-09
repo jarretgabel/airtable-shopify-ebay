@@ -1404,6 +1404,11 @@ Resources:
         Variables:
           PAGESPEED_API_KEY: !Ref PageSpeedApiKey
       Events:
+        DailySearchConsole:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 8 * * ? *)
+            Input: '{"task":"search-console"}'
         Weekly:
           Type: Schedule
           Properties:

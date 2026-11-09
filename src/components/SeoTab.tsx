@@ -4,7 +4,7 @@ import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { DashboardSectionPanel, DashboardSubPanel, StatTile } from '@/components/dashboard/dashboardPrimitives';
 import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { seoAppApi } from '@/services/app-api';
-import { CitationPanel, PageSpeedPanel } from '@/components/SeoInsightPanels';
+import { CitationPanel, PageSpeedPanel, SearchConsolePanel } from '@/components/SeoInsightPanels';
 import { recommendationFor } from '@/components/seoRecommendations';
 import type { SeoPageRow, SeoSiteId, SeoSummary } from '@/services/app-api/seo';
 
@@ -202,6 +202,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
         </DashboardSectionPanel>
       ) : null}
 
+      {summary ? <SearchConsolePanel data={summary.searchConsole} domain={siteLabel.domain} /> : null}
       {summary ? <PageSpeedPanel rows={summary.pageSpeed} /> : null}
       {summary ? <CitationPanel domain={siteLabel.domain} citations={summary.citations} busy={startingCitations} onRun={() => { void runCitations(); }} /> : null}
 

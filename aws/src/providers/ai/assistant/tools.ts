@@ -109,7 +109,7 @@ const FINANCE_TOOLS = [
 const SEO_TOOLS = [
   {
     name: 'get_seo_insights',
-    description: 'SEO and AI-search (AIO) audit of one of our websites (resolutionavnyc.com by default, or stereobuyers.com): overall scores, site checks, scores by page type, biggest improvement opportunities, PageSpeed samples and AI-citation checks, plus the lowest-scoring pages with their top improvements. Optional filters narrow the page list. Scores are our own 0-100 checklists, not Google rankings.',
+    description: 'SEO and AI-search (AIO) audit of one of our websites (resolutionavnyc.com by default, or stereobuyers.com): overall scores, site checks, scores by page type, biggest improvement opportunities, PageSpeed samples, AI-citation checks and real Google Search Console traffic (clicks, impressions, top queries and pages), plus the lowest-scoring pages with their top improvements. Optional filters narrow the page list. Scores are our own 0-100 checklists, not Google rankings.',
     input_schema: {
       type: 'object',
       properties: {
@@ -531,6 +531,13 @@ async function getSeoInsights(input: Record<string, unknown>, scope: { pages: re
       siteCited: citations.latestRun.citedCount,
       notNamedFor: citations.checks.filter((check) => !check.mentioned && !check.error).map((check) => check.question),
     } : null,
+    googleSearch: summary.searchConsole ? {
+      last28Days: summary.searchConsole.current,
+      previous28Days: summary.searchConsole.previous,
+      throughDate: summary.searchConsole.rangeEnd,
+      topQueries: summary.searchConsole.queries.slice(0, 15),
+      topPages: summary.searchConsole.pages.slice(0, 10),
+    } : 'Google Search Console is not connected for this site.',
     lowestPages: pages,
   };
 }

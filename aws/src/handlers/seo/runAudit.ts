@@ -4,20 +4,26 @@ import { runCitationCheck } from '../../seo/citations.js';
 import { runSeoAudit } from '../../seo/crawl.js';
 import { runPageSpeedSample } from '../../seo/pagespeed.js';
 import { getOptionalSecret } from '../../shared/secrets.js';
-import { DEFAULT_SEO_SITE, parseSeoSite, type SeoSiteId } from '../../seo/sites.js';
+import { DEFAULT_SEO_SITE, parseSeoSite, SEO_SITE_IDS, type SeoSiteId } from '../../seo/sites.js';
+import { syncSearchConsole } from '../../seo/searchConsole.js';
 
-export type SeoTaskEvent = { task?: 'audit' | 'citations'; runId?: number; site?: SeoSiteId };
+export type SeoTaskEvent = { task?: 'audit' | 'citations' | 'search-console'; runId?: number; site?: SeoSiteId };
 
 /** The crawl, then a PageSpeed sample of a few pages (its own time budget, never fails the audit). */
 export async function runAuditWithPageSpeed(db: Queryable, existingRunId?: number, site: SeoSiteId = DEFAULT_SEO_SITE): Promise<number | null> {
   const runId = await runSeoAudit(db, { runId: existingRunId, site });
   if (runId !== null) await runPageSpeedSample(db, { apiKey: getOptionalSecret('PAGESPEED_API_KEY'), site });
+  await syncSearchConsole(db, site);
   return runId;
 }
 
 /** Scheduled weekly (audit) and invoked on demand by startAudit for either task. */
 export async function handler(event: SeoTaskEvent = {}): Promise<{ runId: number | null }> {
   const pool = getPostgresPool();
+  if (event?.task === 'search-console') {
+    for (const site of event.site ? [parseSeoSite(event.site)] : SEO_SITE_IDS) await syncSearchConsole(pool, site);
+    return { runId: null };
+  }
   if (event?.task === 'citations' && typeof event.runId === 'number') {
     await runCitationCheck(pool, event.runId, { site: parseSeoSite(event.site) });
     return { runId: event.runId };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DashboardSectionPanel } from '@/components/dashboard/dashboardPrimitives';
-import type { SeoCitationSummary, SeoPageSpeedRow } from '@/services/app-api/seo';
+import type { GscRow, SeoCitationSummary, SeoPageSpeedRow, SeoSearchConsole } from '@/services/app-api/seo';
 
 const dateTime = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 const tone = (score: number | null) => (score === null ? 'text-[var(--muted)]' : score >= 90 ? 'text-emerald-500' : score >= 50 ? 'text-amber-500' : 'text-red-500');
@@ -98,6 +98,72 @@ export function CitationPanel({ domain, citations, busy, onRun }: { domain: stri
           </ul>
         </>
       ) : null}
+    </DashboardSectionPanel>
+  );
+}
+
+const pct = (value: number | null) => (value === null ? '–' : `${(value * 100).toFixed(1)}%`);
+
+function Delta({ now, before, invert = false }: { now: number; before: number; invert?: boolean }) {
+  if (!before) return null;
+  const change = ((now - before) / before) * 100;
+  const good = invert ? change < 0 : change > 0;
+  return <span className={`ml-1 text-[0.72rem] ${Math.abs(change) < 0.5 ? 'text-[var(--muted)]' : good ? 'text-emerald-600' : 'text-red-600'}`}>{change > 0 ? '+' : ''}{change.toFixed(0)}%</span>;
+}
+
+function GscStat({ label, value, now, before, invert }: { label: string; value: string; now: number; before: number; invert?: boolean }) {
+  return (
+    <div className="rounded-lg border border-[var(--line)] px-3 py-2">
+      <div className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]">{label}</div>
+      <div className="text-lg font-semibold text-[var(--ink)]">{value}<Delta now={now} before={before} invert={invert} /></div>
+    </div>
+  );
+}
+
+function GscTable({ title, rows, label }: { title: string; rows: Array<GscRow & { key: string; text: string }>; label: string }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-[0.82rem] text-[var(--ink)]">
+        <thead><tr className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]"><th className="py-1 pr-3">{title}</th><th className="py-1 pr-3">Clicks</th><th className="py-1 pr-3">Impr.</th><th className="py-1 pr-3">CTR</th><th className="py-1 pr-3">Pos.</th></tr></thead>
+        <tbody>
+          {rows.slice(0, 15).map((row) => (
+            <tr key={row.key} className="border-t border-[var(--line)]" aria-label={label}>
+              <td className="max-w-[18rem] truncate py-1.5 pr-3" title={row.text}>{row.text}</td>
+              <td className="py-1.5 pr-3">{row.clicks}</td>
+              <td className="py-1.5 pr-3">{row.impressions}</td>
+              <td className="py-1.5 pr-3">{pct(row.ctr)}</td>
+              <td className="py-1.5 pr-3">{row.position === null ? '–' : row.position.toFixed(1)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function SearchConsolePanel({ data, domain }: { data: SeoSearchConsole | null; domain: string }) {
+  return (
+    <DashboardSectionPanel id="seo-search-console" title="Search performance (Google Search Console)">
+      {data === null ? (
+        <p className="m-0 text-sm text-[var(--muted)]">Search Console is not connected for {domain} yet. Verify the site in Search Console and add the service account as a user.</p>
+      ) : (
+        <>
+          <p className="m-0 text-[0.75rem] text-[var(--muted)]">
+            Last 28 days{data.rangeEnd ? ` (to ${data.rangeEnd})` : ''} compared with the 28 days before. Synced daily{data.syncedAt ? `; last ${dateTime.format(new Date(data.syncedAt))}` : ''}.
+          </p>
+          {data.error ? <p className="m-0 text-sm text-red-600">Last sync failed: {data.error}</p> : null}
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <GscStat label="Clicks" value={String(data.current.clicks)} now={data.current.clicks} before={data.previous.clicks} />
+            <GscStat label="Impressions" value={String(data.current.impressions)} now={data.current.impressions} before={data.previous.impressions} />
+            <GscStat label="CTR" value={pct(data.current.ctr)} now={data.current.ctr} before={data.previous.ctr} />
+            <GscStat label="Avg position" value={data.current.position === null ? '–' : data.current.position.toFixed(1)} now={data.current.position ?? 0} before={data.previous.position ?? 0} invert />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <GscTable title="Top queries" label="query" rows={data.queries.map((q) => ({ ...q, key: q.query, text: q.query }))} />
+            <GscTable title="Top pages" label="page" rows={data.pages.map((p) => ({ ...p, key: p.url, text: shortUrl(p.url) }))} />
+          </div>
+        </>
+      )}
     </DashboardSectionPanel>
   );
 }

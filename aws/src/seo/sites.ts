@@ -88,3 +88,8 @@ export function parseSeoSite(value: unknown): SeoSiteId {
 export function seoSiteUrl(id: SeoSiteId): string {
   return (id === 'resolutionav' ? process.env.SEO_SITE_URL?.trim() : '') || SEO_SITES[id].url;
 }
+
+/** The Search Console property: a domain property unless GSC_PROPERTY_<SITE> says otherwise (e.g. a URL-prefix property). */
+export function gscProperty(id: SeoSiteId): string {
+  return process.env[`GSC_PROPERTY_${id.toUpperCase()}`]?.trim() || `sc-domain:${SEO_SITES[id].domain}`;
+}

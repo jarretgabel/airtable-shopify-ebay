@@ -44,7 +44,22 @@ export interface SeoCitationSummary {
   history: Array<{ finishedAt: string; questionCount: number; mentionedCount: number; citedCount: number }>;
 }
 
+export interface GscTotals { clicks: number; impressions: number; ctr: number; position: number | null }
+export interface GscRow { clicks: number; impressions: number; ctr: number | null; position: number | null }
+
+export interface SeoSearchConsole {
+  syncedAt: string | null;
+  error: string | null;
+  rangeEnd: string | null;
+  current: GscTotals;
+  previous: GscTotals;
+  daily: Array<{ day: string; clicks: number; impressions: number }>;
+  queries: Array<GscRow & { query: string }>;
+  pages: Array<GscRow & { url: string }>;
+}
+
 export interface SeoSummary {
+  searchConsole: SeoSearchConsole | null;
   latestRun: {
     id: number;
     startedAt: string;

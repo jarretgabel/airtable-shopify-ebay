@@ -61,7 +61,22 @@ export interface SeoCitationSummary {
   history: Array<{ finishedAt: string; questionCount: number; mentionedCount: number; citedCount: number }>;
 }
 
+export interface GscTotals { clicks: number; impressions: number; ctr: number; position: number | null }
+
+export interface SeoSearchConsole {
+  syncedAt: string | null;
+  error: string | null;
+  rangeEnd: string | null;
+  /** Last 28 days and the 28 days before them. */
+  current: GscTotals;
+  previous: GscTotals;
+  daily: Array<{ day: string; clicks: number; impressions: number }>;
+  queries: Array<{ query: string; clicks: number; impressions: number; ctr: number | null; position: number | null }>;
+  pages: Array<{ url: string; clicks: number; impressions: number; ctr: number | null; position: number | null }>;
+}
+
 export interface SeoSummary {
+  searchConsole: SeoSearchConsole | null;
   latestRun: SeoRunSummary | null;
   running: boolean;
   trend: Array<{ finishedAt: string; avgSeoScore: number | null; avgAioScore: number | null; pageCount: number }>;
@@ -203,6 +218,42 @@ export async function queryPagesForAssistant(db: Queryable, query: AssistantSeoQ
   }));
 }
 
+const emptyTotals = (): GscTotals => ({ clicks: 0, impressions: 0, ctr: 0, position: null });
+
+/** Null until a first sync has been attempted for the site. */
+export async function getSearchConsoleSummary(db: Queryable, site: SeoSiteId = DEFAULT_SEO_SITE): Promise<SeoSearchConsole | null> {
+  const sync = await db.query(`SELECT synced_at, range_end, error FROM seo_gsc_syncs WHERE site = $1`, [site]);
+  if (!sync.rows[0]) return null;
+  const totals = await db.query(
+    `SELECT (day > (SELECT max(day) FROM seo_gsc_daily WHERE site = $1) - 28) AS recent,
+            sum(clicks)::int AS clicks, sum(impressions)::int AS impressions,
+            (sum(position * impressions) / NULLIF(sum(impressions), 0))::float AS position
+     FROM seo_gsc_daily WHERE site = $1 AND day > (SELECT max(day) FROM seo_gsc_daily WHERE site = $1) - 56
+     GROUP BY 1`,
+    [site],
+  );
+  const toTotals = (row: Record<string, unknown> | undefined): GscTotals => {
+    if (!row) return emptyTotals();
+    const clicks = Number(row.clicks ?? 0);
+    const impressions = Number(row.impressions ?? 0);
+    return { clicks, impressions, ctr: impressions ? clicks / impressions : 0, position: num(row.position) };
+  };
+  const daily = await db.query(`SELECT day, clicks, impressions FROM seo_gsc_daily WHERE site = $1 ORDER BY day DESC LIMIT 90`, [site]);
+  const queries = await db.query(`SELECT query, clicks, impressions, ctr, position FROM seo_gsc_queries WHERE site = $1 ORDER BY clicks DESC, impressions DESC LIMIT 50`, [site]);
+  const pages = await db.query(`SELECT url, clicks, impressions, ctr, position FROM seo_gsc_pages WHERE site = $1 ORDER BY clicks DESC, impressions DESC LIMIT 50`, [site]);
+  const metrics = (row: Record<string, unknown>) => ({ clicks: Number(row.clicks), impressions: Number(row.impressions), ctr: num(row.ctr), position: num(row.position) });
+  return {
+    syncedAt: iso(sync.rows[0].synced_at),
+    error: (sync.rows[0].error as string | null) ?? null,
+    rangeEnd: sync.rows[0].range_end ? String(sync.rows[0].range_end).slice(0, 10) : null,
+    current: toTotals(totals.rows.find((row) => row.recent === true)),
+    previous: toTotals(totals.rows.find((row) => row.recent === false)),
+    daily: daily.rows.map((row) => ({ day: new Date(row.day as string).toISOString().slice(0, 10), clicks: Number(row.clicks), impressions: Number(row.impressions) })).reverse(),
+    queries: queries.rows.map((row) => ({ query: String(row.query), ...metrics(row) })),
+    pages: pages.rows.map((row) => ({ url: String(row.url), ...metrics(row) })),
+  };
+}
+
 export async function getSeoSummary(db: Queryable, filters: { pageType?: string | null; includePages?: boolean; site?: SeoSiteId } = {}): Promise<SeoSummary> {
   const site = filters.site ?? DEFAULT_SEO_SITE;
   const latest = await db.query(`SELECT * FROM seo_audit_runs WHERE site = $1 AND status IN ('completed', 'partial') ORDER BY id DESC LIMIT 1`, [site]);
@@ -257,5 +308,6 @@ export async function getSeoSummary(db: Queryable, filters: { pageType?: string 
     pagesTruncated: truncated,
     pageSpeed: await getPageSpeed(db, site),
     citations: await getCitationSummary(db, site),
+    searchConsole: await getSearchConsoleSummary(db, site),
   };
 }
