@@ -35,14 +35,14 @@ function parse(file) {
   return { fm, text, fmEnd: m[0].length };
 }
 
-async function draft(fm, tries = 3) {
-  const d = await draftOnce(fm);
+async function draft(fm, tries = 6, hint = '') {
+  const d = await draftOnce(fm, hint);
   const ok = d.title.length <= 60 && d.description.length >= 110 && d.description.length <= 157;
   if (ok || tries <= 1) return ok ? d : { ...d, error: `length ${d.title.length}/${d.description.length}` };
-  return draft(fm, tries - 1);
+  return draft(fm, tries - 1, `Previous attempt was title ${d.title.length} chars and description ${d.description.length} chars. Be much shorter: title under 55, description 120-145.`);
 }
 
-async function draftOnce(fm) {
+async function draftOnce(fm, hint = '') {
   const specs = (fm.specs || []).slice(0, 8).map((s) => `${s.n}: ${s.v}`).join('; ');
   const prompt = `Write SEO metadata for a page on StereoBuyers, a Brooklyn, NY business that buys used high-end audio equipment. The page invites people to sell this item to StereoBuyers.
 
@@ -57,6 +57,7 @@ Rules:
 - description: 130-155 characters, plain text, mentions the item, one concrete fact from the blurb/specs only if clearly stated there, and a call to action about a free quote from a Brooklyn buyer.
 - Hard limit: description must be at most 155 characters including spaces. Count carefully.
 - Do not invent specs, prices, speed, or claims (no "fast", "fair", "best"). No quotes, no emoji.
+${hint}
 Reply with JSON only: {"title": "...", "description": "..."}`;
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -87,6 +88,7 @@ if (flag('--apply')) {
 } else {
   let existing = [];
   try { existing = JSON.parse(fs.readFileSync(OUT, 'utf8')); } catch {}
+  if (flag('--retry-errors')) existing = existing.filter((d) => !d.error);
   const done = new Set(existing.map((d) => d.file));
   const out = [...existing];
   let count = 0;
