@@ -65,7 +65,7 @@
   },
   "anthem": {
     "name": "Anthem",
-    "history": "Anthem is a Canadian audio equipment manufacturer based in Toronto, Ontario that produces amplifiers, receivers, and processors. The company has operated for decades and manufactures many products in Canada, with some series built abroad to their specifications.",
+    "history": "Anthem is a Canadian audio equipment manufacturer based in Toronto, Ontario that produces amplifiers, receivers, and processors.",
     "source": "https://www.anthemav.com/about-us",
     "sourceLabel": "Anthem official website",
     "tried2": true
@@ -156,14 +156,14 @@
   },
   "avalon-acoustics": {
     "name": "Avalon Acoustics",
-    "history": "Avalon Acoustics has operated for more than 30 years, designing and building loudspeakers in the Colorado Rocky Mountains foothills. The company manufactures Precision Monitor and Signature Series reference loudspeakers, hand-crafted one pair at a time by a team of engineers and craftsmen, using natural wood cabinetry and digital modeling standards.",
+    "history": "The company manufactures Precision Monitor and Signature Series reference loudspeakers, hand-crafted one pair at a time by a team of engineers and craftsmen, using natural wood cabinetry and digital modeling standards.",
     "source": "https://www.avalonacoustics.com/about/",
     "sourceLabel": "Avalon Acoustics official website",
     "tried2": true
   },
   "avantgarde-acoustic": {
     "name": "Avantgarde Acoustic",
-    "history": "Avantgarde Acoustic manufactures horn loudspeakers, including models such as the Colibri, Opus 1, Zero iTron, and Trio G3. The company is based in the Odenwald region and operates a worldwide dealer network alongside its own showroom.",
+    "history": "Avantgarde Acoustic manufactures horn loudspeakers, including models such as the Colibri, Opus 1, Zero iTron, and Trio G3.",
     "source": "https://avantgarde-acoustic.de/",
     "sourceLabel": "Avantgarde Acoustic official website",
     "tried2": true
@@ -208,7 +208,7 @@
   },
   "benchmark-media": {
     "name": "Benchmark Media",
-    "history": "Benchmark Media Systems manufactures audio products including amplifiers, preamplifiers, headphone amplifiers, and digital-to-analog converters for professional studios and home use. The company has been based in New York State for over 40 years, where they engineer, manufacture, and service their products. Their design approach focuses on achieving low distortion and noise levels to maintain sonic transparency without altering the original audio signal.",
+    "history": "Benchmark Media Systems manufactures audio products including amplifiers, preamplifiers, headphone amplifiers, and digital-to-analog converters for professional studios and home use. Their design approach focuses on achieving low distortion and noise levels to maintain sonic transparency without altering the original audio signal.",
     "source": "https://benchmarkmedia.com/",
     "sourceLabel": "Benchmark Media official website",
     "tried2": true
@@ -326,7 +326,7 @@
   },
   "cyrus": {
     "name": "Cyrus",
-    "history": "Cyrus Audio is a British audio brand based in Cambridgeshire, England that was founded in 1984 with the original Cyrus One amplifier. The company manufactures integrated amplifiers, streamers, CD players, power amplifiers and power supplies in the UK through a partnership with SMS Electronics, and has remained an independent British manufacturer for 40 years.",
+    "history": "Cyrus Audio is a British audio brand based in Cambridgeshire, England that was founded in 1984 with the original Cyrus One amplifier. The company manufactures integrated amplifiers, streamers, CD players, power amplifiers and power supplies in the UK through a partnership with SMS Electronics.",
     "source": "https://cyrusaudio.com/about-cyrus/",
     "sourceLabel": "Cyrus official website",
     "tried2": true
@@ -354,7 +354,7 @@
   },
   "dh-labs": {
     "name": "DH Labs",
-    "history": "DH Labs manufactures audio cables including digital, video, interconnect, speaker, power, and phono cables, operating under the Silver Sonic brand. The company has spent over thirty years engineering cables and supplies products to audio manufacturers and recording studios.",
+    "history": "DH Labs manufactures audio cables including digital, video, interconnect, speaker, power, and phono cables, operating under the Silver Sonic brand.",
     "source": "https://silversonic.com/",
     "sourceLabel": "DH Labs official website",
     "tried2": true
@@ -385,9 +385,6 @@
   },
   "eastern-electric": {
     "name": "Eastern Electric",
-    "history": "Eastern Electric is an electrical contracting company based on Long Island, New York, operating for over 40 years. They provide services to residential, commercial, and industrial customers, including maintenance, upgrades, construction, and emergency work. The company serves Nassau County and Suffolk County.",
-    "source": "https://easternelectric.com/",
-    "sourceLabel": "Eastern Electric official website",
     "tried2": true
   },
   "ead-enlightened-audio-design": {
@@ -488,7 +485,7 @@
   },
   "gallo-acoustics": {
     "name": "Gallo Acoustics",
-    "history": "Gallo Acoustics was founded by Anthony Gallo, who designed his first loudspeaker at age fourteen and released the Nucleus reference speaker in 1994. The company has built its reputation over more than 20 years on spherical speaker enclosure design, which reduces resonance and internal diffraction. Products are now sold in over 30 countries and range from compact speakers like the Micro to larger reference models.",
+    "history": "Gallo Acoustics was founded by Anthony Gallo, who designed his first loudspeaker at age fourteen and released the Nucleus reference speaker in 1994.",
     "source": "https://galloacoustics.com/about-gallo/",
     "sourceLabel": "Gallo Acoustics official website",
     "tried2": true
@@ -606,7 +603,7 @@
   },
   "jeff-rowland-design-group": {
     "name": "Jeff Rowland Design Group",
-    "history": "Jeff Rowland Design Group has manufactured high-end audio amplifiers and preamplifiers for over 40 years. The company was founded on a commitment to uncompromising audio design, with each product created by a single designer rather than by committee, and has produced widely acclaimed products including the Model 7 Amplifiers.",
+    "history": "Jeff Rowland Design Group builds high-end audio amplifiers and preamplifiers, with each product created by a single designer rather than by committee.",
     "source": "https://jeffrowland.com/about",
     "sourceLabel": "Jeff Rowland Design Group official website",
     "tried2": true
@@ -624,9 +621,6 @@
   },
   "joseph-audio": {
     "name": "Joseph Audio",
-    "history": "Joseph Audio manufactures loudspeakers developed through years of research and design. The company sources drivers built to its specifications in Norway from a major manufacturer, and designs crossovers and cabinets for its speaker systems.",
-    "source": "https://www.josephaudio.net/",
-    "sourceLabel": "Joseph Audio official website",
     "tried2": true
   },
   "joule-electra": {
@@ -776,7 +770,7 @@
   },
   "magnum-dynalab": {
     "name": "Magnum Dynalab",
-    "history": "Magnum Dynalab was founded in 1984 with the Signal Sleuth, a device to boost FM signals, followed by their first FM tuner in September 1985. The family-owned company, based in Canada, manufactures FM tuners, FM antennas, integrated amplifiers, internet radio tuners, and music streamers, having introduced 15 analog FM tuner models over 25 years and more recently expanding into digital audio conversion products.",
+    "history": "Magnum Dynalab was founded in 1984 with the Signal Sleuth, a device to boost FM signals, followed by their first FM tuner in September 1985. The family-owned company, based in Canada, manufactures FM tuners, FM antennas, integrated amplifiers, internet radio tuners, and music streamers.",
     "source": "https://www.magnumdynalab.com/about/",
     "sourceLabel": "Magnum Dynalab official website",
     "tried2": true
@@ -834,7 +828,7 @@
   },
   "monitor-audio": {
     "name": "Monitor Audio",
-    "history": "Monitor Audio manufactures loudspeakers and audio equipment, founded in 1972 in Cambridge, England. The company is now headquartered in Rayleigh, Essex, and produces high-fidelity speakers, architectural solutions, home cinema systems, amplifiers, and streamers for both residential and commercial markets. Monitor Audio employs a 40-person research and development department focused on sound reproduction technology.",
+    "history": "Monitor Audio manufactures loudspeakers and audio equipment, founded in 1972 in Cambridge, England. The company is headquartered in Rayleigh, Essex, and produces high-fidelity speakers, architectural solutions, home cinema systems, amplifiers, and streamers for both residential and commercial markets.",
     "source": "https://www.monitoraudio.com/en/about-us/",
     "sourceLabel": "Monitor Audio official website",
     "tried2": true
@@ -853,7 +847,7 @@
   },
   "mundorf": {
     "name": "Mundorf",
-    "history": "Mundorf manufactures audio components for high-end and hi-fi applications since 1985. The company produces capacitors, wires, resistors, terminals, solder, coils, and crossovers used across home audio, professional audio, car audio, and cinema systems. Their components are used by major manufacturers and audio enthusiasts worldwide.",
+    "history": "Mundorf has manufactured audio components for high-end and hi-fi applications since 1985. The company produces capacitors, wires, resistors, terminals, solder, coils, and crossovers used across home audio, professional audio, car audio, and cinema systems.",
     "source": "https://www.mundorf.com/",
     "sourceLabel": "Mundorf official website",
     "tried2": true
@@ -971,7 +965,7 @@
   },
   "parasound": {
     "name": "Parasound",
-    "history": "Parasound, founded in San Francisco in 1981, manufactures audio amplifiers and preamplifiers. The company was established on the premise that high-performance audio equipment did not require premium pricing, emphasizing American design and disciplined engineering. Since 1989, circuit designer John Curl has led the company's amplifier development, and the brand currently operates across 60+ countries.",
+    "history": "Parasound, founded in San Francisco in 1981, manufactures audio amplifiers and preamplifiers. The company was established on the premise that high-performance audio equipment did not require premium pricing, emphasizing American design and disciplined engineering.",
     "source": "https://parasound.com/pages/our-story",
     "sourceLabel": "Parasound official website",
     "tried2": true
@@ -1051,7 +1045,7 @@
   },
   "quicksilver-audio": {
     "name": "Quicksilver Audio",
-    "history": "Quicksilver Audio was founded in 1981 by Mike Sanders, an electrical engineer who previously worked at Magnepan, and began selling the MS190 Stereo Amplifier. The company manufactures tube amplifiers and preamplifiers, hand-wiring each unit and using custom-built transformers, and is currently based in Stockton, California.",
+    "history": "Quicksilver Audio was founded in 1981 by Mike Sanders, an electrical engineer who previously worked at Magnepan, and began selling the MS190 Stereo Amplifier. The company manufactures tube amplifiers and preamplifiers, hand-wiring each unit and using custom-built transformers, and is based in Stockton, California.",
     "source": "https://quicksilveraudio.com/company-history/",
     "sourceLabel": "Quicksilver Audio official website",
     "tried2": true
@@ -1250,7 +1244,7 @@
   },
   "theta-digital": {
     "name": "Theta Digital",
-    "history": "Theta Digital, based in Torrance, California, manufactures audio controllers and amplifiers including the Casablanca series and Prometheus line. The company has produced Casablanca controllers for approximately twenty-five years and continues to update its product line with enhanced analog input capabilities.",
+    "history": "Theta Digital, based in Torrance, California, manufactures audio controllers and amplifiers including the Casablanca series and Prometheus line.",
     "source": "https://www.thetadigital.com/",
     "sourceLabel": "Theta Digital official website",
     "tried2": true
@@ -1313,7 +1307,7 @@
   },
   "vandersteen-audio": {
     "name": "Vandersteen Audio",
-    "history": "Vandersteen Audio, based in Hanford, California, designs and manufactures loudspeakers and electronics. The company was founded by Richard Vandersteen and has developed proprietary driver technologies over decades, including patented reflection-free midrange drivers and more recently Perfect-Piston drivers made from carbon-fiber and balsa wood.",
+    "history": "Vandersteen Audio was founded by Richard Vandersteen and has developed proprietary driver technologies, including patented reflection-free midrange drivers and Perfect-Piston drivers made from carbon-fiber and balsa wood.",
     "source": "https://www.vandersteen.com/about-us",
     "sourceLabel": "Vandersteen Audio official website",
     "tried2": true
