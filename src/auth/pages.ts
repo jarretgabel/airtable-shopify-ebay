@@ -43,7 +43,7 @@ export const PAGE_DEFINITIONS: Record<AppPage, PageDefinition> = {
   sales: { label: 'Sales', path: '/sales' },
   seo: { label: 'SEO: Resolution AV', path: '/seo' },
   'seo-stereobuyers': { label: 'SEO: Stereobuyers', path: '/seo-stereobuyers' },
-  'assistant-insights': { label: 'Assistant', path: '/assistant-insights' },
+  'assistant-insights': { label: 'AI Assistant Audit', path: '/assistant-insights' },
   people: { label: 'People', path: '/people' },
   'workflow-guide': { label: 'User Guide', path: '/workflow-guide' },
   'workflow-guide-editor': { label: 'User Guide Admin', path: '/workflow-guide/edit', adminOnly: true },

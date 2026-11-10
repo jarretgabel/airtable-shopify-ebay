@@ -23,7 +23,7 @@ export function AssistantInsightsTab() {
 
   return (
     <AppPageLayout>
-      <WorkflowPageHeader eyebrow="Utilities" title="Assistant usage & questions" />
+      <WorkflowPageHeader eyebrow="Utilities" title="AI Assistant Audit" detail="Who uses the chatbot and what they ask it." />
       {error ? <p role="alert" className="m-0 text-sm text-red-500">{error}</p> : null}
       {insights ? (
         <>

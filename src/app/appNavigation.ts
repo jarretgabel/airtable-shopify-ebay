@@ -31,7 +31,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   sales: 'Sales',
   seo: 'SEO: Resolution AV',
   'seo-stereobuyers': 'SEO: Stereobuyers',
-  'assistant-insights': 'Assistant',
+  'assistant-insights': 'AI Assistant Audit',
   people: 'People',
   'workflow-guide': 'User Guide',
   'workflow-guide-editor': 'User Guide Admin',
