@@ -78,6 +78,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
   const [summary, setSummary] = useState<SeoSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [trendShown, setTrendShown] = useState(6);
   const [startingCitations, setStartingCitations] = useState(false);
   const [type, setType] = useState('all');
   const [search, setSearch] = useState('');
@@ -192,11 +193,17 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
               <table className="w-full text-left text-[0.82rem]">
                 <thead><tr className="text-[0.68rem] uppercase tracking-[0.08em] text-[var(--muted)]"><th className="py-1 pr-3">Date</th><th className="py-1 pr-3">SEO</th><th className="py-1 pr-3">AI</th><th className="py-1 pr-3">Pages</th></tr></thead>
                 <tbody>
-                  {[...(summary?.trend ?? [])].reverse().map((point) => (
+                  {[...(summary?.trend ?? [])].reverse().slice(0, trendShown).map((point) => (
                     <tr key={point.finishedAt} className="border-t border-[var(--line)]"><td className="py-1.5 pr-3">{dateTime.format(new Date(point.finishedAt))}</td><td className="py-1.5 pr-3"><Score value={point.avgSeoScore} /></td><td className="py-1.5 pr-3"><Score value={point.avgAioScore} /></td><td className="py-1.5 pr-3">{point.pageCount}</td></tr>
                   ))}
                 </tbody>
               </table>
+              {(summary?.trend.length ?? 0) > 6 ? (
+                <div className="mt-2 flex gap-3 text-[0.78rem]">
+                  {trendShown < (summary?.trend.length ?? 0) ? <button type="button" className="underline" onClick={() => setTrendShown((n) => n + 12)}>Show older</button> : null}
+                  {trendShown > 6 ? <button type="button" className="underline" onClick={() => setTrendShown(6)}>Show less</button> : null}
+                </div>
+              ) : null}
             </DashboardSubPanel>
           </div>
         </DashboardSectionPanel>

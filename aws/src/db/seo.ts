@@ -177,7 +177,7 @@ export async function getCitationSummary(db: Queryable, site: SeoSiteId = DEFAUL
   const latest = await db.query(`SELECT * FROM seo_citation_runs WHERE site = $1 AND status IN ('completed', 'failed') ORDER BY id DESC LIMIT 1`, [site]);
   const history = await db.query(
     `SELECT finished_at, question_count, mentioned_count, cited_count FROM (
-       SELECT * FROM seo_citation_runs WHERE site = $1 AND status = 'completed' ORDER BY id DESC LIMIT 12
+       SELECT * FROM seo_citation_runs WHERE site = $1 AND status = 'completed' ORDER BY id DESC LIMIT 60
      ) recent ORDER BY id`,
     [site],
   );
