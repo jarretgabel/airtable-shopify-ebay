@@ -139,7 +139,11 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
 
   return (
     <AppPageLayout className="[overflow-anchor:none]">
-      <WorkflowPageHeader eyebrow="Business" title={`SEO & AI Search: ${siteLabel.name}`} detail={`Audit of ${siteLabel.domain}.`} />
+      <WorkflowPageHeader eyebrow="Utilities" title={`SEO & AI Search: ${siteLabel.name}`} detail={`Audit of ${siteLabel.domain}.`} />
+      {!summary && !error ? (
+        <p role="status" aria-live="polite" className="m-0 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-6 text-center text-sm text-[var(--muted)]">Loading SEO dashboard…</p>
+      ) : null}
+      {summary || error ? (
       <DashboardSectionPanel id="seo-overview" title="Overview">
         <div className="flex flex-wrap items-center gap-3 text-[0.8rem] text-[var(--muted)]">
           <button type="button" className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] disabled:opacity-60" disabled={busy} onClick={() => { void runAudit(); }}>
@@ -159,6 +163,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
           Scores are 0-100 from our own checklist of on-page SEO and AI-search readiness (structured data, answer-ready content, crawler access). Search rankings and clicks need Google Search Console and are not included yet.
         </p>
       </DashboardSectionPanel>
+      ) : null}
 
       {run ? (
         <DashboardSectionPanel id="seo-insights" title="Insights">
