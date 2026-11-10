@@ -104,7 +104,7 @@ for (const b of todo) {
   const has = !!p.history;
   if (has) withHist++;
   if (!APPLY) continue;
-  const lines = ['---', 'layout: auto-brand', `title: ${q(`${b.name} – We Buy Used & Vintage ${b.name} Equipment`)}`,
+  const lines = ['---', 'layout: auto-brand', `title: ${q([`${b.name} – We Buy Used & Vintage Equipment`, `${b.name} – We Buy Used Equipment`, `We Buy Used ${b.name}`].find((t) => t.length <= 60))}`,
     `brand: ${q(b.name)}`, `description: ${q(`StereoBuyers buys used and vintage ${b.name} audio equipment. Get a free quote and cash paid on the spot in the NYC Tri-State Area, Palm Beach FL and Denver, Boulder and the Front Range.`)}`,
     `permalink: /stereo-equipment-and-components-we-buy/${b.slug}/`, 'page_class: brand-page auto-brand-page'];
   if (has) lines.push(`history: ${q(p.history)}`, `history_source: ${q(p.source)}`, `history_source_title: ${q(p.sourceTitle)}`);
