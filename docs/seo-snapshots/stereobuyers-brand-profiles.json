@@ -1,7 +1,8 @@
 {
   "adcom": {
     "name": "Adcom",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "akg": {
     "name": "AKG",
@@ -11,11 +12,13 @@
   },
   "alpha-core-goertz": {
     "name": "Alpha-Core (Goertz)",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "audio-by-van-alstine": {
     "name": "Audio by Van Alstine",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "altec-lansing": {
     "name": "Altec Lansing",
@@ -37,27 +40,35 @@
   },
   "analog-devices": {
     "name": "Analog Devices",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "analogue-tube-audio": {
     "name": "Analogue Tube Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "analysis-plus": {
     "name": "Analysis Plus",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "anthony-gallo-acoustics": {
     "name": "Anthony Gallo Acoustics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "antique-sound-laboratory": {
     "name": "Antique Sound Laboratory",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "anthem": {
     "name": "Anthem",
-    "history": null
+    "history": "Anthem is a Canadian audio equipment manufacturer based in Toronto, Ontario that produces amplifiers, receivers, and processors. The company has operated for decades and manufactures many products in Canada, with some series built abroad to their specifications.",
+    "source": "https://www.anthemav.com/about-us",
+    "sourceLabel": "Anthem official website",
+    "tried2": true
   },
   "apogee": {
     "name": "Apogee",
@@ -67,7 +78,8 @@
   },
   "aragon": {
     "name": "Aragon",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "arcam": {
     "name": "Arcam",
@@ -77,7 +89,8 @@
   },
   "ariel-acoustics": {
     "name": "Ariel Acoustics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "atc": {
     "name": "ATC",
@@ -87,35 +100,47 @@
   },
   "atma-sphere": {
     "name": "Atma-Sphere",
-    "history": null
+    "history": "Atma-Sphere is a company based in Saint Paul, Minnesota that has manufactured vacuum tube amplifiers since 1976. The company specializes in Output TransformerLess (OTL) amplifiers and created the first reliable OTL amplifiers, as well as pioneering balanced-line audio products. All products are handcrafted and made-to-order with custom-selected components.",
+    "source": "http://www.atma-sphere.com/en/index.html",
+    "sourceLabel": "Atma-Sphere official website",
+    "tried2": true
   },
   "audible-illusions": {
     "name": "Audible Illusions",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "audience": {
     "name": "Audience",
-    "history": null
+    "history": "Audience is an American electronics company founded in 1997 by John McDonald, Richard Smith, and Roger Sheker to design high-performance audio components. Based in San Marcos, California, the company manufactures loudspeakers, cables, and power conditioners, and is known for developing crossover-less speakers using proprietary full-range drivers and ultra-thin cable designs that diverged from industry trends.",
+    "source": "https://audience-av.com/about/",
+    "sourceLabel": "Audience official website",
+    "tried2": true
   },
   "audio-aero": {
     "name": "Audio Aero",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "audio-note-japan": {
     "name": "Audio Note Japan",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "audio-note-uk": {
     "name": "Audio Note UK",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "audio-physic": {
     "name": "Audio Physic",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "audio-prism": {
     "name": "Audio Prism",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "audioquest": {
     "name": "Audioquest",
@@ -131,11 +156,17 @@
   },
   "avalon-acoustics": {
     "name": "Avalon Acoustics",
-    "history": null
+    "history": "Avalon Acoustics has operated for more than 30 years, designing and building loudspeakers in the Colorado Rocky Mountains foothills. The company manufactures Precision Monitor and Signature Series reference loudspeakers, hand-crafted one pair at a time by a team of engineers and craftsmen, using natural wood cabinetry and digital modeling standards.",
+    "source": "https://www.avalonacoustics.com/about/",
+    "sourceLabel": "Avalon Acoustics official website",
+    "tried2": true
   },
   "avantgarde-acoustic": {
     "name": "Avantgarde Acoustic",
-    "history": null
+    "history": "Avantgarde Acoustic manufactures horn loudspeakers, including models such as the Colibri, Opus 1, Zero iTron, and Trio G3. The company is based in the Odenwald region and operates a worldwide dealer network alongside its own showroom.",
+    "source": "https://avantgarde-acoustic.de/",
+    "sourceLabel": "Avantgarde Acoustic official website",
+    "tried2": true
   },
   "ayre-acoustics": {
     "name": "Ayre Acoustics",
@@ -145,7 +176,8 @@
   },
   "b-and-k-components": {
     "name": "B&K Components",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "b-and-w": {
     "name": "B&W",
@@ -161,23 +193,30 @@
   },
   "balanced-audio-technology": {
     "name": "Balanced Audio Technology",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "basis-audio": {
     "name": "Basis Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "bel-canto-design": {
     "name": "Bel Canto Design",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "benchmark-media": {
     "name": "Benchmark Media",
-    "history": null
+    "history": "Benchmark Media Systems manufactures audio products including amplifiers, preamplifiers, headphone amplifiers, and digital-to-analog converters for professional studios and home use. The company has been based in New York State for over 40 years, where they engineer, manufacture, and service their products. Their design approach focuses on achieving low distortion and noise levels to maintain sonic transparency without altering the original audio signal.",
+    "source": "https://benchmarkmedia.com/",
+    "sourceLabel": "Benchmark Media official website",
+    "tried2": true
   },
   "blue-circle": {
     "name": "Blue Circle",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "boesendorfer": {
     "name": "Boesendorfer",
@@ -199,11 +238,13 @@
   },
   "camelot-technology": {
     "name": "Camelot Technology",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "cairn": {
     "name": "Cairn",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "cambridge-audio": {
     "name": "Cambridge Audio",
@@ -213,11 +254,17 @@
   },
   "canton": {
     "name": "Canton",
-    "history": null
+    "history": "Canton manufactures speakers and has been building them since 1972. The company is based in Weilrod im Taunus, Germany, where a significant portion of production takes place. Their product range includes stereo speakers, soundbars, wireless speakers, subwoofers, and home cinema systems.",
+    "source": "https://www.canton.de/",
+    "sourceLabel": "Canton official website",
+    "tried2": true
   },
   "cardas-audio": {
     "name": "Cardas Audio",
-    "history": null
+    "history": "Cardas Audio is an American audio cable and connector manufacturer based in Bandon, Oregon. The company produces cables and connectors made from ultra pure copper and silver, and is known for domestic production of products like the Clear Beyond speaker cable, which features braided conductors and compression die forged connectors.",
+    "source": "https://www.cardas.com/",
+    "sourceLabel": "Cardas Audio official website",
+    "tried2": true
   },
   "carver": {
     "name": "Carver",
@@ -227,7 +274,10 @@
   },
   "cayin": {
     "name": "Cayin",
-    "history": null
+    "history": "Cayin is a Chinese audio brand based in Zhuhai that manufactures portable audio products including players and headphone amplifiers, as well as home audio equipment such as tube amplifiers, audio sources, and speakers.",
+    "source": "https://www.cayin.cn/",
+    "sourceLabel": "Cayin official website",
+    "tried2": true
   },
   "celestion": {
     "name": "Celestion",
@@ -237,15 +287,18 @@
   },
   "chang-lightspeed": {
     "name": "Chang Lightspeed",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "chord-cable-uk": {
     "name": "Chord Cable UK",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "chord-electronics": {
     "name": "Chord Electronics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "clearaudio": {
     "name": "Clearaudio",
@@ -255,11 +308,15 @@
   },
   "coincident-speaker-technology": {
     "name": "Coincident Speaker Technology",
-    "history": null
+    "history": "Coincident Speaker Technology is based in Maple, Ontario and manufactures high-end audio equipment including speakers, amplifiers, preamps, and cables. The company produces products such as the Frankenstein 300B amplifiers, Statement phono and line stages, and Dynamo amplifier series.",
+    "source": "https://www.coincidentspeaker.com/",
+    "sourceLabel": "Coincident Speaker Technology official website",
+    "tried2": true
   },
   "continuum-audio-labs": {
     "name": "Continuum Audio Labs",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "creek-audio": {
     "name": "Creek Audio",
@@ -269,7 +326,10 @@
   },
   "cyrus": {
     "name": "Cyrus",
-    "history": null
+    "history": "Cyrus Audio is a British audio brand based in Cambridgeshire, England that was founded in 1984 with the original Cyrus One amplifier. The company manufactures integrated amplifiers, streamers, CD players, power amplifiers and power supplies in the UK through a partnership with SMS Electronics, and has remained an independent British manufacturer for 40 years.",
+    "source": "https://cyrusaudio.com/about-cyrus/",
+    "sourceLabel": "Cyrus official website",
+    "tried2": true
   },
   "dali-loudspeakers": {
     "name": "Dali Loudspeakers",
@@ -279,23 +339,30 @@
   },
   "dcs": {
     "name": "dCS",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "dehavilland": {
     "name": "deHavilland",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "dezorel": {
     "name": "DeZorel",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "dh-labs": {
     "name": "DH Labs",
-    "history": null
+    "history": "DH Labs manufactures audio cables including digital, video, interconnect, speaker, power, and phono cables, operating under the Silver Sonic brand. The company has spent over thirty years engineering cables and supplies products to audio manufacturers and recording studios.",
+    "source": "https://silversonic.com/",
+    "sourceLabel": "DH Labs official website",
+    "tried2": true
   },
   "dnm-design": {
     "name": "DNM Design",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "duntech": {
     "name": "Duntech",
@@ -311,27 +378,39 @@
   },
   "dynavector": {
     "name": "Dynavector",
-    "history": null
+    "history": "Dynavector has manufactured moving coil phono cartridges since 1978. The company is based in Japan and produces phono cartridges and bi-axial tonearms using advanced design theories and production methods. Their product line includes multiple cartridge models at different price points, along with tonearms and related electrical audio components.",
+    "source": "https://www.dynavector.com/",
+    "sourceLabel": "Dynavector official website",
+    "tried2": true
   },
   "eastern-electric": {
     "name": "Eastern Electric",
-    "history": null
+    "history": "Eastern Electric is an electrical contracting company based on Long Island, New York, operating for over 40 years. They provide services to residential, commercial, and industrial customers, including maintenance, upgrades, construction, and emergency work. The company serves Nassau County and Suffolk County.",
+    "source": "https://easternelectric.com/",
+    "sourceLabel": "Eastern Electric official website",
+    "tried2": true
   },
   "ead-enlightened-audio-design": {
     "name": "EAD - Enlightened Audio Design",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "e-a-r": {
     "name": "E.A.R.",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "ecs": {
     "name": "ECS",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "egglestonworks-loudspeaker-company": {
     "name": "Egglestonworks Loudspeaker Company",
-    "history": null
+    "history": "EgglestonWorks, based in Memphis, Tennessee, was founded by craftsmen over a quarter-century ago who initially created furniture before turning to loudspeaker design. The company introduced the Andra speaker in 1997, which won Stereophile's Loudspeaker of the Year award. All speakers are hand-built in their Memphis factory and have been used to master thousands of albums in professional studios.",
+    "source": "https://egglestonworks.com/about/",
+    "sourceLabel": "Egglestonworks Loudspeaker Company official website",
+    "tried2": true
   },
   "electrocompaniet": {
     "name": "Electrocompaniet",
@@ -347,11 +426,13 @@
   },
   "emm-labs": {
     "name": "EMM Labs",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "energy-speaker-systems": {
     "name": "Energy Speaker Systems",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "epos": {
     "name": "Epos",
@@ -361,27 +442,33 @@
   },
   "equi-tech": {
     "name": "Equi=Tech",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "escalante-designs": {
     "name": "Escalante Designs",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "esoteric-teac": {
     "name": "Esoteric (TEAC)",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "exposure-electronics": {
     "name": "Exposure Electronics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "finite-elemente": {
     "name": "Finite Elemente",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "fischer": {
     "name": "Fischer",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "focal-jmlab": {
     "name": "Focal.JMlab",
@@ -391,19 +478,25 @@
   },
   "furman-sound": {
     "name": "Furman Sound",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "furutech": {
     "name": "Furutech",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "gallo-acoustics": {
     "name": "Gallo Acoustics",
-    "history": null
+    "history": "Gallo Acoustics was founded by Anthony Gallo, who designed his first loudspeaker at age fourteen and released the Nucleus reference speaker in 1994. The company has built its reputation over more than 20 years on spherical speaker enclosure design, which reduces resonance and internal diffraction. Products are now sold in over 30 countries and range from compact speakers like the Micro to larger reference models.",
+    "source": "https://galloacoustics.com/about-gallo/",
+    "sourceLabel": "Gallo Acoustics official website",
+    "tried2": true
   },
   "gamut-audio": {
     "name": "GamuT Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "genelec": {
     "name": "Genelec",
@@ -413,11 +506,15 @@
   },
   "genesis": {
     "name": "Genesis",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "goldmund": {
     "name": "Goldmund",
-    "history": null
+    "history": "Goldmund is a Swiss audio equipment manufacturer founded in France in 1978, later relocated to Geneva in 1980. The company produces turntables, amplifiers, preamplifiers, DAC technology, and speakers, with a design approach incorporating technologies like servo-controlled tonearms and mechanical grounding.",
+    "source": "https://goldmund.com/history/",
+    "sourceLabel": "Goldmund official website",
+    "tried2": true
   },
   "goldring": {
     "name": "Goldring",
@@ -433,11 +530,13 @@
   },
   "graham-engineering": {
     "name": "Graham Engineering",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "graham-slee": {
     "name": "Graham Slee",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "grundig": {
     "name": "Grundig",
@@ -453,19 +552,23 @@
   },
   "gutwire": {
     "name": "Gutwire",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "hafler": {
     "name": "Hafler",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "halcro": {
     "name": "Halcro",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "hansen-audio": {
     "name": "Hansen Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "harbeth": {
     "name": "Harbeth",
@@ -481,7 +584,8 @@
   },
   "hovland-company": {
     "name": "Hovland Company",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "infinity": {
     "name": "Infinity",
@@ -491,7 +595,8 @@
   },
   "jadis-electronics": {
     "name": "Jadis Electronics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "jbl": {
     "name": "JBL",
@@ -501,7 +606,10 @@
   },
   "jeff-rowland-design-group": {
     "name": "Jeff Rowland Design Group",
-    "history": null
+    "history": "Jeff Rowland Design Group has manufactured high-end audio amplifiers and preamplifiers for over 40 years. The company was founded on a commitment to uncompromising audio design, with each product created by a single designer rather than by committee, and has produced widely acclaimed products including the Model 7 Amplifiers.",
+    "source": "https://jeffrowland.com/about",
+    "sourceLabel": "Jeff Rowland Design Group official website",
+    "tried2": true
   },
   "jmlab": {
     "name": "JMlab",
@@ -511,19 +619,27 @@
   },
   "jolida": {
     "name": "Jolida",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "joseph-audio": {
     "name": "Joseph Audio",
-    "history": null
+    "history": "Joseph Audio manufactures loudspeakers developed through years of research and design. The company sources drivers built to its specifications in Norway from a major manufacturer, and designs crossovers and cabinets for its speaker systems.",
+    "source": "https://www.josephaudio.net/",
+    "sourceLabel": "Joseph Audio official website",
+    "tried2": true
   },
   "joule-electra": {
     "name": "Joule Electra",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "jps-labs": {
     "name": "JPS Labs",
-    "history": null
+    "history": "JPS Labs is based in New York, USA and manufactures planar speaker drivers, headphones, and associated audio electronics. The company produces AC cables, interconnect cables, and speaker cables for audio systems.",
+    "source": "https://jpslabs.com/",
+    "sourceLabel": "JPS Labs official website",
+    "tried2": true
   },
   "kef": {
     "name": "KEF",
@@ -539,7 +655,8 @@
   },
   "kimber-kable": {
     "name": "Kimber Kable",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "klipsch": {
     "name": "Klipsch",
@@ -555,31 +672,40 @@
   },
   "klyne-audio-arts": {
     "name": "Klyne Audio Arts",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "kondo-audio-note-japan": {
     "name": "Kondo (Audio Note Japan)",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "kubala-sosna": {
     "name": "Kubala-Sosna",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "kuzma": {
     "name": "Kuzma",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "lamm-industries": {
     "name": "Lamm Industries",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "lector": {
     "name": "Lector",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "lehmann-audio": {
     "name": "Lehmann Audio",
-    "history": null
+    "history": "Lehmannaudio was founded in 1988 by Norbert Lehmann in Cologne, Germany, and develops high-end audio devices including phono stages, headphone amplifiers, and power amplifiers. The company manufactures products in Germany, with notable designs like the Black Cube phono preamplifier introduced in 1995 and the Linear headphone amplifier launched in 2004.",
+    "source": "https://www.lehmannaudio.com/about.html",
+    "sourceLabel": "Lehmann Audio official website",
+    "tried2": true
   },
   "lexicon": {
     "name": "Lexicon",
@@ -589,7 +715,8 @@
   },
   "lindemann-audiotechnik": {
     "name": "Lindemann Audiotechnik",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "linn": {
     "name": "Linn",
@@ -599,15 +726,18 @@
   },
   "living-voice": {
     "name": "Living Voice",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "loth-x": {
     "name": "Loth-X",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "lowther": {
     "name": "Lowther",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "lyngdorf-audio": {
     "name": "Lyngdorf Audio",
@@ -623,15 +753,20 @@
   },
   "mactone": {
     "name": "Mactone",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "magico": {
     "name": "Magico",
-    "history": null
+    "history": "Magico is a loudspeaker manufacturer founded to reform design and construction practices in speaker manufacturing. The company focuses on researching and building advanced loudspeakers intended to reveal music accurately, and produces multiple product lines including the A Series, S Series, M Series, and Titan models.",
+    "source": "https://www.magicoaudio.com/",
+    "sourceLabel": "Magico official website",
+    "tried2": true
   },
   "madrigal-audio-labs": {
     "name": "Madrigal Audio Labs",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "magnepan": {
     "name": "Magnepan",
@@ -641,7 +776,10 @@
   },
   "magnum-dynalab": {
     "name": "Magnum Dynalab",
-    "history": null
+    "history": "Magnum Dynalab was founded in 1984 with the Signal Sleuth, a device to boost FM signals, followed by their first FM tuner in September 1985. The family-owned company, based in Canada, manufactures FM tuners, FM antennas, integrated amplifiers, internet radio tuners, and music streamers, having introduced 15 analog FM tuner models over 25 years and more recently expanding into digital audio conversion products.",
+    "source": "https://www.magnumdynalab.com/about/",
+    "sourceLabel": "Magnum Dynalab official website",
+    "tried2": true
   },
   "manley-labs": {
     "name": "Manley Labs",
@@ -657,7 +795,10 @@
   },
   "mbl": {
     "name": "MBL",
-    "history": null
+    "history": "MBL is a German audio manufacturer that produces loudspeakers and electronics. The company is known for its proprietary Radialstrahler technology, which distributes sound concentrically around the loudspeaker to create omnidirectional sound rather than forward-projecting audio. MBL offers multiple product lines including loudspeakers like the MBL 120 MKII and MBL 126 MKII, as well as audio electronics across Reference, Noble, and Cadenza lines.",
+    "source": "https://www.mbl.de/en",
+    "sourceLabel": "MBL official website",
+    "tried2": true
   },
   "meridian": {
     "name": "Meridian",
@@ -667,19 +808,23 @@
   },
   "miller-and-kreisel": {
     "name": "Miller & Kreisel",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "mirage-loudspeakers": {
     "name": "Mirage Loudspeakers",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "mission": {
     "name": "Mission",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "mit-cables": {
     "name": "MIT Cables",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "mobile-fidelity-sound-lab": {
     "name": "Mobile Fidelity Sound Lab",
@@ -689,19 +834,29 @@
   },
   "monitor-audio": {
     "name": "Monitor Audio",
-    "history": null
+    "history": "Monitor Audio manufactures loudspeakers and audio equipment, founded in 1972 in Cambridge, England. The company is now headquartered in Rayleigh, Essex, and produces high-fidelity speakers, architectural solutions, home cinema systems, amplifiers, and streamers for both residential and commercial markets. Monitor Audio employs a 40-person research and development department focused on sound reproduction technology.",
+    "source": "https://www.monitoraudio.com/en/about-us/",
+    "sourceLabel": "Monitor Audio official website",
+    "tried2": true
   },
   "msb-technology": {
     "name": "MSB Technology",
-    "history": null
+    "history": "MSB Technology designs and manufactures audio equipment including digital-to-analog converters and amplifiers in Silicon Valley. The company produces music systems in-house and integrates sustainable practices into manufacturing.",
+    "source": "https://msbtechnology.com/",
+    "sourceLabel": "MSB Technology official website",
+    "tried2": true
   },
   "moscode": {
     "name": "Moscode",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "mundorf": {
     "name": "Mundorf",
-    "history": null
+    "history": "Mundorf manufactures audio components for high-end and hi-fi applications since 1985. The company produces capacitors, wires, resistors, terminals, solder, coils, and crossovers used across home audio, professional audio, car audio, and cinema systems. Their components are used by major manufacturers and audio enthusiasts worldwide.",
+    "source": "https://www.mundorf.com/",
+    "sourceLabel": "Mundorf official website",
+    "tried2": true
   },
   "musical-fidelity": {
     "name": "Musical Fidelity",
@@ -711,7 +866,8 @@
   },
   "mythos-audio": {
     "name": "Mythos Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "nad": {
     "name": "NAD",
@@ -739,11 +895,13 @@
   },
   "nbs-audio-cables": {
     "name": "NBS Audio Cables",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "nitty-gritty": {
     "name": "Nitty Gritty",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "nordost": {
     "name": "Nordost",
@@ -759,19 +917,23 @@
   },
   "nuforce": {
     "name": "Nuforce",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "ohm-acoustics": {
     "name": "Ohm Acoustics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "olive": {
     "name": "Olive",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "omega-loudspeakers": {
     "name": "Omega Loudspeakers",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "onkyo": {
     "name": "Onkyo",
@@ -781,7 +943,8 @@
   },
   "origin-live": {
     "name": "Origin Live",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "ortofon": {
     "name": "Ortofon",
@@ -791,31 +954,42 @@
   },
   "outlaw-audio": {
     "name": "Outlaw Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "panamax": {
     "name": "Panamax",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "paradigm": {
     "name": "Paradigm",
-    "history": null
+    "history": "Paradigm is a Canadian audio brand that manufactures speakers including home theater and custom installation models. The company produces multiple speaker series ranging from entry-level to high-performance options, incorporating patented technology and components across their product lines.",
+    "source": "https://www.paradigm.com/en/",
+    "sourceLabel": "Paradigm official website",
+    "tried2": true
   },
   "parasound": {
     "name": "Parasound",
-    "history": null
+    "history": "Parasound, founded in San Francisco in 1981, manufactures audio amplifiers and preamplifiers. The company was established on the premise that high-performance audio equipment did not require premium pricing, emphasizing American design and disciplined engineering. Since 1989, circuit designer John Curl has led the company's amplifier development, and the brand currently operates across 60+ countries.",
+    "source": "https://parasound.com/pages/our-story",
+    "sourceLabel": "Parasound official website",
+    "tried2": true
   },
   "pathos-acoustics": {
     "name": "Pathos Acoustics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "peak-consult": {
     "name": "Peak Consult",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "plinius-audio": {
     "name": "Plinius Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "polk-audio": {
     "name": "Polk Audio",
@@ -825,7 +999,10 @@
   },
   "primare": {
     "name": "Primare",
-    "history": null
+    "history": "Primare was founded in 1985 by Danish designer Bo Christensen and engineer Bent Nielsen to create audio components with exceptional sound quality and elegant Scandinavian design. The company manufactures integrated amplifiers, CD players, network players, AV processors, and power amplifiers, with a design philosophy emphasizing minimalist aesthetics and user-friendly interfaces. Rather than following typical product cycles, Primare develops what it calls living products that evolve with changing technologies.",
+    "source": "https://primare.net/about/history/",
+    "sourceLabel": "Primare official website",
+    "tried2": true
   },
   "proac": {
     "name": "ProAc",
@@ -847,7 +1024,8 @@
   },
   "promitheus-audio": {
     "name": "Promitheus Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "ps-audio": {
     "name": "PS Audio",
@@ -857,11 +1035,13 @@
   },
   "psb-speaker-systems": {
     "name": "PSB Speaker Systems",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "purist-audio-design": {
     "name": "Purist Audio Design",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "quad": {
     "name": "Quad",
@@ -871,11 +1051,15 @@
   },
   "quicksilver-audio": {
     "name": "Quicksilver Audio",
-    "history": null
+    "history": "Quicksilver Audio was founded in 1981 by Mike Sanders, an electrical engineer who previously worked at Magnepan, and began selling the MS190 Stereo Amplifier. The company manufactures tube amplifiers and preamplifiers, hand-wiring each unit and using custom-built transformers, and is currently based in Stockton, California.",
+    "source": "https://quicksilveraudio.com/company-history/",
+    "sourceLabel": "Quicksilver Audio official website",
+    "tried2": true
   },
   "reference-3a": {
     "name": "Reference 3A",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "rega": {
     "name": "Rega",
@@ -885,7 +1069,10 @@
   },
   "rel-acoustics": {
     "name": "REL Acoustics",
-    "history": null
+    "history": "REL Acoustics manufactures subwoofers, with origins tracing to 1990 when they introduced High Level Input technology. The company underwent significant evolution in 2005 under new ownership with Silicon Valley engineering, after which their products became twice as loud and fast compared to earlier versions. Key innovations include ABC Input Filters (1998), High Current Amplifiers designed for bass reproduction, Natural Sound Filtering (2007), carbon fiber driver cones (2010), and Ultra Speed Filters for their Reference Series.",
+    "source": "https://rel.net/pages/about-us",
+    "sourceLabel": "REL Acoustics official website",
+    "tried2": true
   },
   "revel": {
     "name": "Revel",
@@ -901,7 +1088,8 @@
   },
   "richard-grays-power-company": {
     "name": "Richard Grays Power Company",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "roksan": {
     "name": "Roksan",
@@ -917,15 +1105,18 @@
   },
   "sequerra-audio-labs": {
     "name": "Sequerra Audio Labs",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "shanling": {
     "name": "Shanling",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "shindo-laboratory": {
     "name": "Shindo Laboratory",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "shure-corporation": {
     "name": "Shure Corporation",
@@ -935,11 +1126,13 @@
   },
   "silverline-audio": {
     "name": "Silverline Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "simon-yorke": {
     "name": "Simon Yorke",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "slim-devices": {
     "name": "Slim Devices",
@@ -961,19 +1154,23 @@
   },
   "sony-es": {
     "name": "Sony ES",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "sophia-electric": {
     "name": "Sophia Electric",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "sota-turntables": {
     "name": "Sota Turntables",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "spectral-audio": {
     "name": "Spectral Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "spendor": {
     "name": "Spendor",
@@ -989,35 +1186,43 @@
   },
   "straightwire": {
     "name": "Straightwire",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "spectron": {
     "name": "Spectron",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "sun-audio": {
     "name": "Sun Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "sunfire-labs": {
     "name": "Sunfire Labs",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "sutherland-engineering": {
     "name": "Sutherland Engineering",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "synergistic-research": {
     "name": "Synergistic Research",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "t-a-elektroakustik": {
     "name": "T+A Elektroakustik",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "tag-mclaren": {
     "name": "TAG McLaren",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "tannoy": {
     "name": "Tannoy",
@@ -1045,7 +1250,10 @@
   },
   "theta-digital": {
     "name": "Theta Digital",
-    "history": null
+    "history": "Theta Digital, based in Torrance, California, manufactures audio controllers and amplifiers including the Casablanca series and Prometheus line. The company has produced Casablanca controllers for approximately twenty-five years and continues to update its product line with enhanced analog input capabilities.",
+    "source": "https://www.thetadigital.com/",
+    "sourceLabel": "Theta Digital official website",
+    "tried2": true
   },
   "thiel-audio": {
     "name": "Thiel Audio",
@@ -1067,19 +1275,23 @@
   },
   "totem": {
     "name": "Totem",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "transparent-cables": {
     "name": "Transparent Cables",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "triangle-electroacoustique": {
     "name": "Triangle Electroacoustique",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "tri-planar": {
     "name": "Tri Planar",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "vac": {
     "name": "VAC",
@@ -1089,39 +1301,54 @@
   },
   "vtl": {
     "name": "VTL",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "van-den-hul": {
     "name": "Van Den Hul",
-    "history": null
+    "history": "Van den Hul B.V. is based in Vaassen, Netherlands and manufactures cables, phono cartridges, and electronics. The company operates its own production facilities where it handles cable assembly, inspection, and cartridge production.",
+    "source": "https://www.vandenhul.com/about-us/",
+    "sourceLabel": "Van Den Hul official website",
+    "tried2": true
   },
   "vandersteen-audio": {
     "name": "Vandersteen Audio",
-    "history": null
+    "history": "Vandersteen Audio, based in Hanford, California, designs and manufactures loudspeakers and electronics. The company was founded by Richard Vandersteen and has developed proprietary driver technologies over decades, including patented reflection-free midrange drivers and more recently Perfect-Piston drivers made from carbon-fiber and balsa wood.",
+    "source": "https://www.vandersteen.com/about-us",
+    "sourceLabel": "Vandersteen Audio official website",
+    "tried2": true
   },
   "vienna-acoustics": {
     "name": "Vienna Acoustics",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "von-schweikert-audio": {
     "name": "Von Schweikert Audio",
-    "history": null
+    "history": "Von Schweikert has manufactured high-end audio speakers since 1975, founded by physicist and musician Albert Von Schweikert. The company is based on acoustic theory and loudspeaker design principles, with current leadership under Damon von Schweikert.",
+    "source": "https://www.vonschweikert.com/story",
+    "sourceLabel": "Von Schweikert Audio official website",
+    "tried2": true
   },
   "wadia": {
     "name": "Wadia",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "wavac-audio-lab": {
     "name": "WAVAC Audio Lab",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "weiss-engineering": {
     "name": "Weiss Engineering",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "well-tempered-lab": {
     "name": "Well Tempered Lab",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "western-electric": {
     "name": "Western Electric",
@@ -1137,7 +1364,8 @@
   },
   "whest-audio": {
     "name": "Whest Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "wilson-audio": {
     "name": "Wilson Audio",
@@ -1153,7 +1381,8 @@
   },
   "zanden-audio": {
     "name": "Zanden Audio",
-    "history": null
+    "history": null,
+    "tried2": true
   },
   "zu-audio": {
     "name": "Zu Audio",
