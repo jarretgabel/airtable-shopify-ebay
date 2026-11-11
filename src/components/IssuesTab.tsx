@@ -19,6 +19,52 @@ const AREA_OPTIONS = Object.values(PAGE_DEFINITIONS).map((page) => page.label);
 const buttonClass = 'rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] disabled:opacity-50';
 const labelClass = 'grid gap-1 text-[0.78rem] text-[var(--muted)]';
 
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '');
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
+    reader.readAsDataURL(file);
+  });
+}
+
+function validateImages(files: File[]): string | null {
+  const bad = files.find((file) => !/^image\/(jpeg|png|gif|webp)$/.test(file.type));
+  if (bad) return `${bad.name} is not a JPEG, PNG, GIF or WebP image.`;
+  const big = files.find((file) => file.size > MAX_IMAGE_BYTES);
+  return big ? `${big.name} is larger than 4 MB.` : null;
+}
+
+function ImagePicker({ files, onChange, disabled }: { files: File[]; onChange: (files: File[]) => void; disabled?: boolean }) {
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="grid gap-2">
+      <label className={labelClass}>Screenshots (optional, up to 8)
+        <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple disabled={disabled} className={tabFormControlBaseClass} onChange={(event) => {
+          const next = [...files, ...Array.from(event.target.files ?? [])].slice(0, 8);
+          event.target.value = '';
+          const problem = validateImages(next);
+          setError(problem);
+          if (!problem) onChange(next);
+        }} />
+      </label>
+      {error ? <p role="alert" className="m-0 text-sm text-red-500">{error}</p> : null}
+      {files.length > 0 ? (
+        <ul className="m-0 flex flex-wrap gap-2 p-0 list-none">
+          {files.map((file, index) => (
+            <li key={`${file.name}-${index}`} className="text-[0.78rem]">
+              <img src={URL.createObjectURL(file)} alt={file.name} className="h-16 w-16 rounded object-cover" />
+              <button type="button" className="underline" onClick={() => onChange(files.filter((_, i) => i !== index))}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 const cap = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
 function NewIssueForm({ onCreated }: { onCreated: () => void }) {
@@ -27,6 +73,7 @@ function NewIssueForm({ onCreated }: { onCreated: () => void }) {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<IssuePriority>('normal');
   const [area, setArea] = useState('');
+  const [images, setImages] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +82,13 @@ function NewIssueForm({ onCreated }: { onCreated: () => void }) {
     setSaving(true);
     setError(null);
     try {
-      await issuesAppApi.createIssue({ kind, title, description, priority, area });
+      const { issue } = await issuesAppApi.createIssue({ kind, title, description, priority, area });
+      try {
+        for (const file of images) await issuesAppApi.addIssueImage(issue.id, { filename: file.name, data: await fileToBase64(file) });
+      } catch (reason) {
+        window.alert(`Issue #${issue.id} was created, but a screenshot failed to upload: ${reason instanceof Error ? reason.message : 'unknown error'}. You can retry from the issue.`);
+      }
+      setImages([]);
       setTitle('');
       setDescription('');
       setArea('');
@@ -72,6 +125,7 @@ function NewIssueForm({ onCreated }: { onCreated: () => void }) {
       <label className={labelClass}>Details
         <textarea className={`${tabFormControlBaseClass} min-h-24`} maxLength={5000} value={description} onChange={(event) => setDescription(event.target.value)} placeholder={kind === 'bug' ? 'What happened, what you expected, and the steps to reproduce it' : 'What is needed and why'} />
       </label>
+      <ImagePicker files={images} onChange={setImages} disabled={saving} />
       {error ? <p role="alert" className="m-0 text-sm text-red-500">{error}</p> : null}
       <div><button type="submit" className={buttonClass} disabled={saving || !title.trim()}>{saving ? 'Submitting…' : 'Submit'}</button></div>
     </form>
@@ -156,6 +210,26 @@ function IssueDetailPanel({ id, me, people, onChanged }: { id: number; me: Issue
           <textarea className={`${tabFormControlBaseClass} min-h-16`} maxLength={2000} value={note} onChange={(event) => setNote(event.target.value)} placeholder="What was done to resolve it" />
         </label>
         <div><button type="button" className={buttonClass} disabled={busy || note === (detail.resolutionNote ?? '')} onClick={() => { void run(() => issuesAppApi.updateIssue(id, { resolutionNote: note })); }}>Save note</button></div>
+      </div>
+      <div className="grid gap-2">
+        <h4 className="m-0 text-[0.72rem] uppercase tracking-[0.08em] text-[var(--muted)]">Screenshots ({detail.images.length})</h4>
+        {detail.images.length > 0 ? (
+          <ul className="m-0 flex flex-wrap gap-2 p-0 list-none">
+            {detail.images.map((image) => (
+              <li key={image.id}><a href={image.url} target="_blank" rel="noreferrer"><img src={`${image.url}?w=400`} alt={image.filename} className="h-24 w-24 rounded object-cover" /></a></li>
+            ))}
+          </ul>
+        ) : null}
+        {detail.images.length < 8 ? (
+          <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" aria-label="Add a screenshot" disabled={busy} className="text-[0.78rem]" onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = '';
+            if (!file) return;
+            const problem = validateImages([file]);
+            if (problem) { window.alert(problem); return; }
+            void run(async () => issuesAppApi.addIssueImage(id, { filename: file.name, data: await fileToBase64(file) }));
+          }} />
+        ) : null}
       </div>
       <div className="grid gap-2">
         <h4 className="m-0 text-[0.72rem] uppercase tracking-[0.08em] text-[var(--muted)]">Comments</h4>
@@ -276,7 +350,7 @@ export function IssuesTab() {
                       <tr className="cursor-pointer border-t border-[var(--line)] hover:bg-white/5" onClick={() => setOpenId(openId === issue.id ? null : issue.id)}>
                         <td className="py-1.5 pr-3">{issue.id}</td>
                         <td className="py-1.5 pr-3">
-                          <button type="button" className="text-left underline-offset-2 hover:underline" aria-expanded={openId === issue.id} onClick={(event) => { event.stopPropagation(); setOpenId(openId === issue.id ? null : issue.id); }}>{issue.title}</button>
+                          <button type="button" className="text-left underline-offset-2 hover:underline" aria-expanded={openId === issue.id} onClick={(event) => { event.stopPropagation(); setOpenId(openId === issue.id ? null : issue.id); }}>{issue.title}</button>{issue.imageCount > 0 ? <span className="ml-2 text-[0.72rem] text-[var(--muted)]" title="Screenshots attached">📎 {issue.imageCount}</span> : null}
                           <span className="ml-2 text-[0.7rem] uppercase text-[var(--muted)]">{KIND_LABELS[issue.kind]}</span>
                         </td>
                         <td className={`py-1.5 pr-3 font-semibold ${STATUS_TONE[issue.status]}`}>{STATUS_LABELS[issue.status]}</td>

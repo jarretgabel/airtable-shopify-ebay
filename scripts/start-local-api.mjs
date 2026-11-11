@@ -100,6 +100,7 @@ const ROUTES = [
   ['GET', '/api/issues/{issueId}', 'handlers/issues/issues.js', 'handler'],
   ['PATCH', '/api/issues/{issueId}', 'handlers/issues/issues.js', 'handler'],
   ['POST', '/api/issues/{issueId}/comments', 'handlers/issues/issues.js', 'handler'],
+  ['POST', '/api/issues/{issueId}/images', 'handlers/issues/issues.js', 'handler'],
   ['POST', '/api/ai/generate-description', 'handlers/ai/generateDescription.js', 'handler'],
   ['POST', '/api/gmail/send', 'handlers/gmail/send.js', 'handler'],
   ['POST', '/api/analytics/events', 'handlers/analytics/postEvent.js', 'handler'],

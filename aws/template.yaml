@@ -1271,6 +1271,13 @@ Resources:
     Properties:
       CodeUri: .
       Handler: src/handlers/issues/issues.handler
+      Timeout: 15
+      Policies:
+        - !If
+          - CreatePostgres
+          - S3CrudPolicy:
+              BucketName: !Ref MediaBucket
+          - !Ref AWS::NoValue
       Events:
         List:
           Type: HttpApi
@@ -1287,6 +1294,9 @@ Resources:
         Comment:
           Type: HttpApi
           Properties: { ApiId: !Ref AppHttpApi, Method: POST, Path: '/api/issues/{issueId}/comments' }
+        Image:
+          Type: HttpApi
+          Properties: { ApiId: !Ref AppHttpApi, Method: POST, Path: '/api/issues/{issueId}/images' }
 
   AiGenerateDescriptionFunction:
     Type: AWS::Serverless::Function

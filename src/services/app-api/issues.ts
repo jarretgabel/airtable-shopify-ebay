@@ -27,9 +27,13 @@ export interface Issue {
   resolutionNote: string | null;
   createdAt: string;
   updatedAt: string;
+  imageCount: number;
 }
 
+export interface IssueImage { id: number; filename: string; url: string; uploadedBy: IssuePerson; createdAt: string }
+
 export interface IssueDetail extends Issue {
+  images: IssueImage[];
   comments: Array<{ id: number; author: IssuePerson; body: string; createdAt: string }>;
   events: Array<{ id: number; actor: IssuePerson; action: string; from: string | null; to: string | null; createdAt: string }>;
 }
@@ -68,4 +72,8 @@ export function updateIssue(id: number, update: { status?: IssueStatus; priority
 
 export function addIssueComment(id: number, body: string): Promise<{ issue: IssueDetail }> {
   return postJson<{ issue: IssueDetail }>(`/api/issues/${id}/comments`, { body });
+}
+
+export function addIssueImage(id: number, image: { filename: string; data: string }): Promise<{ issue: IssueDetail }> {
+  return postJson<{ issue: IssueDetail }>(`/api/issues/${id}/images`, image);
 }

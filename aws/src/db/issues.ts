@@ -31,11 +31,13 @@ export interface Issue {
   resolutionNote: string | null;
   createdAt: string;
   updatedAt: string;
+  imageCount: number;
 }
 
+export interface IssueImage { id: number; key: string; filename: string; contentType: string; sizeBytes: number; uploadedBy: IssueActor; createdAt: string }
 export interface IssueComment { id: number; author: IssueActor; body: string; createdAt: string }
 export interface IssueEvent { id: number; actor: IssueActor; action: string; from: string | null; to: string | null; createdAt: string }
-export interface IssueDetail extends Issue { comments: IssueComment[]; events: IssueEvent[] }
+export interface IssueDetail extends Issue { comments: IssueComment[]; events: IssueEvent[]; images: IssueImage[] }
 
 export interface IssueFilters {
   status?: IssueStatus | 'open_all' | null;
@@ -77,6 +79,7 @@ export function mapIssue(row: Record<string, unknown>): Issue {
     resolutionNote: (row.resolution_note as string | null) ?? null,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
+    imageCount: Number(row.image_count ?? 0),
   };
 }
 
@@ -116,7 +119,7 @@ export async function listIssues(db: Queryable, filters: IssueFilters = {}): Pro
   const limit = Math.min(Math.max(filters.limit ?? 200, 1), 500);
   values.push(limit);
   const result = await db.query(
-    `SELECT * FROM issues ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+    `SELECT issues.*, (SELECT count(*) FROM issue_images WHERE issue_id = issues.id)::int AS image_count FROM issues ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
      ORDER BY (status = ANY('{open,in_progress,blocked}')) DESC, CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END, id DESC
      LIMIT $${values.length}`,
     values,
@@ -129,8 +132,10 @@ export async function getIssue(db: Queryable, id: number): Promise<IssueDetail |
   if (issue.rows.length === 0) return null;
   const comments = await db.query(`SELECT * FROM issue_comments WHERE issue_id = $1 ORDER BY id`, [id]);
   const events = await db.query(`SELECT * FROM issue_events WHERE issue_id = $1 ORDER BY id`, [id]);
+  const images = await db.query(`SELECT * FROM issue_images WHERE issue_id = $1 ORDER BY id`, [id]);
   return {
-    ...mapIssue(issue.rows[0]),
+    ...mapIssue({ ...issue.rows[0], image_count: images.rows.length }),
+    images: images.rows.map((row) => ({ id: Number(row.id), key: String(row.storage_key), filename: String(row.filename), contentType: String(row.content_type), sizeBytes: Number(row.size_bytes), uploadedBy: actor(row.uploaded_by_name, row.uploaded_by_email) ?? { name: 'Unknown', email: '' }, createdAt: iso(row.created_at) })),
     comments: comments.rows.map((row) => ({ id: Number(row.id), author: actor(row.author_name, row.author_email) ?? { name: 'Unknown', email: '' }, body: String(row.body), createdAt: iso(row.created_at) })),
     events: events.rows.map((row) => ({ id: Number(row.id), actor: actor(row.actor_name, row.actor_email) ?? { name: 'Unknown', email: '' }, action: String(row.action), from: (row.from_value as string | null) ?? null, to: (row.to_value as string | null) ?? null, createdAt: iso(row.created_at) })),
   };
@@ -225,4 +230,20 @@ export async function listIssuePeople(db: Queryable): Promise<IssueActor[]> {
      ) people ORDER BY lower(email), name`,
   );
   return result.rows.map((row) => ({ name: String(row.name), email: String(row.email) }));
+}
+
+export const MAX_ISSUE_IMAGES = 8;
+
+export async function countIssueImages(db: Queryable, issueId: number): Promise<number | null> {
+  const result = await db.query(`SELECT (SELECT count(*) FROM issue_images WHERE issue_id = i.id)::int AS n FROM issues i WHERE i.id = $1`, [issueId]);
+  return result.rows.length === 0 ? null : Number(result.rows[0].n);
+}
+
+export async function addIssueImage(db: Queryable, issueId: number, image: { key: string; filename: string; contentType: string; sizeBytes: number }, by: IssueActor): Promise<void> {
+  await db.query(
+    `INSERT INTO issue_images (issue_id, storage_key, filename, content_type, size_bytes, uploaded_by_name, uploaded_by_email) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [issueId, image.key, image.filename, image.contentType, image.sizeBytes, by.name, by.email],
+  );
+  await db.query(`UPDATE issues SET updated_at = now() WHERE id = $1`, [issueId]);
+  await addEvent(db, issueId, by, 'screenshot added', null, image.filename);
 }

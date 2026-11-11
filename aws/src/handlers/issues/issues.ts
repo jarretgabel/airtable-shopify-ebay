@@ -2,9 +2,11 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda
 import { requireRouteAccess } from '../../shared/access.js';
 import { getPostgresPool } from '../../db/pool.js';
 import {
-  ISSUE_KINDS, ISSUE_PRIORITIES, ISSUE_STATUSES, addIssueComment, createIssue, getIssue, getIssueSummary, listIssuePeople, listIssues, updateIssue,
+  ISSUE_KINDS, ISSUE_PRIORITIES, ISSUE_STATUSES, MAX_ISSUE_IMAGES, addIssueComment, addIssueImage, countIssueImages, createIssue, getIssue, getIssueSummary, listIssuePeople, listIssues, updateIssue,
   type IssueActor, type IssueKind, type IssuePriority, type IssueStatus, type IssueUpdate,
 } from '../../db/issues.js';
+import { randomUUID } from 'node:crypto';
+import { getMediaStoreFromEnv } from '../../providers/media/mediaStore.js';
 import { HttpError, getStatusCode, toApiErrorBody } from '../../shared/errors.js';
 import { getRequestOrigin, jsonError, jsonOk, requireJsonBody } from '../../shared/http.js';
 import { logError } from '../../shared/logging.js';
@@ -31,6 +33,19 @@ function body(event: APIGatewayProxyEventV2): Record<string, unknown> {
   const parsed = requireJsonBody<unknown>(event, SERVICE, 'ISSUES_INVALID_BODY');
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw badRequest('Request body must be an object');
   return parsed as Record<string, unknown>;
+}
+
+const IMAGE_MAX_BYTES = 4 * 1024 * 1024;
+const IMAGE_TYPES: Array<{ type: string; ext: string; matches: (b: Buffer) => boolean }> = [
+  { type: 'image/jpeg', ext: 'jpg', matches: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  { type: 'image/png', ext: 'png', matches: (b) => b.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47])) },
+  { type: 'image/gif', ext: 'gif', matches: (b) => b.subarray(0, 4).toString('latin1') === 'GIF8' },
+  { type: 'image/webp', ext: 'webp', matches: (b) => b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP' },
+];
+
+function withImageUrls<T extends { images: Array<{ key: string }> }>(detail: T) {
+  const media = getMediaStoreFromEnv();
+  return { ...detail, images: detail.images.map((image) => ({ ...image, url: media ? media.publicUrl(image.key) : '' })) };
 }
 
 function issueId(event: APIGatewayProxyEventV2): number {
@@ -80,7 +95,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     if (route === 'GET /api/issues/{issueId}') {
       const issue = await getIssue(db, issueId(event));
       if (!issue) throw new HttpError(404, 'Issue not found', { service: SERVICE, code: 'ISSUES_NOT_FOUND', retryable: false });
-      return jsonOk({ issue }, { origin });
+      return jsonOk({ issue: withImageUrls(issue) }, { origin });
     }
 
     if (route === 'PATCH /api/issues/{issueId}') {
@@ -95,7 +110,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       }
       const issue = await updateIssue(db, issueId(event), update, me);
       if (!issue) throw new HttpError(404, 'Issue not found', { service: SERVICE, code: 'ISSUES_NOT_FOUND', retryable: false });
-      return jsonOk({ issue }, { origin });
+      return jsonOk({ issue: withImageUrls(issue) }, { origin });
     }
 
     if (route === 'POST /api/issues/{issueId}/comments') {
@@ -103,7 +118,26 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       if (!(await addIssueComment(db, id, text(body(event).body, 'Comment', 3000, true), me))) {
         throw new HttpError(404, 'Issue not found', { service: SERVICE, code: 'ISSUES_NOT_FOUND', retryable: false });
       }
-      return jsonOk({ issue: await getIssue(db, id) }, { origin });
+      return jsonOk({ issue: withImageUrls((await getIssue(db, id))!) }, { origin });
+    }
+
+    if (route === 'POST /api/issues/{issueId}/images') {
+      const id = issueId(event);
+      const input = body(event);
+      const media = getMediaStoreFromEnv();
+      if (!media) throw new HttpError(503, 'Image storage is not configured.', { service: SERVICE, code: 'MEDIA_NOT_CONFIGURED', retryable: false });
+      const data = typeof input.data === 'string' ? Buffer.from(input.data, 'base64') : Buffer.alloc(0);
+      if (data.length === 0) throw badRequest('Image data is required');
+      if (data.length > IMAGE_MAX_BYTES) throw badRequest('Image is too large (4 MB maximum)');
+      const kind = IMAGE_TYPES.find((candidate) => candidate.matches(data));
+      if (!kind) throw badRequest('Only JPEG, PNG, GIF and WebP images are supported');
+      const existing = await countIssueImages(db, id);
+      if (existing === null) throw new HttpError(404, 'Issue not found', { service: SERVICE, code: 'ISSUES_NOT_FOUND', retryable: false });
+      if (existing >= MAX_ISSUE_IMAGES) throw badRequest(`An issue can have at most ${MAX_ISSUE_IMAGES} images`);
+      const key = `issues/${id}/${randomUUID()}.${kind.ext}`;
+      await media.put(key, data, kind.type);
+      await addIssueImage(db, id, { key, filename: text(input.filename, 'Filename', 200) || `screenshot.${kind.ext}`, contentType: kind.type, sizeBytes: data.length }, me);
+      return jsonOk({ issue: withImageUrls((await getIssue(db, id))!) }, { origin });
     }
 
     throw new HttpError(404, 'Not found', { service: SERVICE, code: 'ISSUES_NOT_FOUND', retryable: false });
