@@ -1443,15 +1443,25 @@ Resources:
           Properties:
             Schedule: cron(30 8 * * ? *)
             Input: '{"task":"search-console"}'
-        Weekly:
+        Nightly:
           Type: Schedule
           Properties:
-            Schedule: cron(0 9 ? * MON *)
-        WeeklyStereobuyers:
+            Schedule: cron(0 9 * * ? *)
+        NightlyStereobuyers:
           Type: Schedule
           Properties:
-            Schedule: cron(0 10 ? * MON *)
+            Schedule: cron(0 10 * * ? *)
             Input: '{"site":"stereobuyers"}'
+        NightlyCitations:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 9 * * ? *)
+            Input: '{"task":"citations"}'
+        NightlyCitationsStereobuyers:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 10 * * ? *)
+            Input: '{"task":"citations","site":"stereobuyers"}'
 
   DashboardFinanceFunction:
     Type: AWS::Serverless::Function
