@@ -13,6 +13,7 @@ import type { AppTabContentProps } from '@/app/appTabContentTypes';
 import { ErrorSurface } from '@/components/app/StateSurfaces';
 
 const DashboardTab = lazy(async () => ({ default: (await import('@/components/DashboardTab')).DashboardTab }));
+const IssuesTab = lazy(async () => ({ default: (await import('@/components/IssuesTab')).IssuesTab }));
 const AssistantInsightsTab = lazy(async () => ({ default: (await import('@/components/AssistantInsightsTab')).AssistantInsightsTab }));
 const SeoTab = lazy(async () => ({ default: (await import('@/components/SeoTab')).SeoTab }));
 const SalesTab = lazy(async () => ({ default: (await import('@/components/SalesTab')).SalesTab }));
@@ -190,6 +191,8 @@ function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
       return 'Stereobuyers SEO dashboard';
     case 'assistant-insights':
       return 'assistant usage';
+    case 'issues':
+      return 'issues';
     case 'people':
       return 'people';
     case 'workflow-guide':
@@ -476,6 +479,8 @@ export function AppTabContent({
         return <SeoTab site="stereobuyers" />;
       case 'assistant-insights':
         return <AssistantInsightsTab />;
+      case 'issues':
+        return <IssuesTab />;
       case 'people':
         return <PeopleTab currentUserRole={currentUserRole} />;
       case 'dashboard': {

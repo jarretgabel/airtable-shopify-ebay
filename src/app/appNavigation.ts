@@ -23,7 +23,7 @@ export const INVENTORY_PROCESSING_TABS = ['testing-queue', 'photography-queue', 
 export const INVENTORY_PROCESSING_TAB_SET = new Set<Tab>(INVENTORY_PROCESSING_TABS as readonly Tab[]);
 export const BUSINESS_TABS = ['sales', 'people'] as const satisfies readonly Tab[];
 export const BUSINESS_TAB_SET = new Set<Tab>(BUSINESS_TABS as readonly Tab[]);
-export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab', 'seo', 'seo-stereobuyers', 'assistant-insights'] as const satisfies readonly Tab[];
+export const UTILITY_TABS = ['workflow-guide', 'market', 'imagelab', 'seo', 'seo-stereobuyers', 'assistant-insights', 'issues'] as const satisfies readonly Tab[];
 export const UTILITY_TAB_SET = new Set<Tab>(UTILITY_TABS as readonly Tab[]);
 
 const NAV_LABELS: Partial<Record<Tab, string>> = {
@@ -32,6 +32,7 @@ const NAV_LABELS: Partial<Record<Tab, string>> = {
   seo: 'SEO: Resolution AV',
   'seo-stereobuyers': 'SEO: Stereobuyers',
   'assistant-insights': 'AI Assistant Audit',
+  issues: 'Issues',
   people: 'People',
   'workflow-guide': 'User Guide',
   'workflow-guide-editor': 'User Guide Admin',

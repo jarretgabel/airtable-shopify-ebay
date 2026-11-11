@@ -4,6 +4,7 @@ export const APP_PAGES = [
   'seo',
   'seo-stereobuyers',
   'assistant-insights',
+  'issues',
   'people',
   'workflow-guide',
   'workflow-guide-editor',
@@ -43,6 +44,7 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
   developer: [...APP_PAGES],
   processor: [
     'dashboard',
+    'issues',
     'seo',
     'seo-stereobuyers',
     'workflow-guide',

@@ -6,6 +6,7 @@ export * as dashboardAppApi from './dashboard';
 export * as gmailAppApi from './gmail';
 export * as seoAppApi from './seo';
 export * as assistantInsightsAppApi from './assistantInsights';
+export * as issuesAppApi from './issues';
 export * as shopifyAppApi from './shopify';
 export * as ebayAppApi from './ebay';
 export * as hifisharkAppApi from './hifishark';

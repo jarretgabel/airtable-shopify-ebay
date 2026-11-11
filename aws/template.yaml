@@ -1264,6 +1264,30 @@ Resources:
             Method: GET
             Path: /api/assistant/insights
 
+  IssuesFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: esbuild
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/issues/issues.handler
+      Events:
+        List:
+          Type: HttpApi
+          Properties: { ApiId: !Ref AppHttpApi, Method: GET, Path: /api/issues }
+        Create:
+          Type: HttpApi
+          Properties: { ApiId: !Ref AppHttpApi, Method: POST, Path: /api/issues }
+        Get:
+          Type: HttpApi
+          Properties: { ApiId: !Ref AppHttpApi, Method: GET, Path: '/api/issues/{issueId}' }
+        Update:
+          Type: HttpApi
+          Properties: { ApiId: !Ref AppHttpApi, Method: PATCH, Path: '/api/issues/{issueId}' }
+        Comment:
+          Type: HttpApi
+          Properties: { ApiId: !Ref AppHttpApi, Method: POST, Path: '/api/issues/{issueId}/comments' }
+
   AiGenerateDescriptionFunction:
     Type: AWS::Serverless::Function
     Metadata:

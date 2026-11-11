@@ -7,6 +7,8 @@ export const PHOTOGRAPHY_STATUS = 'Photography In Progress';
 export interface AssistantUser {
   role: UserRole;
   allowedPages: string[];
+  name?: string;
+  email?: string;
 }
 
 export interface AssistantScope {
@@ -21,6 +23,8 @@ export interface AssistantScope {
   canViewCustomers: boolean;
   /** SEO & AI dashboard: whoever has the SEO page. */
   canViewSeo: boolean;
+  /** The signed-in user, recorded as the submitter of issues the assistant files for them. */
+  actor?: { name: string; email: string };
 }
 
 export const BASE_FIELDS = [
@@ -70,7 +74,7 @@ export function resolveAssistantScope(user: AssistantUser): AssistantScope {
   const canViewCustomers = fullAccess || user.role === 'processor';
   if (fullAccess) fields.push(...FINANCE_FIELDS);
   if (canViewCustomers) fields.push(...SELLER_FIELDS);
-  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess, canViewCustomers, canViewSeo: pages.has('seo') || pages.has('seo-stereobuyers') };
+  return { role: user.role, fullAccess, statuses, fields, pages: [...pages], canViewFinance: fullAccess, canViewCustomers, canViewSeo: pages.has('seo') || pages.has('seo-stereobuyers'), ...(user.name && user.email ? { actor: { name: user.name, email: user.email } } : {}) };
 }
 
 export function isStatusVisible(scope: AssistantScope, status: unknown): boolean {

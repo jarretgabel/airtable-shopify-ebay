@@ -17,6 +17,7 @@ import { getFinanceSummary } from '../../../db/finance.js';
 import { getBuyersSummary } from '../../../db/buyers.js';
 import { getReportsSummary } from '../../../db/reports.js';
 import { getSeoSummary, queryPagesForAssistant } from '../../../db/seo.js';
+import { ISSUE_KINDS, ISSUE_PRIORITIES, ISSUE_STATUSES, createIssue, getIssue, listIssues, type IssueKind, type IssuePriority, type IssueStatus } from '../../../db/issues.js';
 import { SEO_SITE_IDS, SEO_SITES } from '../../../seo/sites.js';
 import { getConfiguredRecord, getConfiguredRecords } from '../../../store/index.js';
 import type { AirtableRecord } from '../../airtable/client.js';
@@ -123,6 +124,43 @@ const SEO_TOOLS = [
   },
 ] as const;
 
+const ISSUE_TOOLS = [
+  {
+    name: 'search_issues',
+    description: 'List issues from the Issues tracker (bugs, feature requests, questions): who submitted each, who it is assigned to, who resolved it, and its status. Use for "what is open", "status of issue 12" lookups by keyword, or "issues I submitted".',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Words in the title or description, or an issue number' },
+        status: { type: 'string', enum: ['open_all', ...ISSUE_STATUSES], description: 'open_all means open, in progress or blocked' },
+        kind: { type: 'string', enum: [...ISSUE_KINDS] },
+        mine: { type: 'boolean', description: 'Only issues the user submitted' },
+        limit: { type: 'integer', minimum: 1, maximum: 25 },
+      },
+    },
+  },
+  {
+    name: 'get_issue',
+    description: 'Full details of one issue: description, status, assignee, resolver, resolution note, comments and history.',
+    input_schema: { type: 'object', properties: { issue_id: { type: 'integer' } }, required: ['issue_id'] },
+  },
+  {
+    name: 'create_issue',
+    description: 'File a new issue in the tracker on the user\'s behalf (they are recorded as the submitter). Saves immediately, so only call it after the user has confirmed the title and details.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        kind: { type: 'string', enum: [...ISSUE_KINDS] },
+        title: { type: 'string', description: 'Short summary, under 200 characters' },
+        description: { type: 'string', description: 'What happened or what is needed; steps to reproduce for bugs' },
+        priority: { type: 'string', enum: [...ISSUE_PRIORITIES], description: 'Defaults to normal' },
+        area: { type: 'string', description: 'App page or feature it relates to' },
+      },
+      required: ['kind', 'title'],
+    },
+  },
+] as const;
+
 const INTAKE_TOOL = {
   name: 'propose_intake_item',
   description: 'Prepare (not save) a new inventory intake item as a draft for the user to review and confirm. Always send every known field, including values from earlier drafts. Returns the cleaned draft, missing required fields and invalid values. Select fields must match existing options exactly.',
@@ -154,6 +192,10 @@ export function canDraftAnyStage(scope: AssistantScope): boolean {
   return canDraftStage(scope, 'testing') || canDraftStage(scope, 'photos');
 }
 
+export function canUseIssues(scope: AssistantScope): boolean {
+  return scope.pages.includes('issues');
+}
+
 export function canDraftIntake(scope: AssistantScope): boolean {
   return scope.pages.includes('manual-intake') || scope.pages.includes('create-intake-item');
 }
@@ -164,6 +206,7 @@ export function getAssistantToolDefinitions(scope: AssistantScope) {
     ...(scope.canViewCustomers ? CUSTOMER_TOOLS : []),
     ...(scope.canViewFinance ? FINANCE_TOOLS : []),
     ...(scope.canViewSeo ? SEO_TOOLS : []),
+    ...(canUseIssues(scope) ? ISSUE_TOOLS : []),
     ...(canDraftIntake(scope) ? [INTAKE_TOOL] : []),
     ...(canDraftAnyStage(scope) ? [STAGE_TOOL] : []),
   ];
@@ -470,6 +513,13 @@ export async function runAssistantTool(
       const history = await getSellerHistory(getPostgresPool(), email);
       return history ? { ...stripSellerAmounts(scope, history), items: withItemLinks(scope, stripSellerAmounts(scope, history).items) } : { error: 'No seller found for that email.' };
     }
+    case 'search_issues':
+    case 'get_issue':
+    case 'create_issue': {
+      if (!canUseIssues(scope)) return { error: 'You do not have access to the Issues tracker.' };
+      if (!process.env.DATABASE_URL?.trim()) return { error: 'Issues need the Postgres database, which is not configured.' };
+      return await runIssueTool(scope, name, input);
+    }
     case 'get_seo_insights': {
       if (!scope.canViewSeo) return { error: 'You do not have access to the SEO dashboard.' };
       if (!process.env.DATABASE_URL?.trim()) return { error: 'SEO data needs the Postgres database, which is not configured.' };
@@ -540,4 +590,44 @@ async function getSeoInsights(input: Record<string, unknown>, scope: { pages: re
     } : 'Google Search Console is not connected for this site.',
     lowestPages: pages,
   };
+}
+
+async function runIssueTool(scope: AssistantScope, name: string, input: Record<string, unknown>) {
+  const pool = getPostgresPool();
+  if (name === 'search_issues') {
+    const status = input.status === 'open_all' ? 'open_all' : ISSUE_STATUSES.find((value) => value === input.status) ?? null;
+    const kind = ISSUE_KINDS.find((value) => value === input.kind) ?? null;
+    const issues = await listIssues(pool, {
+      status: status as IssueStatus | 'open_all' | null,
+      kind,
+      search: typeof input.query === 'string' ? input.query.slice(0, 100) : null,
+      submittedBy: input.mine === true ? scope.actor?.email ?? null : null,
+      limit: Math.min(Math.max(Number(input.limit) || 10, 1), MAX_RESULTS),
+    });
+    return {
+      link: '/issues',
+      issues: issues.map((issue) => ({
+        id: issue.id, kind: issue.kind, title: issue.title, status: issue.status, priority: issue.priority,
+        submittedBy: issue.submittedBy.name, assignedTo: issue.assignedTo?.name ?? null, resolvedBy: issue.resolvedBy?.name ?? null, createdAt: issue.createdAt,
+      })),
+    };
+  }
+  if (name === 'get_issue') {
+    const id = Number(input.issue_id);
+    if (!Number.isInteger(id) || id < 1) return { error: 'Invalid issue id.' };
+    const issue = await getIssue(pool, id);
+    return issue ? { ...issue, comments: issue.comments.slice(-10), link: '/issues' } : { error: 'Issue not found.' };
+  }
+  if (!scope.actor) return { error: 'Could not tell who you are, so the issue was not filed.' };
+  const title = typeof input.title === 'string' ? input.title.trim().slice(0, 200) : '';
+  if (!title) return { error: 'A title is required.' };
+  const issue = await createIssue(pool, {
+    kind: (ISSUE_KINDS.find((value) => value === input.kind) ?? 'bug') as IssueKind,
+    title,
+    description: typeof input.description === 'string' ? input.description.trim().slice(0, 5000) : '',
+    priority: (ISSUE_PRIORITIES.find((value) => value === input.priority) ?? 'normal') as IssuePriority,
+    area: typeof input.area === 'string' ? input.area.trim().slice(0, 100) || null : null,
+    source: 'assistant',
+  }, scope.actor);
+  return { created: true, id: issue.id, title: issue.title, status: issue.status, link: '/issues' };
 }

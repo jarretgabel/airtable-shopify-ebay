@@ -3,6 +3,7 @@ import type { UserRole } from '@/stores/auth/authTypes';
 
 const PROCESSOR_PAGES: AppPage[] = [
   'dashboard',
+  'issues',
   'seo',
   'seo-stereobuyers',
   'workflow-guide',
@@ -36,6 +37,7 @@ const DEVELOPER_PAGES: AppPage[] = [
   'seo',
   'seo-stereobuyers',
   'assistant-insights',
+  'issues',
   'people',
   'workflow-guide',
   'workflow-guide-editor',
@@ -82,6 +84,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'seo',
     'seo-stereobuyers',
     'assistant-insights',
+    'issues',
     'people',
     'workflow-guide',
     'workflow-guide-editor',
@@ -112,6 +115,7 @@ export const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'seo',
     'seo-stereobuyers',
     'assistant-insights',
+    'issues',
     'people',
     'workflow-guide',
     'workflow-guide-editor',

@@ -132,6 +132,10 @@ export function resolveRouteAccessRequirement(event: APIGatewayProxyEventV2): Ro
     return { adminOnly: true };
   }
 
+  if (path.startsWith('/api/issues')) {
+    return { anyPage: ['issues'] };
+  }
+
   if (path.startsWith('/api/seo/')) {
     return { anyPage: ['seo', 'seo-stereobuyers'] };
   }

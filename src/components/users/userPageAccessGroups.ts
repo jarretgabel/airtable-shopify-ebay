@@ -30,7 +30,7 @@ export const USER_PAGE_ACCESS_GROUPS: UserPageAccessGroup[] = [
     key: 'utility',
     title: 'Reference Tools',
     description: 'Reference-only utilities and source feeds that do not belong to the workflow intake queue. HiFi Shark is owner/developer/processor only, and Image Lab is available to every non-tester role.',
-    pages: ['market', 'imagelab', 'jotform'],
+    pages: ['market', 'imagelab', 'jotform', 'issues'],
   },
   {
     key: 'workflow',
