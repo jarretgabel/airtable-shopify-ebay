@@ -75,3 +75,8 @@ Before finishing image-related tasks, verify:
 - Brand-model prefix is consistent across the full image set.
 - No collisions in target folder.
 - Output count matches source count.
+
+## Issue Tracking
+- File an issue in the Issues tracker for major feature changes, plans, and adjustments (not small fixes). Also file deferred or leftover work so it isn't lost in chat.
+- Command: `node --env-file=.env.local --import tsx scripts/create-issue.ts --kind feature|bug|question --title "..." --description "..." --priority low|normal|high|urgent --area "..."` (or `--file items.json`).
+- It writes to the database in `.env.local` (staging); mention the issue number in the reply.
