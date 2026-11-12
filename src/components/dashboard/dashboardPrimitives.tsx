@@ -86,8 +86,7 @@ export function DashboardKpiCard({
 }
 
 /**
- * Outer dashboard section panel — the full-width card with scroll anchor, section title h2,
- * and the standard border/shadow/bg treatment shared by every major dashboard section.
+ * Outer dashboard section — a flat, divider-separated block with scroll anchor and section title h2.
  */
 export function DashboardSectionPanel({
   id,
@@ -101,17 +100,10 @@ export function DashboardSectionPanel({
   className?: string;
 }) {
   return (
-    <section id={id} className="scroll-mt-32">
-      <AppPageSectionSurface
-        className={[
-          'flex flex-col gap-4',
-          className ?? '',
-        ].join(' ').trim()}
-      >
+    <AppPageSectionSurface flat id={id} className={['scroll-mt-32 flex flex-col gap-4', className ?? ''].join(' ').trim()}>
       <AppSectionTitle title={title} />
       {children}
-      </AppPageSectionSurface>
-    </section>
+    </AppPageSectionSurface>
   );
 }
 
