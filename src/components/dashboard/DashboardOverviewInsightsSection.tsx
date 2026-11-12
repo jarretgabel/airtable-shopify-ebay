@@ -1,4 +1,5 @@
 import { PAGE_DEFINITIONS, type AppPage } from '@/auth/pages';
+import { DashboardStageBreakdown } from './DashboardStageBreakdown';
 import { DashboardKpiCard, DashboardSectionPanel, DashboardSubPanel } from './dashboardPrimitives';
 import type { DashboardInsight, DashboardTargetTab, TrendSummary } from './dashboardTabTypes';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
@@ -264,8 +265,13 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
   }
 
   const content = (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {orderedCards.map((card) => card.element)}
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {orderedCards.map((card) => card.element)}
+      </div>
+      {workflowUnavailableReason || workflowAnalytics.loading || !(canSeeRoleDashboardModule(currentUserRole, 'processor') || currentUserRole === 'developer') ? null : (
+        <DashboardStageBreakdown counts={workflowAnalytics.statusCounts} accessiblePages={accessiblePages} onSelectTab={onSelectTab} />
+      )}
     </div>
   );
 
