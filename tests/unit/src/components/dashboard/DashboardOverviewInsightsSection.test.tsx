@@ -128,7 +128,7 @@ describe('DashboardOverviewSection', () => {
 
     expect(screen.getByRole('button', { name: /processor ops/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /processing blockers/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /used gear listings/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /used gear listings/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /testing queue/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^bench aging/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /photography queue/i })).not.toBeInTheDocument();

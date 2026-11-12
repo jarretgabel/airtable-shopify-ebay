@@ -256,22 +256,33 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     ) : null,
   ];
 
+  const showStageBreakdown = !workflowUnavailableReason
+    && !workflowAnalytics.loading
+    && (canSeeRoleDashboardModule(currentUserRole, 'processor') || currentUserRole === 'developer')
+    && Object.values(workflowAnalytics.statusCounts).some((count) => count > 0);
+
+  // The stage breakdown already shows "Ready to list" and links to Listings, so the lone card would repeat it.
   const orderedCards = cards
     .filter((card): card is OverviewCardEntry => card !== null)
+    .filter((card) => !(showStageBreakdown && card.key === 'workflow-listings'))
     .sort((left, right) => left.priority - right.priority);
 
-  if (orderedCards.length === 0) {
+  if (orderedCards.length === 0 && !showStageBreakdown) {
     return null;
   }
 
   const content = (
     <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {orderedCards.map((card) => card.element)}
-      </div>
-      {workflowUnavailableReason || workflowAnalytics.loading || !(canSeeRoleDashboardModule(currentUserRole, 'processor') || currentUserRole === 'developer') ? null : (
-        <div className="border-t border-[var(--line)] pt-8"><DashboardStageBreakdown counts={workflowAnalytics.statusCounts} accessiblePages={accessiblePages} onSelectTab={onSelectTab} /></div>
-      )}
+      {orderedCards.length > 0 ? (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {orderedCards.map((card) => card.element)}
+        </div>
+      ) : null}
+      {showStageBreakdown ? (
+        <div className={orderedCards.length > 0 ? 'border-t border-[var(--line)] pt-8' : ''}>
+          <DashboardStageBreakdown counts={workflowAnalytics.statusCounts} accessiblePages={accessiblePages} onSelectTab={onSelectTab} />
+        </div>
+      ) : null}
     </div>
   );
 
