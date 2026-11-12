@@ -542,6 +542,12 @@ export function ApprovalQueueTable({
 		},
 	];
 
+	// SKU leads the row on every other directory.
+	const skuColumn = qtyDisplayLabel === 'sku' ? columns.find((column) => column.key === 'qty') : undefined;
+	const orderedColumns = skuColumn
+		? [{ ...skuColumn, align: undefined, width: '8rem' }, ...columns.filter((column) => column !== skuColumn)]
+		: columns;
+
 	return (
 		<>
 			{qtyUpdateError ? (
@@ -554,7 +560,7 @@ export function ApprovalQueueTable({
 			) : null}
 			<IntakeItemsMatrix
 				items={pagedRecords}
-				columns={columns}
+				columns={orderedColumns}
 				getItemKey={(record) => record.id}
 			/>
 			{(records.length > 0 || (knownTotal ?? 0) > 0) && (totalPages > 1 || canRequestMore) ? (

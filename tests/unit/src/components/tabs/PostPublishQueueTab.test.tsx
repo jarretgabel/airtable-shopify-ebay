@@ -52,7 +52,7 @@ describe('PostPublishQueueTab', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Post-Publish' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Active Listings' })).toBeInTheDocument();
     expect(screen.getByTestId('post-publish-sort-mode')).toHaveTextContent('oldest-activity');
     expect(screen.getByTestId('post-publish-focused-bucket')).toHaveTextContent('sold-ready');
     expect(screen.getByTestId('post-publish-section-search')).toHaveTextContent('enabled');

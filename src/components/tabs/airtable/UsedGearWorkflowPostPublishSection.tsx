@@ -442,22 +442,9 @@ export function UsedGearWorkflowPostPublishSection({
         key: 'item',
         label: 'Item',
         width: 'minmax(0,1.65fr)',
-        renderCell: (record) => {
-          const snapshot = getUsedGearWorkflowPostPublishSnapshot(record);
-          const channelLabel = snapshot?.channel || snapshot?.bucket || 'Workflow';
-          const itemMetaLabel = sectionKey === 'shipped' ? null : channelLabel;
-
-          return (
-            <div className="min-w-0">
-              <div className="truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
-              {itemMetaLabel ? (
-                <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
-                  <span>{itemMetaLabel}</span>
-                </div>
-              ) : null}
-            </div>
-          );
-        },
+        renderCell: (record) => (
+          <div className="min-w-0 truncate text-sm text-[var(--ink)]">{displayInventoryValue(record.fields.Make)} · {displayInventoryValue(record.fields.Model)}</div>
+        ),
       },
     ];
 

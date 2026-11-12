@@ -5,7 +5,6 @@ import { usePageSectionTracking } from '@/components/app/usePageSectionTracking'
 import { WorkflowQueuePageTemplate } from '@/components/app/WorkflowQueuePageTemplate';
 import {
   getPostPublishSectionId,
-  POST_PUBLISH_OVERVIEW_SECTION_ID,
   POST_PUBLISH_SECTION_DEFINITIONS,
   UsedGearWorkflowPostPublishSection,
   type UsedGearWorkflowPostPublishSortMode,
@@ -21,7 +20,7 @@ interface PostPublishQueueTabProps {
 }
 
 const WORKFLOW_POST_PUBLISH_SORT_PARAM = 'workflowPostPublishSort';
-type PostPublishSectionNavKey = 'overview' | UsedGearWorkflowPostPublishBucket;
+type PostPublishSectionNavKey = UsedGearWorkflowPostPublishBucket;
 
 function parsePostPublishSortMode(search: string): UsedGearWorkflowPostPublishSortMode {
   const value = new URLSearchParams(search).get(WORKFLOW_POST_PUBLISH_SORT_PARAM);
@@ -69,24 +68,15 @@ export function PostPublishQueueTab({
   }, [updateRouteState]);
 
   const sectionItems = useMemo(() => [
-    { id: POST_PUBLISH_OVERVIEW_SECTION_ID, key: 'overview' as const, label: 'Overview' },
     ...POST_PUBLISH_SECTION_DEFINITIONS.map((section) => ({ id: section.id, key: section.key, label: section.title })),
   ], []);
-  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, POST_PUBLISH_OVERVIEW_SECTION_ID);
+  const { activeSectionId, scrollToSection } = usePageSectionTracking(sectionItems, sectionItems[0].id);
   const activeSectionKey = useMemo<PostPublishSectionNavKey>(
-    () => sectionItems.find((item) => item.id === activeSectionId)?.key ?? 'overview',
+    () => sectionItems.find((item) => item.id === activeSectionId)?.key ?? sectionItems[0].key,
     [activeSectionId, sectionItems],
   );
 
   const handleSectionSelect = useCallback((sectionKey: PostPublishSectionNavKey) => {
-    if (sectionKey === 'overview') {
-      handleFocusedBucketChange('all');
-      requestAnimationFrame(() => {
-        scrollToSection(POST_PUBLISH_OVERVIEW_SECTION_ID);
-      });
-      return;
-    }
-
     handleFocusedBucketChange(sectionKey);
     requestAnimationFrame(() => {
       scrollToSection(getPostPublishSectionId(sectionKey));
