@@ -203,7 +203,7 @@ export function UsedGearTrashSection({
   useEffect(() => { setPage(1); }, [groupedRecords]);
 
   return (
-    <AppPageSectionSurface id="used-gear-trash" className="space-y-5">
+    <AppPageSectionSurface id="used-gear-trash" flat className="space-y-5">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
           <AppSectionTitle title="Trash" />

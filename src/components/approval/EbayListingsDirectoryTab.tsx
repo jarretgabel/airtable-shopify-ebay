@@ -39,7 +39,7 @@ export function EbayListingsDirectoryTab({
         title="eBay Listing Snapshot"
       />
 
-      <AppPageSectionSurface className="space-y-5">
+      <AppPageSectionSurface flat className="space-y-5">
         <ListingsServiceSummaryPanel
           eyebrow="Selling"
           title="eBay Listing Snapshot"

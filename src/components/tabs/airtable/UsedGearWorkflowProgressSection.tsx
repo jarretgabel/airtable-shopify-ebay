@@ -414,7 +414,7 @@ export function UsedGearWorkflowProgressSection({
   };
 
   return (
-    <AppPageSectionSurface id={sectionId} className="space-y-4">
+    <AppPageSectionSurface id={sectionId} flat className="space-y-4">
       {showSectionIntro || !hideSearchToolbarWhileLoading ? (
         <div className="flex flex-col gap-4">
           {showSectionIntro ? (

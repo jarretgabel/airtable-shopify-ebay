@@ -28,7 +28,7 @@ export function ShopifyListingsDirectoryTab({
         actions={shopifyStoreHref ? <OpenLinkToolbarButton label="Open Shopify store" href={shopifyStoreHref} /> : null}
       />
 
-      <AppPageSectionSurface className="space-y-5">
+      <AppPageSectionSurface flat className="space-y-5">
         <ListingsServiceSummaryPanel
           eyebrow="Selling"
           title="Shopify Product Snapshot"
