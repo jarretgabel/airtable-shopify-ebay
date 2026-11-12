@@ -80,3 +80,8 @@ Before finishing image-related tasks, verify:
 - File an issue in the Issues tracker for major feature changes, plans, and adjustments (not small fixes). Also file deferred or leftover work so it isn't lost in chat.
 - Command: `node --env-file=.env.local --import tsx scripts/create-issue.ts --kind feature|bug|question --title "..." --description "..." --priority low|normal|high|urgent --area "..."` (or `--file items.json`).
 - It writes to the database in `.env.local` (staging); mention the issue number in the reply.
+
+## Work Log
+- After each work session, update the day's row in docs/WORK_LOG.md: a short summary of the major things done, and hours.
+- Hours: use the user's number if given; otherwise estimate from commit timestamps (sessions = commits <2h apart, first-to-last + 30 min, rounded to 0.25h) and mark with `~`.
+- Add a new row only when the date has none; never invent work that was not done.
