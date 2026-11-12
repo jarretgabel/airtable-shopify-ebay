@@ -134,12 +134,34 @@ export function AppSidebar({
       >
         <div className={`flex h-14 shrink-0 items-center border-b border-[var(--sidebar-line)] ${rail ? 'justify-center' : 'justify-between px-4'}`}>
           {rail ? (
-            <span className="text-sm font-bold tracking-tight text-[var(--sidebar-active-ink)]" aria-label="ResolutionAV">RA</span>
+            <>
+              <span className="text-sm font-bold tracking-tight text-[var(--sidebar-active-ink)] md:hidden" aria-label="ResolutionAV">RA</span>
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--sidebar-muted)] transition-colors hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)] md:inline-flex"
+          >
+            <NavIcon page={collapsed ? 'expand' : 'collapse'} className="h-[1.1rem] w-[1.1rem]" />
+          </button>
+            </>
           ) : (
+            <>
             <span className="flex flex-col leading-tight">
               <span className="text-[0.95rem] font-bold tracking-[0.02em] text-[var(--sidebar-active-ink)]">ResolutionAV</span>
               <span className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--sidebar-muted)]">Operations portal</span>
             </span>
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--sidebar-muted)] transition-colors hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)] md:inline-flex"
+          >
+            <NavIcon page={collapsed ? 'expand' : 'collapse'} className="h-[1.1rem] w-[1.1rem]" />
+          </button>
+            </>
           )}
         </div>
 
@@ -261,16 +283,6 @@ export function AppSidebar({
               {rail ? null : <span className="min-w-0 flex-1 truncate">{(currentUserLabel.split('·')[0] ?? '').trim() || 'Account'}</span>}
             </button>
           </div>
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={`${itemBase} hidden text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)] md:flex ${rail ? 'justify-center px-0' : ''}`}
-          >
-            <NavIcon page={collapsed ? 'expand' : 'collapse'} className="h-[1.1rem] w-[1.1rem] shrink-0" />
-            {rail ? null : 'Collapse'}
-          </button>
         </div>
       </aside>
       {rail && flyoutGroup && flyout ? (

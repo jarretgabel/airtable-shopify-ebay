@@ -82,7 +82,7 @@ export function AppFrame({
           </button>
           <span className="text-[0.95rem] font-bold tracking-[0.02em] text-[var(--ink)]">ResolutionAV</span>
         </header>
-        <section className="mx-auto w-full max-w-[1320px] px-4 pb-28 pt-6 sm:px-6 md:pt-10">
+        <section className="mx-auto w-full max-w-[1320px] px-5 pb-28 pt-8 sm:px-8 md:px-10 md:pt-12">
           {exportProgress && <AppFrameExportOverlay exportProgress={exportProgress} />}
           {children}
         </section>
