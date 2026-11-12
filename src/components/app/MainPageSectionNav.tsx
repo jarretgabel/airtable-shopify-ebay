@@ -27,7 +27,7 @@ export function MainPageSectionNav<T extends string>({
       activeKey={activeKey}
       onSelect={onSelect}
       className={[
-        'sticky top-3 z-20',
+        'sticky top-[4.25rem] z-20',
         className ?? '',
       ].join(' ').trim()}
     />

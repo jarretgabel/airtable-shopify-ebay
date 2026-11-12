@@ -69,7 +69,7 @@ export function AppTopBar({
           aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
           title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
           onClick={onToggleTheme}
-          className="!px-2.5 !py-2"
+          className="!h-9 !w-9 !rounded-lg !p-0 focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-sky-400/60"
         >
           <span className="inline-flex h-5 w-5 items-center justify-center" aria-hidden="true">
             {theme === 'dark' ? (

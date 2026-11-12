@@ -58,10 +58,10 @@ export function AppFrameHeaderNotificationsMenu({
         aria-label="Open notifications menu"
         onClick={() => onToggleDropdown('notifications')}
         onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'notifications', onToggleDropdown, onCloseDropdowns)}
-        className="relative !px-2.5 !py-2 focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-sky-400/60 focus-visible:!ring-offset-2 focus-visible:!ring-offset-[var(--header-surface)] sm:!px-3 lg:!px-3 lg:!py-2 xl:!px-4 xl:!py-2.5"
+        className="relative !h-9 !w-9 !rounded-lg !p-0 focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-sky-400/60"
       >
-        <span className="relative inline-flex h-6 w-6 items-center justify-center lg:h-5 lg:w-5 xl:h-6 xl:w-6">
-          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 lg:h-4 lg:w-4 xl:h-4.5 xl:w-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+        <span className="relative inline-flex h-5 w-5 items-center justify-center">
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
             <path d="M6 9a6 6 0 0 1 12 0v4.4l1.6 2.1a1 1 0 0 1-.8 1.6H5.2a1 1 0 0 1-.8-1.6L6 13.4V9Z" />
             <path d="M9.7 18.2a2.4 2.4 0 0 0 4.6 0" />
           </svg>
