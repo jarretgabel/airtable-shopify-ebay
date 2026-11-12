@@ -439,7 +439,7 @@ describe('ListingApprovalTab', () => {
       />,
     );
 
-    expect(screen.getByText('Loading listing record')).toBeInTheDocument();
+    expect(screen.getByText('Loading listing record...')).toBeInTheDocument();
     expect(screen.queryByText('Back to listings directory')).not.toBeInTheDocument();
   });
 });

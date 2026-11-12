@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useMemo, useState } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppPageStatSection } from '@/components/app/AppPageStatSection';
@@ -305,38 +306,6 @@ function defaultQuickFilterForChannel(channel: 'shopify' | 'ebay' | 'combined'):
   if (channel === 'shopify') return 'pending';
   if (channel === 'ebay') return 'ready';
   return 'all';
-}
-
-function ListingApprovalQueueSkeleton() {
-  return (
-    <div className="space-y-4" aria-hidden="true">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="h-3 w-20 animate-pulse rounded-md bg-white/10" />
-          <div className="h-6 w-52 animate-pulse rounded-md bg-white/10" />
-          <div className="h-4 w-40 animate-pulse rounded-md bg-white/10" />
-        </div>
-        <div className="h-10 w-32 animate-pulse rounded-xl bg-white/10" />
-      </div>
-      <div className="h-4 w-36 animate-pulse rounded-md bg-white/10" />
-      <div className="overflow-hidden rounded-[14px] border border-[var(--line)] bg-[var(--bg)]">
-        <div className="grid grid-cols-4 gap-3 border-b border-[var(--line)] px-4 py-3 max-md:grid-cols-2">
-          {Array.from({ length: 4 }, (_, index) => (
-            <div key={`header-${index}`} className="h-3 animate-pulse rounded-md bg-white/10" />
-          ))}
-        </div>
-        <div className="space-y-3 px-4 py-4">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div key={`row-${index}`} className="grid grid-cols-4 gap-3 max-md:grid-cols-2">
-              {Array.from({ length: 4 }, (_, columnIndex) => (
-                <div key={`cell-${index}-${columnIndex}`} className="h-4 animate-pulse rounded-md bg-white/10" />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 interface ListingApprovalQueuePanelProps {
@@ -901,11 +870,11 @@ export function ListingApprovalQueuePanel({
       {hasTableReference && loading && records.length === 0 ? (
         isCombinedApproval ? (
           <AppPageSectionSurface flat>
-            <ListingApprovalQueueSkeleton />
+            <LoadingSurface message="Loading listings..." />
           </AppPageSectionSurface>
         ) : (
           <section className={approvalQueueSurfaceClass}>
-            <ListingApprovalQueueSkeleton />
+            <LoadingSurface message="Loading listings..." />
           </section>
         )
       ) : hasTableReference ? (
@@ -1019,7 +988,7 @@ export function ListingApprovalQueuePanel({
 
           {filteredRecords.length > 0 && isCombinedApproval ? (
             <div className="space-y-5">
-              <AppPageSectionSurface flat id={COMBINED_QUEUE_SECTION_IDS['ready-for-publishing']} className="scroll-mt-24 pt-8">
+              <AppPageSectionSurface flat id={COMBINED_QUEUE_SECTION_IDS['ready-for-publishing']} className="scroll-mt-24">
                 <AppSectionTitle
                   title="Ready for Publishing"
                   className="mb-4"

@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import type { ApprovalTabViewModel } from '@/app/appTabViewModels';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { SecondaryActionButton } from '@/components/app/SecondaryActionButton';
@@ -48,15 +49,7 @@ export function ListingApprovalTab({
   if (viewModel.selectedRecordId && queuePanelProps.loading && !queuePanelProps.error) {
     return (
       <AppPageLayout>
-        <section>
-          <div className="space-y-3" aria-hidden="true">
-            <div className="h-3 w-28 animate-pulse rounded bg-white/10" />
-            <div className="h-8 w-72 animate-pulse rounded bg-white/10" />
-            <div className="h-4 w-full max-w-2xl animate-pulse rounded bg-white/5" />
-            <div className="h-4 w-full max-w-xl animate-pulse rounded bg-white/5" />
-          </div>
-          <p className="sr-only" role="status" aria-live="polite">Loading listing record</p>
-        </section>
+        <LoadingSurface message="Loading listing record..." />
         {confirmationModal}
       </AppPageLayout>
     );
