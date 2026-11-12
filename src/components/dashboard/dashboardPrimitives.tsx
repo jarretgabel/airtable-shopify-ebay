@@ -65,7 +65,7 @@ export function DashboardKpiCard({
   return (
     <button
       type="button"
-      className={`w-full appearance-none rounded-[14px] border border-[var(--line)] border-t-[3px] bg-[color:color-mix(in_srgb,var(--panel)_92%,transparent)] px-4 pb-3 pt-3 text-left text-[var(--ink)] shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_10px_rgba(17,32,49,0.04)] transition focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200 ${borderToneClass} ${unavailableReason ? 'cursor-not-allowed opacity-85' : 'hover:border-white/15 hover:bg-[color:color-mix(in_srgb,var(--panel)_96%,white_4%)] hover:shadow-[0_3px_12px_rgba(17,32,49,0.06)]'}`}
+      className={`w-full appearance-none rounded-xl border border-[var(--line)] border-t-[3px] bg-[var(--panel)] px-4 pb-3.5 pt-3.5 text-left text-[var(--ink)] shadow-[0_1px_2px_rgba(2,6,23,0.1)] transition focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200 ${borderToneClass} ${unavailableReason ? 'cursor-not-allowed opacity-85' : 'hover:border-[var(--accent)]/50 hover:shadow-[0_6px_18px_rgba(2,6,23,0.12)]'}`}
       disabled={Boolean(unavailableReason)}
       title={unavailableReason ?? undefined}
       onClick={() => {
@@ -75,10 +75,10 @@ export function DashboardKpiCard({
       }}
     >
       <div className="mb-0.5 flex items-center gap-2">
-        <span className="text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{eyebrow}</span>
+        <span className="text-[0.74rem] font-semibold text-[var(--muted)]">{eyebrow}</span>
         {unavailableReason ? <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-amber-200">Unavailable</span> : null}
       </div>
-      <p className="m-0 text-[1.65rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{value}</p>
+      <p className="m-0 mt-1 text-[1.75rem] font-bold leading-none tracking-[-0.02em] text-[var(--ink)]">{value}</p>
       <p className="m-0 text-[0.78rem] leading-[1.5] text-[var(--muted)]">{detail}</p>
       <p className={`mt-auto pt-1.5 text-[0.74rem] font-bold uppercase tracking-[0.02em] ${trendClass}`}>{trend}</p>
     </button>
@@ -101,10 +101,10 @@ export function DashboardSectionPanel({
   className?: string;
 }) {
   return (
-    <section id={id} className="scroll-mt-24">
+    <section id={id} className="scroll-mt-32">
       <AppPageSectionSurface
         className={[
-          'flex flex-col gap-4 bg-[color:color-mix(in_srgb,var(--panel)_94%,transparent)] shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_12px_rgba(17,32,49,0.04)]',
+          'flex flex-col gap-4',
           className ?? '',
         ].join(' ').trim()}
       >
@@ -129,9 +129,9 @@ export function DashboardSubPanel({
   className?: string;
 }) {
   return (
-    <section className={`flex flex-col gap-4 rounded-[14px] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--bg)_92%,transparent)] p-4${className ? ` ${className}` : ''}`}>
+    <section className={`flex flex-col gap-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4${className ? ` ${className}` : ''}`}>
       {title && (
-        <h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-bold text-[var(--ink)]">
+        <h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-semibold text-[var(--ink)]">
           {title}
         </h3>
       )}
@@ -142,7 +142,7 @@ export function DashboardSubPanel({
 
 export function DashboardLoadingBanner({ label }: { label: string }) {
   return (
-    <div className="rounded-[12px] border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-[0.82rem] font-medium text-[var(--muted)]">
       {label}
     </div>
   );
