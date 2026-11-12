@@ -82,14 +82,14 @@ export function ShopifySmartCollectionsPreview({ fields }: ShopifySmartCollectio
     .slice(0, MAX_CLOSE_MATCHES);
 
   return (
-    <div className="col-span-1 mt-3 flex flex-col gap-2 border-t border-[var(--line)] pt-5 md:col-span-2">
+    <div className="col-span-1 mt-3 flex flex-col gap-3 border-t border-[var(--line)] pt-5 md:col-span-2">
       <span className={labelClass}>Automatic Collections</span>
       <div>
         {error && <p role="alert" className="m-0 text-xs text-rose-400">{error}</p>}
         {!error && !collections && <p className="m-0 text-sm text-[var(--muted)]">Checking smart collection rules…</p>}
         {collections && (
           <>
-            <p className="m-0 mb-2 text-xs text-[var(--muted)]">
+            <p className="m-0 mb-4 text-sm text-[var(--muted)]">
               Smart collections are filled by Shopify from tags, product type, vendor and stock. This is a preview based on the values on this form.
             </p>
             {joins.length > 0 ? (
@@ -105,7 +105,7 @@ export function ShopifySmartCollectionsPreview({ fields }: ShopifySmartCollectio
               </p>
             )}
             {closeMatches.length > 0 && (
-              <details className={`mt-3 ${detailDisclosureClass}`}>
+              <details className={`mt-6 ${detailDisclosureClass}`}>
                 <summary className={detailDisclosureSummaryClass}>Almost matching ({closeMatches.length})</summary>
                 <div className={`${detailDisclosureBodyClass} space-y-2`}>
                   {closeMatches.map((evaluation) => (

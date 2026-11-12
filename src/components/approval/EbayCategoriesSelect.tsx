@@ -136,7 +136,7 @@ export function EbayCategoriesSelect({
   }, [closeMenu, isOpen]);
 
   return (
-    <div ref={rootRef} className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
+    <div ref={rootRef} className="relative col-span-1 mt-3 flex flex-col gap-2 border-t border-[var(--line)] pt-5 md:col-span-2">
       <span className={`${labelClass} flex items-center gap-2 ${missingRequiredSelection ? 'text-[var(--required-label-ink)]' : ''}`}>
         <span>{label}</span>
         {required && missingRequiredSelection && <span className={requiredBadgeClass}>eBay Required</span>}

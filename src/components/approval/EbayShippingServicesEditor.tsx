@@ -72,7 +72,7 @@ export function EbayShippingServicesEditor({
   const selectedInternationalService = selectedInternationalServices[0] ?? '';
 
   return (
-    <section className="col-span-1 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2">
+    <section className="col-span-1 mt-3 rounded-lg border border-[var(--line)] bg-white/5 md:col-span-2">
       <div className="border-b border-[var(--line)] px-3 py-2 text-sm font-semibold text-[var(--ink)]">
         Shipping Services
       </div>
