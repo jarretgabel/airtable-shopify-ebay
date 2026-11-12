@@ -105,13 +105,9 @@ export function IntakeItemsMatrix<TItem>({
             const isLastRow = renderedRowCount === totalRowCount;
             const isStripedGroup = groupIndex % 2 === 1;
             const isNewGroupStart = groupItemIndex === 0 && groupIndex > 0;
-            const rowClassName = isStripedGroup ? 'bg-[color-mix(in_srgb,var(--panel)_28%,transparent)]' : 'bg-transparent';
-            const groupCellClassName = isStripedGroup
-              ? 'bg-[color-mix(in_srgb,var(--panel)_42%,transparent)]'
-              : 'bg-[var(--panel)]/35';
-            const groupActionCellClassName = isStripedGroup
-              ? 'bg-[color-mix(in_srgb,var(--panel)_24%,transparent)]'
-              : 'bg-[var(--panel)]/20';
+            const rowClassName = isStripedGroup ? 'bg-[color-mix(in_srgb,var(--ink)_6%,transparent)]' : 'bg-transparent';
+            const groupCellClassName = '';
+            const groupActionCellClassName = '';
             const groupStartRowClassName = isNewGroupStart ? 'border-t border-[var(--line)]' : '';
             const cellContext: IntakeItemsMatrixCellContext<TItem> = {
               group,
