@@ -328,7 +328,7 @@ export function AppTabContent({
               recordId={deferredRouteState.ebayListingsRecordId}
               viewModel={ebayViewModel}
               onBackToSnapshot={() => navigateToEbayList()}
-              onOpenListings={() => navigateToListingsList()}
+              onOpenListing={(recordId) => navigateToListingsRecord(recordId)}
               onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );
@@ -540,7 +540,7 @@ export function AppTabContent({
               productId={deferredRouteState.shopifyListingsRecordId}
               viewModel={shopifyViewModel}
               onBackToSnapshot={() => navigateToShopifyList()}
-              onOpenListings={() => navigateToListingsList()}
+              onOpenListing={(recordId) => navigateToListingsRecord(recordId)}
               onOpenOperationalRecord={(recordId) => navigateToUsedGearOperationalRecord(recordId)}
             />
           );

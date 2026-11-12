@@ -32,10 +32,8 @@ export function WorkflowRecordPageLayout({
       />
       {belowHeader}
       <AppPageSectionSurface
-        className={[
-          'space-y-5 bg-[color:color-mix(in_srgb,var(--panel)_94%,transparent)] shadow-[0_1px_2px_rgba(17,32,49,0.05),0_3px_12px_rgba(17,32,49,0.04)]',
-          contentClassName ?? '',
-        ].join(' ').trim()}
+        flat
+        className={['space-y-8', contentClassName ?? ''].join(' ').trim()}
       >
         {children}
       </AppPageSectionSurface>

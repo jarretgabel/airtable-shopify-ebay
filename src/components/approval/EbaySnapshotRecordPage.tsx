@@ -15,7 +15,6 @@ import {
   detailDisclosureSummaryClass,
   detailPreBlockClass,
   infoPillClass,
-  insetPanelClass,
   insetPanelMutedClass,
   sectionLabelClass,
   sectionTitleDescriptionClass,
@@ -30,7 +29,7 @@ interface EbaySnapshotRecordPageProps {
   recordId: string;
   viewModel: EbayTabViewModel;
   onBackToSnapshot: () => void;
-  onOpenListings: () => void;
+  onOpenListing: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
 }
 
@@ -44,7 +43,7 @@ function stringifyJson(value: unknown): string {
 
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`${insetPanelClass} px-3 py-2`}>
+    <div className="border-t border-[var(--line)] pt-2">
       <p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
       <p className="m-0 mt-1 text-sm text-[var(--ink)] break-words">{value || '—'}</p>
     </div>
@@ -85,7 +84,7 @@ export function EbaySnapshotRecordPage({
   recordId,
   viewModel,
   onBackToSnapshot,
-  onOpenListings,
+  onOpenListing,
   onOpenOperationalRecord,
 }: EbaySnapshotRecordPageProps) {
   const [workflowSummary, setWorkflowSummary] = useState<ListingApprovalWorkflowSummaryData | null>(null);
@@ -114,7 +113,12 @@ export function EbaySnapshotRecordPage({
   const headerActions = (
     <>
       <BackToolbarButton label="Back to eBay Snapshot" onClick={onBackToSnapshot} />
-      <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
+      {operationalRecordId ? (
+        <button type="button" className={snapshotOpenListingsButtonClass} onClick={() => onOpenListing(operationalRecordId)}>Open Listing</button>
+      ) : null}
+      {resolvedOffer?.listingId ? (
+        <a className={snapshotOpenListingsButtonClass} href={`https://www.ebay.com/itm/${encodeURIComponent(resolvedOffer.listingId)}`} target="_blank" rel="noreferrer">View on eBay</a>
+      ) : null}
     </>
   );
 
@@ -177,7 +181,6 @@ export function EbaySnapshotRecordPage({
         <EmptySurface title="eBay snapshot not found" message="This SKU is no longer available in the current eBay snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
             <BackToolbarButton label="Back to eBay Snapshot" onClick={onBackToSnapshot} />
-            <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
           </div>
         </EmptySurface>
       </WorkflowRecordPageLayout>
@@ -195,14 +198,14 @@ export function EbaySnapshotRecordPage({
         error={workflowError}
         description="Cross-referenced from the used-gear workflow by SKU so you can see where this read-only eBay snapshot sits in the intake-to-listing pipeline."
         emptyMessage="No used-gear operational row is linked to this eBay snapshot yet."
-        primaryActionLabel="Open Listings"
-        onPrimaryAction={onOpenListings}
+        primaryActionLabel={operationalRecordId ? 'Open Listing' : undefined}
+        onPrimaryAction={operationalRecordId ? () => onOpenListing(operationalRecordId) : null}
         secondaryActionLabel={operationalRecordId ? 'Edit Workflow Record' : undefined}
         onSecondaryAction={operationalRecordId ? () => onOpenOperationalRecord(operationalRecordId) : null}
       />
 
       <PanelSurface>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
           <FieldRow label="SKU" value={resolvedItem?.sku ?? resolvedOffer?.sku ?? recordId} />
           <FieldRow label="Offer Status" value={resolvedOffer?.status ?? '—'} />
           <FieldRow label="Listing ID" value={resolvedOffer?.listingId ?? '—'} />
@@ -221,7 +224,7 @@ export function EbaySnapshotRecordPage({
       <PanelSurface>
         <SectionTitle title="Offer Setup" description="Marketplace, pricing, and policy configuration present on this eBay snapshot." />
         <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className={insetPanelClass}>
+          <div>
             <p className={sectionLabelClass}>Pricing And Publishing</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <FieldRow label="Price" value={formatMoney(resolvedOffer?.pricingSummary?.price)} />
@@ -230,7 +233,7 @@ export function EbaySnapshotRecordPage({
               <FieldRow label="Recent Listing" value={resolvedRecentListing ? 'Yes' : 'No'} />
             </div>
           </div>
-          <div className={insetPanelClass}>
+          <div>
             <p className={sectionLabelClass}>Business Policies</p>
             <p className="m-0 mt-2 text-xs text-[var(--muted)]">
               <a
@@ -256,7 +259,7 @@ export function EbaySnapshotRecordPage({
         <SectionTitle title="Inventory Details" description="Product-facing information from the current inventory item snapshot." />
         <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-4">
-            <div className={insetPanelClass}>
+            <div>
               <p className={sectionLabelClass}>Product Metadata</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <FieldRow label="Title" value={resolvedItem?.product?.title ?? '—'} />
@@ -265,7 +268,7 @@ export function EbaySnapshotRecordPage({
                 <FieldRow label="Condition Notes" value={resolvedItem?.conditionDescription ?? '—'} />
               </div>
             </div>
-            <div className={insetPanelClass}>
+            <div>
               <p className={sectionLabelClass}>Aspects</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {aspects.length > 0 ? aspects.map(([key, values]) => (
@@ -274,7 +277,7 @@ export function EbaySnapshotRecordPage({
               </div>
             </div>
           </div>
-          <div className={insetPanelClass}>
+          <div>
             <p className={sectionLabelClass}>Images</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {imageUrls.length > 0 ? imageUrls.map((imageUrl, index) => (

@@ -25,11 +25,11 @@ import {
   snapshotTableMutedCellClass,
   snapshotTableRowClass,
   snapshotTableWrapClass,
-  insetPanelClass,
   insetPanelMutedClass,
   insetPillClass,
 } from '@/components/tabs/uiClasses';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
+import { checkOptionalEnv } from '@/config/runtimeEnv';
 import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { ShopifyProduct } from '@/types/shopify';
 
@@ -37,7 +37,7 @@ interface ShopifySnapshotRecordPageProps {
   productId: string;
   viewModel: ShopifyTabViewModel;
   onBackToSnapshot: () => void;
-  onOpenListings: () => void;
+  onOpenListing: (recordId: string) => void;
   onOpenOperationalRecord: (recordId: string) => void;
 }
 
@@ -51,7 +51,7 @@ function stringifyJson(value: unknown): string {
 
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className={`${insetPanelClass} px-3 py-2`}>
+    <div className="border-t border-[var(--line)] pt-2">
       <p className="m-0 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
       <p className="m-0 mt-1 text-sm text-[var(--ink)] break-words">{value || '—'}</p>
     </div>
@@ -101,7 +101,7 @@ export function ShopifySnapshotRecordPage({
   productId,
   viewModel,
   onBackToSnapshot,
-  onOpenListings,
+  onOpenListing,
   onOpenOperationalRecord,
 }: ShopifySnapshotRecordPageProps) {
   const [workflowSummary, setWorkflowSummary] = useState<ListingApprovalWorkflowSummaryData | null>(null);
@@ -116,10 +116,21 @@ export function ShopifySnapshotRecordPage({
   const images = product?.images ?? [];
   const metafields = product?.metafields ?? [];
   const workflowSku = variants.map((variant) => variant.sku?.trim() ?? '').find(Boolean) ?? '';
+  const storeDomain = checkOptionalEnv('VITE_SHOPIFY_STORE_DOMAIN').trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+  const storefrontUrl = storeDomain && product?.handle ? `https://${storeDomain}/products/${encodeURIComponent(product.handle)}` : '';
+  const adminUrl = storeDomain && product ? `https://${storeDomain}/admin/products/${encodeURIComponent(String(product.id))}` : '';
   const headerActions = (
     <>
       <BackToolbarButton label="Back to Shopify Snapshot" onClick={onBackToSnapshot} />
-      <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
+      {operationalRecordId ? (
+        <button type="button" className={snapshotOpenListingsButtonClass} onClick={() => onOpenListing(operationalRecordId)}>Open Listing</button>
+      ) : null}
+      {storefrontUrl ? (
+        <a className={snapshotOpenListingsButtonClass} href={storefrontUrl} target="_blank" rel="noreferrer">View on Shopify</a>
+      ) : null}
+      {adminUrl ? (
+        <a className={snapshotOpenListingsButtonClass} href={adminUrl} target="_blank" rel="noreferrer">Shopify Admin</a>
+      ) : null}
     </>
   );
 
@@ -182,7 +193,6 @@ export function ShopifySnapshotRecordPage({
         <EmptySurface title="Shopify snapshot not found" message="This product is no longer available in the current Shopify snapshot.">
           <div className="mt-4 flex flex-wrap gap-2">
             <BackToolbarButton label="Back to Shopify Snapshot" onClick={onBackToSnapshot} />
-            <button type="button" className={snapshotOpenListingsButtonClass} onClick={onOpenListings}>Open Listings</button>
           </div>
         </EmptySurface>
       </WorkflowRecordPageLayout>
@@ -200,14 +210,14 @@ export function ShopifySnapshotRecordPage({
         error={workflowError}
         description="Cross-referenced from the used-gear workflow by SKU so you can see where this read-only Shopify snapshot sits in the intake-to-listing pipeline."
         emptyMessage="No used-gear operational row is linked to this Shopify snapshot yet."
-        primaryActionLabel="Open Listings"
-        onPrimaryAction={onOpenListings}
+        primaryActionLabel={operationalRecordId ? 'Open Listing' : undefined}
+        onPrimaryAction={operationalRecordId ? () => onOpenListing(operationalRecordId) : null}
         secondaryActionLabel={operationalRecordId ? 'Edit Workflow Record' : undefined}
         onSecondaryAction={operationalRecordId ? () => onOpenOperationalRecord(operationalRecordId) : null}
       />
 
       <PanelSurface>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
           <FieldRow label="Product ID" value={String(product.id)} />
           <FieldRow label="Status" value={product.status ?? '—'} />
           <FieldRow label="Vendor" value={product.vendor ?? '—'} />
@@ -226,12 +236,12 @@ export function ShopifySnapshotRecordPage({
       <PanelSurface>
         <SectionTitle title="Merchandising Details" description="Snapshot of the customer-facing content that drives the Shopify listing." />
         <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-          <div className={insetPanelClass}>
+          <div>
             <p className={sectionLabelClass}>Body Copy</p>
             <p className="m-0 mt-3 whitespace-pre-wrap text-sm leading-6 text-[var(--ink)]">{product.body_html ? product.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || '—' : '—'}</p>
           </div>
           <div className="space-y-4">
-            <div className={insetPanelClass}>
+            <div>
               <p className={sectionLabelClass}>Tags</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {tags.length > 0 ? tags.map((tag) => (
@@ -239,7 +249,7 @@ export function ShopifySnapshotRecordPage({
                 )) : <p className="m-0 text-sm text-[var(--muted)]">No tags on this Shopify product.</p>}
               </div>
             </div>
-            <div className={insetPanelClass}>
+            <div>
               <p className={sectionLabelClass}>Options</p>
               <div className="mt-3 space-y-2">
                 {options.length > 0 ? options.map((option) => (
@@ -295,7 +305,7 @@ export function ShopifySnapshotRecordPage({
       <PanelSurface>
         <SectionTitle title="Media And Metafields" description="Supporting assets and Shopify-specific metadata surfaced on this snapshot." />
         <div className="mt-4 grid gap-4 xl:grid-cols-2">
-          <div className={insetPanelClass}>
+          <div>
             <p className={sectionLabelClass}>Images</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {images.length > 0 ? images.map((image, index) => (
@@ -306,7 +316,7 @@ export function ShopifySnapshotRecordPage({
               )) : <p className="m-0 text-sm text-[var(--muted)]">No Shopify media on this product.</p>}
             </div>
           </div>
-          <div className={insetPanelClass}>
+          <div>
             <p className={sectionLabelClass}>Metafields</p>
             <div className="mt-3 space-y-2">
               {metafields.length > 0 ? metafields.map((metafield, index) => (

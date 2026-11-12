@@ -462,7 +462,7 @@ export function ListingApprovalWorkflowProcessCard({
 
   if (!summary) {
     return (
-      <section className={workflowCardSurfaceClass}>
+      <section className="mb-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className={sectionLabelClass}>{eyebrow}</p>
@@ -471,8 +471,8 @@ export function ListingApprovalWorkflowProcessCard({
           </div>
         </div>
         <div className={[
-          'mt-4 rounded-xl border px-4 py-3 text-sm leading-6',
-          error ? 'border-amber-400/35 bg-amber-500/10 text-amber-50' : 'border-[var(--line)] bg-[var(--bg)] text-[var(--muted)]',
+          'mt-3 text-sm leading-6',
+          error ? 'text-amber-300' : 'text-[var(--muted)]',
         ].join(' ')}>
           {error || emptyMessage}
         </div>
