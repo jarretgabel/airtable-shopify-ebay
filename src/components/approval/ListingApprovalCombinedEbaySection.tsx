@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { BodyHtmlPreview } from '@/components/approval/BodyHtmlPreview';
@@ -15,7 +16,6 @@ import {
   detailDisclosureClass,
   detailDisclosureSummaryClass,
   detailPreBlockClass,
-  insetPanelClass,
 } from '@/components/tabs/uiClasses';
 import { findEbayBodyHtmlFieldName } from '@/components/approval/listingApprovalFieldHelpers';
 import type { ListingApprovalCombinedEbaySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
@@ -29,9 +29,7 @@ const EbayApprovalPayloadDetails = lazy(async () => ({
 
 function EbayPayloadFallback() {
   return (
-    <div className={`${insetPanelClass} mt-4 text-sm text-[var(--muted)]`}>
-      Loading eBay payload preview...
-    </div>
+    <LoadingSurface message="Loading eBay payload preview..." />
   );
 }
 

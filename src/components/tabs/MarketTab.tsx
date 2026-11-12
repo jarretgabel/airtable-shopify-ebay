@@ -1,9 +1,10 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { FormEvent, useRef } from 'react';
 import type { MarketTabViewModel } from '@/app/appTabViewModels';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { PrimaryActionButton } from '@/components/app/PrimaryActionButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
-import { darkTableHeaderClass, darkTableRowHoverClass, emptySurfaceClass, errorSurfaceClass, listingSummaryClass, loadingSurfaceClass, mutedCodeClass, panelSurfaceClass, spinnerClass } from '@/components/tabs/uiClasses';
+import { darkTableHeaderClass, darkTableRowHoverClass, emptySurfaceClass, errorSurfaceClass, listingSummaryClass, mutedCodeClass, panelSurfaceClass } from '@/components/tabs/uiClasses';
 
 interface MarketTabProps {
   viewModel: MarketTabViewModel;
@@ -64,10 +65,7 @@ export function MarketTab({ viewModel }: MarketTabProps) {
       )}
 
       {loading && (
-        <section className={loadingSurfaceClass}>
-          <div className={spinnerClass} />
-          <p>Fetching market listings from HiFiShark...</p>
-        </section>
+        <LoadingSurface message="Fetching market listings from HiFiShark..." />
       )}
 
       {!loading && listings.length > 0 && (

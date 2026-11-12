@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useMemo, useState } from 'react';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
@@ -457,9 +458,7 @@ export function UsedGearWorkflowProgressSection({
 
       <div className="space-y-4">
         {loading ? (
-          <div className="px-6 py-2 text-sm text-[var(--muted)]">
-            Loading used-gear processing and holding queue...
-          </div>
+          <LoadingSurface message="Loading used-gear processing and holding queue..." />
         ) : (() => {
           const nextIntakeSortMode: UsedGearWorkflowProgressSortMode = sortMode === 'newest' ? 'oldest' : 'newest';
 

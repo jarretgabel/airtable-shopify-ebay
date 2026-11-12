@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useMemo, useState } from 'react';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
@@ -292,9 +293,7 @@ export function UsedGearParkingLotSection({
 
       <div className="space-y-4">
         {loading ? (
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
-            Loading Parking Lot queue...
-          </div>
+          <LoadingSurface message="Loading Parking Lot queue..." />
         ) : (() => {
           const nextIntakeSortMode: UsedGearParkingLotSortMode = sortMode === 'newest'
             ? 'oldest'

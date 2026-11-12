@@ -8,7 +8,7 @@ import {
   type EbaySampleListingResult,
 } from '@/services/app-api/ebay';
 import type { EbayBusinessPolicyConfig, EbayLocationConfig } from '@/services/ebay/types';
-import { spinnerClass } from '@/components/tabs/uiClasses';
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { EbayServerConfigNotice } from '@/components/ebay/EbayCards';
 import { EbayAuthenticatedView } from '@/components/ebay/EbayAuthenticatedView';
 
@@ -150,7 +150,7 @@ export function EbayTab({ viewModel, onOpenSnapshotRecord }: EbayTabProps) {
           </div>
           <h2 className="m-0 text-xl font-extrabold text-[var(--ink)]">Restoring eBay Session</h2>
           <p className="m-0 text-[0.87rem] leading-[1.6] text-[var(--muted)]">Checking the Lambda-backed eBay connection and loading inventory.</p>
-          <div className="flex items-center justify-center gap-3 py-8 text-[0.84rem] text-[var(--muted)]"><div className={spinnerClass} /><span>{loading ? 'Loading eBay inventory...' : 'Connecting...'}</span></div>
+          <LoadingSurface message={loading ? 'Loading eBay inventory...' : 'Connecting...'} />
           {error && <div className="w-full rounded-[10px] border border-red-400/40 bg-[var(--error-bg)] px-4 py-2.5 text-left text-[0.82rem] text-[var(--error-text)]">{error}</div>}
         </div>
       </div>

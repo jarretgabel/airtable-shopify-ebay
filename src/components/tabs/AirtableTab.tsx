@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { AirtableTabViewModel } from '@/app/appTabViewModels';
@@ -308,9 +309,7 @@ export function AirtableTab({
 
       <section id="inventory-directory-list" className="space-y-4">
         {directoryLoading && records.length === 0 ? (
-          <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-10 text-center text-sm text-[var(--muted)]">
-            Loading Workflow Hub directory...
-          </div>
+          <LoadingSurface message="Loading Workflow Hub directory..." />
         ) : null}
 
         {directoryError && records.length === 0 ? (

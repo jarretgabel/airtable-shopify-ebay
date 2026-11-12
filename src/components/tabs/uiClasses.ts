@@ -1,12 +1,12 @@
 export const panelSurfaceClass = 'mt-3';
 export const errorSurfaceClass = 'mt-3 rounded-[14px] border border-[#f7c8c4] bg-[var(--error-bg)] p-4';
-export const loadingSurfaceClass = 'mt-3 flex items-center gap-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 text-[var(--muted)]';
+export const loadingSurfaceClass = 'flex items-center justify-center gap-3 py-16 text-sm text-[var(--muted)]';
 export const emptySurfaceClass = 'mt-3 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4 text-center text-[var(--muted)]';
 export const listingSummaryClass = 'mb-4 text-sm text-[var(--muted)]';
 export const mutedCodeClass = 'rounded bg-[var(--line)] px-1.5 py-0.5 text-[0.85em] text-[var(--ink)]';
 export const darkTableHeaderClass = 'bg-white/5 text-[var(--muted)]';
 export const darkTableRowHoverClass = 'transition-colors hover:bg-white/5';
-export const spinnerClass = 'h-[18px] w-[18px] animate-spin rounded-full border-[3px] border-sky-200 border-t-[var(--accent)]';
+export const spinnerClass = 'h-[18px] w-[18px] animate-spin rounded-full border-2 border-[var(--line)] border-t-[var(--accent)]';
 
 export const tabSectionSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_2px_rgba(2,6,23,0.12),0_8px_24px_rgba(2,6,23,0.06)]';
 export const tabSectionPrimaryActionClass = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60';

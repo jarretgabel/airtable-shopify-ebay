@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useMemo, useState } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { EmptySurface } from '@/components/app/StateSurfaces';
@@ -305,9 +306,7 @@ export function UsedGearWorkflowSourceDirectoryPage({
       ) : null}
 
       {loading && sourceRecords.length === 0 ? (
-        <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-10 text-center text-sm text-[var(--muted)]">
-              Loading workflow directory...
-        </div>
+        <LoadingSurface message="Loading workflow directory..." />
       ) : null}
 
       {sourceRecords.length > 0 ? (

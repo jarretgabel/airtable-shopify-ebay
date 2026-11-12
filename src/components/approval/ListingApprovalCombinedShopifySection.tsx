@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy, useMemo } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import { ShopifySeoFieldsEditor, SHOPIFY_SEO_DESCRIPTION_FIELD_NAME, SHOPIFY_SEO_TITLE_FIELD_NAME } from '@/components/approval/ShopifySeoFieldsEditor';
@@ -16,7 +17,6 @@ import {
   detailDisclosureClass,
   detailDisclosureSummaryClass,
   detailPreBlockClass,
-  insetPanelClass,
 } from '@/components/tabs/uiClasses';
 import type { ListingApprovalCombinedShopifySectionProps } from '@/components/approval/listingApprovalCombinedSectionTypes';
 import { useAuthStore } from '@/stores/auth/authStore';
@@ -30,9 +30,7 @@ const SHOPIFY_CONDITION_METAFIELD_VALUE_FIELD = 'Shopify Condition Metafield Val
 
 function ShopifyPayloadFallback() {
   return (
-    <div className={`${insetPanelClass} mt-4 text-sm text-[var(--muted)]`}>
-      Loading Shopify payload preview...
-    </div>
+    <LoadingSurface message="Loading Shopify payload preview..." />
   );
 }
 

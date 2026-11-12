@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy, useRef, useState } from 'react';
 import { ApprovalFormFields } from '@/components/approval/ApprovalFormFields';
 import {
@@ -24,9 +25,7 @@ const KeyFeaturesEditor = lazy(async () => ({
 
 function CombinedSharedEditorFallback() {
   return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)]">
-      Loading shared editor...
-    </div>
+    <LoadingSurface message="Loading shared editor..." />
   );
 }
 

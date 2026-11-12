@@ -17,9 +17,9 @@ export function ErrorSurface({ title, message, children }: { title: string; mess
 
 export function LoadingSurface({ message }: { message: string }) {
   return (
-    <section className={loadingSurfaceClass}>
-      <div className={spinnerClass} />
-      <p>{message}</p>
+    <section className={loadingSurfaceClass} aria-live="polite">
+      <div className={spinnerClass} aria-hidden="true" />
+      <p className="m-0">{message}</p>
     </section>
   );
 }
