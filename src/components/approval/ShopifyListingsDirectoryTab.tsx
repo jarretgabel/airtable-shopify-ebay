@@ -1,5 +1,6 @@
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
 import { getEffectiveShopifyStatus } from '@/components/tabs/ShopifyTab';
+import { ListingSnapshotNav } from '@/components/app/ListingChannelContext';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -26,6 +27,7 @@ export function ShopifyListingsDirectoryTab({
         eyebrow="Selling"
         title="Shopify Product Snapshot"
       />
+      <ListingSnapshotNav active="shopify" />
 
       <AppPageSectionSurface flat className="space-y-5">
         <ListingsServiceSummaryPanel

@@ -5,6 +5,7 @@ import { AppPageStatSection } from '@/components/app/AppPageStatSection';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
+import { PENDING_LISTINGS_SECTION_KEY, useListingChannels } from '@/components/app/ListingChannelContext';
 import { QueueSearchToolbar } from '@/components/app/QueueSearchToolbar';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -365,6 +366,7 @@ export function ListingApprovalQueuePanel({
   loadRecords,
 }: ListingApprovalQueuePanelProps) {
   const isCombinedApproval = approvalChannel === 'combined';
+  const listingChannels = useListingChannels();
   const combinedSectionItems = useMemo(
     () => isCombinedApproval
       ? [
@@ -379,6 +381,15 @@ export function ListingApprovalQueuePanel({
     () => combinedSectionItems.find((item) => item.id === activeSectionId)?.key ?? 'ready-for-publishing',
     [activeSectionId, combinedSectionItems],
   );
+  useEffect(() => {
+    const pending = sessionStorage.getItem(PENDING_LISTINGS_SECTION_KEY);
+    if (!pending || !isCombinedApproval) return;
+    const sectionId = combinedSectionItems.find((item) => item.key === pending)?.id;
+    if (sectionId && document.getElementById(sectionId)) {
+      sessionStorage.removeItem(PENDING_LISTINGS_SECTION_KEY);
+      requestAnimationFrame(() => scrollToSection(sectionId));
+    }
+  }, [combinedSectionItems, isCombinedApproval, loading, records.length, scrollToSection]);
   const supportsQuickFilters = approvalChannel !== 'combined';
   const quickFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:quick`;
   const extraFilterStorageKey = `${FILTER_STORAGE_PREFIX}:${approvalChannel}:extra`;
@@ -1127,9 +1138,16 @@ export function ListingApprovalQueuePanel({
       {hasTableReference && loading && records.length === 0 ? null : (
         <MainPageSectionNav
           ariaLabel="Combined listings sections"
-          items={combinedSectionItems.map((item) => ({ key: item.key, label: item.label }))}
-          activeKey={activeCombinedSectionKey}
+          items={[
+            ...combinedSectionItems.map((item) => ({ key: item.key as string, label: item.label })),
+            ...(listingChannels?.channels ?? []),
+          ]}
+          activeKey={activeCombinedSectionKey as string}
           onSelect={(sectionKey) => {
+            if (sectionKey === 'shopify' || sectionKey === 'ebay') {
+              listingChannels?.navigate(sectionKey);
+              return;
+            }
             const sectionId = combinedSectionItems.find((item) => item.key === sectionKey)?.id;
             if (sectionId) {
               requestAnimationFrame(() => {

@@ -1,4 +1,5 @@
 import type { EbayTabViewModel } from '@/app/appTabViewModels';
+import { ListingSnapshotNav } from '@/components/app/ListingChannelContext';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -38,6 +39,7 @@ export function EbayListingsDirectoryTab({
         eyebrow="Selling"
         title="eBay Listing Snapshot"
       />
+      <ListingSnapshotNav active="ebay" />
 
       <AppPageSectionSurface flat className="space-y-5">
         <ListingsServiceSummaryPanel

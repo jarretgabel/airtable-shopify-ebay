@@ -1,7 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
-
-/** Lets a wrapper place a control in the page header's action area. */
-export const PageSubNavContext = createContext<ReactNode>(null);
+import type { ReactNode } from 'react';
 
 interface AppPageHeaderProps {
   /** Kept for callers; the top-bar breadcrumb already shows the group. */
@@ -22,9 +19,7 @@ export function AppPageHeader({
   className,
   actionsClassName,
 }: AppPageHeaderProps) {
-  const subNav = useContext(PageSubNavContext);
   return (
-    <>
     <header className={`pb-1 ${className ?? ''}`.trim()}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
@@ -32,9 +27,8 @@ export function AppPageHeader({
           {description ? <div className="mt-1.5 text-sm leading-6 text-[var(--muted)]">{description}</div> : null}
           {detail ? <div className="mt-1.5 text-sm leading-6 text-[var(--muted)]">{detail}</div> : null}
         </div>
-        {actions || subNav ? <div className={actionsClassName ?? 'flex flex-wrap items-center gap-2'}>{subNav}{actions}</div> : null}
+        {actions ? <div className={actionsClassName ?? 'flex flex-wrap gap-2'}>{actions}</div> : null}
       </div>
     </header>
-    </>
   );
 }
