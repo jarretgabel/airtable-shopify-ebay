@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
                 if (id.includes('/react-router/') || id.includes('/react-router-dom/')) return 'vendor-router'
                 if (id.includes('/zustand/')) return 'vendor-state'
                 if (id.includes('/jspdf/')) return 'vendor-jspdf'
-                if (id.includes('/html2canvas/')) return 'vendor-html2canvas'
+                if (id.includes('/html2canvas-pro/')) return 'vendor-html2canvas'
                 if (id.includes('/dompurify/')) return 'vendor-dompurify'
                 return 'vendor-misc'
               }

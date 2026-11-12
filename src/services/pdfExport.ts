@@ -11,7 +11,7 @@ export interface PdfSectionMeta {
 
 async function loadPdfLibraries() {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-    import('html2canvas'),
+    import('html2canvas-pro'),
     import('jspdf'),
   ]);
 
