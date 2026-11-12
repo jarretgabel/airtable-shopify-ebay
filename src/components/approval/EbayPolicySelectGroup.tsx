@@ -84,11 +84,12 @@ function renderVisuallyRequiredLabel(
   fieldName: string,
   renderFieldLabel: (fieldName: string) => JSX.Element,
   visibleLabelFieldName?: string,
+  filled = false,
 ): JSX.Element {
   return (
     <span className="flex items-center gap-2 [&>span]:mb-0">
       {renderFieldLabel(visibleLabelFieldName ?? fieldName)}
-      <span className={`${requiredBadgeClass} self-center`}>Required</span>
+      {!filled && <span className={`${requiredBadgeClass} self-center`}>Required</span>}
     </span>
   );
 }
@@ -213,7 +214,7 @@ export function EbayPolicySelectGroup({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {fulfillmentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel, 'Fulfillment policy')}
+            {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel, 'Fulfillment policy', Boolean((formValues[fulfillmentPolicyFieldName ?? ''] ?? '').trim()))}
             <ApprovalSelect
               selectClassName={`${getSelectClassName(fulfillmentPolicyFieldName)}${shippingPolicyIssue ? ' ring-1 ring-rose-400' : ''}`}
               value={selectedFulfillmentPolicyId}
@@ -240,7 +241,7 @@ export function EbayPolicySelectGroup({
 
         {paymentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel, 'Payment policy')}
+            {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel, 'Payment policy', Boolean((formValues[paymentPolicyFieldName] ?? '').trim()))}
             <ApprovalSelect
               selectClassName={getSelectClassName(paymentPolicyFieldName)}
               value={resolveSelectedPolicyValue(
@@ -262,7 +263,7 @@ export function EbayPolicySelectGroup({
 
         {returnPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel, 'Return policy')}
+            {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel, 'Return policy', Boolean((formValues[returnPolicyFieldName] ?? '').trim()))}
             <ApprovalSelect
               selectClassName={getSelectClassName(returnPolicyFieldName)}
               value={resolveSelectedPolicyValue(

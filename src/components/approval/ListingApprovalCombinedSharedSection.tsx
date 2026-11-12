@@ -347,8 +347,8 @@ export function ListingApprovalCombinedSharedSection({
           <div className="flex flex-col gap-2">
             <div className={`mb-1 flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] ${descriptionIsMissing ? 'text-[var(--required-label-ink)]' : 'text-[var(--muted)]'}`}>
               <label htmlFor="combined-description-field">Description</label>
-              {descriptionIsShopifyRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">Shopify Required</span>}
-              {descriptionIsEbayRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">eBay Required</span>}
+              {descriptionIsMissing && descriptionIsShopifyRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">Shopify Required</span>}
+              {descriptionIsMissing && descriptionIsEbayRequired && <span className="inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]">eBay Required</span>}
               <button
                 type="button"
                 className="ml-auto rounded-md border border-[var(--line)] bg-[var(--panel)] px-2.5 py-1 text-[0.68rem] font-semibold normal-case tracking-normal text-[var(--ink)] hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"

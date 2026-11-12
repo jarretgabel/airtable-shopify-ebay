@@ -431,7 +431,7 @@ describe('combined approval sections', () => {
     expect(titleFields.compareDocumentPosition(descriptionLabel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('keeps the description requirement badge visible while only marking an empty value invalid', () => {
+  it('hides the description requirement badge once filled and only marks an empty value invalid', () => {
     const props = buildSharedProps();
     props.ebayRequiredFieldNames = [...props.ebayRequiredFieldNames, 'Description'];
     props.combinedRequiredFieldNames = [...props.combinedRequiredFieldNames, 'Description'];
@@ -447,7 +447,7 @@ describe('combined approval sections', () => {
     props.formValues = { ...props.formValues, Description: 'Integrated amplifier in excellent condition.' };
     rerender(<ListingApprovalCombinedSharedSection {...props} />);
 
-    expect(screen.getByText('eBay Required')).toBeInTheDocument();
+    expect(screen.queryByText('eBay Required')).not.toBeInTheDocument();
     expect(description).toHaveAttribute('aria-invalid', 'false');
     expect(description).not.toHaveClass('border-rose-400/45');
   });
