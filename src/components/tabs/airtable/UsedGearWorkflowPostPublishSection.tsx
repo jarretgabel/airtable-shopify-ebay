@@ -835,7 +835,7 @@ export function UsedGearWorkflowPostPublishSection({
             : sectionRecords;
 
           return (
-            <AppPageSectionSurface id={section.id} key={section.key} flat className="scroll-mt-24 [&:not(:first-child)]:mt-12 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-[var(--line)] [&:not(:first-child)]:pt-8">
+            <AppPageSectionSurface id={section.id} key={section.key} flat className="scroll-mt-24">
               {showSectionTitles ? (
                 <AppSectionTitle
                   title={section.title}
