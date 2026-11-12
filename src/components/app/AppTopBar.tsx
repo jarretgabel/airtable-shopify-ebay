@@ -45,7 +45,7 @@ export function AppTopBar({
   }, [onCloseDropdowns, openDropdown]);
 
   return (
-    <header ref={barRef} className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--header-surface)] px-4 backdrop-blur-md sm:px-6">
+    <header ref={barRef} className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 bg-[var(--header-surface)] px-4 backdrop-blur-md sm:px-6">
       <div className="flex min-w-0 items-center gap-3" data-export-ignore="true">
         <button
           type="button"
