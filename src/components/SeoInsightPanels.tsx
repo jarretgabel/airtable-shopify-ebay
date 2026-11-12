@@ -159,7 +159,7 @@ export function SearchConsolePanel({ data, domain }: { data: SeoSearchConsole | 
             <GscStat label="CTR" value={pct(data.current.ctr)} now={data.current.ctr} before={data.previous.ctr} />
             <GscStat label="Avg position" value={data.current.position === null ? '–' : data.current.position.toFixed(1)} now={data.current.position ?? 0} before={data.previous.position ?? 0} invert />
           </div>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-x-14 gap-y-10 lg:grid-cols-2">
             <GscTable title="Top queries" label="query" rows={data.queries.map((q) => ({ ...q, key: q.query, text: q.query }))} />
             <GscTable title="Top pages" label="page" rows={data.pages.map((p) => ({ ...p, key: p.url, text: shortUrl(p.url) }))} />
           </div>

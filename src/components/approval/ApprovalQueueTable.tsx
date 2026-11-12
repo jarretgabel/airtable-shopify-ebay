@@ -405,8 +405,8 @@ export function ApprovalQueueTable({
 						}
 
 						return (
-							<div className="flex min-w-[7rem] items-center justify-center gap-2">
-								<span className="text-[var(--muted)]">{getCell(record, qtyFieldName)}</span>
+							<div className={`flex items-center gap-2 ${qtyDisplayLabel === 'sku' ? 'justify-start' : 'min-w-[7rem] justify-center'}`}>
+								<span className={qtyDisplayLabel === 'sku' ? 'font-semibold text-[var(--ink)]' : 'text-[var(--muted)]'}>{getCell(record, qtyFieldName)}</span>
 								{onUpdateQty ? (
 									<button
 										type="button"
@@ -530,7 +530,7 @@ export function ApprovalQueueTable({
 			headerClassName: 'border-l border-[var(--line)]/60',
 			cellClassName: 'border-l border-[var(--line)]/60',
 			renderCell: (record) => (
-				<div className="flex min-h-[3rem] items-center justify-center gap-1.5">
+				<div className="flex min-h-[2.25rem] items-center justify-center gap-1.5">
 					<CompactIconActionButton
 						label="View Listing"
 						variant="small-secondary"

@@ -167,7 +167,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
 
       {run ? (
         <DashboardSectionPanel id="seo-insights" title="Insights">
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-x-14 gap-y-10 lg:grid-cols-2">
             <DashboardSubPanel title="Site checks">
               <ul className="m-0 list-none space-y-1.5 p-0 text-[0.85rem]">
                 {run.siteChecks.map((check) => (
@@ -178,7 +178,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
               </ul>
             </DashboardSubPanel>
             <DashboardSubPanel title="Biggest opportunities">
-              <ul className="m-0 list-none space-y-1.5 p-0 text-[0.85rem]">
+              <ul className="m-0 list-none space-y-3 p-0 text-[0.85rem]">
                 {summary?.topIssues.map((issue) => (
                   <li key={`${issue.kind}-${issue.id}`}><span className="font-semibold uppercase">{issue.kind}</span> {issue.label} <span className="text-[var(--muted)]">· {issue.pages} pages</span><br /><span className="text-[var(--muted)]">Fix: {recommendationFor({ ...issue, kind: issue.kind as 'seo' | 'aio', lost: issue.pointsLost })}</span></li>
                 ))}

@@ -120,7 +120,7 @@ export function IntakeItemsMatrix<TItem>({
             return (
               <tr
                 key={getItemKey(item)}
-                className={isLastRow ? `align-top ${rowClassName} ${groupStartRowClassName}` : `align-top border-b border-[var(--line)]/70 ${rowClassName} ${groupStartRowClassName}`}
+                className={isLastRow ? `align-middle ${rowClassName} ${groupStartRowClassName}` : `align-middle border-b border-[var(--line)]/70 ${rowClassName} ${groupStartRowClassName}`}
               >
                 {showGroupColumn && groupItemIndex === 0 ? (
                   <td
@@ -133,7 +133,7 @@ export function IntakeItemsMatrix<TItem>({
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={`px-3 py-2.5 text-sm text-[var(--ink)] ${alignClassNames[column.align ?? 'left']} ${column.cellClassName ?? ''}`}
+                    className={`px-3 py-2 text-[0.8125rem] text-[var(--ink)] ${alignClassNames[column.align ?? 'left']} ${column.cellClassName ?? ''}`}
                   >
                     {column.renderCell(item, cellContext)}
                   </td>
