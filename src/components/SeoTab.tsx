@@ -167,7 +167,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
 
       {run ? (
         <DashboardSectionPanel id="seo-insights" title="Insights">
-          <div className="grid gap-x-14 gap-y-10 lg:grid-cols-2">
+          <div className="grid lg:grid-cols-2 [&>section]:border-t [&>section]:border-[var(--line)] [&>section]:py-8 [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0 lg:[&>section:nth-child(2)]:border-t-0 lg:[&>section:nth-child(2)]:pt-0 lg:[&>section:nth-child(odd)]:pr-10 lg:[&>section:nth-child(even)]:border-l lg:[&>section:nth-child(even)]:pl-10">
             <DashboardSubPanel title="Site checks">
               <ul className="m-0 list-none space-y-1.5 p-0 text-[0.85rem]">
                 {run.siteChecks.map((check) => (
