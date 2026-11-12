@@ -40,7 +40,7 @@ interface GuideSectionProps {
 
 function GuideSection({ id, eyebrow, title, summary, children }: GuideSectionProps) {
   return (
-    <section id={id} className="scroll-mt-28 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_18px_40px_rgba(2,6,23,0.18)]">
+    <section id={id} data-flat-section="" className="scroll-mt-28">
       <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">{eyebrow}</p>
       <h3 className="mt-2 text-xl font-semibold text-[var(--ink)]">{title}</h3>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{summary}</p>
@@ -241,10 +241,10 @@ function FlowStageCard({
   return (
     <article
       className={[
-        'rounded-2xl border bg-[var(--bg)]/80 p-4 shadow-[0_10px_24px_rgba(2,6,23,0.12)] backdrop-blur-[1px]',
+        'rounded-xl border bg-transparent p-4',
         toneStyles.edge,
         isPrimary
-          ? 'border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_10%,var(--bg))]'
+          ? 'border-[var(--accent)]'
           : isSupport
             ? 'border-sky-400/40'
             : 'border-[var(--line)]',
@@ -292,7 +292,7 @@ function WorkflowFlowChart({ currentUserRole, flowStages }: { currentUserRole: U
 
   return (
     <div className="space-y-3">
-      <div className="rounded-[28px] border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_94%,transparent),color-mix(in_srgb,var(--bg)_90%,transparent))] p-4 shadow-[0_18px_40px_rgba(2,6,23,0.16)] xl:p-5">
+      <div>
         <div className="mb-4 flex flex-wrap items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">
           <span className="inline-flex items-center whitespace-nowrap rounded-full bg-[var(--accent)]/15 px-3 py-1 text-[var(--accent)]">Your lane</span>
           <span className="inline-flex items-center whitespace-nowrap rounded-full bg-sky-400/15 px-3 py-1 text-sky-200">You support</span>
@@ -305,7 +305,7 @@ function WorkflowFlowChart({ currentUserRole, flowStages }: { currentUserRole: U
               {index < visibleStages.length - 1 ? (
                 <div className="absolute bottom-[-18px] left-5 top-11 w-px bg-[color:color-mix(in_srgb,var(--line)_72%,white_10%)]" />
               ) : null}
-              <span className="absolute left-0 top-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-sm font-bold text-[var(--ink)] shadow-[0_8px_20px_rgba(2,6,23,0.18)]">
+              <span className="absolute left-0 top-1 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--panel)] text-sm font-bold text-[var(--ink)]">
                 {index + 1}
               </span>
               <FlowStageCard currentUserRole={currentUserRole} stage={stage} />
@@ -387,7 +387,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
         className="mb-1"
       />
 
-      <section className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--panel)_92%,transparent),color-mix(in_srgb,var(--bg)_88%,transparent))] p-5 shadow-[0_20px_45px_rgba(2,6,23,0.2)]">
+      <section data-flat-section="">
         <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Your Starting Point</p>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{roleSummary(currentUserRole, guideContent.roleGuides)}</p>
         <div className="mt-4">
