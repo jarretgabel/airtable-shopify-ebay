@@ -103,7 +103,7 @@ export function IntakeItemsMatrix<TItem>({
           {resolvedGroups.flatMap((group, groupIndex) => group.items.map((item, groupItemIndex) => {
             renderedRowCount += 1;
             const isLastRow = renderedRowCount === totalRowCount;
-            const isStripedGroup = groupIndex % 2 === 1;
+            const isStripedGroup = (groups ? groupIndex : renderedRowCount - 1) % 2 === 1;
             const isNewGroupStart = groupItemIndex === 0 && groupIndex > 0;
             const rowClassName = isStripedGroup ? 'bg-[color-mix(in_srgb,var(--ink)_3.5%,transparent)]' : 'bg-transparent';
             const groupCellClassName = '';

@@ -94,7 +94,7 @@ export function UserDirectoryListSection({
               <th className="border-b border-white/15 px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.1em] text-slate-300">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="[&>tr:nth-child(even)]:bg-[color-mix(in_srgb,var(--ink)_3.5%,transparent)]">
             {listUsers.map((user) => (
               <tr key={user.id} className="transition hover:bg-white/5">
                 <td className="border-b border-white/10 px-3 py-2.5 font-medium text-[var(--ink)]">{user.name}</td>
