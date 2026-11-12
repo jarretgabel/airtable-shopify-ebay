@@ -763,7 +763,7 @@ export function UsedGearWorkflowPostPublishSection({
   };
 
   return (
-    <section id={overviewSectionId} ref={sectionRef} className="space-y-4  scroll-mt-24">
+    <section id={overviewSectionId} ref={sectionRef} className="space-y-4  scroll-mt-32">
       <div className="flex flex-col gap-4 empty:hidden">
         {showSectionIntro ? (
           <AppSectionTitle title={queueTitle} />
@@ -834,7 +834,7 @@ export function UsedGearWorkflowPostPublishSection({
             : sectionRecords;
 
           return (
-            <AppPageSectionSurface id={section.id} key={section.key} flat className="scroll-mt-24">
+            <AppPageSectionSurface id={section.id} key={section.key} flat className="scroll-mt-32">
               {showSectionTitles ? (
                 <AppSectionTitle
                   title={section.title}

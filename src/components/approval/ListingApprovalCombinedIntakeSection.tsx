@@ -345,7 +345,7 @@ export function ListingApprovalCombinedIntakeSection({
       actions={workflowHeaderAction}
       fields={intakeSnapshotFields}
       cards={[]}
-      className="scroll-mt-24 bg-[var(--panel)]/70"
+      className="scroll-mt-32 bg-[var(--panel)]/70"
       sectionId={sectionId}
     >
       <WorkflowReferenceImagesPanel

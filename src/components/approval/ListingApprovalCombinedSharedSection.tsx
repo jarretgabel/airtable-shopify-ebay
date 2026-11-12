@@ -280,7 +280,7 @@ export function ListingApprovalCombinedSharedSection({
     && isMissingRequiredFieldValue(combinedDescriptionFieldName, formValues[combinedDescriptionFieldName]);
 
   return (
-    <AppPageSectionSurface flat id={sectionId} className="scroll-mt-24 space-y-4">
+    <AppPageSectionSurface flat id={sectionId} className="scroll-mt-32 space-y-4">
       <div className="space-y-4">
         <AppSectionTitle
           title="Shared Fields"

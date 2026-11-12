@@ -463,7 +463,7 @@ export function DashboardActionsSection({
   return (
     <section
       id="actions"
-      className="scroll-mt-24 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]"
+      className="scroll-mt-32 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]"
     >
       <div className="mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1">
         <h2 className="m-0 text-[1.05rem] font-semibold text-[var(--ink)]">Actions Needed</h2>

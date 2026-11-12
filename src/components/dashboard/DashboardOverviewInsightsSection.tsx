@@ -24,7 +24,7 @@ const insightBadgeClass = {
   info: 'bg-blue-900/50 text-blue-300',
   positive: 'bg-emerald-900/50 text-emerald-300',
 } as const;
-const sectionBaseClass = 'scroll-mt-24';
+const sectionBaseClass = 'scroll-mt-32';
 const sectionHeaderClass = 'mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1';
 const sectionHeaderLabelClass = 'm-0 text-[1.05rem] font-semibold text-[var(--ink)]';
 
