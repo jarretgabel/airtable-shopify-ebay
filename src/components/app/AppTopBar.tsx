@@ -8,8 +8,6 @@ import type { AppTheme } from '@/services/themePreference';
 
 interface AppTopBarProps {
   barRef: Ref<HTMLElement>;
-  groupTitle: string | null;
-  pageLabel: string | null;
   currentUserLabel: string;
   canManageUsers: boolean;
   theme: AppTheme;
@@ -26,8 +24,6 @@ interface AppTopBarProps {
 
 export function AppTopBar({
   barRef,
-  groupTitle,
-  pageLabel,
   currentUserLabel,
   canManageUsers,
   theme,
@@ -59,10 +55,6 @@ export function AppTopBar({
         >
           <NavIcon page="menu" className="h-5 w-5" />
         </button>
-        <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
-          {groupTitle ? <><span className="hidden text-[var(--muted)] sm:inline">{groupTitle}</span><span className="hidden text-[var(--muted)] sm:inline" aria-hidden="true">/</span></> : null}
-          <span className="truncate font-semibold text-[var(--ink)]">{pageLabel ?? 'ResolutionAV'}</span>
-        </nav>
       </div>
       <div className="flex items-center gap-1.5" data-export-ignore="true">
         <SecondaryActionButton

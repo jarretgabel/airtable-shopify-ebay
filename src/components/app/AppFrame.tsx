@@ -45,8 +45,6 @@ export function AppFrame({
     { id: 'selling', title: 'Selling', tabs: [...listingsTabs, ...postPublishTabs, ...postEbayTabs] },
     { id: 'utilities', title: 'Utilities', tabs: utilityTabs },
   ].filter((group) => group.tabs.length > 0);
-  const activeGroup = groups.find((group) => group.tabs.some((tab) => tab.active));
-  const activeTab = activeGroup?.tabs.find((tab) => tab.active);
 
   function toggleCollapsed() {
     setCollapsed((current) => {
@@ -93,8 +91,6 @@ export function AppFrame({
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopBar
           barRef={shellContainerRef}
-          groupTitle={activeGroup && activeGroup.id !== 'main' ? activeGroup.title : null}
-          pageLabel={activeTab?.label ?? null}
           currentUserLabel={currentUserLabel}
           canManageUsers={canManageUsers}
           theme={theme}

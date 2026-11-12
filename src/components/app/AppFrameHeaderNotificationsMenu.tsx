@@ -60,17 +60,17 @@ export function AppFrameHeaderNotificationsMenu({
         onKeyDown={(event) => handleDropdownTriggerKeyDown(event, 'notifications', onToggleDropdown, onCloseDropdowns)}
         className="relative !h-9 !w-9 !rounded-lg !p-0 focus-visible:!outline-none focus-visible:!ring-2 focus-visible:!ring-sky-400/60"
       >
-        <span className="relative inline-flex h-5 w-5 items-center justify-center">
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+        <span className="inline-flex h-5 w-5 items-center justify-center">
+          <svg viewBox="0 0 24 24" className="h-[1.15rem] w-[1.15rem]" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
             <path d="M6 9a6 6 0 0 1 12 0v4.4l1.6 2.1a1 1 0 0 1-.8 1.6H5.2a1 1 0 0 1-.8-1.6L6 13.4V9Z" />
             <path d="M9.7 18.2a2.4 2.4 0 0 0 4.6 0" />
           </svg>
-          {notificationCount > 0 && (
-            <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.62rem] font-bold leading-none text-white">
-              {notificationCount > 99 ? '99+' : notificationCount}
-            </span>
-          )}
         </span>
+        {notificationCount > 0 && (
+          <span className="pointer-events-none absolute -right-1.5 -top-1.5 inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-red-500 px-1 text-[0.62rem] font-bold leading-none text-white ring-2 ring-[var(--bg)]">
+            {notificationCount > 99 ? '99+' : notificationCount}
+          </span>
+        )}
       </SecondaryActionButton>
 
       {openDropdown === 'notifications' && (

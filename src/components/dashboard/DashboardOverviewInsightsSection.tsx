@@ -159,25 +159,6 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
       />,
       }
     ) : null,
-    accessiblePages.includes('listings') ? (
-      {
-        key: 'workflow-listings',
-        priority: 25,
-        element: <DashboardKpiCard
-        key="workflow-listings"
-        borderToneClass="border-t-violet-500"
-        eyebrow="Used Gear Listings"
-        value={workflowUnavailableReason ? 'Off' : workflowAnalytics.loading ? '…' : listingPhaseCount.toLocaleString()}
-        detail={workflowUnavailableReason
-          ? workflowUnavailableReason
-          : <><strong className="font-semibold text-[var(--accent)]">{listingPhaseCount}</strong> ready to list</>}
-        trend={workflowUnavailableReason ? 'Unavailable' : listingPhaseCount > 0 ? `${listingPhaseCount} ready to list` : 'Clear'}
-        trendClass={workflowUnavailableReason ? 'text-amber-300' : listingPhaseCount > 0 ? 'text-violet-300' : 'text-emerald-300'}
-        unavailableReason={workflowUnavailableReason}
-        onClick={() => onSelectTab('listings')}
-      />,
-      }
-    ) : null,
     canSeeRoleDashboardModule(currentUserRole, 'tester') && accessiblePages.includes('testing-queue') ? (
       {
         key: 'testing-queue',
@@ -261,10 +242,8 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
     && (canSeeRoleDashboardModule(currentUserRole, 'processor') || currentUserRole === 'developer')
     && Object.values(workflowAnalytics.statusCounts).some((count) => count > 0);
 
-  // The stage breakdown already shows "Ready to list" and links to Listings, so the lone card would repeat it.
   const orderedCards = cards
     .filter((card): card is OverviewCardEntry => card !== null)
-    .filter((card) => !(showStageBreakdown && card.key === 'workflow-listings'))
     .sort((left, right) => left.priority - right.priority);
 
   if (orderedCards.length === 0 && !showStageBreakdown) {

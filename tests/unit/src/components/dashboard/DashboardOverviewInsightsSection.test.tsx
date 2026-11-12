@@ -98,22 +98,19 @@ describe('DashboardOverviewSection', () => {
       />,
     );
 
-    expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByRole('button', { name: /inventory value/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /testing queue/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /photography queue/i })).not.toBeInTheDocument();
 
     const blockerButton = screen.getByRole('button', { name: /processing blockers/i });
-    const listingsButton = screen.getByRole('button', { name: /used gear listings/i });
 
     expect(blockerButton).toBeDisabled();
-    expect(listingsButton).toBeDisabled();
 
     fireEvent.click(blockerButton);
-    fireEvent.click(listingsButton);
 
     expect(onSelectTab).not.toHaveBeenCalled();
-    expect(screen.getAllByText('Off').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Off').length).toBeGreaterThanOrEqual(1);
   });
 
   it('keeps leadership dashboards focused on processor and listing summaries', () => {
