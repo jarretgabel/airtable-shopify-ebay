@@ -21,6 +21,7 @@ export interface IntakeSnapshotSectionProps {
   className?: string;
   actions?: ReactNode;
   sectionId?: string;
+  flat?: boolean;
   children?: ReactNode;
 }
 
@@ -53,11 +54,12 @@ export function IntakeSnapshotSection({
   className,
   actions,
   sectionId,
+  flat,
   children,
 }: IntakeSnapshotSectionProps) {
   return (
-    <div id={sectionId} className={['', className].filter(Boolean).join(' ')}>
-      <AppSectionTitle title={title} titleClassName="text-lg" actions={actions} />
+    <div id={sectionId} {...(flat ? { 'data-flat-section': '' } : {})} className={['', className].filter(Boolean).join(' ')}>
+      <AppSectionTitle title={title} titleClassName={flat ? 'text-xl' : 'text-lg'} actions={actions} />
       {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p> : null}
       <div className="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
         {fields.map((field) => <SnapshotFieldCard key={field.label} {...field} />)}

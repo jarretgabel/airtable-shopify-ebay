@@ -663,12 +663,7 @@ export function ListingApprovalWorkflowProcessCard({
   if (timelineOnly) {
     return (
       <section className={workflowCardSurfaceClass}>
-        <div>
-          <p className={sectionLabelClass}>Workflow Timeline</p>
-        </div>
-        <div className="mt-4">
-          {milestonesContent}
-        </div>
+        {milestonesContent}
       </section>
     );
   }

@@ -129,7 +129,7 @@ export function ShopifyTaxonomyAttributesEditor({
   }
 
   return (
-    <details className={`${detailDisclosureClass} col-span-1 md:col-span-2`}>
+    <details className={`${detailDisclosureClass} col-span-1 mt-3 md:col-span-2`}>
       <summary className={detailDisclosureSummaryClass}>
         <span className="inline-flex items-center gap-2">
           <span>Shopify taxonomy attributes</span>

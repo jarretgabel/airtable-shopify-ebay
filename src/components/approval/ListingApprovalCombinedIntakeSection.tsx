@@ -347,6 +347,7 @@ export function ListingApprovalCombinedIntakeSection({
       cards={[]}
       className="scroll-mt-32"
       sectionId={sectionId}
+      flat
     >
       <WorkflowReferenceImagesPanel
         title="Intake Photos"

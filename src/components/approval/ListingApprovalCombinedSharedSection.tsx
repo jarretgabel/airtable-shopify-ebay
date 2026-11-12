@@ -283,6 +283,7 @@ export function ListingApprovalCombinedSharedSection({
     <AppPageSectionSurface flat id={sectionId} className="scroll-mt-32 space-y-4">
       <div className="space-y-4">
         <AppSectionTitle
+          titleClassName="text-xl"
           title="Shared Fields"
           actions={(
             <>

@@ -82,7 +82,7 @@ export function ShopifySmartCollectionsPreview({ fields }: ShopifySmartCollectio
     .slice(0, MAX_CLOSE_MATCHES);
 
   return (
-    <div className="col-span-1 flex flex-col gap-2 md:col-span-2">
+    <div className="col-span-1 mt-3 flex flex-col gap-2 border-t border-[var(--line)] pt-5 md:col-span-2">
       <span className={labelClass}>Automatic Collections</span>
       <div>
         {error && <p role="alert" className="m-0 text-xs text-rose-400">{error}</p>}

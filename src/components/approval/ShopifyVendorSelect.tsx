@@ -293,7 +293,7 @@ export function ShopifyVendorSelect({
   };
 
   return (
-    <div className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
+    <div className="relative col-span-1 mt-3 flex flex-col gap-2 border-t border-[var(--line)] pt-5 md:col-span-2">
       <span className={labelClass}>Vendor</span>
 
       <div>
