@@ -417,7 +417,7 @@ export function UsedGearWorkflowProgressSection({
   return (
     <AppPageSectionSurface id={sectionId} flat className="space-y-4">
       {showSectionIntro || !hideSearchToolbarWhileLoading ? (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 empty:hidden">
           {showSectionIntro ? (
             <AppSectionTitle title={queuePresentation.title} />
           ) : null}

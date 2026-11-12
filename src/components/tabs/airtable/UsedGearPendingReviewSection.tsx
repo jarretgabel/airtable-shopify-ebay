@@ -233,7 +233,7 @@ export function UsedGearPendingReviewSection({
 
   return (
     <AppPageSectionSurface id="used-gear-pending-review" flat className="space-y-5">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 empty:hidden">
         {showSectionIntro ? (
           <AppSectionTitle title="Pending Review Queue" />
         ) : null}

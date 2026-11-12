@@ -764,7 +764,7 @@ export function UsedGearWorkflowPostPublishSection({
 
   return (
     <section id={overviewSectionId} ref={sectionRef} className="space-y-4  scroll-mt-24">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 empty:hidden">
         {showSectionIntro ? (
           <AppSectionTitle title={queueTitle} />
         ) : null}

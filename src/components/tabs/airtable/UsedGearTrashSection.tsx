@@ -205,7 +205,7 @@ export function UsedGearTrashSection({
 
   return (
     <AppPageSectionSurface id="used-gear-trash" flat className="space-y-5">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 empty:hidden">
         {showSectionIntro ? (
           <AppSectionTitle title="Trash" />
         ) : null}

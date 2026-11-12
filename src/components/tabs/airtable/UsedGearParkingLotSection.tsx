@@ -246,7 +246,7 @@ export function UsedGearParkingLotSection({
 
   return (
     <AppPageSectionSurface id="used-gear-parking-lot" flat className="space-y-5">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 empty:hidden">
         {showSectionIntro ? (
           <AppSectionTitle title="Parking Lot" />
         ) : null}
