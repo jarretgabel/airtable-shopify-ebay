@@ -132,37 +132,20 @@ export function AppSidebar({
         data-export-ignore="true"
         className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-[var(--sidebar-line)] bg-[var(--sidebar-bg)] text-[var(--sidebar-ink)] transition-[width,transform] duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} ${rail ? 'w-64 md:w-[4.25rem]' : 'w-64'}`}
       >
-        <div className={`flex h-14 shrink-0 items-center border-b border-[var(--sidebar-line)] ${rail ? 'justify-center' : 'justify-between px-4'}`}>
-          {rail ? (
-            <>
-              <span className="text-sm font-bold tracking-tight text-[var(--sidebar-active-ink)] md:hidden" aria-label="ResolutionAV">RA</span>
+        <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[var(--sidebar-line)] px-[1.125rem]">
+          <span className={`flex min-w-0 flex-1 flex-col overflow-hidden whitespace-nowrap leading-tight transition-opacity duration-150 ${rail ? 'md:pointer-events-none md:opacity-0' : ''}`} aria-hidden={rail ? true : undefined}>
+            <span className="text-[0.95rem] font-bold tracking-[0.02em] text-[var(--sidebar-active-ink)]">ResolutionAV</span>
+            <span className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--sidebar-muted)]">Operations portal</span>
+          </span>
           <button
             type="button"
             onClick={onToggleCollapsed}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--sidebar-muted)] transition-colors hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)] md:inline-flex"
+            className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--sidebar-muted)] outline-none transition-colors hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)] focus:outline-none focus-visible:outline-none md:inline-flex"
           >
             <NavIcon page={collapsed ? 'expand' : 'collapse'} className="h-[1.1rem] w-[1.1rem]" />
           </button>
-            </>
-          ) : (
-            <>
-            <span className="flex flex-col leading-tight">
-              <span className="text-[0.95rem] font-bold tracking-[0.02em] text-[var(--sidebar-active-ink)]">ResolutionAV</span>
-              <span className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--sidebar-muted)]">Operations portal</span>
-            </span>
-          <button
-            type="button"
-            onClick={onToggleCollapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md text-[var(--sidebar-muted)] transition-colors hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)] md:inline-flex"
-          >
-            <NavIcon page={collapsed ? 'expand' : 'collapse'} className="h-[1.1rem] w-[1.1rem]" />
-          </button>
-            </>
-          )}
         </div>
 
         <nav aria-label="Main navigation" className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 py-3">
