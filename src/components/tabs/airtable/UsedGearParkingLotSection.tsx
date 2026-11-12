@@ -365,7 +365,7 @@ export function UsedGearParkingLotSection({
               headerClassName: 'border-l border-[var(--line)]/60',
               cellClassName: 'border-l border-[var(--line)]/60',
               renderCell: (record) => (
-                <div className="flex min-h-[4.5rem] w-full flex-col items-center justify-center gap-1.5">
+                <div className="flex min-h-[2.25rem] w-full flex-col items-center justify-center gap-1.5">
                   <CompactIconActionButton
                     label="Open Review"
                     variant="compact-primary"
@@ -397,7 +397,7 @@ export function UsedGearParkingLotSection({
                 }
 
                 return (
-                  <div className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1">
+                  <div className="flex min-h-[2.25rem] flex-col items-center justify-center gap-1">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.items.length}</span>
                   </div>
                 );

@@ -514,7 +514,7 @@ export function UsedGearWorkflowPostPublishSection({
             const recordBusy = updatingRecordIds.includes(record.id);
 
             return (
-              <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
+              <div className="flex min-h-[2.25rem] w-full flex-wrap items-center justify-center gap-1.5">
                 <CompactIconActionButton
                   label="Open Completed Shipment"
                   icon="open"
@@ -632,7 +632,7 @@ export function UsedGearWorkflowPostPublishSection({
           const showDispositionActions = Boolean(snapshot?.postSaleOutcome) && !snapshot?.restockDisposition;
 
           return (
-            <div className="flex min-h-[4.5rem] w-full flex-wrap items-center justify-center gap-1.5">
+            <div className="flex min-h-[2.25rem] w-full flex-wrap items-center justify-center gap-1.5">
               {showMarkShipped && !hideTextActions ? (
                 <button
                   type="button"

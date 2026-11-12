@@ -493,7 +493,7 @@ export function UsedGearWorkflowProgressSection({
                 });
 
                 return (
-                  <div className="flex min-h-[4.5rem] w-full items-center justify-center gap-1.5">
+                  <div className="flex min-h-[2.25rem] w-full items-center justify-center gap-1.5">
                     <CompactIconActionButton label={primaryAction.label} variant="compact-primary" icon={primaryAction.icon} onClick={primaryAction.onClick} />
                     {primaryAction.showSecondaryAction ? (
                       <CompactIconActionButton label="Edit Workflow Record" icon="edit" onClick={() => onOpenOperationalRecord(record.id)} />
@@ -583,7 +583,7 @@ export function UsedGearWorkflowProgressSection({
                 }
 
                 return (
-                  <div className="flex min-h-[4.5rem] flex-col items-center justify-center gap-1">
+                  <div className="flex min-h-[2.25rem] flex-col items-center justify-center gap-1">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{group.items.length}</span>
                   </div>
                 );

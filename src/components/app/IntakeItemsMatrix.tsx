@@ -61,7 +61,7 @@ export function IntakeItemsMatrix<TItem>({
   let renderedRowCount = 0;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
+    <div className="overflow-x-auto">
       <table className="w-full min-w-[760px] border-collapse table-fixed">
         <colgroup>
           {showGroupColumn ? <col style={{ width: '3.5rem' }} /> : null}
@@ -71,7 +71,7 @@ export function IntakeItemsMatrix<TItem>({
           {showGroupActionColumn ? <col style={{ width: '4.75rem' }} /> : null}
         </colgroup>
         <thead>
-          <tr className="border-b border-[var(--line)] bg-[var(--panel)]/80">
+          <tr className="border-b border-[var(--line)]">
             {showGroupColumn ? (
               <th
                 scope="col"
@@ -112,7 +112,7 @@ export function IntakeItemsMatrix<TItem>({
             const groupActionCellClassName = isStripedGroup
               ? 'bg-[color-mix(in_srgb,var(--panel)_24%,transparent)]'
               : 'bg-[var(--panel)]/20';
-            const groupStartRowClassName = isNewGroupStart ? 'border-t-2 border-[var(--line)]/90' : '';
+            const groupStartRowClassName = isNewGroupStart ? 'border-t border-[var(--line)]' : '';
             const cellContext: IntakeItemsMatrixCellContext<TItem> = {
               group,
               groupItemIndex,
@@ -129,7 +129,7 @@ export function IntakeItemsMatrix<TItem>({
                 {showGroupColumn && groupItemIndex === 0 ? (
                   <td
                     rowSpan={group.items.length}
-                    className={`border-r border-[var(--line)]/60 px-2 py-2.5 align-middle text-center ${groupCellClassName} ${isNewGroupStart ? 'border-t-2 border-t-[var(--line)]/90' : ''}`}
+                    className={`px-2 py-2.5 align-middle text-center ${groupCellClassName} ${isNewGroupStart ? 'border-t border-t-[var(--line)]' : ''}`}
                   >
                     {renderGroupCell?.(group)}
                   </td>
@@ -145,7 +145,7 @@ export function IntakeItemsMatrix<TItem>({
                 {showGroupActionColumn && groupItemIndex === 0 ? (
                   <td
                     rowSpan={group.items.length}
-                    className={`border-l border-[var(--line)]/60 px-2 py-2.5 align-middle text-center ${groupActionCellClassName} ${isNewGroupStart ? 'border-t-2 border-t-[var(--line)]/90' : ''}`}
+                    className={`px-2 py-2.5 align-middle text-center ${groupActionCellClassName} ${isNewGroupStart ? 'border-t border-t-[var(--line)]' : ''}`}
                   >
                     {renderGroupActionCell?.(group)}
                   </td>
