@@ -177,3 +177,10 @@
 		margin-left: 8px;
 	}
 }
+
+/* Flat page sections get a divider only when they follow another flat section. */
+[data-flat-section] + [data-flat-section] {
+  margin-top: 3rem !important;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}

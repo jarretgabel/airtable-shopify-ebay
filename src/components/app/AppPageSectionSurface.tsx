@@ -10,7 +10,8 @@ export function AppPageSectionSurface({ children, className, flat, ...sectionPro
   return (
     <section
       {...sectionProps}
-      className={`${flat ? '[&:not(:first-child)]:!mt-12 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-[var(--line)] [&:not(:first-child)]:pt-8' : 'rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5'} ${className ?? ''}`.trim()}
+      {...(flat ? { 'data-flat-section': '' } : {})}
+      className={`${flat ? '' : 'rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5'} ${className ?? ''}`.trim()}
     >
       {children}
     </section>
