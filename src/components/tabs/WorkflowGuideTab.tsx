@@ -358,7 +358,6 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
       { id: 'advancement-rules', key: 'advancement-rules', label: 'Next Steps' },
       { id: 'page-reference', key: 'page-reference', label: 'Pages' },
       { id: 'record-reference', key: 'record-reference', label: 'Record Pages' },
-      { id: 'quick-answers', key: 'quick-answers', label: 'Quick Answers' },
     ],
     [],
   );

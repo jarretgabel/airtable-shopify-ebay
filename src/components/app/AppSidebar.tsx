@@ -80,6 +80,9 @@ export function AppSidebar({
   const [accountOpen, setAccountOpen] = useState(false);
   const activeGroupId = groups.find((group) => group.tabs.some((tab) => tab.active))?.id;
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(activeGroupId ? [activeGroupId] : []));
+  useEffect(() => {
+    if (activeGroupId && activeGroupId !== 'main') setOpenGroups(new Set([activeGroupId]));
+  }, [activeGroupId]);
   const mainGroup = groups.find((group) => group.id === 'main');
   const sections = useMemo(() => {
     const exportTabs: AppTab[] = [
@@ -125,11 +128,7 @@ export function AppSidebar({
   }
 
   function toggleGroup(id: string) {
-    setOpenGroups((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+    setOpenGroups((current) => (current.has(id) ? new Set() : new Set([id])));
   }
 
   return (
