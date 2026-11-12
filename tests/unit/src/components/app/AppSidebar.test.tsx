@@ -47,11 +47,14 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('button', { name: /Utilities/ })).toHaveTextContent('2');
   });
 
-  it('renders every page as an icon rail when collapsed and toggles', () => {
+  it('collapses to an icon rail with one icon per group and a flyout of pages', () => {
     const onToggleCollapsed = vi.fn();
-    renderSidebar({ collapsed: true, onToggleCollapsed });
-    expect(screen.getByRole('button', { name: 'JotForm' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Issues' })).toBeInTheDocument();
+    const { jotform } = renderSidebar({ collapsed: true, onToggleCollapsed });
+    expect(screen.getByRole('button', { name: 'Dashboard' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'JotForm' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Intake' }));
+    fireEvent.click(screen.getByRole('button', { name: 'JotForm' }));
+    expect(jotform.onClick).toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Expand sidebar' }));
     expect(onToggleCollapsed).toHaveBeenCalled();
   });

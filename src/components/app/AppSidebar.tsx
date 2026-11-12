@@ -22,7 +22,7 @@ interface AppSidebarProps {
 
 const itemBase = 'group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[0.86rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-55';
 
-function NavItem({ tab, collapsed, onSelect }: { tab: AppTab; collapsed: boolean; onSelect: (tab: AppTab) => void }): ReactNode {
+function NavItem({ tab, collapsed, onSelect, showIcon = true }: { tab: AppTab; collapsed: boolean; onSelect: (tab: AppTab) => void; showIcon?: boolean }): ReactNode {
   return (
     <button
       type="button"
@@ -31,9 +31,9 @@ function NavItem({ tab, collapsed, onSelect }: { tab: AppTab; collapsed: boolean
       aria-label={tab.label}
       aria-current={tab.active ? 'page' : undefined}
       onClick={() => onSelect(tab)}
-      className={`${itemBase} ${collapsed ? 'justify-center px-0' : ''} ${tab.active ? 'bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-ink)]' : 'text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)]'}`}
+      className={`${itemBase} ${collapsed ? 'justify-center px-0' : ''} ${showIcon ? '' : 'pl-9'} ${tab.active ? 'bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-ink)]' : 'text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)]'}`}
     >
-      <NavIcon page={tab.key} className="h-[1.1rem] w-[1.1rem] shrink-0" />
+      {showIcon ? <NavIcon page={tab.key} className="h-[1.1rem] w-[1.1rem] shrink-0" /> : null}
       {collapsed ? (
         tab.badgeCount ? <span className="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-red-500" aria-hidden="true" /> : null
       ) : (
@@ -52,11 +52,24 @@ export function AppSidebar({ groups, collapsed, mobileOpen, exportDisabled, onTo
   const mainGroup = groups.find((group) => group.id === 'main');
   const sections = useMemo(() => groups.filter((group) => group.id !== 'main'), [groups]);
   const rail = collapsed && !mobileOpen;
+  const [flyout, setFlyout] = useState<{ id: string; top: number } | null>(null);
+  const flyoutGroup = flyout ? sections.find((group) => group.id === flyout.id) : undefined;
 
   useEffect(() => {
     if (!activeGroupId) return;
     setOpenGroups((current) => (current.has(activeGroupId) ? current : new Set(current).add(activeGroupId)));
   }, [activeGroupId]);
+
+  useEffect(() => {
+    if (!flyout) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setFlyout(null); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [flyout]);
+
+  useEffect(() => {
+    if (!rail) setFlyout(null);
+  }, [rail]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -66,6 +79,7 @@ export function AppSidebar({ groups, collapsed, mobileOpen, exportDisabled, onTo
   }, [mobileOpen, onCloseMobile]);
 
   function select(tab: AppTab) {
+    setFlyout(null);
     onCloseMobile();
     tab.onClick();
   }
@@ -103,9 +117,24 @@ export function AppSidebar({ groups, collapsed, mobileOpen, exportDisabled, onTo
             const open = openGroups.has(group.id);
             const badge = group.tabs.reduce((sum, tab) => sum + (tab.badgeCount ?? 0), 0);
             if (rail) {
+              const groupActive = group.tabs.some((tab) => tab.active);
               return (
-                <div key={group.id} className="mt-2 space-y-1 border-t border-[var(--sidebar-line)] pt-2">
-                  {group.tabs.map((tab) => <NavItem key={tab.key} tab={tab} collapsed onSelect={select} />)}
+                <div key={group.id} className="mt-2 border-t border-[var(--sidebar-line)] pt-2">
+                  <button
+                    type="button"
+                    aria-label={group.title}
+                    aria-haspopup="menu"
+                    aria-expanded={flyout?.id === group.id}
+                    title={group.title}
+                    onClick={(event) => {
+                      const top = event.currentTarget.getBoundingClientRect().top;
+                      setFlyout((current) => (current?.id === group.id ? null : { id: group.id, top }));
+                    }}
+                    className={`${itemBase} justify-center px-0 ${groupActive ? 'bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-ink)]' : 'text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-active-ink)]'}`}
+                  >
+                    <NavIcon page={`group-${group.id}`} className="h-[1.1rem] w-[1.1rem] shrink-0" />
+                    {badge > 0 ? <span className="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-red-500" aria-hidden="true" /> : null}
+                  </button>
                 </div>
               );
             }
@@ -118,12 +147,12 @@ export function AppSidebar({ groups, collapsed, mobileOpen, exportDisabled, onTo
                   onClick={() => toggleGroup(group.id)}
                   className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--sidebar-muted)] transition-colors hover:text-[var(--sidebar-active-ink)]"
                 >
-                  <span className="inline-flex items-center gap-2">{group.title}{!open && badge > 0 ? <TabBadge count={badge} /> : null}</span>
+                  <span className="inline-flex items-center gap-2"><NavIcon page={`group-${group.id}`} className="h-[1.1rem] w-[1.1rem] shrink-0" />{group.title}{!open && badge > 0 ? <TabBadge count={badge} /> : null}</span>
                   <span aria-hidden="true" className="text-base leading-none">{open ? '−' : '+'}</span>
                 </button>
                 {open ? (
                   <div id={`sidebar-group-${group.id}`} className="mt-0.5 space-y-0.5">
-                    {group.tabs.map((tab) => <NavItem key={tab.key} tab={tab} collapsed={false} onSelect={select} />)}
+                    {group.tabs.map((tab) => <NavItem key={tab.key} tab={tab} collapsed={false} onSelect={select} showIcon={false} />)}
                   </div>
                 ) : null}
               </div>
@@ -154,6 +183,21 @@ export function AppSidebar({ groups, collapsed, mobileOpen, exportDisabled, onTo
           </button>
         </div>
       </aside>
+      {rail && flyoutGroup && flyout ? (
+        <>
+          <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 hidden cursor-default md:block" onClick={() => setFlyout(null)} data-export-ignore="true" />
+          <div
+            role="menu"
+            aria-label={flyoutGroup.title}
+            data-export-ignore="true"
+            style={{ top: Math.max(8, flyout.top) }}
+            className="fixed left-[4.5rem] z-50 hidden w-56 rounded-xl border border-[var(--sidebar-line)] bg-[var(--sidebar-bg)] p-2 shadow-xl md:block"
+          >
+            <p className="m-0 px-3 py-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--sidebar-muted)]">{flyoutGroup.title}</p>
+            {flyoutGroup.tabs.map((tab) => <NavItem key={tab.key} tab={tab} collapsed={false} onSelect={select} showIcon={false} />)}
+          </div>
+        </>
+      ) : null}
     </>
   );
 }
