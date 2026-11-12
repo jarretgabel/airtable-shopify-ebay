@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { AppTab } from '@/components/app/appFrameTypes';
 import { TabBadge } from '@/components/app/AppFrameHeaderShared';
 import { NavIcon } from '@/components/app/navIcons';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 export interface SidebarGroup {
   id: string;
@@ -18,6 +19,19 @@ interface AppSidebarProps {
   onCloseMobile: () => void;
   onExportCurrentPage: () => void;
   onExportAllPages: () => void;
+  currentUserLabel: string;
+  canManageUsers: boolean;
+  onOpenNotifications: () => void;
+  onOpenSettings: () => void;
+  onOpenUserManagement: () => void;
+  onLogout: () => void;
+}
+
+function userInitials(userLabel: string): string {
+  const parts = (userLabel.split('·')[0] ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'U';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
 }
 
 const itemBase = 'group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[0.86rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-55';
@@ -46,7 +60,24 @@ function NavItem({ tab, collapsed, onSelect, showIcon = true }: { tab: AppTab; c
   );
 }
 
-export function AppSidebar({ groups, collapsed, mobileOpen, exportDisabled, onToggleCollapsed, onCloseMobile, onExportCurrentPage, onExportAllPages }: AppSidebarProps): ReactNode {
+export function AppSidebar({
+  groups,
+  collapsed,
+  mobileOpen,
+  exportDisabled,
+  onToggleCollapsed,
+  onCloseMobile,
+  onExportCurrentPage,
+  onExportAllPages,
+  currentUserLabel,
+  canManageUsers,
+  onOpenNotifications,
+  onOpenSettings,
+  onOpenUserManagement,
+  onLogout,
+}: AppSidebarProps): ReactNode {
+  const unreadCount = useNotificationStore((state) => state.notifications.filter((item) => !item.seen).length);
+  const [accountOpen, setAccountOpen] = useState(false);
   const activeGroupId = groups.find((group) => group.tabs.some((tab) => tab.active))?.id;
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(activeGroupId ? [activeGroupId] : []));
   const mainGroup = groups.find((group) => group.id === 'main');
@@ -171,6 +202,53 @@ export function AppSidebar({ groups, collapsed, mobileOpen, exportDisabled, onTo
               </button>
             </>
           ) : null}
+          <button
+            type="button"
+            aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+            title={rail ? 'Notifications' : undefined}
+            onClick={() => { onCloseMobile(); onOpenNotifications(); }}
+            className={`${itemBase} relative text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)] ${rail ? 'justify-center px-0' : ''}`}
+          >
+            <NavIcon page="notifications" className="h-[1.1rem] w-[1.1rem] shrink-0" />
+            {rail ? (
+              unreadCount > 0 ? <span className="absolute right-1.5 top-1 h-2 w-2 rounded-full bg-red-500" aria-hidden="true" /> : null
+            ) : (
+              <>
+                <span className="min-w-0 flex-1 truncate">Notifications</span>
+                <TabBadge count={unreadCount > 0 ? unreadCount : undefined} />
+              </>
+            )}
+          </button>
+          <div className="relative">
+            {accountOpen ? (
+              <>
+                <button type="button" aria-label="Close account menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setAccountOpen(false)} />
+                <div
+                  role="menu"
+                  aria-label="Account menu"
+                  className={`absolute z-50 w-56 rounded-xl border border-[var(--sidebar-line)] bg-[var(--sidebar-bg)] p-1.5 shadow-xl ${rail ? 'bottom-0 left-full ml-2' : 'bottom-full left-0 mb-2'}`}
+                >
+                  <button role="menuitem" type="button" className={`${itemBase} text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`} onClick={() => { setAccountOpen(false); onCloseMobile(); onOpenSettings(); }}>Settings</button>
+                  {canManageUsers ? (
+                    <button role="menuitem" type="button" className={`${itemBase} text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`} onClick={() => { setAccountOpen(false); onCloseMobile(); onOpenUserManagement(); }}>User Management</button>
+                  ) : null}
+                  <button role="menuitem" type="button" className={`${itemBase} text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`} onClick={() => { setAccountOpen(false); onLogout(); }}>Log Out</button>
+                </div>
+              </>
+            ) : null}
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={accountOpen}
+              aria-label="Open account menu"
+              title={rail ? currentUserLabel : undefined}
+              onClick={() => setAccountOpen((open) => !open)}
+              className={`${itemBase} text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)] ${rail ? 'justify-center px-0' : ''}`}
+            >
+              <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft-bg)] text-[0.66rem] font-bold text-[var(--accent-soft-ink)]">{userInitials(currentUserLabel)}</span>
+              {rail ? null : <span className="min-w-0 flex-1 truncate">{(currentUserLabel.split('·')[0] ?? '').trim() || 'Account'}</span>}
+            </button>
+          </div>
           <button
             type="button"
             onClick={onToggleCollapsed}

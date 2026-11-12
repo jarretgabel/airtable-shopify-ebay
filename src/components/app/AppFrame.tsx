@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { AppFrameExportOverlay } from '@/components/app/AppFrameExportOverlay';
 import { AppSidebar, type SidebarGroup } from '@/components/app/AppSidebar';
-import { AppTopBar } from '@/components/app/AppTopBar';
-import type { AppFrameProps, OpenDropdown } from '@/components/app/appFrameTypes';
+import { NavIcon } from '@/components/app/navIcons';
+import type { AppFrameProps } from '@/components/app/appFrameTypes';
 
 const SIDEBAR_COLLAPSED_KEY = 'app.sidebarCollapsed';
 
@@ -25,14 +25,10 @@ export function AppFrame({
   onOpenUserManagement,
   canManageUsers,
   onLogout,
-  theme,
-  onToggleTheme,
   exportProgress,
   exporting,
   children,
 }: AppFrameProps) {
-  const [openDropdown, setOpenDropdown] = useState<OpenDropdown>(null);
-  const shellContainerRef = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(() => {
     try { return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'; } catch { return false; }
   });
@@ -53,26 +49,6 @@ export function AppFrame({
     });
   }
 
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      if (!shellContainerRef.current || !(event.target instanceof Node)) return;
-      if (!shellContainerRef.current.contains(event.target)) {
-        setOpenDropdown(null);
-      }
-    }
-
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, []);
-
-  function toggleDropdown(next: Exclude<OpenDropdown, null>) {
-    setOpenDropdown((current) => (current === next ? null : next));
-  }
-
-  function closeDropdowns() {
-    setOpenDropdown(null);
-  }
-
   return (
     <main
       ref={shellRef}
@@ -87,24 +63,26 @@ export function AppFrame({
         onCloseMobile={() => setMobileOpen(false)}
         onExportCurrentPage={onExportCurrentPage}
         onExportAllPages={onExportAllPages}
+        currentUserLabel={currentUserLabel}
+        canManageUsers={canManageUsers}
+        onOpenNotifications={onOpenNotifications}
+        onOpenSettings={onOpenSettings}
+        onOpenUserManagement={onOpenUserManagement}
+        onLogout={onLogout}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <AppTopBar
-          barRef={shellContainerRef}
-          currentUserLabel={currentUserLabel}
-          canManageUsers={canManageUsers}
-          theme={theme}
-          onToggleTheme={onToggleTheme}
-          onOpenMobileNav={() => setMobileOpen(true)}
-          onOpenNotifications={onOpenNotifications}
-          onOpenSettings={onOpenSettings}
-          onOpenUserManagement={onOpenUserManagement}
-          onLogout={onLogout}
-          openDropdown={openDropdown}
-          onToggleDropdown={toggleDropdown}
-          onCloseDropdowns={closeDropdowns}
-        />
-        <section className="mx-auto w-full max-w-[1320px] px-4 pb-28 pt-6 sm:px-6 sm:pt-8">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 bg-[var(--header-surface)] px-4 backdrop-blur-md md:hidden" data-export-ignore="true">
+          <button
+            type="button"
+            aria-label="Open navigation menu"
+            onClick={() => setMobileOpen(true)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--line)] text-[var(--ink)]"
+          >
+            <NavIcon page="menu" className="h-5 w-5" />
+          </button>
+          <span className="text-[0.95rem] font-bold tracking-[0.02em] text-[var(--ink)]">ResolutionAV</span>
+        </header>
+        <section className="mx-auto w-full max-w-[1320px] px-4 pb-28 pt-6 sm:px-6 md:pt-10">
           {exportProgress && <AppFrameExportOverlay exportProgress={exportProgress} />}
           {children}
         </section>

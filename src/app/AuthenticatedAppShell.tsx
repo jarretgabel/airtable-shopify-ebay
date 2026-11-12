@@ -19,14 +19,14 @@ import { getLocalAppApiRoutingWarning } from '@/services/app-api/flags';
 import {
   applyThemeToDocument,
   loadThemePreference,
-  saveThemePreference,
-  type AppTheme,
+  resolveTheme,
 } from '@/services/themePreference';
 import { createEmptyUsedGearWorkflowNotificationSummary } from '@/services/usedGearQueue';
 import { trackWorkflowEvent } from '@/services/workflowAnalytics';
 import { useAppUIStore } from '@/stores/appUIStore';
 import { useAuthStore } from '@/stores/auth/authStore';
 import type { AppUser } from '@/stores/auth/authTypes';
+import { useThemeStore } from '@/stores/themeStore';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useApprovalStore } from '@/stores/approvalStore';
 import { useNavigate } from 'react-router-dom';
@@ -86,7 +86,8 @@ export function AuthenticatedAppShell({
   const completeRequiredPasswordChange = useAuthStore((state) => state.completeRequiredPasswordChange);
   const clearNotifications = useNotificationStore((state) => state.clear);
   const applyCurrentUserPreferences = useNotificationStore((state) => state.applyCurrentUserPreferences);
-  const [theme, setTheme] = useState<AppTheme>(() => loadThemePreference(currentUser.id));
+  const themeMode = useThemeStore((state) => state.mode);
+  const setThemeMode = useThemeStore((state) => state.setMode);
   const [workflowNotificationSummary, setWorkflowNotificationSummary] = useState(createEmptyUsedGearWorkflowNotificationSummary);
   const shellRef = useRef<HTMLElement>(null);
   const {
@@ -194,15 +195,17 @@ export function AuthenticatedAppShell({
   });
 
   useEffect(() => {
-    const nextTheme = loadThemePreference(currentUser.id);
-    setTheme(nextTheme);
-    applyThemeToDocument(nextTheme);
-  }, [currentUser.id]);
+    setThemeMode(loadThemePreference(currentUser.id));
+  }, [currentUser.id, setThemeMode]);
 
   useEffect(() => {
-    applyThemeToDocument(theme);
-    saveThemePreference(theme, currentUser.id);
-  }, [theme, currentUser.id]);
+    applyThemeToDocument(resolveTheme(themeMode));
+    if (themeMode !== 'system' || typeof window.matchMedia !== 'function') return undefined;
+    const query = window.matchMedia('(prefers-color-scheme: light)');
+    const onChange = () => applyThemeToDocument(resolveTheme('system'));
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, [themeMode]);
 
   useEffect(() => {
     clearNotifications();
@@ -274,8 +277,6 @@ export function AuthenticatedAppShell({
           onOpenUserManagement={() => navigateToTab('users')}
           canManageUsers={currentUser.role === 'admin' || currentUser.role === 'owner'}
           onLogout={handleLogout}
-          theme={theme}
-          onToggleTheme={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
           exportProgress={exportingPdf ? exportProgress : null}
           exporting={exportingPdf}
         >

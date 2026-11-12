@@ -25,6 +25,12 @@ function renderSidebar(props: Partial<Parameters<typeof AppSidebar>[0]> = {}) {
       onCloseMobile={vi.fn()}
       onExportCurrentPage={vi.fn()}
       onExportAllPages={vi.fn()}
+      currentUserLabel="Dana Doe · admin"
+      canManageUsers
+      onOpenNotifications={vi.fn()}
+      onOpenSettings={vi.fn()}
+      onOpenUserManagement={vi.fn()}
+      onLogout={vi.fn()}
       {...props}
     />,
   );

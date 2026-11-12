@@ -10,6 +10,8 @@ import { getAppApiSessionDiagnostics } from '@/services/app-api/flags';
 import { useAuthStore } from '@/stores/auth/authStore';
 import { PASSWORD_POLICY_MESSAGE, validatePasswordPolicy } from '@/stores/auth/passwordPolicy';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { useThemeStore } from '@/stores/themeStore';
+import { saveThemePreference, type ThemeMode } from '@/services/themePreference';
 import {
   USED_GEAR_WORKFLOW_NOTIFICATION_EVENT_OPTIONS,
   type UsedGearWorkflowNotificationEvent,
@@ -48,6 +50,39 @@ type LocalProxyProbeState = {
   detail: string;
   value: string | null;
 };
+
+const themeOptions: Array<{ value: ThemeMode; label: string }> = [
+  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+];
+
+function AppearancePreference({ userId }: { userId: string }) {
+  const mode = useThemeStore((state) => state.mode);
+  const setMode = useThemeStore((state) => state.setMode);
+
+  return (
+    <fieldset className="mt-6 border-t border-[var(--line)] pt-5">
+      <legend className="sr-only">Appearance</legend>
+      <p className="m-0 text-sm font-semibold text-[var(--ink)]">Appearance</p>
+      <p className="mb-3 mt-1 text-xs text-[var(--muted)]">System follows your computer's light or dark setting.</p>
+      <div role="radiogroup" aria-label="Theme" className="inline-flex rounded-lg border border-[var(--line)] p-0.5">
+        {themeOptions.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={mode === option.value}
+            onClick={() => { setMode(option.value); saveThemePreference(option.value, userId); }}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${mode === option.value ? 'bg-[var(--accent-soft-bg)] text-[var(--accent-soft-ink)]' : 'text-[var(--muted)] hover:text-[var(--ink)]'}`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
 
 export function SettingsTab() {
   const users = useAuthStore((state) => state.users);
@@ -385,6 +420,8 @@ export function SettingsTab() {
                 Send Email Confirmation
               </button>
             </form>
+
+            <AppearancePreference userId={currentUser.id} />
           </section>
 
           <section

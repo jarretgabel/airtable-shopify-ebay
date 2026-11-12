@@ -27,7 +27,7 @@ export function MainPageSectionNav<T extends string>({
       activeKey={activeKey}
       onSelect={onSelect}
       className={[
-        'sticky top-[4.25rem] z-20 mb-4 bg-[var(--bg)]',
+        'sticky top-[4.25rem] md:top-3 z-20 mb-4 bg-[var(--bg)]',
         className ?? '',
       ].join(' ').trim()}
     />
