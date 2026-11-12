@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppFrameExportOverlay } from '@/components/app/AppFrameExportOverlay';
-import { AppFrameHeader } from '@/components/app/AppFrameHeader';
+import { AppSidebar, type SidebarGroup } from '@/components/app/AppSidebar';
+import { AppTopBar } from '@/components/app/AppTopBar';
 import type { AppFrameProps, OpenDropdown } from '@/components/app/appFrameTypes';
+
+const SIDEBAR_COLLAPSED_KEY = 'app.sidebarCollapsed';
 
 export function AppFrame({
   shellRef,
@@ -30,6 +33,27 @@ export function AppFrame({
 }: AppFrameProps) {
   const [openDropdown, setOpenDropdown] = useState<OpenDropdown>(null);
   const shellContainerRef = useRef<HTMLElement>(null);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'; } catch { return false; }
+  });
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const groups: SidebarGroup[] = [
+    { id: 'main', title: 'Main', tabs },
+    { id: 'business', title: 'Business', tabs: businessTabs ?? [] },
+    { id: 'intake', title: 'Intake', tabs: intakeTabs },
+    { id: 'processing', title: 'Processing', tabs: inventoryProcessingTabs },
+    { id: 'selling', title: 'Selling', tabs: [...listingsTabs, ...postPublishTabs, ...postEbayTabs] },
+    { id: 'utilities', title: 'Utilities', tabs: utilityTabs },
+  ].filter((group) => group.tabs.length > 0);
+  const activeGroup = groups.find((group) => group.tabs.some((tab) => tab.active));
+  const activeTab = activeGroup?.tabs.find((tab) => tab.active);
+
+  function toggleCollapsed() {
+    setCollapsed((current) => {
+      try { window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, current ? '0' : '1'); } catch { /* preference is optional */ }
+      return !current;
+    });
+  }
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -54,43 +78,41 @@ export function AppFrame({
   return (
     <main
       ref={shellRef}
-      className={[
-        'dashboard-dark min-h-screen text-[var(--ink)]',
-        exporting ? 'cursor-progress' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className={['dashboard-dark flex min-h-screen text-[var(--ink)]', exporting ? 'cursor-progress' : ''].filter(Boolean).join(' ')}
     >
-      <AppFrameHeader
-        headerRef={shellContainerRef}
-        currentUserLabel={currentUserLabel}
-        tabs={tabs}
-        intakeTabs={intakeTabs}
-        listingsTabs={listingsTabs}
-        postPublishTabs={postPublishTabs}
-        inventoryProcessingTabs={inventoryProcessingTabs}
-        postEbayTabs={postEbayTabs}
-        businessTabs={businessTabs}
-        utilityTabs={utilityTabs}
+      <AppSidebar
+        groups={groups}
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
         exportDisabled={exportDisabled}
+        onToggleCollapsed={toggleCollapsed}
+        onCloseMobile={() => setMobileOpen(false)}
         onExportCurrentPage={onExportCurrentPage}
         onExportAllPages={onExportAllPages}
-        onOpenNotifications={onOpenNotifications}
-        onOpenSettings={onOpenSettings}
-        onOpenUserManagement={onOpenUserManagement}
-        canManageUsers={canManageUsers}
-        onLogout={onLogout}
-        theme={theme}
-        onToggleTheme={onToggleTheme}
-        openDropdown={openDropdown}
-        onToggleDropdown={toggleDropdown}
-        onCloseDropdowns={closeDropdowns}
       />
-
-      <section className="mx-auto w-[min(1200px,96vw)] py-6 sm:py-8">
-        {exportProgress && <AppFrameExportOverlay exportProgress={exportProgress} />}
-        {children}
-      </section>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AppTopBar
+          barRef={shellContainerRef}
+          groupTitle={activeGroup && activeGroup.id !== 'main' ? activeGroup.title : null}
+          pageLabel={activeTab?.label ?? null}
+          currentUserLabel={currentUserLabel}
+          canManageUsers={canManageUsers}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
+          onOpenMobileNav={() => setMobileOpen(true)}
+          onOpenNotifications={onOpenNotifications}
+          onOpenSettings={onOpenSettings}
+          onOpenUserManagement={onOpenUserManagement}
+          onLogout={onLogout}
+          openDropdown={openDropdown}
+          onToggleDropdown={toggleDropdown}
+          onCloseDropdowns={closeDropdowns}
+        />
+        <section className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 sm:py-8">
+          {exportProgress && <AppFrameExportOverlay exportProgress={exportProgress} />}
+          {children}
+        </section>
+      </div>
     </main>
   );
 }
