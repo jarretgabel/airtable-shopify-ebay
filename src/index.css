@@ -17,7 +17,7 @@
 		--ink: #f5f9ff;
 		--muted: #c0cee0;
 		--panel: #0b1726;
-		--line: #3f5874;
+		--line: #314760;
 		--accent: #4da3ff;
 		--header-surface: rgba(3, 8, 15, 0.92);
 		--panel-soft: rgba(7, 14, 23, 0.82);
@@ -49,14 +49,14 @@
 		--sidebar-active-ink: #ffffff;
 		--sidebar-active-bg: rgba(77, 163, 255, 0.2);
 		--sidebar-hover-bg: rgba(255, 255, 255, 0.07);
-		--bg: #eef3f9;
+		--bg: #f3f6fa;
 		--ink: #15253a;
 		--muted: #4b6078;
 		--panel: #ffffff;
-		--line: #8ea4bd;
+		--line: #cfdae8;
 		--accent: #005ecb;
 		--header-surface: rgba(255, 255, 255, 0.92);
-		--panel-soft: #dde8f4;
+		--panel-soft: #e6edf6;
 		--accent-soft-bg: rgba(0, 94, 203, 0.14);
 		--accent-soft-ink: #08418b;
 		--skeleton-soft: rgba(8, 56, 120, 0.1);

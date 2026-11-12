@@ -11,9 +11,9 @@ const skeletonPulseClass = 'animate-pulse rounded-md bg-white/10';
  */
 export function StatTile({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-[12px] border border-[var(--line)] bg-[var(--panel)] px-3 py-2.5">
-      <p className="m-0 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
-      <p className="m-0 mt-1 text-[1.1rem] font-bold text-[var(--ink)]">{value}</p>
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3.5 shadow-[0_1px_2px_rgba(2,6,23,0.1)]">
+      <p className="m-0 text-[0.72rem] font-medium text-[var(--muted)]">{label}</p>
+      <p className="m-0 mt-1 text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-[var(--ink)]">{value}</p>
     </div>
   );
 }

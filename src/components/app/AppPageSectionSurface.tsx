@@ -8,7 +8,7 @@ export function AppPageSectionSurface({ children, className, ...sectionProps }: 
   return (
     <section
       {...sectionProps}
-      className={`rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 ${className ?? ''}`.trim()}
+      className={`rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_2px_rgba(2,6,23,0.12),0_8px_24px_rgba(2,6,23,0.06)] ${className ?? ''}`.trim()}
     >
       {children}
     </section>
