@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
@@ -823,9 +824,7 @@ export function UsedGearWorkflowPostPublishSection({
 
       <div className="space-y-4">
         {loading || refreshing ? (
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] px-4 py-5 text-sm text-[var(--muted)]">
-            {`Loading used-gear ${queueNoun}...`}
-          </div>
+          <LoadingSurface message={`Loading used-gear ${queueNoun}...`} />
         ) : !loadError && hasLoaded ? sectionDefinitions.map((section) => {
           const sectionRecords = recordsBySection.get(section.key) ?? [];
           const sectionSearchTerm = sectionSearchEnabled ? sectionSearchTerms[section.key] ?? '' : searchTerm;
