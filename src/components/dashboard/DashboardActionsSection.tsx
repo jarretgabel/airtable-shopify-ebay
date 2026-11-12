@@ -3,7 +3,7 @@ import type { DashboardTargetTab } from './dashboardTabTypes';
 import type { UsedGearWorkflowPostPublishBucket } from '@/services/usedGearWorkflowLifecycle';
 import type { UsedGearWorkflowAnalyticsSnapshotState } from '@/hooks/useUsedGearWorkflowAnalyticsSnapshot';
 import type { UserRole } from '@/stores/auth/authTypes';
-import { DashboardSubPanel } from './dashboardPrimitives';
+import { DashboardSectionPanel, DashboardSubPanel } from './dashboardPrimitives';
 
 const severityClass = {
   critical: 'border-red-500/30 bg-red-950/25 text-red-300 hover:border-red-400/50',
@@ -461,15 +461,8 @@ export function DashboardActionsSection({
   }
 
   return (
-    <section
-      id="actions"
-      className="scroll-mt-32 rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]"
-    >
-      <div className="mb-4 flex items-center border-b border-[var(--line)] pb-3 pt-1">
-        <h2 className="m-0 text-[1.05rem] font-semibold text-[var(--ink)]">Actions Needed</h2>
-      </div>
-
+    <DashboardSectionPanel id="actions" title="Actions Needed">
       {content}
-    </section>
+    </DashboardSectionPanel>
   );
 }

@@ -265,12 +265,12 @@ export function DashboardOverviewSection(props: DashboardOverviewSectionProps) {
   }
 
   const content = (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {orderedCards.map((card) => card.element)}
       </div>
       {workflowUnavailableReason || workflowAnalytics.loading || !(canSeeRoleDashboardModule(currentUserRole, 'processor') || currentUserRole === 'developer') ? null : (
-        <DashboardStageBreakdown counts={workflowAnalytics.statusCounts} accessiblePages={accessiblePages} onSelectTab={onSelectTab} />
+        <div className="border-t border-[var(--line)] pt-8"><DashboardStageBreakdown counts={workflowAnalytics.statusCounts} accessiblePages={accessiblePages} onSelectTab={onSelectTab} /></div>
       )}
     </div>
   );
