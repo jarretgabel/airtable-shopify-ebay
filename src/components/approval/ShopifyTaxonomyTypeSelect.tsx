@@ -287,7 +287,7 @@ export function ShopifyTaxonomyTypeSelect({
   };
 
   return (
-    <div className="relative flex flex-col gap-2">
+    <div className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
       <span className={`${labelClassName} flex items-center gap-2`}>
         <span>{label}</span>
         {required && <span className={requiredBadgeClass}>Required</span>}
