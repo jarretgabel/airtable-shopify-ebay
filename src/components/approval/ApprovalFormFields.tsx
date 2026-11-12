@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { hasWorkflowListingSourceContext } from '@/stores/approval/approvalStoreWorkflowPrefill';
@@ -392,7 +393,7 @@ export function ApprovalFormFields({
     getInputClassName,
   };
   const supplementalEditors = showSupplementalEditors ? (
-    <Suspense fallback={<div className="col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3 text-sm text-[var(--muted)] md:col-span-2">Loading supplemental editors...</div>}>
+    <Suspense fallback={<LoadingSurface message="Loading supplemental editors..." />}>
       <ApprovalFormFieldsSupplementalEditors {...supplementalEditorsProps} />
     </Suspense>
   ) : null;

@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Fragment, useCallback, useEffect, useState, type FormEvent } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -164,7 +165,7 @@ function IssueDetailPanel({ id, me, people, onChanged }: { id: number; me: Issue
     }
   };
 
-  if (!detail) return <p className="m-0 text-sm text-[var(--muted)]">{error ?? 'Loading…'}</p>;
+  if (!detail) return error ? <p className="m-0 text-sm text-[var(--muted)]">{error}</p> : <LoadingSurface message="Loading issue..." />;
 
   const assignees = [me, ...people.filter((person) => person.email.toLowerCase() !== me.email.toLowerCase())];
   const assigneeEmail = detail.assignedTo?.email.toLowerCase() ?? '';
@@ -297,7 +298,7 @@ export function IssuesTab() {
     <AppPageLayout>
       <WorkflowPageHeader eyebrow="Utilities" title="Issues" detail="Report bugs, request features and track them to resolution." />
       {error ? <p role="alert" className="m-0 text-sm text-red-500">{error}</p> : null}
-      {!data && !error ? <p role="status" aria-live="polite" className="m-0 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-6 text-center text-sm text-[var(--muted)]">Loading issues…</p> : null}
+      {!data && !error ? <LoadingSurface message="Loading issues..." /> : null}
       {data ? (
         <>
           <DashboardSectionPanel id="issues-overview" title="Overview">

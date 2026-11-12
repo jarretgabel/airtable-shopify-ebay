@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { EbayShippingServicesEditor } from './EbayShippingServicesEditor';
 import { ApprovalFormFieldsShippingEditors } from './ApprovalFormFieldsShippingEditors';
@@ -11,7 +12,7 @@ import {
 } from './workflowListingImageHelpers';
 import { getListingWorkflowImageMetadata, parseWorkflowImageMetadata, serializeWorkflowImageMetadata } from '@/services/workflowImageMetadata';
 import { inspectWorkflowImageMetadata } from '@/services/app-api/airtable';
-import { insetPanelClass, sharedIconActionButtonClass } from '@/components/tabs/uiClasses';
+import { sharedIconActionButtonClass } from '@/components/tabs/uiClasses';
 
 const EbayAttributesEditor = lazy(async () => ({
   default: (await import('./EbayAttributesEditor')).EbayAttributesEditor,
@@ -38,11 +39,7 @@ const EbayBodyHtmlEditor = lazy(async () => ({
   default: (await import('./EbayBodyHtmlEditor')).EbayBodyHtmlEditor,
 }));
 
-const lazyEditorFallback = (
-  <div className={`${insetPanelClass} col-span-1 text-sm text-[var(--muted)] md:col-span-2`}>
-    Loading editor...
-  </div>
-);
+const lazyEditorFallback = <LoadingSurface message="Loading editor..." />;
 
 export interface ApprovalFormFieldsSupplementalEditorsProps {
   recordId?: string;

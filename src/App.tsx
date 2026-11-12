@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LoginScreen } from '@/components/LoginScreen';
@@ -12,12 +13,8 @@ const AuthenticatedAppShell = lazy(async () => ({
 
 function AuthenticatedAppShellFallback() {
   return (
-    <main className="min-h-screen px-5 py-8 text-[var(--ink)]">
-      <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-[var(--line)] bg-[var(--panel)]/90 p-6 shadow-[var(--elevation-lg)] backdrop-blur">
-        <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">Listing Control Center</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)]">Loading workspace</h1>
-        <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Preparing the authenticated workspace shell...</p>
-      </section>
+    <main className="min-h-screen">
+      <LoadingSurface message="Loading workspace..." />
     </main>
   );
 }

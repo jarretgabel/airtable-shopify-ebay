@@ -73,7 +73,7 @@ describe('ListingApprovalSelectedRecordPanel', () => {
     expect(screen.getByText('Selected Record View')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Loading record editor')).toBeInTheDocument();
+      expect(screen.getByText('Loading record editor...')).toBeInTheDocument();
       expect(screen.queryByText('Alerts')).not.toBeInTheDocument();
       expect(screen.queryByText('Actions')).not.toBeInTheDocument();
     });

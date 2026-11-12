@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -142,7 +143,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
     <AppPageLayout className="[overflow-anchor:none]">
       <WorkflowPageHeader eyebrow="Utilities" title={`SEO & AI Search: ${siteLabel.name}`} detail={`Audit of ${siteLabel.domain}.`} />
       {!summary && !error ? (
-        <p role="status" aria-live="polite" className="m-0 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-6 text-center text-sm text-[var(--muted)]">Loading SEO dashboard…</p>
+        <LoadingSurface message="Loading SEO dashboard..." />
       ) : null}
       {summary || error ? (
       <DashboardSectionPanel id="seo-overview" title="Overview">

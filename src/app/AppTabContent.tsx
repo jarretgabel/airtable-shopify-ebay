@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy, useDeferredValue } from 'react';
 import {
   buildAirtableTabViewModel,
@@ -52,131 +53,11 @@ const PostPublishQueueTab = lazy(async () => ({ default: (await import('@/compon
 const ArchiveQueueTab = lazy(async () => ({ default: (await import('@/components/tabs/ArchiveQueueTab')).ArchiveQueueTab }));
 
 function TabLoadingFallback({ tabLabel }: { tabLabel: string }) {
-  return (
-    <section className="rounded-[1.25rem] border border-[var(--line)] bg-[var(--surface-veil-soft)] p-5 text-sm text-[var(--muted)] shadow-[var(--elevation-lg)]">
-      <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Loading view</p>
-      <p className="m-0 mt-2 text-base font-semibold text-[var(--ink)]">Preparing {tabLabel}</p>
-      <div className="mt-4 space-y-3" aria-hidden="true">
-        <div className="h-4 w-40 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
-        <div className="h-24 animate-pulse rounded-xl bg-[var(--skeleton-soft)]" />
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="h-20 animate-pulse rounded-xl bg-[var(--skeleton-soft)]" />
-          <div className="h-20 animate-pulse rounded-xl bg-[var(--skeleton-soft)]" />
-        </div>
-      </div>
-    </section>
-  );
+  return <LoadingSurface message={`Loading ${tabLabel}...`} />;
 }
 
 function DashboardTabLoadingFallback() {
-  const sectionPanelClass = 'rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]';
-
-  return (
-    <section className="flex flex-col gap-12 pt-1" aria-hidden="true">
-      <div className="rounded-[18px] border border-[var(--line)] bg-[var(--surface-veil)] px-3 py-3 shadow-[var(--elevation-lg)] backdrop-blur-md">
-        <div className="flex min-w-max items-center gap-2">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div key={index} className="h-11 w-28 animate-pulse rounded-full bg-[var(--skeleton-soft)]" />
-          ))}
-        </div>
-      </div>
-      <div className="rounded-[14px] border border-[var(--info-border)] bg-[var(--info-bg)] px-4 py-4 shadow-[0_1px_3px_rgba(17,32,49,0.06),0_4px_14px_rgba(17,32,49,0.05)]">
-        <div className="h-3 w-40 animate-pulse rounded-md bg-[var(--skeleton-soft)]" />
-        <div className="mt-3 h-4 w-[min(42rem,85%)] animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
-        <div className="mt-2 h-4 w-[min(32rem,70%)] animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
-      </div>
-      <div className={sectionPanelClass}>
-        <div className="mb-4 h-8 w-32 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
-        <div className="space-y-4">
-          <div className="h-6 w-36 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }, (_, index) => (
-              <div key={index} className="h-40 animate-pulse rounded-[14px] border border-[var(--line)] bg-[var(--skeleton-soft)]" />
-            ))}
-          </div>
-        </div>
-        <div className="mt-4 space-y-4">
-          <div className="h-6 w-40 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
-          {Array.from({ length: 3 }, (_, index) => (
-            <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-[var(--skeleton-soft)]" />
-          ))}
-        </div>
-        <div className="mt-4 space-y-4">
-          <div className="h-6 w-56 animate-pulse rounded-md bg-white/10" />
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
-            ))}
-          </div>
-          <div className="grid gap-4 xl:grid-cols-4">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="h-72 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className={sectionPanelClass}>
-        <div className="mb-4 h-8 w-28 animate-pulse rounded-md bg-white/10" />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="h-72 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
-          <div className="h-72 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
-        </div>
-      </div>
-      <div className={sectionPanelClass}>
-        <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
-        <div className="space-y-4">
-          <div className="h-6 w-44 animate-pulse rounded-md bg-white/10" />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {Array.from({ length: 3 }, (_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-[14px] border border-[var(--line)] bg-white/5" />
-            ))}
-          </div>
-          <div className="h-72 animate-pulse rounded-[18px] border border-[var(--line)] bg-white/5" />
-        </div>
-        <div className="mt-4">
-          <div className="h-6 w-48 animate-pulse rounded-md bg-white/10" />
-          <div className="mt-4 space-y-3">
-            {Array.from({ length: 8 }, (_, index) => (
-              <div key={index} className="h-6 animate-pulse rounded-md bg-white/5" />
-            ))}
-          </div>
-        </div>
-        <div className="mt-4">
-          <div className="h-6 w-44 animate-pulse rounded-md bg-white/10" />
-          <div className="mt-4 h-80 animate-pulse rounded-[14px] bg-white/5" />
-        </div>
-      </div>
-      <div className={sectionPanelClass}>
-        <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />
-            ))}
-          </div>
-          <div className="grid gap-3 lg:grid-cols-2">
-            {Array.from({ length: 2 }, (_, index) => (
-              <div key={index} className="h-72 animate-pulse rounded-[16px] border border-[var(--line)] bg-white/5" />
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className={sectionPanelClass}>
-        <div className="mb-4 h-8 w-20 animate-pulse rounded-md bg-white/10" />
-        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 2 }, (_, index) => (
-            <div key={index} className="h-72 animate-pulse rounded-[16px] border border-[var(--line)] bg-white/5" />
-          ))}
-        </div>
-      </div>
-      <div className={sectionPanelClass}>
-        <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
-        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-          <div className="h-56 animate-pulse rounded-[16px] border border-[var(--line)] bg-white/5" />
-        </div>
-      </div>
-    </section>
-  );
+  return <LoadingSurface message="Loading dashboard..." />;
 }
 
 function getTabLoadingLabel(tab: AppTabContentProps['activeTab']): string {
@@ -880,11 +761,6 @@ export function AppTabContent({
 
   return (
     <div className="relative">
-      {isRouteTransitionPending && (
-        <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full border border-[var(--info-border)] bg-[var(--surface-veil)] px-3 py-1 text-[0.72rem] font-semibold tracking-[0.04em] text-[var(--info-ink)] shadow-[var(--elevation-lg)]">
-          Loading {getTabLoadingLabel(activeTab)}...
-        </div>
-      )}
       <div className={isRouteTransitionPending ? 'opacity-95 transition-opacity' : 'transition-opacity'} aria-busy={isRouteTransitionPending}>
         <Suspense fallback={activeTab === 'dashboard' ? <DashboardTabLoadingFallback /> : <TabLoadingFallback tabLabel={getTabLoadingLabel(activeTab)} />}>
           {renderActiveTab()}

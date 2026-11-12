@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useMemo, useState } from 'react';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
@@ -96,7 +97,7 @@ export function AssistantInsightsTab() {
             </div>
           </DashboardSectionPanel>
         </>
-      ) : error ? null : <p className="m-0 text-sm text-[var(--muted)]">Loading…</p>}
+      ) : error ? null : <LoadingSurface message="Loading assistant audit..." />}
     </AppPageLayout>
   );
 }

@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { Suspense, lazy, useMemo, useState } from 'react';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { ShopifyTagsEditor } from '@/components/approval/ShopifyTagsEditor';
@@ -50,7 +51,7 @@ const HELP_CLASS = 'mt-1 text-xs text-[var(--muted)]';
 const DATE_BUTTON_CLASS = 'inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--bg)] text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/20';
 
 const EbayCategoriesSelect = lazy(() => import('@/components/approval/EbayCategoriesSelect').then((module) => ({ default: module.EbayCategoriesSelect })));
-const LAZY_EDITOR_FALLBACK = <div className="mt-2 rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--muted)]">Loading editor...</div>;
+const LAZY_EDITOR_FALLBACK = <LoadingSurface message="Loading editor..." />;
 
 type InventoryEditorFieldKind = 'checkbox' | 'text' | 'textarea' | 'select' | 'searchable-select' | 'date' | 'number' | 'unsupported';
 

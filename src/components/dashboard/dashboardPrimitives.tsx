@@ -1,3 +1,4 @@
+import { LoadingSurface } from '@/components/app/StateSurfaces';
 import type { ReactNode } from 'react';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
@@ -133,11 +134,7 @@ export function DashboardSubPanel({
 }
 
 export function DashboardLoadingBanner({ label }: { label: string }) {
-  return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-[0.82rem] font-medium text-[var(--muted)]">
-      {label}
-    </div>
-  );
+  return <LoadingSurface message={`${label}...`} />;
 }
 
 export function DashboardStatTileSkeletonGrid({ count = 4 }: { count?: number }) {
