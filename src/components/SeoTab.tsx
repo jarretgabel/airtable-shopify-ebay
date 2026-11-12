@@ -161,9 +161,6 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
             <StatTile label="Pages audited" value={run.pageCount} />
           </div>
         ) : null}
-        <p className="m-0 text-[0.75rem] text-[var(--muted)]">
-          Scores are 0-100 from our own checklist of on-page SEO and AI-search readiness (structured data, answer-ready content, crawler access). Search rankings and clicks come from Google Search Console, are shown separately below, and are not part of these scores.
-        </p>
         <SeoScoreExplainer />
       </DashboardSectionPanel>
       ) : null}

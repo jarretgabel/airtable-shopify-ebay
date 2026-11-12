@@ -55,13 +55,13 @@ export function SeoScoreExplainer() {
       <summary className="cursor-pointer font-semibold text-[var(--ink)]">How the scores are calculated</summary>
       <div className="mt-2 grid gap-4">
         <p className="m-0">
-          Each page gets two scores out of 100. Every check has a point value that adds up to 100. A page earns the full value when it passes, partial credit when it partly passes (for example, 2 of 4 images with alt text earns half), and nothing when it fails. The run average is the mean of all audited pages. A page that cannot be fetched scores 0.
+          Scores come from our own checklist of on-page SEO and AI-search readiness (structured data, answer-ready content, crawler access). Each page gets two scores out of 100. Every check has a point value that adds up to 100. A page earns the full value when it passes, partial credit when it partly passes (for example, 2 of 4 images with alt text earns half), and nothing when it fails. The run average is the mean of all audited pages. A page that cannot be fetched scores 0.
         </p>
         <div className="grid gap-4 lg:grid-cols-2">
           <CriteriaList title="SEO score (on-page basics)" criteria={SEO_CRITERIA} />
           <CriteriaList title="AI search score (readiness to be cited by AI)" criteria={AIO_CRITERIA} />
         </div>
-        <p className="m-0">Search Console rankings and clicks, PageSpeed and AI citation checks are shown in their own panels and do not change these scores.</p>
+        <p className="m-0">Search Console rankings and clicks, PageSpeed and AI citation checks come from separate sources, are shown in their own panels, and are not part of these scores.</p>
       </div>
     </details>
   );
