@@ -298,9 +298,9 @@ export function SettingsTab() {
     setStatusMessage(result.message);
   }
 
-  const labelClass = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-slate-300';
-  const inputClass = 'w-full rounded-xl border border-white/15 bg-slate-950/55 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
-  const revealButtonClass = 'shrink-0 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10';
+  const labelClass = 'text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]';
+  const inputClass = 'w-full rounded-xl border border-[var(--line)] bg-[var(--panel-strong,var(--panel))] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30';
+  const revealButtonClass = 'shrink-0 rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] transition hover:bg-[var(--accent-soft-bg)]';
 
   function navigateToSection(targetSection: SettingsSectionKey): void {
     setActiveSection(targetSection);

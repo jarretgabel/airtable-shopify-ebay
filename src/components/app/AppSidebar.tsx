@@ -98,6 +98,8 @@ export function AppSidebar({
     return () => document.removeEventListener('keydown', onKey);
   }, [flyout]);
 
+  const [exportOpen, setExportOpen] = useState(false);
+
   useEffect(() => {
     if (!rail) setFlyout(null);
   }, [rail]);
@@ -193,14 +195,24 @@ export function AppSidebar({
 
         <div className="shrink-0 space-y-0.5 border-t border-[var(--sidebar-line)] px-2 py-2">
           {!rail ? (
-            <>
-              <button type="button" disabled={exportDisabled} onClick={() => { onCloseMobile(); onExportCurrentPage(); }} className={`${itemBase} text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}>
-                <NavIcon page="export" className="h-[1.1rem] w-[1.1rem] shrink-0" />Export page as PDF
+            <div>
+              <button
+                type="button"
+                aria-expanded={exportOpen}
+                aria-controls="sidebar-export-menu"
+                onClick={() => setExportOpen((value) => !value)}
+                className={`${itemBase} justify-between text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}
+              >
+                <span className="inline-flex items-center gap-3"><NavIcon page="export" className="h-[1.1rem] w-[1.1rem] shrink-0" />Export</span>
+                <span aria-hidden="true" className="text-base leading-none">{exportOpen ? '−' : '+'}</span>
               </button>
-              <button type="button" disabled={exportDisabled} onClick={() => { onCloseMobile(); onExportAllPages(); }} className={`${itemBase} text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}>
-                <NavIcon page="export" className="h-[1.1rem] w-[1.1rem] shrink-0" />Export full PDF
-              </button>
-            </>
+              {exportOpen ? (
+                <div id="sidebar-export-menu" className="mt-0.5 space-y-0.5">
+                  <button type="button" disabled={exportDisabled} onClick={() => { onCloseMobile(); onExportCurrentPage(); }} className={`${itemBase} pl-10 text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}>Export page as PDF</button>
+                  <button type="button" disabled={exportDisabled} onClick={() => { onCloseMobile(); onExportAllPages(); }} className={`${itemBase} pl-10 text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}>Export full PDF</button>
+                </div>
+              ) : null}
+            </div>
           ) : null}
           <button
             type="button"
