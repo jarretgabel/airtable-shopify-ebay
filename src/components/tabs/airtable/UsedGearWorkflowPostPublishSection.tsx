@@ -251,7 +251,7 @@ export function UsedGearWorkflowPostPublishSection({
   overviewSectionId = POST_PUBLISH_OVERVIEW_SECTION_ID,
   queueTitle = 'Post-Publish Queue',
   queueNoun = 'post-publish queue',
-  focusedBucketNotice = 'Dashboard shortcut opened the post-publish page and jumped to the selected lifecycle section.',
+  focusedBucketNotice = '',
   emptyStateTitle = 'No post-publish operational rows',
   emptyStateMessage = 'The used-gear workflow currently has no listed, stale, sold-ready, or shipped operational rows.',
   nextRouteMessage = 'Next route: open Listings for newly approved publish work, then return here when a live item needs stale, sold-ready, or shipped follow-through.',

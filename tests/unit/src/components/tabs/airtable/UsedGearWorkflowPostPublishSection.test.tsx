@@ -145,7 +145,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     expect(screen.queryByText('No post-publish operational rows')).not.toBeInTheDocument();
   });
 
-  it('keeps all sections visible and announces the deep-linked lifecycle section', async () => {
+  it('keeps all sections visible for the deep-linked lifecycle section', async () => {
     loadWorkflowPostPublishQueueMock.mockResolvedValue([
       {
         id: 'rec-active',
@@ -183,7 +183,7 @@ describe('UsedGearWorkflowPostPublishSection', () => {
     );
 
     expect(await screen.findByText('Sold Ready To Ship')).toBeInTheDocument();
-    expect(screen.getByText('Dashboard shortcut opened the post-publish page and jumped to the selected lifecycle section.')).toBeInTheDocument();
+    expect(screen.queryByText(/Dashboard shortcut opened/)).not.toBeInTheDocument();
     expect(screen.getByText('Active Listings')).toBeInTheDocument();
   });
 
