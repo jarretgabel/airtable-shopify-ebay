@@ -13,7 +13,7 @@ interface SectionPillNavProps<T extends string> {
 
 function sectionButtonClass(active: boolean): string {
   return [
-    '-mb-px inline-flex items-center border-b-2 px-3 py-2 text-[0.8rem] font-semibold transition',
+    '-mb-px inline-flex outline-none focus:outline-none focus-visible:outline-none items-center border-b-2 px-3 py-2 text-[0.8rem] font-semibold transition',
     active
       ? 'border-[var(--accent)] text-[var(--ink)]'
       : 'border-transparent text-[var(--muted)] hover:border-[var(--line)] hover:text-[var(--ink)]',

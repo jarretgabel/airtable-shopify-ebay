@@ -108,6 +108,10 @@
 		outline-offset: 2px;
 	}
 
+	button:focus-visible {
+		outline: none;
+	}
+
 	* {
 		scrollbar-width: thin;
 		scrollbar-color: color-mix(in srgb, var(--muted) 40%, transparent) transparent;

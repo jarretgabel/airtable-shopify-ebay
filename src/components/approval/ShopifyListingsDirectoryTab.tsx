@@ -2,7 +2,6 @@ import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
 import { getEffectiveShopifyStatus } from '@/components/tabs/ShopifyTab';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
-import { OpenLinkToolbarButton } from '@/components/app/OpenLinkToolbarButton';
 import { WorkflowPageHeader } from '@/components/app/WorkflowPageHeader';
 import { ListingsServiceSummaryPanel } from '@/components/approval/ListingsServiceSummaryPanel';
 import { ShopifyTab } from '@/components/tabs/ShopifyTab';
@@ -20,14 +19,12 @@ export function ShopifyListingsDirectoryTab({
   const soldProductsCount = shopifyViewModel.products.filter((product) => getEffectiveShopifyStatus(product) === 'sold').length;
   const draftProductsCount = shopifyViewModel.products.filter((product) => product.status?.toLowerCase() === 'draft').length;
   const archivedProductsCount = shopifyViewModel.products.filter((product) => product.status?.toLowerCase() === 'archived').length;
-  const shopifyStoreHref = shopifyViewModel.storeDomain?.trim() || '';
 
   return (
     <AppPageLayout>
       <WorkflowPageHeader
         eyebrow="Selling"
         title="Shopify Product Snapshot"
-        actions={shopifyStoreHref ? <OpenLinkToolbarButton label="Open Shopify store" href={shopifyStoreHref} /> : null}
       />
 
       <AppPageSectionSurface flat className="space-y-5">

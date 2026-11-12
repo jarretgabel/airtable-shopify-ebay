@@ -12,6 +12,7 @@ import {
 } from '@/app/appTabContentMappers';
 import type { AppTabContentProps } from '@/app/appTabContentTypes';
 import { ErrorSurface } from '@/components/app/StateSurfaces';
+import { PageSubNavContext } from '@/components/app/AppPageHeader';
 
 const DashboardTab = lazy(async () => ({ default: (await import('@/components/DashboardTab')).DashboardTab }));
 const IssuesTab = lazy(async () => ({ default: (await import('@/components/IssuesTab')).IssuesTab }));
@@ -286,6 +287,28 @@ export function AppTabContent({
     || deferredRouteState.shopifyListingsRecordId !== shopifyListingsRecordId
     || deferredRouteState.ebayListingsRecordId !== ebayListingsRecordId
     || deferredRouteState.userRecordId !== userRecordId;
+
+  const channelItems = (['listings', 'shopify', 'ebay'] as const)
+    .filter((page) => accessiblePages.includes(page))
+    .map((page) => ({ key: page, label: page === 'listings' ? 'Listings' : page === 'shopify' ? 'Shopify' : 'eBay' }));
+  const onChannelList = (activeTab === 'listings' && !listingsRecordId)
+    || (activeTab === 'shopify' && !deferredRouteState.shopifyListingsRecordId)
+    || (activeTab === 'ebay' && !deferredRouteState.ebayListingsRecordId);
+  const channelNav = onChannelList && channelItems.length > 1 ? (
+    <div role="group" aria-label="Listing channels" className="inline-flex self-start rounded-lg border border-[var(--line)] p-0.5">
+      {channelItems.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          aria-pressed={item.key === activeTab}
+          onClick={() => navigateToTab(item.key)}
+          className={`rounded-md px-3 py-1 text-[0.8rem] font-semibold outline-none transition ${item.key === activeTab ? 'bg-[var(--accent)]/15 text-[var(--ink)]' : 'text-[var(--muted)] hover:text-[var(--ink)]'}`}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  ) : null;
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -763,7 +786,7 @@ export function AppTabContent({
     <div className="relative">
       <div className={isRouteTransitionPending ? 'opacity-95 transition-opacity' : 'transition-opacity'} aria-busy={isRouteTransitionPending}>
         <Suspense fallback={activeTab === 'dashboard' ? <DashboardTabLoadingFallback /> : <TabLoadingFallback tabLabel={getTabLoadingLabel(activeTab)} />}>
-          {renderActiveTab()}
+          <PageSubNavContext.Provider value={channelNav}>{renderActiveTab()}</PageSubNavContext.Provider>
         </Suspense>
       </div>
     </div>

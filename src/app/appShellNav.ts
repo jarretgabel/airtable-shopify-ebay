@@ -79,10 +79,11 @@ export function buildAppFrameNavTabs(input: BuildNavTabsInput): {
     onClick: () => navigateToTab(tab),
   }));
 
-  const listingsNavTabs = listingsTabs.map((tab) => ({
+  const CHANNEL_TABS = new Set<Tab>(['shopify', 'ebay']);
+  const listingsNavTabs = listingsTabs.filter((tab) => !CHANNEL_TABS.has(tab)).map((tab) => ({
     key: tab,
     label: navLabel(tab),
-    active: activeTab === tab,
+    active: activeTab === tab || (tab === 'listings' && CHANNEL_TABS.has(activeTab)),
     badgeCount: tab === 'listings' ? listingsBadgeCount : undefined,
     ...resolveDisabledState(tab),
     onClick: () => navigateToTab(tab),

@@ -32,14 +32,8 @@ describe('buildAppFrameNavTabs', () => {
       disabled: true,
       disabledReason: 'Missing public runtime config: VITE_AIRTABLE_COMBINED_LISTINGS_TABLE_REF.',
     });
-    expect(result.listingsNavTabs.find((tab) => tab.key === 'ebay')).toMatchObject({
-      disabled: false,
-      disabledReason: undefined,
-    });
-    expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toMatchObject({
-      disabled: false,
-      disabledReason: undefined,
-    });
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'ebay')).toBeUndefined();
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toBeUndefined();
     expect(result.postPublishNavTabs).toEqual([]);
   });
 
@@ -123,7 +117,7 @@ describe('buildAppFrameNavTabs', () => {
     expect(result.tabs.find((tab) => tab.key === 'jotform-audit')).toBeUndefined();
     expect(result.intakeNavTabs.find((tab) => tab.key === 'create-intake-item')).toBeDefined();
     expect(result.inventoryProcessingNavTabs.map((tab) => tab.key)).toEqual(['testing-queue', 'photography-queue']);
-    expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'post-publish', 'shopify', 'ebay']);
+    expect(result.listingsNavTabs.map((tab) => tab.key)).toEqual(['listings', 'post-publish']);
     expect(result.postPublishNavTabs).toEqual([]);
   });
 
@@ -140,7 +134,7 @@ describe('buildAppFrameNavTabs', () => {
 
     expect(result.tabs.find((tab) => tab.key === 'inventory')).toMatchObject({ badgeCount: undefined, label: 'Workflow Hub' });
     expect(result.listingsNavTabs.find((tab) => tab.key === 'listings')).toMatchObject({ badgeCount: 4 });
-    expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toMatchObject({ badgeCount: undefined });
+    expect(result.listingsNavTabs.find((tab) => tab.key === 'shopify')).toBeUndefined();
     expect(result.postPublishNavTabs).toEqual([]);
   });
 });
