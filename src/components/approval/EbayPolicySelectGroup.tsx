@@ -199,6 +199,12 @@ export function EbayPolicySelectGroup({
     (formValues[fulfillmentPolicyFieldName ?? ''] ?? '').trim(),
     defaultPolicyIds.fulfillmentPolicyId,
   );
+  const selectedPaymentPolicyId = paymentPolicyFieldName
+    ? resolveSelectedPolicyValue(paymentOptions, (formValues[paymentPolicyFieldName] ?? '').trim(), defaultPolicyIds.paymentPolicyId)
+    : '';
+  const selectedReturnPolicyId = returnPolicyFieldName
+    ? resolveSelectedPolicyValue(returnOptions, (formValues[returnPolicyFieldName] ?? '').trim(), defaultPolicyIds.returnPolicyId)
+    : '';
   const shippingPolicyIssue = policyIssue && recordId && policyIssue.recordId === recordId
     && (policyIssue.policyId
       ? policyIssue.policyId === selectedFulfillmentPolicyId
@@ -214,7 +220,7 @@ export function EbayPolicySelectGroup({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {fulfillmentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel, 'Fulfillment policy', Boolean((formValues[fulfillmentPolicyFieldName ?? ''] ?? '').trim()))}
+            {renderVisuallyRequiredLabel(fulfillmentPolicyFieldName, renderFieldLabel, 'Fulfillment policy', Boolean(selectedFulfillmentPolicyId))}
             <ApprovalSelect
               selectClassName={`${getSelectClassName(fulfillmentPolicyFieldName)}${shippingPolicyIssue ? ' ring-1 ring-rose-400' : ''}`}
               value={selectedFulfillmentPolicyId}
@@ -241,14 +247,10 @@ export function EbayPolicySelectGroup({
 
         {paymentPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel, 'Payment policy', Boolean((formValues[paymentPolicyFieldName] ?? '').trim()))}
+            {renderVisuallyRequiredLabel(paymentPolicyFieldName, renderFieldLabel, 'Payment policy', Boolean(selectedPaymentPolicyId))}
             <ApprovalSelect
               selectClassName={getSelectClassName(paymentPolicyFieldName)}
-              value={resolveSelectedPolicyValue(
-                paymentOptions,
-                (formValues[paymentPolicyFieldName] ?? '').trim(),
-                defaultPolicyIds.paymentPolicyId,
-              )}
+              value={selectedPaymentPolicyId}
               onChange={(event) => setFormValue(paymentPolicyFieldName, event.target.value)}
               onFocus={refreshPolicyOptions}
               disabled={disabled}
@@ -263,14 +265,10 @@ export function EbayPolicySelectGroup({
 
         {returnPolicyFieldName && (
           <label className="col-span-1 flex flex-col gap-2">
-            {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel, 'Return policy', Boolean((formValues[returnPolicyFieldName] ?? '').trim()))}
+            {renderVisuallyRequiredLabel(returnPolicyFieldName, renderFieldLabel, 'Return policy', Boolean(selectedReturnPolicyId))}
             <ApprovalSelect
               selectClassName={getSelectClassName(returnPolicyFieldName)}
-              value={resolveSelectedPolicyValue(
-                returnOptions,
-                (formValues[returnPolicyFieldName] ?? '').trim(),
-                defaultPolicyIds.returnPolicyId,
-              )}
+              value={selectedReturnPolicyId}
               onChange={(event) => setFormValue(returnPolicyFieldName, event.target.value)}
               onFocus={refreshPolicyOptions}
               disabled={disabled}
