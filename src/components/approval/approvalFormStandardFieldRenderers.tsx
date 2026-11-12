@@ -290,6 +290,7 @@ export function renderApprovalFormSpecialField({
   value,
   formValues,
   inputDisabled,
+  approvalChannel,
   isRequiredField,
   renderFieldLabel,
   toFieldLabel,
@@ -316,6 +317,7 @@ export function renderApprovalFormSpecialField({
         fieldName={fieldName}
         label={toFieldLabel(fieldName)}
         required={isRequiredField(fieldName)}
+        requiredBadgeText={approvalChannel === 'combined' ? 'Shopify Required' : 'Required'}
         value={value}
         onChange={(nextValue) => setFormValue(fieldName, nextValue)}
         disabled={inputDisabled}

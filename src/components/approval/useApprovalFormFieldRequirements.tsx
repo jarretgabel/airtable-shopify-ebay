@@ -157,6 +157,7 @@ export function useApprovalFormFieldRequirements({
     const isEbayRequired = isEbayRequiredField(fieldName);
 
     if (!isShopifyRequired && !isEbayRequired) return null;
+    if (!isRequiredFieldMissing(fieldName)) return null;
 
     if (approvalChannel !== 'combined' && !isCombinedApproval && isRequiredField(fieldName)) {
       return <span className={requiredBadgeClass}>Required</span>;
@@ -168,7 +169,7 @@ export function useApprovalFormFieldRequirements({
         {isEbayRequired && <span className={requiredBadgeClass}>eBay Required</span>}
       </>
     );
-  }, [approvalChannel, isCombinedApproval, isEbayRequiredField, isRequiredField, isShopifyRequiredField]);
+  }, [approvalChannel, isCombinedApproval, isEbayRequiredField, isRequiredField, isRequiredFieldMissing, isShopifyRequiredField]);
 
   const renderFieldLabel = useCallback((fieldName: string): JSX.Element => (
     <span className={`${getLabelClassName(fieldName)} flex items-center gap-2`}>

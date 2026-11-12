@@ -60,7 +60,7 @@ describe('EbayCategoriesSelect', () => {
     );
 
     const input = screen.getByRole('textbox', { name: 'eBay Categories' });
-    expect(screen.getByText('eBay Required')).toBeInTheDocument();
+    expect(screen.queryByText('eBay Required')).not.toBeInTheDocument();
     expect(input).not.toHaveAttribute('aria-invalid');
     expect(input).not.toHaveClass('border-rose-400/45');
     expect(screen.queryByText('No categories selected.')).not.toBeInTheDocument();

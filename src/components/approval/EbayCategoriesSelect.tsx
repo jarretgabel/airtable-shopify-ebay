@@ -139,7 +139,7 @@ export function EbayCategoriesSelect({
     <div ref={rootRef} className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
       <span className={`${labelClass} flex items-center gap-2 ${missingRequiredSelection ? 'text-[var(--required-label-ink)]' : ''}`}>
         <span>{label}</span>
-        {required && <span className={requiredBadgeClass}>eBay Required</span>}
+        {required && missingRequiredSelection && <span className={requiredBadgeClass}>eBay Required</span>}
         {formValues && (
           <button
             type="button"

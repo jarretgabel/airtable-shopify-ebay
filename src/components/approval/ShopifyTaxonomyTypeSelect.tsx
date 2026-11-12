@@ -67,6 +67,7 @@ interface ShopifyTaxonomyTypeSelectProps {
   fieldName: string;
   label: string;
   required?: boolean;
+  requiredBadgeText?: string;
   value: string;
   disabled: boolean;
   onChange: (value: string) => void;
@@ -77,6 +78,7 @@ export function ShopifyTaxonomyTypeSelect({
   fieldName,
   label,
   required = false,
+  requiredBadgeText = 'Required',
   value,
   disabled,
   onChange,
@@ -193,11 +195,12 @@ export function ShopifyTaxonomyTypeSelect({
     () => normalizeCategoryPath(value).split('>').map((segment) => segment.trim()).filter(Boolean),
     [value],
   );
-  const labelClassName = required ? `${labelClass} text-rose-200` : labelClass;
-  const inputClassName = required
+  const missing = required && !value.trim();
+  const labelClassName = missing ? `${labelClass} text-rose-200` : labelClass;
+  const inputClassName = missing
     ? `${inputBaseClass} border-rose-400/45 bg-rose-500/5 focus:border-rose-300`
     : inputBaseClass;
-  const toggleButtonClassName = required
+  const toggleButtonClassName = missing
     ? 'rounded-xl border border-rose-400/45 bg-rose-500/5 px-3 py-2 text-sm text-[var(--ink)] transition hover:border-rose-300 disabled:cursor-not-allowed disabled:opacity-70'
     : 'rounded-xl border border-[var(--line)] bg-[var(--panel)] px-3 py-2 text-sm text-[var(--ink)] transition hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70';
 
@@ -287,10 +290,10 @@ export function ShopifyTaxonomyTypeSelect({
   };
 
   return (
-    <div className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
+    <div className="relative col-span-1 mt-3 flex flex-col gap-2 border-t border-[var(--line)] pt-5 md:col-span-2">
       <span className={`${labelClassName} flex items-center gap-2`}>
         <span>{label}</span>
-        {required && <span className={requiredBadgeClass}>Required</span>}
+        {missing && <span className={requiredBadgeClass}>{requiredBadgeText}</span>}
         {formValues && (
           <button
             type="button"
