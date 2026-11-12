@@ -47,7 +47,7 @@ function App() {
   if (!usersReady) {
     return (
       <main className="flex min-h-screen items-center justify-center px-5 text-[var(--ink)]">
-        <LoadingSurface message="Loading..." />
+        <div className="boot-loader"><LoadingSurface message="Loading..." /></div>
       </main>
     );
   }

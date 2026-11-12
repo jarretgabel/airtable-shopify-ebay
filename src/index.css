@@ -184,3 +184,14 @@
   padding-top: 2rem;
   border-top: 1px solid var(--line);
 }
+
+@keyframes boot-loader-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Delayed so a fast account check never flashes a loader before the page's own one. */
+.boot-loader {
+  opacity: 0;
+  animation: boot-loader-in 200ms ease 500ms forwards;
+}
