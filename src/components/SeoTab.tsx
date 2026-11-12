@@ -5,6 +5,7 @@ import { DashboardSectionPanel, DashboardSubPanel, StatTile } from '@/components
 import { tabFormControlBaseClass } from '@/components/tabs/uiClasses';
 import { seoAppApi } from '@/services/app-api';
 import { CitationPanel, PageSpeedPanel, SearchConsolePanel } from '@/components/SeoInsightPanels';
+import { SeoScoreExplainer } from '@/components/SeoScoreExplainer';
 import { recommendationFor } from '@/components/seoRecommendations';
 import type { SeoPageRow, SeoSiteId, SeoSummary } from '@/services/app-api/seo';
 
@@ -149,7 +150,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
           <button type="button" className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] disabled:opacity-60" disabled={busy} onClick={() => { void runAudit(); }}>
             {busy ? 'Audit running…' : 'Run audit now'}
           </button>
-          <span>{run?.finishedAt ? `Last audit ${dateTime.format(new Date(run.finishedAt))}${run.status === 'partial' ? ' (partial)' : ''}` : 'No audit has finished yet. Audits also run weekly.'}</span>
+          <span>{run?.finishedAt ? `Last audit ${dateTime.format(new Date(run.finishedAt))}${run.status === 'partial' ? ' (partial)' : ''}` : 'No audit has finished yet. Audits also run nightly.'}</span>
         </div>
         {error ? <p role="alert" className="m-0 text-sm text-red-500">{error}</p> : null}
         {run ? (
@@ -162,6 +163,7 @@ export function SeoTab({ site = 'resolutionav' }: { site?: SeoSiteId }) {
         <p className="m-0 text-[0.75rem] text-[var(--muted)]">
           Scores are 0-100 from our own checklist of on-page SEO and AI-search readiness (structured data, answer-ready content, crawler access). Search rankings and clicks come from Google Search Console, are shown separately below, and are not part of these scores.
         </p>
+        <SeoScoreExplainer />
       </DashboardSectionPanel>
       ) : null}
 
