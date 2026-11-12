@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { usePageSectionTracking } from '@/components/app/usePageSectionTracking';
@@ -67,6 +67,8 @@ export function PostPublishQueueTab({
     });
   }, [updateRouteState]);
 
+  const [loaded, setLoaded] = useState(false);
+
   const sectionItems = useMemo(() => [
     ...POST_PUBLISH_SECTION_DEFINITIONS.map((section) => ({ id: section.id, key: section.key, label: section.title })),
   ], []);
@@ -88,16 +90,19 @@ export function PostPublishQueueTab({
       eyebrow="Selling"
       title="Post-Publish"
     >
-      <MainPageSectionNav
-        ariaLabel="Post-publish sections"
-        items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
-        activeKey={activeSectionKey}
-        onSelect={handleSectionSelect}
-      />
+      {loaded ? (
+        <MainPageSectionNav
+          ariaLabel="Post-publish sections"
+          items={sectionItems.map((item) => ({ key: item.key, label: item.label }))}
+          activeKey={activeSectionKey}
+          onSelect={handleSectionSelect}
+        />
+      ) : null}
 
       <UsedGearWorkflowPostPublishSection
         currentUserName={currentUserName}
         showSectionIntro={false}
+        onLoadedChange={setLoaded}
         focusedBucket={focusedBucket}
         onOpenOperationalRecord={onOpenOperationalRecord}
         onOpenListingsRecord={onOpenListingsRecord}

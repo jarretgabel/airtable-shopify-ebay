@@ -32,6 +32,7 @@ interface UsedGearWorkflowPostPublishSectionProps {
   currentUserName: string;
   showSectionIntro?: boolean;
   showSectionTitles?: boolean;
+  onLoadedChange?: (loaded: boolean) => void;
   focusedBucket?: UsedGearWorkflowPostPublishBucket | null;
   onOpenOperationalRecord: (recordId: string) => void;
   onOpenListingsRecord: (recordId: string) => void;
@@ -239,6 +240,7 @@ function buildPostSaleChipValues(snapshot: ReturnType<typeof getUsedGearWorkflow
 export function UsedGearWorkflowPostPublishSection({
   showSectionIntro = true,
   showSectionTitles = true,
+  onLoadedChange,
   focusedBucket = null,
   onOpenOperationalRecord,
   onOpenListingsRecord,
@@ -266,6 +268,10 @@ export function UsedGearWorkflowPostPublishSection({
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+
+  useEffect(() => {
+    onLoadedChange?.(hasLoaded || !loading);
+  }, [hasLoaded, loading, onLoadedChange]);
   const [uncontrolledSearchTerm, setUncontrolledSearchTerm] = useState('');
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowPostPublishSortMode>('latest-activity');
   const [updatingRecordIds, setUpdatingRecordIds] = useState<string[]>([]);

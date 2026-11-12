@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -16,19 +17,24 @@ vi.mock('@/components/tabs/airtable/UsedGearWorkflowPostPublishSection', () => (
     focusedBucket,
     onSortModeChange,
     sectionSearchEnabled,
+    onLoadedChange,
   }: {
+    onLoadedChange?: (loaded: boolean) => void;
     sortMode?: string;
     focusedBucket?: string | null;
     onSortModeChange?: (value: 'latest-activity' | 'oldest-activity' | 'sku') => void;
     sectionSearchEnabled?: boolean;
-  }) => (
+  }) => {
+    useEffect(() => { onLoadedChange?.(true); }, [onLoadedChange]);
+    return (
     <div>
       <div data-testid="post-publish-sort-mode">{sortMode ?? ''}</div>
       <div data-testid="post-publish-focused-bucket">{focusedBucket ?? ''}</div>
       <div data-testid="post-publish-section-search">{sectionSearchEnabled ? 'enabled' : 'disabled'}</div>
       <button type="button" onClick={() => onSortModeChange?.('sku')}>Set Sort</button>
     </div>
-  ),
+    );
+  },
 }));
 
 function LocationState() {

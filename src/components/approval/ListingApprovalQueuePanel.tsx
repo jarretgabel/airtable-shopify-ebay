@@ -1124,19 +1124,21 @@ export function ListingApprovalQueuePanel({
         title="Listings"
       />
 
-      <MainPageSectionNav
-        ariaLabel="Combined listings sections"
-        items={combinedSectionItems.map((item) => ({ key: item.key, label: item.label }))}
-        activeKey={activeCombinedSectionKey}
-        onSelect={(sectionKey) => {
-          const sectionId = combinedSectionItems.find((item) => item.key === sectionKey)?.id;
-          if (sectionId) {
-            requestAnimationFrame(() => {
-              scrollToSection(sectionId);
-            });
-          }
-        }}
-      />
+      {hasTableReference && loading && records.length === 0 ? null : (
+        <MainPageSectionNav
+          ariaLabel="Combined listings sections"
+          items={combinedSectionItems.map((item) => ({ key: item.key, label: item.label }))}
+          activeKey={activeCombinedSectionKey}
+          onSelect={(sectionKey) => {
+            const sectionId = combinedSectionItems.find((item) => item.key === sectionKey)?.id;
+            if (sectionId) {
+              requestAnimationFrame(() => {
+                scrollToSection(sectionId);
+              });
+            }
+          }}
+        />
+      )}
 
       {queuePanel}
     </AppPageLayout>
