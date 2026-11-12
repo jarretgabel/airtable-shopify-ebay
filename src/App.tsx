@@ -22,7 +22,7 @@ function AuthenticatedAppShellFallback() {
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { users, usersLoading, usersReady, currentUser, requiresPasswordChange, accessiblePages, canAccessPage, logout } = useAuthSession();
+  const { users, usersReady, currentUser, requiresPasswordChange, accessiblePages, canAccessPage, logout } = useAuthSession();
   const routeState = useAppRouteState(location, accessiblePages);
   const {
     normalizedPath,
@@ -46,14 +46,8 @@ function App() {
 
   if (!usersReady) {
     return (
-      <main className="min-h-screen px-5 py-8 text-[var(--ink)]">
-        <section className="mx-auto w-full max-w-xl rounded-[1.4rem] border border-[var(--line)] bg-[var(--panel)]/90 p-6 shadow-[var(--elevation-lg)] backdrop-blur">
-          <p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">Listing Control Center</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)]">Loading users</h1>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-            {usersLoading ? 'Loading account access...' : 'Preparing account access...'}
-          </p>
-        </section>
+      <main className="flex min-h-screen items-center justify-center px-5 text-[var(--ink)]">
+        <LoadingSurface message="Loading..." />
       </main>
     );
   }
