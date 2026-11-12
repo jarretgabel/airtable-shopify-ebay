@@ -46,7 +46,7 @@ interface KeyFeaturePreset {
 
 // eBay rejects item specifics longer than this.
 export const KEY_FEATURE_VALUE_MAX_LENGTH = 65;
-// AI generation fills the list up to this many rows. Rows added by hand are not limited.
+// Maximum number of feature rows, for both AI generation and manual adds.
 export const KEY_FEATURE_AI_MAX_ROWS = 10;
 
 const inputClass =
@@ -383,7 +383,7 @@ export function KeyFeaturesEditor({
       const filledRowCount = rows.filter((row) => row.feature.trim() || row.value.trim()).length;
       const remainingSlots = KEY_FEATURE_AI_MAX_ROWS - filledRowCount;
       if (remainingSlots <= 0) {
-        setGenerateError(`Already at ${KEY_FEATURE_AI_MAX_ROWS} features. Remove one to generate more, or add more by hand.`);
+        setGenerateError(`Already at ${KEY_FEATURE_AI_MAX_ROWS} features. Remove one to generate more.`);
         return;
       }
 
@@ -630,7 +630,8 @@ export function KeyFeaturesEditor({
         <button
           type="button"
           onClick={addRow}
-          disabled={disabled}
+          disabled={disabled || rows.length >= KEY_FEATURE_AI_MAX_ROWS}
+          title={rows.length >= KEY_FEATURE_AI_MAX_ROWS ? `Maximum of ${KEY_FEATURE_AI_MAX_ROWS} features` : undefined}
           className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[var(--line)] py-2 text-[0.78rem] font-medium text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Add feature

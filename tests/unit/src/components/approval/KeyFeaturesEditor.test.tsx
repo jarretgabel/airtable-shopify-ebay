@@ -81,7 +81,7 @@ describe('KeyFeaturesEditor', () => {
     expect(screen.getByLabelText('Key value 1')).toHaveAttribute('maxLength', '65');
   });
 
-  it('fills AI features only up to 10 rows total, while manual rows stay unlimited', async () => {
+  it('fills AI features only up to 10 rows total, and disables Add feature at the max', async () => {
     const setFormValue = vi.fn();
     const existing = Array.from({ length: 8 }, (_, index) => `Feature ${index + 1},Value ${index + 1}`).join('\n');
     const onGenerateFeatures = vi.fn().mockResolvedValue(
@@ -104,8 +104,8 @@ describe('KeyFeaturesEditor', () => {
     expect(saved).toHaveLength(10);
     expect(saved.slice(-2)).toEqual(['Generated 1,Generated value 1', 'Generated 2,Generated value 2']);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add feature' }));
-    expect(screen.getAllByLabelText(/^Key value /)).toHaveLength(11);
+    expect(screen.getByRole('button', { name: 'Add feature' })).toBeDisabled();
+    expect(screen.getAllByLabelText(/^Key value /)).toHaveLength(10);
   });
 
   it('does not call AI when the list already has 10 features', async () => {
