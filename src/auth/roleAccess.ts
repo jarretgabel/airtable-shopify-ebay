@@ -29,8 +29,8 @@ const PROCESSOR_PAGES: AppPage[] = [
   'imagelab',
 ];
 
-const TESTER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'testing-queue', 'testing'];
-const PHOTOGRAPHER_PAGES: AppPage[] = ['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab'];
+const TESTER_PAGES: AppPage[] = ['dashboard', 'issues', 'workflow-guide', 'testing-queue', 'testing'];
+const PHOTOGRAPHER_PAGES: AppPage[] = ['dashboard', 'issues', 'workflow-guide', 'photography-queue', 'photos', 'imagelab'];
 const DEVELOPER_PAGES: AppPage[] = [
   'dashboard',
   'sales',
@@ -181,6 +181,11 @@ export function normalizeRolePages(pages: AppPage[], role: UserRole): AppPage[] 
   // Keep the shared reference guide available to existing users whose stored page bundles predate it.
   if (allowedSet.has('workflow-guide')) {
     nextPages.add('workflow-guide');
+  }
+
+  // Every user can file and follow issues, including those whose stored bundles predate it.
+  if (allowedSet.has('issues')) {
+    nextPages.add('issues');
   }
 
   if (nextPages.has('manual-intake') && allowedSet.has('create-intake-item')) {

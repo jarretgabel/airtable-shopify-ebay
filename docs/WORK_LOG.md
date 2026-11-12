@@ -92,3 +92,4 @@ Hours marked `~` are estimates from commit timestamps: commits less than 2h apar
 | 2026-11-09 | ~7.25 | Add Stereobuyers SEO audit page; label Resolution AV SEO page; Add Google Search Console sync and Search performance panel; Disable AI answer check while an audit runs; Log assistant questions and show them in the insights dashboard (+13 more) |
 | 2026-11-10 | ~0.75 | SEO/assistant insights: Utilities eyebrow and SEO loading state; Rename Assistant nav item to AI Assistant Audit |
 | 2026-11-11 | ~5.25 | Ops portal UI overhaul: sidebar shell (footer account/notifications, accordion groups), flat sections and single loader, dashboard/listing detail polish, PDF export fix, Listings tab row with Shopify/eBay snapshots, issues tracker |
+| 2026-11-12 | TBD | Work log with estimated hours; Issues page and ticket submission opened to all roles (tester, photographer, processor) |

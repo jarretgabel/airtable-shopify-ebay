@@ -69,8 +69,8 @@ const ROLE_ALLOWED_PAGES: Record<UserRole, AppPage[]> = {
     'notifications',
     'imagelab',
   ],
-  tester: ['dashboard', 'workflow-guide', 'testing-queue', 'testing'],
-  photographer: ['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab'],
+  tester: ['dashboard', 'issues', 'workflow-guide', 'testing-queue', 'testing'],
+  photographer: ['dashboard', 'issues', 'workflow-guide', 'photography-queue', 'photos', 'imagelab'],
 };
 
 export function isAppPage(value: string): value is AppPage {
@@ -88,6 +88,10 @@ export function normalizeAllowedPages(pages: AppPage[], role: UserRole): AppPage
 
   if (allowedSet.has('workflow-guide')) {
     nextPages.add('workflow-guide');
+  }
+
+  if (allowedSet.has('issues')) {
+    nextPages.add('issues');
   }
 
   if (nextPages.has('manual-intake') && allowedSet.has('create-intake-item')) {

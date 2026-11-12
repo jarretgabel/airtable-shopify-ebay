@@ -132,9 +132,9 @@ describe('authContextHelpers', () => {
     expect(getAccessiblePages(baseUsers[2])).toEqual(getRoleDefaultPages('processor'));
     expect(getAccessiblePages(baseUsers[0])).toEqual(getRoleDefaultPages('admin'));
     expect(getAccessiblePages(owner)).toEqual(getRoleDefaultPages('owner'));
-    expect(getAccessiblePages(baseUsers[3])).toEqual(['dashboard', 'workflow-guide', 'testing-queue', 'testing', 'settings', 'notifications']);
+    expect(getAccessiblePages(baseUsers[3])).toEqual(['dashboard', 'issues', 'workflow-guide', 'testing-queue', 'testing', 'settings', 'notifications']);
     expect(getAccessiblePages(baseUsers[4])).toEqual(getRoleDefaultPages('developer'));
-    expect(getAccessiblePages(baseUsers[5])).toEqual(['dashboard', 'workflow-guide', 'photography-queue', 'photos', 'imagelab', 'settings', 'notifications']);
+    expect(getAccessiblePages(baseUsers[5])).toEqual(['dashboard', 'issues', 'workflow-guide', 'photography-queue', 'photos', 'imagelab', 'settings', 'notifications']);
   });
 
   it('uses stored role notification defaults when building new users', () => {
@@ -188,6 +188,7 @@ describe('authContextHelpers', () => {
 
     expect(getAccessiblePages(existingTester)).toEqual([
       'dashboard',
+      'issues',
       'workflow-guide',
       'testing-queue',
       'testing',
