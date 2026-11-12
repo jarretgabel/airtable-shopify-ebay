@@ -277,7 +277,7 @@ export function EbayAttributesEditor({
           eBay item specifics used for buyer filters and product attributes. Choose a preset to add the common rows for that listing type.
         </p>
 
-        <div className="grid grid-cols-1 gap-3 rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div className="grid grid-cols-1 gap-3  md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <label className="flex flex-col gap-2">
             <span className="text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Add Default Attributes</span>
             <ApprovalSelect
@@ -315,7 +315,7 @@ export function EbayAttributesEditor({
         {rows.map((row, index) => (
           <div
             key={`${row.lockedName ? 'locked' : 'custom'}-${row.name || 'row'}-${index}`}
-            className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3"
+           
           >
             <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(180px,0.9fr)_minmax(0,1.4fr)_auto] md:items-start">
               <input

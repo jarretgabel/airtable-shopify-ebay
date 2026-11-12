@@ -192,7 +192,7 @@ export function SettingsTab() {
 
   if (!currentUser) {
     return (
-      <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5">
+      <section>
         <p className="text-sm text-[var(--muted)]">No active user session found.</p>
       </section>
     );
@@ -519,7 +519,7 @@ export function SettingsTab() {
               </select>
             </div>
 
-            <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--bg)]/45 p-4">
+            <div className="mt-5">
               <AppSectionTitle title="Used Gear Workflow Alerts" className="mb-3" />
               {showDeveloperRuntimeSection ? (
                 <p className="mt-2 text-[0.78rem] leading-6 text-[var(--muted)]">

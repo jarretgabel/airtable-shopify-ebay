@@ -762,7 +762,7 @@ export function UsedGearWorkflowPostPublishSection({
   };
 
   return (
-    <section id={overviewSectionId} ref={sectionRef} className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-24">
+    <section id={overviewSectionId} ref={sectionRef} className="space-y-4  scroll-mt-24">
       <div className="flex flex-col gap-4">
         {showSectionIntro ? (
           <AppSectionTitle title={queueTitle} />

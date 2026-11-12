@@ -432,7 +432,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                 recordId={recordId ?? undefined}
               />
             ) : (
-              <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
+              <div>
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Intake Images</p>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">No intake reference images are available for this record yet.</p>
               </div>
@@ -447,7 +447,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
                 recordId={recordId ?? undefined}
               />
             ) : (
-              <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
+              <div>
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Testing Images</p>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">No testing reference images are available for this record yet.</p>
               </div>
@@ -455,7 +455,7 @@ export function PhotosFormTab({ recordId, onBackToDirectory, eyebrow = 'Forms' }
           </div>
         </WorkflowFormSnapshotSection>
 
-        <form className="space-y-5 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <AppSectionTitle title="Photography Details" titleClassName="text-lg" />
           <div className="grid gap-5 lg:grid-cols-2">
             {editableFields.map((field) => (

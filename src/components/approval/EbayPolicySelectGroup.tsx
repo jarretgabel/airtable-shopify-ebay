@@ -7,7 +7,7 @@ import {
 } from '@/services/app-api/ebay';
 import { ApprovalSelect } from '@/components/approval/ApprovalSelect';
 
-const panelClass = 'col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3 md:col-span-2';
+const panelClass = 'col-span-1  md:col-span-2';
 const requiredBadgeClass = 'inline-block rounded-full border border-[var(--required-badge-border)] bg-[var(--required-badge-bg)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--required-badge-ink)]';
 
 interface EbayPolicySelectGroupProps {

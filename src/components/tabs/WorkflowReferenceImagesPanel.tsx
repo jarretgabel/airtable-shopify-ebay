@@ -84,7 +84,7 @@ export function WorkflowReferenceImagesPanel({
 
   if (collapsible) {
     return (
-      <details className="group mt-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4" open={!defaultCollapsed}>
+      <details className="group mt-4" open={!defaultCollapsed}>
         <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export function WorkflowReferenceImagesPanel({
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/60 p-4">
+    <div className="mt-4">
       <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{title}</p>
       {panelBody}
     </div>

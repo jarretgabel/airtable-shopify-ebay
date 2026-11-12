@@ -58,7 +58,7 @@ export function UserDetailPanel({
     <section className="space-y-5">
       <PageTitleHeader eyebrow="User" title="User Management" />
 
-      <section className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
+      <section>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <button
             type="button"

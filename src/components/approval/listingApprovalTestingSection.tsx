@@ -114,7 +114,7 @@ export function ListingApprovalTestingSection({
         {snapshotCards.length > 0 ? (
           <div className="mt-4 grid gap-3 lg:grid-cols-2">
             {snapshotCards.map((card) => (
-              <div key={card.title} className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+              <div key={card.title} className="text-sm text-[var(--muted)]">
                 <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{card.title}</p>
                 <p className="mt-2 whitespace-pre-wrap leading-6 text-[var(--ink)]">{card.value.trim() || card.emptyValue || 'No notes available.'}</p>
               </div>

@@ -38,7 +38,7 @@ function SnapshotNoteCard({ title, value, emptyValue }: IntakeSnapshotCard) {
   const content = value.trim() || emptyValue || 'No notes available.';
 
   return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--muted)]">
+    <div className="text-sm text-[var(--muted)]">
       <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{title}</p>
       <p className="mt-2 whitespace-pre-wrap leading-6 text-[var(--ink)]">{content}</p>
     </div>
@@ -56,7 +56,7 @@ export function IntakeSnapshotSection({
   children,
 }: IntakeSnapshotSectionProps) {
   return (
-    <div id={sectionId} className={['rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5', className].filter(Boolean).join(' ')}>
+    <div id={sectionId} className={['', className].filter(Boolean).join(' ')}>
       <AppSectionTitle title={title} titleClassName="text-lg" actions={actions} />
       {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p> : null}
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

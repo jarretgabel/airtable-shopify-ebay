@@ -178,7 +178,7 @@ export function BodyHtmlPreview({
       />
     ) : (
       <div
-        className="prose prose-invert max-w-none rounded-lg border border-[var(--line)] bg-[var(--bg)] p-4 text-sm text-[var(--ink)]"
+        className="prose prose-invert max-w-none  text-sm text-[var(--ink)]"
         dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
       />
     )

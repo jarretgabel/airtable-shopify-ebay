@@ -53,7 +53,7 @@ export function ListingApprovalSoldReadyRecordPage({
 
     return (
       <AppPageLayout>
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-6">
+        <section>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">Sold-Ready Listing</p>
           <h1 className="mt-3 text-2xl font-semibold text-[var(--text)]">Listing record not found</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">

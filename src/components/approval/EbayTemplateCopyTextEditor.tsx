@@ -143,7 +143,7 @@ export function EbayTemplateCopyTextEditor({
   };
 
   return (
-    <div className="col-span-1 rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3 md:col-span-2">
+    <div className="col-span-1  md:col-span-2">
       <p className="m-0 mb-2 text-sm font-semibold text-[var(--ink)]">{label}</p>
       <p className="m-0 mb-3 text-xs text-[var(--muted)]">{helperText}</p>
 

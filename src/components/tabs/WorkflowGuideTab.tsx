@@ -53,7 +53,7 @@ function StepList({ steps }: { steps: GuideStep[] }) {
   return (
     <ol className="grid gap-3 lg:grid-cols-2">
       {steps.map((step, index) => (
-        <li key={step.title} className="list-none rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+        <li key={step.title} className="list-none">
           <div className="flex items-start gap-3">
             <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]/15 text-sm font-semibold text-[var(--accent)]">
               {index + 1}
@@ -71,7 +71,7 @@ function StepList({ steps }: { steps: GuideStep[] }) {
 
 function QuickStartCard({ title, items }: { title: string; items: string[] }) {
   return (
-    <article className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+    <article>
       <h4 className="m-0 text-sm font-semibold text-[var(--ink)]">{title}</h4>
       <ul className="mt-3 space-y-2 pl-5 text-sm leading-6 text-[var(--muted)]">
         {items.map((item) => (
@@ -100,7 +100,7 @@ function GuideReferenceCard({
   ctaLabel?: string;
 }) {
   return (
-    <article className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+    <article>
       <h4 className="m-0 text-sm font-semibold text-[var(--ink)]">{title}</h4>
       <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{summary}</p>
 
@@ -160,7 +160,7 @@ function RoleStartStrip({
         const pagePath = PAGE_DEFINITIONS[item.page]?.path ?? '#';
 
         return (
-          <article key={`${item.page}-${item.title}`} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+          <article key={`${item.page}-${item.title}`}>
             <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">Suggested start</p>
             <p className="mt-2 text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--muted)]">{pageLabel}</p>
             <h4 className="mt-2 m-0 text-sm font-semibold text-[var(--ink)]">{item.title}</h4>
@@ -483,7 +483,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
       >
         <div className="space-y-3">
           {roleGuide.questions.map((item) => (
-            <article key={item.question} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4">
+            <article key={item.question}>
               <h4 className="m-0 text-sm font-semibold text-[var(--ink)]">{item.question}</h4>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.answer}</p>
             </article>

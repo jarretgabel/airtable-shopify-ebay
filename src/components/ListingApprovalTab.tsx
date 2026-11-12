@@ -48,7 +48,7 @@ export function ListingApprovalTab({
   if (viewModel.selectedRecordId && queuePanelProps.loading && !queuePanelProps.error) {
     return (
       <AppPageLayout>
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-6">
+        <section>
           <div className="space-y-3" aria-hidden="true">
             <div className="h-3 w-28 animate-pulse rounded bg-white/10" />
             <div className="h-8 w-72 animate-pulse rounded bg-white/10" />
@@ -65,7 +65,7 @@ export function ListingApprovalTab({
   if (viewModel.selectedRecordId && !queuePanelProps.loading && !queuePanelProps.error) {
     return (
       <AppPageLayout>
-        <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-6">
+        <section>
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">Listing Record</p>
           <h1 className="mt-3 text-2xl font-semibold text-[var(--text)]">Listing record not found</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">

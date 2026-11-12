@@ -624,7 +624,7 @@ export function FormImageUploadEditor({
   };
 
   return (
-    <section className={`rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 ${className}`.trim()}>
+    <section className={` ${className}`.trim()}>
       <div className="flex flex-col gap-4">
         <div>
           <p className="m-0 text-sm font-semibold text-[var(--ink)]">
@@ -702,7 +702,7 @@ export function FormImageUploadEditor({
       />
 
       {items.length > 0 ? (
-        <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+        <div className="mt-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="m-0 text-sm font-semibold text-[var(--ink)]">Default processing options</p>
@@ -792,7 +792,7 @@ export function FormImageUploadEditor({
                 </label>
               </div>
 
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)]/35 p-3 sm:p-4">
+              <div className="sm:p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <label className="flex items-start gap-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-3 text-sm text-[var(--ink)] lg:max-w-xl">
                     <input
@@ -851,7 +851,7 @@ export function FormImageUploadEditor({
             const isCustomRoleSelected = getWorkflowImageRoleSelectValue(item.imageRole, item.customImageRole, imageRoleOptions) === 'custom';
 
             return (
-            <article key={item.id} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+            <article key={item.id}>
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0 xl:flex-1">
                   <p className="m-0 break-all text-sm font-semibold text-[var(--ink)]">{item.originalFile.name}</p>
@@ -1159,7 +1159,7 @@ export function FormImageUploadEditor({
           onClick={() => setEnlargedPreview(null)}
         >
           <div
-            className="relative h-[94vh] w-[96vw] rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-3"
+            className="relative h-[94vh] w-[96vw]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-2 flex items-center justify-between px-1">

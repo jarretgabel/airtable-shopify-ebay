@@ -502,7 +502,7 @@ export function AirtableEmbeddedForm({
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         {isEditMode && recordSource === 'used-gear-workflow' && workflowSource ? (
-          <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+          <section>
             <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Workflow Source</p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--ink)]">
@@ -555,7 +555,7 @@ export function AirtableEmbeddedForm({
           })
         ) : (
           <>
-            <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+            <section>
               <div className="space-y-5">
                 {sharedFieldGroups.map((group) => {
                   if (Array.isArray(group)) {
@@ -585,7 +585,7 @@ export function AirtableEmbeddedForm({
               </div>
             </section>
 
-            <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4">
+            <section>
               <div className="flex flex-col gap-3 border-b border-[var(--line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="mt-1 text-xl font-semibold text-[var(--ink)]">Intake Items</h2>
@@ -602,7 +602,7 @@ export function AirtableEmbeddedForm({
 
               <div className="mt-5 space-y-4">
                 {itemValues.map((itemValue, itemIndex) => (
-                  <article key={`manual-intake-item-${itemIndex}`} className="rounded-2xl border border-[var(--line)] bg-[var(--panel)]/40 p-4">
+                  <article key={`manual-intake-item-${itemIndex}`}>
                     <div className="flex flex-col gap-3 border-b border-[var(--line)] pb-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Item {itemIndex + 1}</div>

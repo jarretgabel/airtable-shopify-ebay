@@ -265,7 +265,7 @@ export function ShopifyCollectionsSelect({
       </span>
       {suggestError && <span role="alert" className="text-xs text-rose-400">{suggestError}</span>}
 
-      <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+      <div>
         <p className="m-0 mb-2 text-xs text-[var(--muted)]">
           Drag selected items to reorder.
         </p>

@@ -181,7 +181,7 @@ export function UserManagementTab({ viewModel }: UserManagementTabProps) {
   if (selectedUserId && !selectedUser) {
     return (
       <AppPageLayout>
-        <section className="rounded-[14px] border border-[var(--line)] bg-[var(--panel)] p-4">
+        <section>
           <p className="rounded-xl border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">User not found.</p>
           <button
             type="button"

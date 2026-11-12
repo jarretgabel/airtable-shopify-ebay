@@ -210,7 +210,7 @@ export function WorkflowGuideEditorTab({ className }: WorkflowGuideEditorTabProp
         <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">
           The reader-facing User Guide stays separate from this page. Choose the exact guide surface on the left, edit its fields on the right, then save to update the live copy seen across the app.
         </p>
-        <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4 text-sm text-[var(--muted)]">
+        <div className="mt-4  text-sm text-[var(--muted)]">
           <p className="m-0">Edit access: <span className="font-semibold text-[var(--ink)]">Admin, Owner, Developer</span></p>
           {loading ? <p className="m-0 mt-2">Refreshing guide content...</p> : null}
           {guideSource === 'default' ? <p className="m-0 mt-2 text-amber-200">Guide rows are unavailable, so this page is showing fallback content and saves are blocked until the configured source comes back.</p> : null}

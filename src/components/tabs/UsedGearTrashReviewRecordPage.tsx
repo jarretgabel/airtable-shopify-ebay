@@ -243,7 +243,7 @@ export function UsedGearTrashReviewRecordPage({
           </div>
         ) : null}
         <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)]">
-          <section id="restore" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+          <section id="restore" className="scroll-mt-28">
             <AppSectionTitle title="Restore To Parking Lot" titleClassName="text-lg" className="pt-0" />
             <button
               type="button"
@@ -257,7 +257,7 @@ export function UsedGearTrashReviewRecordPage({
             </button>
           </section>
 
-          <section id="requalify" className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 scroll-mt-28">
+          <section id="requalify" className="scroll-mt-28">
             <AppSectionTitle title="Re-qualify Into Parking Lot" titleClassName="text-lg" className="pt-0" />
             <div className="mt-3 grid gap-3">
               <label className="block">

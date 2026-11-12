@@ -87,7 +87,7 @@ function DashboardTabLoadingFallback() {
       </div>
       <div className={sectionPanelClass}>
         <div className="mb-4 h-8 w-32 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
-        <div className="space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+        <div className="space-y-4">
           <div className="h-6 w-36 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }, (_, index) => (
@@ -95,13 +95,13 @@ function DashboardTabLoadingFallback() {
             ))}
           </div>
         </div>
-        <div className="mt-4 space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+        <div className="mt-4 space-y-4">
           <div className="h-6 w-40 animate-pulse rounded-md bg-[var(--skeleton-strong)]" />
           {Array.from({ length: 3 }, (_, index) => (
             <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-[var(--skeleton-soft)]" />
           ))}
         </div>
-        <div className="mt-4 space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+        <div className="mt-4 space-y-4">
           <div className="h-6 w-56 animate-pulse rounded-md bg-white/10" />
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => (
@@ -124,7 +124,7 @@ function DashboardTabLoadingFallback() {
       </div>
       <div className={sectionPanelClass}>
         <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
-        <div className="space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+        <div className="space-y-4">
           <div className="h-6 w-44 animate-pulse rounded-md bg-white/10" />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {Array.from({ length: 3 }, (_, index) => (
@@ -133,7 +133,7 @@ function DashboardTabLoadingFallback() {
           </div>
           <div className="h-72 animate-pulse rounded-[18px] border border-[var(--line)] bg-white/5" />
         </div>
-        <div className="mt-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+        <div className="mt-4">
           <div className="h-6 w-48 animate-pulse rounded-md bg-white/10" />
           <div className="mt-4 space-y-3">
             {Array.from({ length: 8 }, (_, index) => (
@@ -141,14 +141,14 @@ function DashboardTabLoadingFallback() {
             ))}
           </div>
         </div>
-        <div className="mt-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+        <div className="mt-4">
           <div className="h-6 w-44 animate-pulse rounded-md bg-white/10" />
           <div className="mt-4 h-80 animate-pulse rounded-[14px] bg-white/5" />
         </div>
       </div>
       <div className={sectionPanelClass}>
         <div className="mb-4 h-8 w-24 animate-pulse rounded-md bg-white/10" />
-        <div className="space-y-4 rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-5">
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => (
               <div key={index} className="h-20 animate-pulse rounded-[12px] border border-[var(--line)] bg-white/5" />

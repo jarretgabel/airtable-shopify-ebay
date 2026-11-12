@@ -133,7 +133,7 @@ export function NotificationsTab() {
         )}
       />
 
-      <section className="rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5">
+      <section>
         <QueueSearchToolbar
           className="rounded-xl border border-[var(--line)] bg-[rgba(9,16,26,0.45)] p-3"
           searchAriaLabel="Search notifications"

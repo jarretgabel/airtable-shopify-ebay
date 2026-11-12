@@ -160,7 +160,7 @@ export function WorkflowImageMetadataEditor({
   };
 
   return (
-    <section className={`rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5 ${className}`.trim()}>
+    <section className={` ${className}`.trim()}>
       <div>
         <p className="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{title}</p>
         <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p>
@@ -180,7 +180,7 @@ export function WorkflowImageMetadataEditor({
               <article
                 key={record.attachmentId ?? record.url}
                 data-testid="workflow-image-metadata-card"
-                className="grid gap-4 rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4 lg:grid-cols-[180px_minmax(0,1fr)]"
+                className="grid gap-4  lg:grid-cols-[180px_minmax(0,1fr)]"
               >
                 <div className="overflow-hidden rounded-xl">
                   {isArchivedWorkflowImageUrl(record.url) ? (

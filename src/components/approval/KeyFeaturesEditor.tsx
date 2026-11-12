@@ -483,7 +483,7 @@ export function KeyFeaturesEditor({
           </div>
         ) : null}
         {componentTypeValue ? (
-          <div className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3">
+          <div>
             <div className="space-y-1">
               <span className="text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Suggested Defaults</span>
               <p className="m-0 text-xs text-[var(--muted)]">

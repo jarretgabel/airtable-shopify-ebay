@@ -70,7 +70,7 @@ export function DashboardJotformSection({
             <DashboardLoadingBanner label="Loading submission trend snapshot" />
             <div className="mb-4 grid grid-cols-1 gap-[0.8rem] sm:grid-cols-3">
               {Array.from({ length: 3 }, (_, index) => (
-                <div key={index} className="flex flex-col gap-[0.28rem] rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-[0.85rem_0.95rem]">
+                <div key={index} className="flex flex-col gap-[0.28rem]">
                   <div className="h-3 w-20 animate-pulse rounded-md bg-white/10" />
                   <div className="h-5 w-24 animate-pulse rounded-md bg-white/10" />
                 </div>
@@ -86,9 +86,9 @@ export function DashboardJotformSection({
               This view is meant for quick intake pacing. Keep the trend and brand concentration visible, then expand the recent submission list only when you need to inspect individual leads.
             </p>
             <div className="mb-4 grid grid-cols-1 gap-[0.8rem] sm:grid-cols-3">
-              <div className="flex flex-col gap-[0.28rem] rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-[0.85rem_0.95rem]"><span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">14-day total</span><strong className="text-[0.96rem] leading-[1.35] text-[var(--ink)]">{submissionWindowTotal}</strong></div>
-              <div className="flex flex-col gap-[0.28rem] rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-[0.85rem_0.95rem]"><span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Average / day</span><strong className="text-[0.96rem] leading-[1.35] text-[var(--ink)]">{submissionAverage.toFixed(1)}</strong></div>
-              <div className="flex flex-col gap-[0.28rem] rounded-[14px] border border-[var(--line)] bg-[var(--bg)] p-[0.85rem_0.95rem]"><span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Peak day</span><strong className="text-[0.96rem] leading-[1.35] text-[var(--ink)]">{peakSubmissionDay ? `${peakSubmissionDay.count} on ${peakSubmissionDay.label}` : 'No activity'}</strong></div>
+              <div className="flex flex-col gap-[0.28rem]"><span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">14-day total</span><strong className="text-[0.96rem] leading-[1.35] text-[var(--ink)]">{submissionWindowTotal}</strong></div>
+              <div className="flex flex-col gap-[0.28rem]"><span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Average / day</span><strong className="text-[0.96rem] leading-[1.35] text-[var(--ink)]">{submissionAverage.toFixed(1)}</strong></div>
+              <div className="flex flex-col gap-[0.28rem]"><span className="text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">Peak day</span><strong className="text-[0.96rem] leading-[1.35] text-[var(--ink)]">{peakSubmissionDay ? `${peakSubmissionDay.count} on ${peakSubmissionDay.label}` : 'No activity'}</strong></div>
             </div>
 
             <div className="rounded-[18px] border border-[var(--line)] bg-[radial-gradient(circle_at_top,rgba(104,164,255,0.08),transparent_55%),linear-gradient(180deg,rgba(16,26,40,0.98),rgba(11,20,31,0.98))] p-4">

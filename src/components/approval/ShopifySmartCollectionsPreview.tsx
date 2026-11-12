@@ -84,7 +84,7 @@ export function ShopifySmartCollectionsPreview({ fields }: ShopifySmartCollectio
   return (
     <div className="col-span-1 flex flex-col gap-2 md:col-span-2">
       <span className={labelClass}>Automatic Collections</span>
-      <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+      <div>
         {error && <p role="alert" className="m-0 text-xs text-rose-400">{error}</p>}
         {!error && !collections && <p className="m-0 text-sm text-[var(--muted)]">Checking smart collection rules…</p>}
         {collections && (

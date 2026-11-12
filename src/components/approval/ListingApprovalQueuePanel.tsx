@@ -55,7 +55,7 @@ interface QueueExtraFilterDefinition {
 
 const queueFilterButtonClass = 'rounded-lg border px-3.5 py-2 text-[0.82rem] font-semibold transition';
 const FILTER_STORAGE_PREFIX = 'approval-queue-filter';
-const approvalQueueSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5';
+const approvalQueueSurfaceClass = '';
 const COMBINED_QUEUE_INITIAL_FETCH_LIMIT = 40;
 const COMBINED_QUEUE_FETCH_STEP = 80;
 const COMBINED_QUEUE_MAX_FETCH_LIMIT = 1000;

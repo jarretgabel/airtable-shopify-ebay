@@ -296,7 +296,7 @@ export function ShopifyVendorSelect({
     <div className="relative col-span-1 flex flex-col gap-2 md:col-span-2">
       <span className={labelClass}>Vendor</span>
 
-      <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] p-3">
+      <div>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <span className="text-xs text-[var(--muted)]">Selected value</span>
           <span className="inline-flex max-w-full items-center rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-sm text-blue-100">

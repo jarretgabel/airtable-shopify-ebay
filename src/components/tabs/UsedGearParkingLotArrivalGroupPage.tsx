@@ -254,7 +254,7 @@ export function UsedGearParkingLotArrivalGroupPage({
         {successMessage ? <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{successMessage}</div> : null}
 
         <section id="review" className="scroll-mt-28">
-          <div className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+          <div>
             <div className="flex items-center justify-between gap-3 border-b border-[var(--line)] pb-3 pt-1">
               <h2 className="m-0 text-[1.05rem] font-semibold text-[var(--ink)]">Group Review</h2>
             </div>

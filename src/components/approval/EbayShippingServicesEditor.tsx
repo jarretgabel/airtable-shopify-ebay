@@ -77,7 +77,7 @@ export function EbayShippingServicesEditor({
         Shipping Services
       </div>
       <div className="grid grid-cols-1 gap-4 px-3 py-3 md:grid-cols-2">
-        <section className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3">
+        <section>
           <label className="flex flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
             Domestic
             <span className="relative">
@@ -95,7 +95,7 @@ export function EbayShippingServicesEditor({
           </label>
         </section>
 
-        <section className="rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3">
+        <section>
           <label className="flex flex-col gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
             International
             <span className="relative">

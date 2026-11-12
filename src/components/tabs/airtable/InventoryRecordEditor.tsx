@@ -298,7 +298,7 @@ export function InventoryRecordEditor({
 
   if (!record) {
     return (
-      <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5">
+      <section>
         <h3 className="m-0 text-xl font-semibold text-[var(--ink)]">{copy.title}</h3>
         <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{copy.emptyMessage}</p>
       </section>
