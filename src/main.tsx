@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { AppFailureScreen } from './components/app/AppFailureScreen.tsx'
 import { getRuntimeHealthReport } from './config/runtimeHealth.ts'
 import { loadRuntimeConfig } from './config/runtimeConfig.ts'
+import '@fontsource-variable/inter'
 import './index.css'
 import { installChunkReloadHandlers, isChunkLoadError, reloadForChunkError } from './utils/chunkReload.ts'
 

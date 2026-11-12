@@ -8,9 +8,9 @@ export const darkTableHeaderClass = 'bg-white/5 text-[var(--muted)]';
 export const darkTableRowHoverClass = 'transition-colors hover:bg-white/5';
 export const spinnerClass = 'h-[18px] w-[18px] animate-spin rounded-full border-[3px] border-sky-200 border-t-[var(--accent)]';
 
-export const tabSectionSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-5';
+export const tabSectionSurfaceClass = 'rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-5 shadow-[0_1px_2px_rgba(2,6,23,0.12),0_8px_24px_rgba(2,6,23,0.06)]';
 export const tabSectionPrimaryActionClass = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60';
-export const tabFormControlBaseClass = 'w-full rounded-xl border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
+export const tabFormControlBaseClass = 'w-full rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5 text-sm shadow-[inset_0_1px_1px_rgba(2,6,23,0.06)] text-[var(--ink)] outline-none transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20';
 export const tabFormControlClass = `mt-2 ${tabFormControlBaseClass}`;
 export const tabFormControlMultilineClass = `min-h-24 ${tabFormControlBaseClass}`;
 export const tabFormLabelClass = 'text-sm font-semibold text-[var(--ink)]';

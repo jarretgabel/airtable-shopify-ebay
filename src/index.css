@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-	--font-sans: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+	--font-sans: "Inter Variable", "Inter", -apple-system, "Segoe UI", sans-serif;
 }
 
 @layer base {
@@ -88,18 +88,56 @@
 	body {
 		font-family: var(--font-sans);
 		overflow-x: hidden;
-		background: radial-gradient(circle at 90% -12%, rgba(78, 143, 228, 0.16), transparent 36%),
-		            radial-gradient(circle at 10% -2%, rgba(32, 140, 160, 0.12), transparent 32%),
-		            linear-gradient(180deg, #02050b, #040913 30%, #03070f 100%);
+		background: radial-gradient(circle at 85% -15%, rgba(78, 143, 228, 0.1), transparent 40%),
+		            linear-gradient(180deg, #050a13, #040811 100%);
 		background-attachment: fixed;
 		color: var(--ink);
-		line-height: 1.45;
+		line-height: 1.5;
+		letter-spacing: -0.003em;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		font-feature-settings: 'cv11', 'ss01';
+	}
+
+	::selection {
+		background: color-mix(in srgb, var(--accent) 35%, transparent);
+	}
+
+	:focus-visible {
+		outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+		outline-offset: 2px;
+	}
+
+	* {
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in srgb, var(--muted) 40%, transparent) transparent;
+	}
+
+	h1, h2, h3 {
+		letter-spacing: -0.015em;
+	}
+
+	table {
+		font-variant-numeric: tabular-nums;
+	}
+
+	thead th {
+		font-size: 0.72rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+	}
+
+	button,
+	a,
+	input,
+	select,
+	textarea {
+		transition-property: color, background-color, border-color, box-shadow, opacity;
+		transition-duration: 150ms;
 	}
 
 	:root[data-theme='light'] body {
-		background: radial-gradient(circle at 92% -6%, rgba(0, 94, 203, 0.12), transparent 40%),
-		            radial-gradient(circle at 12% 2%, rgba(14, 165, 233, 0.1), transparent 38%),
-		            linear-gradient(180deg, #f8fbff, #f0f5fb 36%, #eaf0f8 100%);
+		background: linear-gradient(180deg, #f6f8fc, #eff3f9 100%);
 	}
 
 	* {
