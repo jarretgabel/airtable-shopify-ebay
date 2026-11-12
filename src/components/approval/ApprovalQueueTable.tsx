@@ -1,4 +1,3 @@
-import { LoadingSurface } from '@/components/app/StateSurfaces';
 import { useEffect, useState } from 'react';
 import { getWorkflowStatusDisplayLabel } from '@/services/usedGearWorkflow';
 import { CompactIconActionButton } from '@/components/app/CompactIconActionButton';
@@ -554,9 +553,6 @@ export function ApprovalQueueTable({
 				<div className="mb-3 rounded-lg border border-rose-400/35 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
 					{qtyUpdateError}
 				</div>
-			) : null}
-			{isLoadingNextPage ? (
-				<LoadingSurface message="Loading more rows..." />
 			) : null}
 			<IntakeItemsMatrix
 				items={pagedRecords}
