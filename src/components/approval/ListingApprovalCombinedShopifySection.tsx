@@ -110,7 +110,7 @@ export function ListingApprovalCombinedShopifySection({
   });
 
   return (
-    <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
+    <AppPageSectionSurface flat id={sectionId} className="scroll-mt-24 space-y-4">
       <AppSectionTitle
         title="Shopify-Specific Fields"
         actions={shopifyDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={shopifyDrawerRequiredStatus.allFilled} /> : null}

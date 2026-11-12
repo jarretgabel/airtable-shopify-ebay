@@ -205,7 +205,7 @@ export function InventoryDirectoryListSection({
   ];
 
   return (
-    <section className="rounded-2xl border border-[var(--line)] bg-[var(--bg)]/70 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+    <section>
       <QueueSearchToolbar
         className="mb-4"
         searchAriaLabel={searchAriaLabel}

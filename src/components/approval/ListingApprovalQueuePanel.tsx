@@ -900,7 +900,7 @@ export function ListingApprovalQueuePanel({
 
       {hasTableReference && loading && records.length === 0 ? (
         isCombinedApproval ? (
-          <AppPageSectionSurface>
+          <AppPageSectionSurface flat>
             <ListingApprovalQueueSkeleton />
           </AppPageSectionSurface>
         ) : (
@@ -1019,7 +1019,7 @@ export function ListingApprovalQueuePanel({
 
           {filteredRecords.length > 0 && isCombinedApproval ? (
             <div className="space-y-5">
-              <AppPageSectionSurface id={COMBINED_QUEUE_SECTION_IDS['ready-for-publishing']} className="scroll-mt-24 bg-[var(--bg)]/60">
+              <AppPageSectionSurface flat id={COMBINED_QUEUE_SECTION_IDS['ready-for-publishing']} className="scroll-mt-24">
                 <AppSectionTitle
                   title="Ready for Publishing"
                   className="mb-4"
@@ -1073,7 +1073,7 @@ export function ListingApprovalQueuePanel({
                 )}
               </AppPageSectionSurface>
 
-              <AppPageSectionSurface id={COMBINED_QUEUE_SECTION_IDS['needs-further-work']} className="scroll-mt-24 bg-[var(--bg)]/60">
+              <AppPageSectionSurface flat id={COMBINED_QUEUE_SECTION_IDS['needs-further-work']} className="scroll-mt-24">
                 <AppSectionTitle
                   title="Needs Further Work"
                   className="mb-4"

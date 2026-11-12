@@ -131,7 +131,7 @@ export function ListingApprovalCombinedEbaySection({
   }, [ebayRuntimeConfig, selectedRecord.fields]);
 
   return (
-    <AppPageSectionSurface id={sectionId} className="scroll-mt-24 space-y-4 bg-[var(--bg)]/60">
+    <AppPageSectionSurface flat id={sectionId} className="scroll-mt-24 space-y-4">
       <AppSectionTitle
         title="eBay-Specific Fields"
         actions={ebayDrawerRequiredStatus.hasRequired ? <DrawerStatusIcon allFilled={ebayDrawerRequiredStatus.allFilled} /> : null}

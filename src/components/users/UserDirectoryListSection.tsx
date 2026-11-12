@@ -34,7 +34,7 @@ export function UserDirectoryListSection({
   onSelectUser,
 }: UserDirectoryListSectionProps) {
   return (
-    <section className="rounded-2xl border border-white/15 bg-slate-950/45 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.28)]">
+    <section>
       <QueueSearchToolbar
         className="mb-4"
         searchAriaLabel="Search users"
