@@ -29,6 +29,7 @@ import {
   insetPillClass,
 } from '@/components/tabs/uiClasses';
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
+import { getEffectiveShopifyStatus } from '@/components/tabs/ShopifyTab';
 import { checkOptionalEnv } from '@/config/runtimeEnv';
 import { loadUsedGearOperationalRecordBySku } from '@/services/usedGearQueue';
 import type { ShopifyProduct } from '@/types/shopify';
@@ -219,7 +220,7 @@ export function ShopifySnapshotRecordPage({
       <PanelSurface>
         <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
           <FieldRow label="Product ID" value={String(product.id)} />
-          <FieldRow label="Status" value={product.status ?? '—'} />
+          <FieldRow label="Status" value={getEffectiveShopifyStatus(product)} />
           <FieldRow label="Vendor" value={product.vendor ?? '—'} />
           <FieldRow label="Product Type" value={trimProductType(product.product_type)} />
           <FieldRow label="Handle" value={product.handle ?? '—'} />

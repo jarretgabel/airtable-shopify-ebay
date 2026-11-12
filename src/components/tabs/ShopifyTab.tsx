@@ -10,10 +10,18 @@ import {
 } from '@/components/tabs/uiClasses';
 import type { ShopifyProduct, ShopifyProductVariant } from '@/types/shopify';
 
+// Sold items stay "active" in Shopify's API but are tagged sold-archive.
+export function getEffectiveShopifyStatus(product: Pick<ShopifyProduct, 'status' | 'tags'>): string {
+  const sold = (product.tags ?? '').split(',').some((tag) => tag.trim().toLowerCase() === 'sold-archive');
+  return sold ? 'sold' : product.status ?? 'unknown';
+}
+
 function StatusBadge({ status }: { status: string }) {
   const normalizedStatus = status.toLowerCase();
   const statusClassName = normalizedStatus === 'active'
     ? 'border border-emerald-400/35 bg-emerald-500/20 text-emerald-200'
+    : normalizedStatus === 'sold'
+      ? 'border border-rose-400/35 bg-rose-500/20 text-rose-200'
     : normalizedStatus === 'draft'
       ? 'border border-amber-400/35 bg-amber-500/20 text-amber-200'
       : 'border border-slate-400/35 bg-slate-500/20 text-slate-200';
@@ -56,7 +64,7 @@ const selectClass = 'rounded-lg border border-[var(--line)] bg-[var(--panel)] px
 export function ShopifyTab({ viewModel, onOpenProduct }: ShopifyTabProps) {
   const { loading, error, products } = viewModel;
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'sold' | 'draft' | 'archived'>('all');
   const [sort, setSort] = useState<'title-asc' | 'title-desc' | 'price-asc' | 'price-desc' | 'date-newest' | 'date-oldest'>('title-asc');
 
   const filteredProducts = useMemo(() => {
@@ -70,7 +78,7 @@ export function ShopifyTab({ viewModel, onOpenProduct }: ShopifyTabProps) {
       );
     }
     if (statusFilter !== 'all') {
-      list = list.filter((p) => p.status?.toLowerCase() === statusFilter);
+      list = list.filter((p) => getEffectiveShopifyStatus(p).toLowerCase() === statusFilter);
     }
     switch (sort) {
       case 'title-asc': list.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? '')); break;
@@ -109,6 +117,7 @@ export function ShopifyTab({ viewModel, onOpenProduct }: ShopifyTabProps) {
         <select className={selectClass} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} aria-label="Filter by status">
           <option value="all">All statuses</option>
           <option value="active">Active</option>
+          <option value="sold">Sold</option>
           <option value="draft">Draft</option>
           <option value="archived">Archived</option>
         </select>
@@ -144,7 +153,7 @@ export function ShopifyTab({ viewModel, onOpenProduct }: ShopifyTabProps) {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="m-0 text-[1.08rem] font-semibold text-[var(--ink)]">{product.title}</h3>
-                    <StatusBadge status={product.status ?? 'unknown'} />
+                    <StatusBadge status={getEffectiveShopifyStatus(product)} />
                   </div>
                   <div className="mt-1.5 text-sm text-[var(--muted)]">{product.vendor || 'No vendor'} · {product.product_type ? trimProductType(product.product_type) : 'No type'}</div>
                   {descriptionPreview && <p className="m-0 mt-3 line-clamp-2 max-w-3xl text-sm leading-6 text-[var(--muted)]">{descriptionPreview}</p>}
