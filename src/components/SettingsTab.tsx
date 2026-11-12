@@ -5,8 +5,6 @@ import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppSectionTitle } from '@/components/app/AppSectionTitle';
 import { MainPageSectionNav } from '@/components/app/MainPageSectionNav';
 import { PageTitleHeader } from '@/components/app/PageTitleHeader';
-import { getRuntimeHealthReport, type RuntimeHealthEntry } from '@/config/runtimeHealth';
-import { getAppApiSessionDiagnostics } from '@/services/app-api/flags';
 import { useAuthStore } from '@/stores/auth/authStore';
 import { PASSWORD_POLICY_MESSAGE, validatePasswordPolicy } from '@/stores/auth/passwordPolicy';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -29,27 +27,14 @@ const preferenceRows: Array<{ key: BooleanPreferenceKey; label: string }> = [
   { key: 'errorEnabled', label: 'Error notifications' },
 ];
 
-type SettingsSectionKey = 'profile' | 'security' | 'preferences' | 'runtime' | 'session';
+type SettingsSectionKey = 'profile' | 'security' | 'preferences' | 'session';
 
 const settingsSections: Array<{ key: SettingsSectionKey; label: string; detail: string }> = [
   { key: 'profile', label: 'Profile', detail: 'Email and account identity' },
   { key: 'security', label: 'Password', detail: 'Credential and sign-in security' },
   { key: 'preferences', label: 'Notifications', detail: 'Notification tone and timing' },
-  { key: 'runtime', label: 'Runtime', detail: 'Public config and feature wiring' },
   { key: 'session', label: 'Session', detail: 'Sign out controls' },
 ];
-
-const runtimeStatusClasses: Record<RuntimeHealthEntry['status'], string> = {
-  ok: 'border-emerald-400/35 bg-emerald-500/10 text-emerald-200',
-  warning: 'border-amber-400/35 bg-amber-500/10 text-amber-200',
-  missing: 'border-rose-400/35 bg-rose-500/10 text-rose-200',
-};
-
-type LocalProxyProbeState = {
-  status: RuntimeHealthEntry['status'];
-  detail: string;
-  value: string | null;
-};
 
 const themeOptions: Array<{ value: ThemeMode; label: string }> = [
   { value: 'system', label: 'System' },
@@ -120,24 +105,7 @@ export function SettingsTab() {
   const profileSectionRef = useRef<HTMLElement | null>(null);
   const securitySectionRef = useRef<HTMLElement | null>(null);
   const preferencesSectionRef = useRef<HTMLElement | null>(null);
-  const runtimeSectionRef = useRef<HTMLElement | null>(null);
   const sessionSectionRef = useRef<HTMLElement | null>(null);
-  const runtimeHealth = useMemo(() => getRuntimeHealthReport(), []);
-  const appApiDiagnostics = useMemo(() => getAppApiSessionDiagnostics(), []);
-  const [localProxyProbeState, setLocalProxyProbeState] = useState<LocalProxyProbeState>(() => (
-    appApiDiagnostics.shouldProbeLocalProxy
-      ? {
-        status: 'warning',
-        detail: 'Checking whether the local no-Docker API is reachable through the current /api route...',
-        value: 'Checking...',
-      }
-      : {
-        status: 'warning',
-        detail: 'Local proxy reachability checks only run for localhost sessions.',
-        value: 'Not applicable',
-      }
-  ));
-
   useEffect(() => {
     const token = new URLSearchParams(location.search).get('emailChangeToken');
     if (!token) return;
@@ -159,7 +127,6 @@ export function SettingsTab() {
       profile: profileSectionRef,
       security: securitySectionRef,
       preferences: preferencesSectionRef,
-      runtime: runtimeSectionRef,
       session: sessionSectionRef,
     };
     const target = sectionRefMap[section]?.current;
@@ -172,58 +139,15 @@ export function SettingsTab() {
     });
   }, [section]);
 
-  useEffect(() => {
-    const healthPath = appApiDiagnostics.localProxyHealthPath;
-    if (!appApiDiagnostics.shouldProbeLocalProxy || !healthPath) return;
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        const response = await fetch(healthPath, {
-          credentials: 'include',
-          headers: {
-            Accept: 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const payload = await response.json() as { service?: string; port?: number; apiPrefix?: string };
-        if (cancelled) return;
-
-        setLocalProxyProbeState({
-          status: 'ok',
-          detail: 'The current browser session can reach the local app API through the /api proxy path.',
-          value: `${payload.service ?? 'local-api'}${typeof payload.port === 'number' ? ` on port ${payload.port}` : ''}${payload.apiPrefix ? ` via ${payload.apiPrefix}` : ''}`,
-        });
-      } catch (error) {
-        if (cancelled) return;
-
-        setLocalProxyProbeState({
-          status: 'warning',
-          detail: 'The current session could not confirm the local app API through /api. Check that Vite is running with the local proxy and that npm run local:api is listening.',
-          value: error instanceof Error ? error.message : String(error),
-        });
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [appApiDiagnostics]);
-
   const showDeveloperRuntimeSection = currentUser ? isDeveloperRole(currentUser.role) : false;
 
   useEffect(() => {
-    if (showDeveloperRuntimeSection || section !== 'runtime') {
+    if ((section as string | null) !== 'runtime') {
       return;
     }
 
     navigate('/account/settings?section=profile', { replace: true });
-  }, [navigate, section, showDeveloperRuntimeSection]);
+  }, [navigate, section]);
 
   if (!currentUser) {
     return (
@@ -233,9 +157,6 @@ export function SettingsTab() {
     );
   }
 
-  const visibleSettingsSections = showDeveloperRuntimeSection
-    ? settingsSections
-    : settingsSections.filter((sectionItem) => sectionItem.key !== 'runtime');
   const isMainAdmin = currentUser.id === 'u-admin';
 
   async function handleEmailSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -327,7 +248,7 @@ export function SettingsTab() {
 
       <MainPageSectionNav
         ariaLabel="Settings sections"
-        items={visibleSettingsSections.map((sectionItem) => ({ key: sectionItem.key, label: sectionItem.label }))}
+        items={settingsSections.map((sectionItem) => ({ key: sectionItem.key, label: sectionItem.label }))}
         activeKey={activeSection}
         onSelect={navigateToSection}
       />
@@ -373,15 +294,15 @@ export function SettingsTab() {
                     </span>
                   </label>
             </div>
-            <p className="mt-3 text-[0.84rem] text-[var(--muted)]">Signed in as {currentUser.name} ({currentUser.role}).</p>
+            <p className="mb-5 mt-7 border-t border-[var(--line)] pt-5 text-[0.84rem] text-[var(--muted)]">Signed in as {currentUser.name} ({currentUser.role}).</p>
 
             {isMainAdmin && (
-              <p className="mb-3 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[0.82rem] text-amber-200">
+              <p className="mb-5 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[0.82rem] text-amber-200">
                 Email changes are disabled for the main admin account.
               </p>
             )}
 
-            <form className="space-y-3" onSubmit={handleEmailSubmit}>
+            <form className="space-y-4" onSubmit={handleEmailSubmit}>
               <label className={labelClass} htmlFor="settings-email">Email</label>
               <input
                 id="settings-email"
@@ -589,94 +510,6 @@ export function SettingsTab() {
               )}
             </div>
           </section>
-
-          {showDeveloperRuntimeSection && (
-          <section
-            id="settings-section-runtime"
-            ref={runtimeSectionRef}
-            className={`scroll-mt-20 rounded-2xl border bg-[var(--panel)] p-5 ${activeSection === 'runtime' ? 'border-cyan-500/45' : 'border-[var(--line)]'}`}
-          >
-            <AppSectionTitle title="Runtime Config Health" className="mb-4" />
-            <p className="mt-1 text-[0.84rem] text-[var(--muted)]">Review which browser-safe settings are loaded, which ones are missing, and which feature surfaces may degrade.</p>
-
-            <div className="mt-4 rounded-xl border border-[var(--line)] bg-black/15 px-4 py-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-full border px-2.5 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[runtimeHealth.configSource.status === 'loaded' ? 'ok' : runtimeHealth.configSource.status === 'idle' ? 'warning' : 'missing']}`}>
-                  {runtimeHealth.configSource.status}
-                </span>
-                <span className="text-sm font-semibold text-[var(--ink)]">Runtime config source</span>
-              </div>
-              <p className="mt-2 text-sm text-[var(--muted)]">{runtimeHealth.configSource.message}</p>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/55 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : 'ok']}`}>
-                    {appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : 'ok'}
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--ink)]">Effective API route</span>
-                </div>
-                <p className="mt-2 text-[0.84rem] leading-6 text-[var(--muted)]">
-                  Requests in this browser session resolve through this route before any proxying happens.
-                </p>
-                <p className="mt-2 text-[0.78rem] text-slate-300">
-                  Current value: {appApiDiagnostics.effectiveRoute}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/55 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : appApiDiagnostics.configuredBaseUrl ? 'ok' : 'missing']}`}>
-                    {appApiDiagnostics.ignoredConfiguredBaseUrl ? 'warning' : appApiDiagnostics.configuredBaseUrl ? 'ok' : 'missing'}
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--ink)]">Configured API base URL</span>
-                </div>
-                <p className="mt-2 text-[0.84rem] leading-6 text-[var(--muted)]">
-                  {appApiDiagnostics.ignoredConfiguredBaseUrl
-                    ? 'A configured remote base URL exists, but localhost sessions ignore it so requests stay on the local app API.'
-                    : 'This is the configured browser-safe API base URL from runtime-config or bundled env.'}
-                </p>
-                <p className="mt-2 text-[0.78rem] text-slate-300">
-                  Current value: {appApiDiagnostics.configuredBaseUrl ?? 'Not set'}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/55 px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[localProxyProbeState.status]}`}>
-                    {localProxyProbeState.status}
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--ink)]">Local proxy reachability</span>
-                </div>
-                <p className="mt-2 text-[0.84rem] leading-6 text-[var(--muted)]">{localProxyProbeState.detail}</p>
-                <p className="mt-2 text-[0.78rem] text-slate-300">
-                  Current value: {localProxyProbeState.value ?? 'Unknown'}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3">
-              {runtimeHealth.entries.map((entry) => (
-                <div key={entry.label} className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/55 px-4 py-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--ink)]">{entry.label}</span>
-                    <span className={`rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] ${runtimeStatusClasses[entry.status]}`}>
-                      {entry.status}
-                    </span>
-                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-slate-300">
-                      {entry.requirement}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-[0.84rem] leading-6 text-[var(--muted)]">{entry.detail}</p>
-                  <p className="mt-2 text-[0.78rem] text-slate-300">
-                    Current value: {entry.value ?? 'Not set'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-          )}
 
           <section
             id="settings-section-session"
