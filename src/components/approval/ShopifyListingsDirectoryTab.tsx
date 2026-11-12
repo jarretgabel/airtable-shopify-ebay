@@ -1,4 +1,5 @@
 import type { ShopifyTabViewModel } from '@/app/appTabViewModels';
+import { getEffectiveShopifyStatus } from '@/components/tabs/ShopifyTab';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
 import { AppPageSectionSurface } from '@/components/app/AppPageSectionSurface';
 import { OpenLinkToolbarButton } from '@/components/app/OpenLinkToolbarButton';
@@ -15,7 +16,8 @@ export function ShopifyListingsDirectoryTab({
   shopifyViewModel,
   onOpenSnapshotRecord,
 }: ShopifyListingsDirectoryTabProps) {
-  const activeProductsCount = shopifyViewModel.products.filter((product) => product.status?.toLowerCase() === 'active').length;
+  const activeProductsCount = shopifyViewModel.products.filter((product) => getEffectiveShopifyStatus(product) === 'active').length;
+  const soldProductsCount = shopifyViewModel.products.filter((product) => getEffectiveShopifyStatus(product) === 'sold').length;
   const draftProductsCount = shopifyViewModel.products.filter((product) => product.status?.toLowerCase() === 'draft').length;
   const archivedProductsCount = shopifyViewModel.products.filter((product) => product.status?.toLowerCase() === 'archived').length;
   const shopifyStoreHref = shopifyViewModel.storeDomain?.trim() || '';
@@ -36,12 +38,14 @@ export function ShopifyListingsDirectoryTab({
           showHeader={false}
           stats={[
             { label: 'Active Products', value: activeProductsCount },
+            { label: 'Sold Products', value: soldProductsCount },
             { label: 'Draft Products', value: draftProductsCount },
             { label: 'Archived Products', value: archivedProductsCount },
           ]}
           metrics={[
             { label: 'Tracked products', value: shopifyViewModel.products.length },
             { label: 'Active products', value: activeProductsCount, valueClass: 'text-green-400' },
+            { label: 'Sold products', value: soldProductsCount, valueClass: 'text-rose-400' },
             { label: 'Draft products', value: draftProductsCount, valueClass: 'text-amber-400' },
             { label: 'Archived products', value: archivedProductsCount, valueClass: 'text-[var(--muted)]' },
           ]}
