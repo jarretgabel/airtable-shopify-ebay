@@ -5,6 +5,7 @@ import { DashboardSectionPanel, DashboardSourceWarning, DashboardSubPanel } from
 
 interface DashboardReportsSectionProps {
   showWarnings?: boolean;
+  onLoadedChange?: (loaded: boolean) => void;
   loadReports?: () => Promise<ReportsSummary>;
 }
 
@@ -30,9 +31,13 @@ function ReportTable({ headers, rows }: { headers: string[]; rows: Array<Array<s
   );
 }
 
-export function DashboardReportsSection({ showWarnings = false, loadReports = loadDefaultReports }: DashboardReportsSectionProps) {
+export function DashboardReportsSection({ showWarnings = false, onLoadedChange, loadReports = loadDefaultReports }: DashboardReportsSectionProps) {
   const [reports, setReports] = useState<ReportsSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLoadedChange?.(reports !== null || error !== null);
+  }, [reports, error, onLoadedChange]);
 
   useEffect(() => {
     let cancelled = false;

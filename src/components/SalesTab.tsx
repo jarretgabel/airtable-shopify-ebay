@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { LoadingSurface } from '@/components/app/StateSurfaces';
+import { useSectionLoadTracker } from '@/components/dashboard/useSectionLoadTracker';
 import { canViewFinance, hasFullAccessRole, isDeveloperRole } from '@/auth/roleAccess';
 import type { UserRole } from '@/stores/auth/authTypes';
 import { AppPageLayout } from '@/components/app/AppPageLayout';
@@ -25,15 +27,24 @@ export function SalesTab({ currentUserRole }: { currentUserRole: UserRole }) {
     }),
     [finance, reports],
   );
+  const expectedSections = useMemo(
+    () => [...(finance ? ['finance', 'buyers'] : []), ...(reports ? ['reports'] : [])],
+    [finance, reports],
+  );
+  const { allLoaded, reporter } = useSectionLoadTracker(expectedSections);
   const { activeSectionId, scrollToSection } = useDashboardSectionTracking(sections);
 
   return (
     <AppPageLayout className="[overflow-anchor:none]">
       <WorkflowPageHeader eyebrow="Business" title="Sales" />
-      <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
-      {finance ? <DashboardFinanceSection showWarnings={showWarnings} /> : null}
-      {finance ? <DashboardBuyersSection showWarnings={showWarnings} /> : null}
-      {reports ? <DashboardReportsSection showWarnings={showWarnings} /> : null}
+      {expectedSections.length > 0 && !allLoaded ? <LoadingSurface message="Loading sales..." /> : (
+        <DashboardSectionNav sections={sections} activeSectionId={activeSectionId} onSelectSection={scrollToSection} />
+      )}
+      <div className={allLoaded ? 'contents' : 'hidden'}>
+        {finance ? <DashboardFinanceSection showWarnings={showWarnings} onLoadedChange={reporter('finance')} /> : null}
+        {finance ? <DashboardBuyersSection showWarnings={showWarnings} onLoadedChange={reporter('buyers')} /> : null}
+        {reports ? <DashboardReportsSection showWarnings={showWarnings} onLoadedChange={reporter('reports')} /> : null}
+      </div>
     </AppPageLayout>
   );
 }

@@ -6,14 +6,19 @@ import { DashboardSectionPanel, DashboardSourceWarning, DashboardSubPanel, StatT
 
 interface DashboardSellersSectionProps {
   showWarnings?: boolean;
+  onLoadedChange?: (loaded: boolean) => void;
   loadSummary?: (filters: DashboardDateRange & { search?: string }) => Promise<SellersSummary>;
 }
 
 const loadSellersSummary = (filters: DashboardDateRange & { search?: string }) => dashboardAppApi.getSellersSummary(10, filters);
 
-export function DashboardSellersSection({ showWarnings = false, loadSummary = loadSellersSummary }: DashboardSellersSectionProps) {
+export function DashboardSellersSection({ showWarnings = false, onLoadedChange, loadSummary = loadSellersSummary }: DashboardSellersSectionProps) {
   const [summary, setSummary] = useState<SellersSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLoadedChange?.(summary !== null || error !== null);
+  }, [summary, error, onLoadedChange]);
   const [search, setSearch] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');

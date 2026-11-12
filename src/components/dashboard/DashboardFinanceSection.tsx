@@ -6,6 +6,7 @@ import { DashboardSectionPanel, DashboardSourceWarning, DashboardSubPanel } from
 
 interface DashboardFinanceSectionProps {
   showWarnings?: boolean;
+  onLoadedChange?: (loaded: boolean) => void;
   loadFinance?: (range: DashboardDateRange) => Promise<FinanceSummary>;
 }
 
@@ -22,9 +23,13 @@ function Stat({ label, value, detail }: { label: string; value: string; detail?:
   );
 }
 
-export function DashboardFinanceSection({ showWarnings = false, loadFinance = loadDefaultFinance }: DashboardFinanceSectionProps) {
+export function DashboardFinanceSection({ showWarnings = false, onLoadedChange, loadFinance = loadDefaultFinance }: DashboardFinanceSectionProps) {
   const [finance, setFinance] = useState<FinanceSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLoadedChange?.(finance !== null || error !== null);
+  }, [finance, error, onLoadedChange]);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 

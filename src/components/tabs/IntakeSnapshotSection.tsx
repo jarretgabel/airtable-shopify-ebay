@@ -26,7 +26,7 @@ export interface IntakeSnapshotSectionProps {
 
 function SnapshotFieldCard({ label, value, description }: IntakeSnapshotField) {
   return (
-    <div className="rounded-lg border border-[var(--line)] bg-[var(--bg)] px-3 py-2.5">
+    <div className="border-t border-[var(--line)] pt-2">
       <p className="m-0 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">{label}</p>
       <p className="mt-1 text-sm leading-5 text-[var(--ink)]">{value || 'Not provided'}</p>
       {description ? <p className="mt-1 text-[0.72rem] leading-5 text-[var(--muted)]">{description}</p> : null}
@@ -59,7 +59,7 @@ export function IntakeSnapshotSection({
     <div id={sectionId} className={['', className].filter(Boolean).join(' ')}>
       <AppSectionTitle title={title} titleClassName="text-lg" actions={actions} />
       {description ? <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{description}</p> : null}
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
         {fields.map((field) => <SnapshotFieldCard key={field.label} {...field} />)}
       </div>
 

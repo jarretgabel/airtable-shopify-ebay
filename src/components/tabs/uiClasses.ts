@@ -47,8 +47,8 @@ export const sectionTitleHeadingClass = 'm-0 text-base font-semibold text-[var(-
 export const sectionTitleDescriptionClass = 'm-0 mt-2 text-sm text-[var(--muted)]';
 export const sectionLabelClass = 'm-0 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[var(--muted)]';
 
-export const workflowCardSurfaceClass = 'mb-4 rounded-2xl border border-[var(--line)] bg-white/5 p-4';
-export const workflowInnerPanelClass = 'rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-4';
+export const workflowCardSurfaceClass = 'mb-4';
+export const workflowInnerPanelClass = 'rounded-xl border border-[var(--line)] p-4';
 export const workflowMetaChipClass = 'rounded-full border border-[var(--line)] bg-white/5 px-3 py-1.5 text-sm text-[var(--muted)]';
 export const workflowPrimaryActionClass = 'rounded-xl border border-sky-400/35 bg-sky-500/15 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:border-sky-300/45 hover:bg-sky-500/20';
 export const workflowSecondaryActionClass = 'rounded-xl border border-[var(--line)] bg-white/5 px-3 py-2 text-sm font-semibold text-[var(--ink)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]';

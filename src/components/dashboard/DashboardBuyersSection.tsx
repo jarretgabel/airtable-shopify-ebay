@@ -6,6 +6,7 @@ import { DashboardSectionPanel, DashboardSourceWarning, StatTile } from './dashb
 
 interface DashboardBuyersSectionProps {
   showWarnings?: boolean;
+  onLoadedChange?: (loaded: boolean) => void;
   loadBuyers?: (filters: DashboardDateRange & { search?: string }) => Promise<BuyersSummary>;
 }
 
@@ -18,9 +19,13 @@ function summarizeItems(items: BuyerRow['items']): string {
   return labels.length > 1 ? `${labels[0]} +${labels.length - 1} more` : labels[0];
 }
 
-export function DashboardBuyersSection({ showWarnings = false, loadBuyers = loadDefaultBuyers }: DashboardBuyersSectionProps) {
+export function DashboardBuyersSection({ showWarnings = false, onLoadedChange, loadBuyers = loadDefaultBuyers }: DashboardBuyersSectionProps) {
   const [summary, setSummary] = useState<BuyersSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLoadedChange?.(summary !== null || error !== null);
+  }, [summary, error, onLoadedChange]);
   const [search, setSearch] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');

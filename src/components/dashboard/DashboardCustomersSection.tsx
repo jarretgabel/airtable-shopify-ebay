@@ -10,19 +10,24 @@ type CustomersApi = Pick<typeof dashboardAppApi,
 
 interface DashboardCustomersSectionProps {
   showWarnings?: boolean;
+  onLoadedChange?: (loaded: boolean) => void;
   api?: CustomersApi;
 }
 
 const KINDS: InteractionKind[] = ['note', 'call', 'email', 'text', 'visit', 'other'];
 const formatDate = (value: string) => new Date(value).toLocaleDateString();
 
-export function DashboardCustomersSection({ showWarnings = false, api = dashboardAppApi }: DashboardCustomersSectionProps) {
+export function DashboardCustomersSection({ showWarnings = false, onLoadedChange, api = dashboardAppApi }: DashboardCustomersSectionProps) {
   const [search, setSearch] = useState('');
   const [contacts, setContacts] = useState<CrmContactRow[] | null>(null);
   const [due, setDue] = useState<CrmDueFollowUp[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CrmContactDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onLoadedChange?.(contacts !== null || error !== null);
+  }, [contacts, error, onLoadedChange]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [kind, setKind] = useState<InteractionKind>('note');
   const [summary, setSummary] = useState('');
