@@ -9,10 +9,10 @@ const reports = {
 };
 
 describe('DashboardReportsSection', () => {
-  it('renders the three reports', async () => {
+  it('renders the time-in-stage and shipped-by-brand reports', async () => {
     render(<DashboardReportsSection loadReports={vi.fn().mockResolvedValue(reports)} />);
-    await waitFor(() => expect(screen.getByText('Inventory by status')).toBeTruthy());
-    expect(screen.getByText('Shipped')).toBeTruthy();
+    await waitFor(() => expect(screen.getByText('Shipped items by brand')).toBeTruthy());
+    expect(screen.queryByText('Inventory by status')).toBeNull();
     expect(screen.getByText('3.5')).toBeTruthy();
     expect(screen.getByText('$1,500')).toBeTruthy();
   });

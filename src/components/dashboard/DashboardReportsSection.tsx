@@ -53,9 +53,6 @@ export function DashboardReportsSection({ showWarnings = false, loadReports = lo
 
   return (
     <DashboardSectionPanel id="reports" title="Reports">
-      <DashboardSubPanel title="Inventory by status">
-        <ReportTable headers={['Status', 'Items']} rows={reports.inventoryByStatus.map((row) => [row.status, row.count])} />
-      </DashboardSubPanel>
       <DashboardSubPanel title="Average time in each stage (finished stays only)">
         <ReportTable headers={['Stage', 'Avg days', 'Stays']} rows={reports.timeInStage.map((row) => [row.status, row.avgDays, row.stints])} />
       </DashboardSubPanel>
