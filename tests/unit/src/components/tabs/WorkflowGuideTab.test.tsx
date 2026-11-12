@@ -117,7 +117,7 @@ describe('WorkflowGuideTab', () => {
     expect(screen.queryByRole('link', { name: 'Shopify Products' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'eBay' })).not.toBeInTheDocument();
     expect(screen.getAllByText('Your lane').length).toBeGreaterThan(1);
-    expect(screen.getByText('Where should I start if I am working intake?')).toBeInTheDocument();
+    expect(screen.queryByText('Where should I start if I am working intake?')).not.toBeInTheDocument();
   });
 
   it('shows a guide editor entry point for full-access roles without mixing editor controls into the reader page', async () => {

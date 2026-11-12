@@ -81,7 +81,16 @@ export function AppSidebar({
   const activeGroupId = groups.find((group) => group.tabs.some((tab) => tab.active))?.id;
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(activeGroupId ? [activeGroupId] : []));
   const mainGroup = groups.find((group) => group.id === 'main');
-  const sections = useMemo(() => groups.filter((group) => group.id !== 'main'), [groups]);
+  const sections = useMemo(() => {
+    const exportTabs: AppTab[] = [
+      { key: 'export-page' as AppTab['key'], label: 'Export page as PDF', active: false, disabled: exportDisabled, onClick: onExportCurrentPage },
+      { key: 'export-all' as AppTab['key'], label: 'Export full PDF', active: false, disabled: exportDisabled, onClick: onExportAllPages },
+    ];
+    const others = groups.filter((group) => group.id !== 'main');
+    const utilities = others.find((group) => group.id === 'utilities');
+    const withExport: SidebarGroup = { id: 'utilities', title: 'Utilities', tabs: [...(utilities?.tabs ?? []), ...exportTabs] };
+    return utilities ? others.map((group) => (group.id === 'utilities' ? withExport : group)) : [...others, withExport];
+  }, [groups, exportDisabled, onExportCurrentPage, onExportAllPages]);
   const rail = collapsed && !mobileOpen;
   const [flyout, setFlyout] = useState<{ id: string; top: number } | null>(null);
   const flyoutGroup = flyout ? sections.find((group) => group.id === flyout.id) : undefined;
@@ -97,8 +106,6 @@ export function AppSidebar({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [flyout]);
-
-  const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
     if (!rail) setFlyout(null);
@@ -199,26 +206,6 @@ export function AppSidebar({
         </nav>
 
         <div className="shrink-0 space-y-0.5 border-t border-[var(--sidebar-line)] px-2 py-2">
-          {!rail ? (
-            <div>
-              <button
-                type="button"
-                aria-expanded={exportOpen}
-                aria-controls="sidebar-export-menu"
-                onClick={() => setExportOpen((value) => !value)}
-                className={`${itemBase} justify-between text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}
-              >
-                <span className="inline-flex items-center gap-3"><NavIcon page="export" className="h-[1.1rem] w-[1.1rem] shrink-0" />Export</span>
-                <span aria-hidden="true" className="text-base leading-none">{exportOpen ? '−' : '+'}</span>
-              </button>
-              {exportOpen ? (
-                <div id="sidebar-export-menu" className="mt-0.5 space-y-0.5">
-                  <button type="button" disabled={exportDisabled} onClick={() => { onCloseMobile(); onExportCurrentPage(); }} className={`${itemBase} pl-10 text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}>Export page as PDF</button>
-                  <button type="button" disabled={exportDisabled} onClick={() => { onCloseMobile(); onExportAllPages(); }} className={`${itemBase} pl-10 text-[var(--sidebar-ink)] hover:bg-[var(--sidebar-hover-bg)]`}>Export full PDF</button>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
           <button
             type="button"
             aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}

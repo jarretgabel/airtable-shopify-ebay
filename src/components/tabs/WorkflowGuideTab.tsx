@@ -437,7 +437,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
         title="How To Use The Pages For This Role"
         summary="This is organized page first, then module-by-module, so the fastest question stays clear: which page owns the job you are trying to do? Only pages this login can access appear here."
       >
-        <div className="grid gap-3">
+        <div className="grid gap-8 [&>article+article]:border-t [&>article+article]:border-[var(--line)] [&>article+article]:pt-8">
           {visiblePageCards.map((card) => (
             <GuideReferenceCard
               key={card.title}
@@ -459,7 +459,7 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
         title="Record And Detail Pages"
         summary="Use this section when a queue or directory gets you close, but the actual work, audit trail, or grouped decision lives on a deeper single-record or group page. Only record surfaces tied to accessible pages appear here."
       >
-        <div className="grid gap-3">
+        <div className="grid gap-8 [&>article+article]:border-t [&>article+article]:border-[var(--line)] [&>article+article]:pt-8">
           {visibleRecordCards.map((card) => (
             <GuideReferenceCard
               key={card.title}
@@ -471,22 +471,6 @@ export function WorkflowGuideTab({ currentUserRole, currentUserName: _currentUse
               href={PAGE_DEFINITIONS[card.pages[0]]?.path}
               ctaLabel={`Open ${PAGE_DEFINITIONS[card.pages[0]]?.label ?? 'parent page'}`}
             />
-          ))}
-        </div>
-      </GuideSection>
-
-      <GuideSection
-        id="quick-answers"
-        eyebrow="Quick Answers"
-        title="Common Questions For Your Role"
-        summary="These answers are trimmed to the work this login is expected to handle."
-      >
-        <div className="space-y-3">
-          {roleGuide.questions.map((item) => (
-            <article key={item.question}>
-              <h4 className="m-0 text-sm font-semibold text-[var(--ink)]">{item.question}</h4>
-              <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.answer}</p>
-            </article>
           ))}
         </div>
       </GuideSection>
