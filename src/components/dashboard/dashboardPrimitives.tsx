@@ -11,7 +11,7 @@ const skeletonPulseClass = 'animate-pulse rounded-md bg-white/10';
  */
 export function StatTile({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--panel)] px-4 py-3.5 shadow-[0_1px_2px_rgba(2,6,23,0.1)]">
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)]/50 px-4 py-3.5">
       <p className="m-0 text-[0.72rem] font-medium text-[var(--muted)]">{label}</p>
       <p className="m-0 mt-1 text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-[var(--ink)]">{value}</p>
     </div>
@@ -65,7 +65,7 @@ export function DashboardKpiCard({
   return (
     <button
       type="button"
-      className={`w-full appearance-none rounded-xl border border-[var(--line)] border-t-[3px] bg-[var(--panel)] px-4 pb-3.5 pt-3.5 text-left text-[var(--ink)] shadow-[0_1px_2px_rgba(2,6,23,0.1)] transition focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200 ${borderToneClass} ${unavailableReason ? 'cursor-not-allowed opacity-85' : 'hover:border-[var(--accent)]/50 hover:shadow-[0_6px_18px_rgba(2,6,23,0.12)]'}`}
+      className={`w-full appearance-none rounded-xl border border-[var(--line)] border-t-[3px] bg-[var(--bg)]/50 px-4 pb-3.5 pt-3.5 text-left text-[var(--ink)] transition focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-200 ${borderToneClass} ${unavailableReason ? 'cursor-not-allowed opacity-85' : 'hover:border-[var(--accent)]/50 hover:shadow-[0_6px_18px_rgba(2,6,23,0.12)]'}`}
       disabled={Boolean(unavailableReason)}
       title={unavailableReason ?? undefined}
       onClick={() => {
@@ -108,7 +108,7 @@ export function DashboardSectionPanel({
           className ?? '',
         ].join(' ').trim()}
       >
-      <AppSectionTitle title={title} className="mb-4" />
+      <AppSectionTitle title={title} />
       {children}
       </AppPageSectionSurface>
     </section>
@@ -116,8 +116,8 @@ export function DashboardSectionPanel({
 }
 
 /**
- * Inner nested sub-panel — the recessed bg-[var(--bg)] section used for stats/data
- * blocks inside a DashboardSectionPanel. Accepts an optional ReactNode title rendered as h3.
+ * Inner sub-section — a flat heading plus content (no card of its own) so the section panel
+ * is the only container around stat tiles and data. Accepts an optional ReactNode title rendered as h3.
  */
 export function DashboardSubPanel({
   title,
@@ -129,9 +129,9 @@ export function DashboardSubPanel({
   className?: string;
 }) {
   return (
-    <section className={`flex flex-col gap-4 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4${className ? ` ${className}` : ''}`}>
+    <section className={`flex flex-col gap-3${className ? ` ${className}` : ''}`}>
       {title && (
-        <h3 className="m-0 flex items-baseline gap-2 border-b border-[var(--line)] pb-3 text-[0.92rem] font-semibold text-[var(--ink)]">
+        <h3 className="m-0 flex items-baseline gap-2 text-[0.92rem] font-semibold text-[var(--ink)]">
           {title}
         </h3>
       )}

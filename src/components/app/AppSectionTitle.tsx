@@ -15,7 +15,7 @@ export function AppSectionTitle({
 }: AppSectionTitleProps) {
   return (
     <div className={[
-      'flex items-center justify-between gap-3 border-b border-[var(--line)] pb-3',
+      'flex items-center justify-between gap-3',
       className ?? '',
     ].join(' ').trim()}>
       <h2 className={[
