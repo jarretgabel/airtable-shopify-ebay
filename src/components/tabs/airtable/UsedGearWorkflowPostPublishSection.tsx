@@ -768,7 +768,7 @@ export function UsedGearWorkflowPostPublishSection({
         {showSectionIntro ? (
           <AppSectionTitle title={queueTitle} />
         ) : null}
-        {!sectionSearchEnabled ? (
+        {!sectionSearchEnabled && (hasLoaded || !loading) ? (
           <QueueSearchToolbar
             searchAriaLabel={`Search used gear ${queueNoun}`}
             searchPlaceholder={searchPlaceholder}

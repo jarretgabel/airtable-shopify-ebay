@@ -209,6 +209,7 @@ export function UsedGearTrashSection({
         {showSectionIntro ? (
           <AppSectionTitle title="Trash" />
         ) : null}
+        {!(loading && records.length === 0) ? (
         <QueueSearchToolbar
           searchAriaLabel="Search workflow trash"
           searchPlaceholder="Search by SKU, make, model, source, status, or reason"
@@ -221,6 +222,7 @@ export function UsedGearTrashSection({
             void refreshQueue();
           }}
         />
+        ) : null}
       </div>
 
       {error ? (

@@ -286,7 +286,7 @@ export function UsedGearWorkflowProgressSection({
   const [uncontrolledSortMode, setUncontrolledSortMode] = useState<UsedGearWorkflowProgressSortMode>('newest');
   const searchTerm = typeof controlledSearchTerm === 'string' ? controlledSearchTerm : uncontrolledSearchTerm;
   const sortMode = controlledSortMode ?? uncontrolledSortMode;
-  const hideSearchToolbarWhileLoading = loading && (queueMode === 'testing' || queueMode === 'photography');
+  const hideSearchToolbarWhileLoading = loading && records.length === 0;
 
   useEffect(() => {
     let cancelled = false;

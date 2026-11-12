@@ -237,6 +237,7 @@ export function UsedGearPendingReviewSection({
         {showSectionIntro ? (
           <AppSectionTitle title="Pending Review Queue" />
         ) : null}
+        {!(loading && records.length === 0) ? (
         <QueueSearchToolbar
           searchAriaLabel="Search pending review queue"
           searchPlaceholder="Search by SKU, make, model, source, or status"
@@ -249,6 +250,7 @@ export function UsedGearPendingReviewSection({
             void refreshQueue();
           }}
         />
+        ) : null}
       </div>
 
       {error ? (

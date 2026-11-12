@@ -250,6 +250,7 @@ export function UsedGearParkingLotSection({
         {showSectionIntro ? (
           <AppSectionTitle title="Parking Lot" />
         ) : null}
+        {!(loading && records.length === 0) ? (
         <QueueSearchToolbar
           searchAriaLabel="Search Parking Lot"
           searchPlaceholder="Search by SKU, make, model, source, or status"
@@ -275,6 +276,7 @@ export function UsedGearParkingLotSection({
             },
           ]}
         />
+        ) : null}
       </div>
 
       {error ? (

@@ -1019,7 +1019,7 @@ export function ListingApprovalQueuePanel({
 
           {filteredRecords.length > 0 && isCombinedApproval ? (
             <div className="space-y-5">
-              <AppPageSectionSurface flat id={COMBINED_QUEUE_SECTION_IDS['ready-for-publishing']} className="scroll-mt-24">
+              <AppPageSectionSurface flat id={COMBINED_QUEUE_SECTION_IDS['ready-for-publishing']} className="scroll-mt-24 pt-8">
                 <AppSectionTitle
                   title="Ready for Publishing"
                   className="mb-4"
